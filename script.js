@@ -128,7 +128,6 @@ async function loadClassStudents() {
 
 async function handleCreateStudent(e) {
     e.preventDefault();
-    const name = document.getElementById('createStudentName').value;
     const username = document.getElementById('createStudentUsername').value;
     const password = document.getElementById('createStudentPassword').value;
 
@@ -139,9 +138,13 @@ async function handleCreateStudent(e) {
 
     try {
         const hashedPassword = window.bcrypt.hashSync(password, 10);
+        // O nome de usuário é usado também como o nome do aluno.
         const { error } = await supabaseClient.from('students').insert([{
-            name, username, password: hashedPassword,
-            class_id: currentClassId, teacher_id: currentUser.id
+            name: username, // Usando username para o nome
+            username, 
+            password: hashedPassword,
+            class_id: currentClassId, 
+            teacher_id: currentUser.id
         }]);
 
         if (error) throw error;
@@ -335,7 +338,10 @@ function renderClasses(classes) {
                 <div class="class-card">
                     <h3>${cls.name}</h3>
                     <span class="student-count">👥 ${studentCount} aluno(s)</span>
-                    <button class="btn primary" onclick="manageClass('${cls.id}', '${cls.name}')">Gerenciar</button>
+                    <div class="class-card-actions">
+                        <button class="btn primary" onclick="manageClass('${cls.id}', '${cls.name}')">Gerenciar</button>
+                        <button class="btn danger" onclick="handleDeleteClass('${cls.id}', '${cls.name.replace(/'/g, "'")}')">Excluir</button>
+                    </div>
                 </div>`;
         }).join('');
 }
