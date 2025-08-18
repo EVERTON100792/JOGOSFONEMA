@@ -147,30 +147,6 @@
             <button id="startButton" class="start-button">
                 <i class="fas fa-play"></i> Começar Aventura
             </button>
-            <div class="upload-section">
-                <h3><i class="fas fa-microphone"></i> Para Professores</h3>
-                <p>Carregue suas gravações dos sons das letras:</p>
-                <div class="upload-instructions">
-                    <p><i class="fas fa-info-circle"></i> <strong>Como nomear seus arquivos:</strong></p>
-                    <ul>
-                        <li>Primeira letra do nome: <code>a.mp3, b.wav, c.mp3</code></li>
-                        <li>Com prefixo: <code>letra-a.mp3, som-b.wav</code></li>
-                        <li>Qualquer formato de áudio: MP3, WAV, M4A, etc.</li>
-                    </ul>
-                </div>
-                <div class="upload-area">
-                    <input type="file" id="audioUpload" accept="audio/*" multiple>
-                    <label for="audioUpload" class="upload-label">
-                        <i class="fas fa-cloud-upload-alt"></i>
-                        <span>Clique aqui ou arraste os arquivos</span>
-                        <small>Selecione múltiplos arquivos de áudio</small>
-                    </label>
-                </div>
-                <div id="uploadStatus"></div>
-                <button id="testAudioButton" class="test-audio-button" style="display: none;">
-                    <i class="fas fa-play"></i> Testar Áudios Carregados
-                </button>
-            </div>
         </div>
     </div>
 
@@ -193,7 +169,6 @@
                 </div>
             </div>
         </div>
-
         <div class="game-content">
             <div class="question-area">
                 <div class="mascot-helper">
@@ -204,27 +179,17 @@
                         Clique no alto-falante para ouvir o som!
                     </div>
                 </div>
-
                 <div class="audio-section">
                     <button id="playAudioButton" class="audio-button">
                         <i class="fas fa-volume-up"></i>
                         <span>Ouvir Som</span>
                     </button>
-                    <div class="sound-waves">
-                        <div class="wave"></div>
-                        <div class="wave"></div>
-                        <div class="wave"></div>
-                    </div>
                 </div>
-
                 <div class="question-text">
                     <h3 id="questionText">Qual letra faz este som?</h3>
                 </div>
             </div>
-
-            <div class="letters-grid" id="lettersGrid">
-                </div>
-
+            <div class="letters-grid" id="lettersGrid"></div>
             <div class="game-controls">
                 <button id="repeatAudio" class="control-button">
                     <i class="fas fa-redo"></i> Ouvir Novamente
@@ -268,13 +233,6 @@
                     </button>
                 </div>
             </div>
-            <div class="celebration" id="celebration">
-                <div class="confetti"></div>
-                <div class="confetti"></div>
-                <div class="confetti"></div>
-                <div class="confetti"></div>
-                <div class="confetti"></div>
-            </div>
         </div>
     </div>
 
@@ -304,12 +262,10 @@
     <div id="manageClassModal" class="modal">
         <div class="modal-content large">
             <h3 id="manageClassTitle">Gerenciar Turma</h3>
-            
             <div class="modal-tabs">
                 <button class="tab-btn active" onclick="showTab('students')">Alunos</button>
                 <button class="tab-btn" onclick="showTab('progress')">Progresso</button>
             </div>
-
             <div id="studentsTab" class="tab-content active">
                 <div class="students-section">
                     <div class="section-header">
@@ -318,11 +274,9 @@
                             <i class="fas fa-plus"></i> Adicionar Aluno
                         </button>
                     </div>
-                    
                     <div id="createStudentForm" class="create-form" style="display: none;">
                         <form id="createStudentFormElement">
                             <div class="form-row">
-                                
                                 <div class="form-group">
                                     <label for="createStudentUsername">Usuário:</label>
                                     <input type="text" id="createStudentUsername" required autocomplete="username">
@@ -338,20 +292,15 @@
                             </div>
                         </form>
                     </div>
-
-                    <div id="studentsList" class="students-list">
-                        </div>
+                    <div id="studentsList" class="students-list"></div>
                 </div>
             </div>
-
             <div id="progressTab" class="tab-content">
                 <div class="progress-section">
                     <h4>Relatório de Progresso da Turma</h4>
-                    <div id="classProgressChart" class="progress-chart">
-                        </div>
+                    <div id="classProgressChart" class="progress-chart"></div>
                 </div>
             </div>
-
             <div class="modal-actions">
                 <button type="button" onclick="closeModal('manageClassModal')" class="modal-btn">Fechar</button>
             </div>
@@ -360,7 +309,5 @@
 
     <script src="https://unpkg.com/bcryptjs@2.4.3/dist/bcrypt.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    
-    <script src="script.js" defer></script>
-</body>
+    <script src="script.js"></script> </body>
 </html>
