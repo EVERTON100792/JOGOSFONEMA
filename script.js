@@ -1,5 +1,5 @@
 // =======================================================
-// PARTE 1: INICIALIZAÇÃO E CONFIGURAÇÃO
+// PARTE 1: CONFIGURAÇÃO INICIAL
 // =======================================================
 
 const { createClient } = supabase;
@@ -10,22 +10,67 @@ const supabaseClient = createClient(supabaseUrl, supabaseKey);
 let currentUser = null;
 let currentClassId = null;
 
+const GAME_CONFIG = {
+    minAccuracy: 95,
+    maxAttempts: 2,
+    questionsPerPhase: 10,
+    maxPhases: 3,
+};
+
+let gameState = {
+    currentPhase: 1,
+    score: 0,
+    attempts: GAME_CONFIG.maxAttempts,
+    questions: [],
+    currentQuestionIndex: 0,
+    playerProgress: {},
+    uploadedAudios: {}
+};
+
+const ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
+
+
 // =======================================================
-// PARTE 2: LÓGICA PRINCIPAL E EVENTOS
+// PARTE 2: FUNÇÕES DE CRIPTOGRAFIA (SUBSTITUINDO O BCRYPT)
 // =======================================================
 
-// A execução começa aqui, após o HTML ser totalmente carregado.
+/**
+ * Converte uma string de senha em um hash seguro usando a API nativa do navegador.
+ * @param {string} password A senha em texto plano.
+ * @returns {Promise<string>} O hash da senha.
+ */
+async function hashPassword(password) {
+    const encoder = new TextEncoder();
+    const data = encoder.encode(password);
+    const hashBuffer = await window.crypto.subtle.digest('SHA-256', data);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+    return hashHex;
+}
+
+/**
+ * Verifica se uma senha em texto plano corresponde a um hash existente.
+ * @param {string} password A senha em texto plano para verificar.
+ * @param {string} storedHash O hash que está salvo no banco de dados.
+ * @returns {Promise<boolean>} True se a senha corresponder, false caso contrário.
+ */
+async function verifyPassword(password, storedHash) {
+    const newHash = await hashPassword(password);
+    return newHash === storedHash;
+}
+
+
+// =======================================================
+// PARTE 3: LÓGICA PRINCIPAL E EVENTOS
+// =======================================================
+
 document.addEventListener('DOMContentLoaded', initApp);
 
 async function initApp() {
-    // Verifica se as bibliotecas externas carregaram
-    if (!window.supabase || !window.bcrypt) {
-        const errorMsg = "ERRO CRÍTICO: Bibliotecas essenciais (Supabase ou Bcrypt) não carregaram. Verifique a conexão com a internet.";
-        console.error(errorMsg);
-        alert(errorMsg);
+    if (!window.supabase) {
+        alert("ERRO CRÍTICO: A biblioteca Supabase (banco de dados) não carregou. Verifique sua conexão com a internet.");
         return;
     }
-    
     setupAllEventListeners();
     await checkSession();
 }
@@ -38,18 +83,25 @@ function setupAllEventListeners() {
         else if (type === 'student') showStudentLogin();
     }));
 
-    // Formulários de Autenticação
+    // Formulários
     document.getElementById('teacherLoginForm')?.addEventListener('submit', handleTeacherLogin);
     document.getElementById('teacherRegisterForm')?.addEventListener('submit', handleTeacherRegister);
     document.getElementById('studentLoginForm')?.addEventListener('submit', handleStudentLogin);
-    
-    // Dashboard do Professor
     document.getElementById('createClassForm')?.addEventListener('submit', handleCreateClass);
     document.getElementById('createStudentSubmitBtn')?.addEventListener('click', handleCreateStudent);
+
+    // Controles do Jogo
+    document.getElementById('startButton')?.addEventListener('click', startGame);
+    document.getElementById('playAudioButton')?.addEventListener('click', playCurrentAudio);
+    document.getElementById('repeatAudio')?.addEventListener('click', playCurrentAudio);
+    document.getElementById('nextQuestion')?.addEventListener('click', nextQuestion);
+    document.getElementById('continueButton')?.addEventListener('click', nextPhase);
+    document.getElementById('retryButton')?.addEventListener('click', retryPhase);
+    document.getElementById('restartButton')?.addEventListener('click', restartGame);
 }
 
 // =======================================================
-// PARTE 3: AUTENTICAÇÃO E SESSÃO
+// PARTE 4: AUTENTICAÇÃO E SESSÃO
 // =======================================================
 
 async function checkSession() {
@@ -59,7 +111,7 @@ async function checkSession() {
         if (currentUser.user_metadata.role === 'teacher') {
             await showTeacherDashboard();
         } else {
-            showUserTypeScreen(); // Se um usuário não professor tem sessão, deslogue ou trate.
+            showUserTypeScreen();
         }
     } else {
         showUserTypeScreen();
@@ -106,10 +158,9 @@ async function handleStudentLogin(e) {
         const { data, error } = await supabaseClient.from('students').select('password, id').eq('username', username).single();
         if (error || !data) throw new Error('Usuário ou senha inválidos.');
         
-        const match = await bcrypt.compare(password, data.password);
+        const match = await verifyPassword(password, data.password);
         if (!match) throw new Error('Usuário ou senha inválidos.');
 
-        // Se a senha bate, busca o resto dos dados do aluno
         const { data: studentData, error: studentError } = await supabaseClient.from('students').select('*').eq('id', data.id).single();
         if (studentError) throw studentError;
 
@@ -130,7 +181,7 @@ async function logout() {
 }
 
 // =======================================================
-// PARTE 4: DASHBOARD DO PROFESSOR
+// PARTE 5: DASHBOARD DO PROFESSOR
 // =======================================================
 
 async function showTeacherDashboard() {
@@ -217,24 +268,14 @@ async function handleCreateStudent(event) {
     const password = document.getElementById('createStudentPassword').value;
     const submitButton = document.getElementById('createStudentSubmitBtn');
 
-    if (!username || !password) {
-        return showFeedback("Por favor, preencha o nome de usuário e a senha.", "error");
-    }
-    if (!currentClassId || !currentUser?.id) {
-        return showFeedback("Erro de sessão. Tente recarregar a página.", "error");
-    }
+    if (!username || !password) return showFeedback("Por favor, preencha todos os campos.", "error");
+    if (!currentClassId || !currentUser?.id) return showFeedback("Erro de sessão. Recarregue a página.", "error");
 
     submitButton.disabled = true;
     submitButton.textContent = 'Criando...';
 
     try {
-        const hashedPassword = await new Promise((resolve, reject) => {
-            bcrypt.hash(password, 10, (err, hash) => {
-                if (err) reject(err);
-                else resolve(hash);
-            });
-        });
-
+        const hashedPassword = await hashPassword(password);
         const { error } = await supabaseClient.from('students').insert([{
             name: username,
             username,
@@ -258,7 +299,71 @@ async function handleCreateStudent(event) {
 }
 
 // =======================================================
-// PARTE 5: UI HELPERS E LÓGICA DO JOGO
+// PARTE 6: LÓGICA DO JOGO
+// =======================================================
+
+function showStudentGame() {
+    showScreen('startScreen');
+    initializeGame();
+}
+
+function initializeGame() {
+    gameState.currentPhase = 1; // Simplificado para sempre começar da fase 1
+    // Lógica para carregar progresso do aluno pode ser adicionada aqui
+}
+
+function startGame() {
+    gameState.attempts = GAME_CONFIG.maxAttempts;
+    generateQuestions();
+    showScreen('gameScreen');
+    updateUI();
+    startQuestion();
+}
+
+function generateQuestions() {
+    gameState.questions = [];
+    gameState.currentQuestionIndex = 0;
+    gameState.score = 0;
+    const letters = [...ALPHABET].sort(() => 0.5 - Math.random());
+    for (let i = 0; i < GAME_CONFIG.questionsPerPhase; i++) {
+        const correctLetter = letters[i % letters.length];
+        const options = generateLetterOptions(correctLetter);
+        gameState.questions.push({ correctLetter, options });
+    }
+}
+
+function generateLetterOptions(correctLetter) {
+    const options = new Set([correctLetter]);
+    const availableLetters = ALPHABET.filter(l => l !== correctLetter);
+    while (options.size < 4) {
+        const randomIndex = Math.floor(Math.random() * availableLetters.length);
+        options.add(availableLetters.splice(randomIndex, 1)[0]);
+    }
+    return Array.from(options).sort(() => 0.5 - Math.random());
+}
+
+function startQuestion() {
+    // ...
+}
+
+function playCurrentAudio() {
+    // ...
+}
+function nextQuestion() {
+    // ...
+}
+function nextPhase() {
+    // ...
+}
+function retryPhase() {
+    // ...
+}
+function restartGame() {
+    // ...
+}
+
+// =======================================================
+// PARTE 7: FUNÇÕES DE UI (INTERFACE DO USUÁRIO)
 // =======================================================
 
 function showScreen(screenId) {
@@ -270,23 +375,36 @@ function showUserTypeScreen() { showScreen('userTypeScreen'); }
 function showTeacherLogin() { showScreen('teacherLoginScreen'); }
 function showTeacherRegister() { showScreen('teacherRegisterScreen'); }
 function showStudentLogin() { showScreen('studentLoginScreen'); }
-function showStudentGame() { showScreen('startScreen'); /* Lógica do jogo aqui */ }
 function showCreateClassModal() { document.getElementById('createClassModal').classList.add('show'); }
-function closeModal(modalId) { document.getElementById(modalId).classList.remove('show'); }
-function showCreateStudentForm() { document.getElementById('createStudentForm').style.display = 'block'; }
+function closeModal(modalId) { document.getElementById(modalId)?.classList.remove('show'); }
+
+function showCreateStudentForm() {
+    document.getElementById('createStudentForm').style.display = 'block';
+}
+
 function hideCreateStudentForm() {
     document.getElementById('createStudentForm').style.display = 'none';
     document.getElementById('createStudentFormElement').reset();
 }
+
 function showTab(tabName) {
     document.querySelectorAll('.tab-content, .tab-btn').forEach(el => el.classList.remove('active'));
-    document.getElementById(tabName + 'Tab').classList.add('active');
+    document.getElementById(tabName + 'Tab')?.classList.add('active');
     document.querySelector(`.tab-btn[onclick*="'${tabName}'"]`)?.classList.add('active');
 }
+
 function showFeedback(message, type = 'info') {
     const feedback = document.getElementById('globalFeedback');
     if (!feedback) return;
     feedback.querySelector('.feedback-text').textContent = message;
     feedback.className = `feedback ${type} show`;
     setTimeout(() => feedback.classList.remove('show'), 4000);
+}
+
+function updateUI() {
+    const scoreEl = document.getElementById('score');
+    const totalEl = document.getElementById('totalQuestions');
+    if (scoreEl) scoreEl.textContent = gameState.score;
+    if (totalEl) totalEl.textContent = gameState.questions.length;
+    // ... completar com outros elementos de UI se necessário
 }
