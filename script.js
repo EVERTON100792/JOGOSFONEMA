@@ -136,9 +136,22 @@ async function handleCreateStudent(e) {
         return;
     }
 
+    const submitButton = e.target.querySelector('button[type="submit"]');
+    submitButton.disabled = true;
+    submitButton.textContent = 'Criando...';
+
     try {
-        const hashedPassword = window.bcrypt.hashSync(password, 10);
-        // O nome de usuário é usado também como o nome do aluno.
+        // CORREÇÃO APLICADA AQUI: Usando a versão assíncrona do bcrypt
+        const hashedPassword = await new Promise((resolve, reject) => {
+            window.bcrypt.hash(password, 10, (err, hash) => {
+                if (err) {
+                    reject(err);
+                } else {
+                    resolve(hash);
+                }
+            });
+        });
+
         const { error } = await supabaseClient.from('students').insert([{
             name: username, // Usando username para o nome
             username, 
@@ -157,6 +170,9 @@ async function handleCreateStudent(e) {
             ? 'Este nome de usuário já existe.'
             : `Erro ao criar aluno: ${error.message}`;
         showFeedback(message, 'error');
+    } finally {
+        submitButton.disabled = false;
+        submitButton.textContent = 'Criar Aluno';
     }
 }
 
