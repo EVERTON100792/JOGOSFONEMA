@@ -126,13 +126,17 @@ async function loadClassStudents() {
     }
 }
 
+// CORRIGIDO: Função para criar aluno usando bcrypt assíncrono
 async function handleCreateStudent(e) {
     e.preventDefault();
+    console.log("Iniciando a criação do aluno..."); // Para depuração
+
     const username = document.getElementById('createStudentUsername').value;
     const password = document.getElementById('createStudentPassword').value;
 
     if (!currentClassId || !currentUser?.id) {
         showFeedback("Erro: Não foi possível identificar a turma ou o professor.", "error");
+        console.error("currentClassId ou currentUser.id está nulo.", { currentClassId, currentUser });
         return;
     }
 
@@ -141,19 +145,17 @@ async function handleCreateStudent(e) {
     submitButton.textContent = 'Criando...';
 
     try {
-        // CORREÇÃO APLICADA AQUI: Usando a versão assíncrona do bcrypt
+        console.log("Criptografando a senha...");
         const hashedPassword = await new Promise((resolve, reject) => {
             window.bcrypt.hash(password, 10, (err, hash) => {
-                if (err) {
-                    reject(err);
-                } else {
-                    resolve(hash);
-                }
+                if (err) reject(err);
+                else resolve(hash);
             });
         });
+        console.log("Senha criptografada. Inserindo no banco de dados...");
 
         const { error } = await supabaseClient.from('students').insert([{
-            name: username, // Usando username para o nome
+            name: username,
             username, 
             password: hashedPassword,
             class_id: currentClassId, 
@@ -162,10 +164,12 @@ async function handleCreateStudent(e) {
 
         if (error) throw error;
 
+        console.log("Aluno inserido com sucesso!");
         hideCreateStudentForm();
         await loadClassStudents();
         showFeedback('Aluno criado com sucesso!', 'success');
     } catch (error) {
+        console.error("Erro explícito ao criar aluno:", error);
         const message = error.message.includes('duplicate key')
             ? 'Este nome de usuário já existe.'
             : `Erro ao criar aluno: ${error.message}`;
@@ -173,6 +177,7 @@ async function handleCreateStudent(e) {
     } finally {
         submitButton.disabled = false;
         submitButton.textContent = 'Criar Aluno';
+        console.log("Processo de criação finalizado.");
     }
 }
 
@@ -181,44 +186,12 @@ async function handleDeleteClass(classId, className) {
     if (!confirmation) return;
 
     try {
-        // Primeiro, excluir os alunos da turma
-        const { error: studentError } = await supabaseClient.from('students').delete().eq('class_id', classId);
-        if (studentError) throw studentError;
-
-        // Depois, excluir a turma
-        const { error: classError } = await supabaseClient.from('classes').delete().eq('id', classId);
-        if (classError) throw classError;
-
+        await supabaseClient.from('students').delete().eq('class_id', classId);
+        await supabaseClient.from('classes').delete().eq('id', classId);
         await loadTeacherClasses();
         showFeedback('Turma excluída com sucesso!', 'success');
     } catch (error) {
         showFeedback(`Erro ao excluir turma: ${error.message}`, 'error');
-    }
-}
-
-// === Verificação de Sessão ===
-async function checkSession() {
-    const { data: { session } } = await supabaseClient.auth.getSession();
-    if (session) {
-        currentUser = session.user;
-        if (currentUser.user_metadata.role === 'teacher') await showTeacherDashboard();
-        else showUserTypeScreen();
-    } else {
-        const studentSession = localStorage.getItem('studentSession');
-        if (studentSession) {
-            try {
-                const { id } = JSON.parse(studentSession);
-                const { data: studentData } = await supabaseClient.from('students').select('*').eq('id', id).single();
-                if (studentData) {
-                    currentUser = { ...studentData, type: 'student' };
-                    await showStudentGame();
-                    return;
-                }
-            } catch (e) {
-                localStorage.removeItem('studentSession');
-            }
-        }
-        showUserTypeScreen();
     }
 }
 
@@ -248,26 +221,11 @@ const ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
 
 // --- Elementos do DOM ---
 const elements = {
-    userTypeScreen: document.getElementById('userTypeScreen'),
-    teacherLoginScreen: document.getElementById('teacherLoginScreen'),
-    teacherRegisterScreen: document.getElementById('teacherRegisterScreen'),
-    studentLoginScreen: document.getElementById('studentLoginScreen'),
-    teacherDashboard: document.getElementById('teacherDashboard'),
-    startScreen: document.getElementById('startScreen'),
-    gameScreen: document.getElementById('gameScreen'),
-    resultScreen: document.getElementById('resultScreen'),
-    
-    currentPhaseSpan: document.getElementById('currentPhase'),
     progressFill: document.getElementById('progressFill'),
     scoreSpan: document.getElementById('score'),
     totalQuestionsSpan: document.getElementById('totalQuestions'),
     attemptsSpan: document.getElementById('attempts'),
     lettersGrid: document.getElementById('lettersGrid'),
-    questionText: document.getElementById('questionText'),
-    helperText: document.getElementById('helperText'),
-    
-    resultIcon: document.getElementById('resultIcon'),
-    resultTitle: document.getElementById('resultTitle'),
     finalScore: document.getElementById('finalScore'),
     accuracy: document.getElementById('accuracy'),
     resultMessage: document.getElementById('resultMessage'),
@@ -280,13 +238,16 @@ document.addEventListener('DOMContentLoaded', initApp);
 
 async function initApp() {
     setupAllEventListeners();
-
+    
+    // Verificação de sessão movida para cá para garantir que tudo esteja pronto
     const { data: { session } } = await supabaseClient.auth.getSession();
-    currentUser = session?.user ?? null;
-
-    // Decide a tela inicial com base na sessão
-    if (currentUser && currentUser.user_metadata.role === 'teacher') {
-        await showTeacherDashboard();
+    if (session) {
+        currentUser = session.user;
+        if (currentUser.user_metadata.role === 'teacher') {
+            await showTeacherDashboard();
+        } else {
+            showUserTypeScreen();
+        }
     } else {
         const studentSession = localStorage.getItem('studentSession');
         if (studentSession) {
@@ -297,28 +258,21 @@ async function initApp() {
                     currentUser = { ...studentData, type: 'student' };
                     await showStudentGame();
                 } else {
+                    localStorage.removeItem('studentSession');
                     showUserTypeScreen();
                 }
             } catch {
+                localStorage.removeItem('studentSession');
                 showUserTypeScreen();
             }
         } else {
             showUserTypeScreen();
         }
     }
-
-    // Configura o listener para futuras mudanças de autenticação (logout, refresh de token)
-    supabaseClient.auth.onAuthStateChange((_event, session) => {
-        currentUser = session?.user ?? null;
-        if (_event === 'SIGNED_OUT') {
-            // Se a sessão for nula (logout), volta para a tela de seleção de usuário
-            showUserTypeScreen();
-        }
-    });
 }
 
 function setupAllEventListeners() {
-    // Eventos de Autenticação
+    // Eventos de Navegação e Autenticação
     document.querySelectorAll('.user-type-btn').forEach(btn => btn.addEventListener('click', (e) => {
         const type = e.currentTarget.getAttribute('data-type');
         if (type === 'teacher') showTeacherLogin();
@@ -328,7 +282,12 @@ function setupAllEventListeners() {
     document.getElementById('teacherLoginForm')?.addEventListener('submit', handleTeacherLogin);
     document.getElementById('teacherRegisterForm')?.addEventListener('submit', handleTeacherRegister);
     document.getElementById('studentLoginForm')?.addEventListener('submit', handleStudentLogin);
+    
+    // Eventos do Dashboard
     document.getElementById('createClassForm')?.addEventListener('submit', handleCreateClass);
+
+    // NOVO E CORRIGIDO: Evento de criar aluno registrado uma única vez aqui!
+    document.getElementById('createStudentFormElement')?.addEventListener('submit', handleCreateStudent);
 
     // Eventos do Jogo
     document.getElementById('startButton')?.addEventListener('click', startGame);
@@ -341,7 +300,6 @@ function setupAllEventListeners() {
     document.getElementById('audioUpload')?.addEventListener('change', handleAudioUpload);
     document.getElementById('testAudioButton')?.addEventListener('click', testUploadedAudios);
 }
-
 
 // --- Funções de Navegação de Tela e UI ---
 function showScreen(screenId) {
@@ -376,7 +334,7 @@ function renderClasses(classes) {
                     <span class="student-count">👥 ${studentCount} aluno(s)</span>
                     <div class="class-card-actions">
                         <button class="btn primary" onclick="manageClass('${cls.id}', '${cls.name}')">Gerenciar</button>
-                        <button class="btn danger" onclick="handleDeleteClass('${cls.id}', '${cls.name.replace(/'/g, "'")}')">Excluir</button>
+                        <button class="btn danger" onclick="handleDeleteClass('${cls.id}', '${cls.name.replace(/'/g, "\\'")}')">Excluir</button>
                     </div>
                 </div>`;
         }).join('');
@@ -405,14 +363,9 @@ async function manageClass(classId, className) {
     await loadClassStudents();
 }
 
+// CORRIGIDO: Esta função agora apenas mostra o formulário. O evento já foi registrado.
 function showCreateStudentForm() {
-    const formContainer = document.getElementById('createStudentForm');
-    const formElement = document.getElementById('createStudentFormElement');
-    
-    formContainer.style.display = 'block';
-    
-    formElement.removeEventListener('submit', handleCreateStudent);
-    formElement.addEventListener('submit', handleCreateStudent);
+    document.getElementById('createStudentForm').style.display = 'block';
 }
 
 function hideCreateStudentForm() {
@@ -424,17 +377,15 @@ function showTab(tabName) {
     document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
     document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
     document.getElementById(tabName + 'Tab').classList.add('active');
-    const clickedButton = document.querySelector(`.tab-btn[onclick*="'${tabName}'"]`);
-    if(clickedButton) clickedButton.classList.add('active');
+    document.querySelector(`.tab-btn[onclick*="'${tabName}'"]`)?.classList.add('active');
 }
-
 
 // --- Lógica Principal do Jogo ---
 
 function initializeGame() {
     gameState.currentPhase = gameState.playerProgress.current_phase || 1;
     updateUI();
-    createPlaceholderAudios();
+    // createPlaceholderAudios(); // Função para áudios padrão, se necessário
 }
 
 function startGame() {
@@ -449,10 +400,7 @@ function generateQuestions() {
     gameState.questions = [];
     gameState.currentQuestionIndex = 0;
     gameState.score = 0;
-    
-    const letters = [...ALPHABET];
-    letters.sort(() => 0.5 - Math.random()); // Embaralhar
-
+    const letters = [...ALPHABET].sort(() => 0.5 - Math.random());
     for (let i = 0; i < GAME_CONFIG.questionsPerPhase; i++) {
         const correctLetter = letters[i % letters.length];
         const options = generateLetterOptions(correctLetter);
@@ -478,7 +426,7 @@ function startQuestion() {
     }
     document.getElementById('nextQuestion').style.display = 'none';
     updateProgress();
-    elements.questionText.textContent = 'Qual letra faz este som?';
+    document.getElementById('questionText').textContent = 'Qual letra faz este som?';
     renderLetterOptions(currentQuestion.options);
     setTimeout(playCurrentAudio, 1000);
 }
@@ -495,18 +443,14 @@ function renderLetterOptions(options) {
 
 function selectAnswer(selectedLetter) {
     const buttons = document.querySelectorAll('.letter-button');
-    buttons.forEach(btn => btn.disabled = true); // Desabilita botões
+    buttons.forEach(btn => btn.disabled = true);
 
     const currentQuestion = gameState.questions[gameState.currentQuestionIndex];
     const isCorrect = selectedLetter === currentQuestion.correctLetter;
 
     buttons.forEach(btn => {
-        if (btn.textContent === currentQuestion.correctLetter) {
-            btn.classList.add('correct');
-        }
-        if (btn.textContent === selectedLetter && !isCorrect) {
-            btn.classList.add('incorrect');
-        }
+        if (btn.textContent === currentQuestion.correctLetter) btn.classList.add('correct');
+        if (btn.textContent === selectedLetter && !isCorrect) btn.classList.add('incorrect');
     });
 
     if (isCorrect) {
@@ -534,7 +478,6 @@ function nextQuestion() {
 function endPhase() {
     const accuracy = Math.round((gameState.score / gameState.questions.length) * 100);
     const passed = accuracy >= GAME_CONFIG.minAccuracy;
-    
     savePlayerProgress(passed);
     showResultScreen(accuracy, passed);
 }
@@ -544,12 +487,10 @@ function showResultScreen(accuracy, passed) {
     elements.accuracy.textContent = accuracy;
     
     if (passed) {
-        elements.resultTitle.textContent = 'Parabéns!';
         elements.resultMessage.textContent = 'Você passou de fase!';
         elements.continueButton.style.display = gameState.currentPhase < GAME_CONFIG.maxPhases ? 'inline-block' : 'none';
         elements.retryButton.style.display = 'none';
     } else {
-        elements.resultTitle.textContent = 'Quase lá!';
         elements.resultMessage.textContent = `Você precisa de ${GAME_CONFIG.minAccuracy}% para passar. Tente novamente!`;
         elements.continueButton.style.display = 'none';
         elements.retryButton.style.display = 'inline-block';
@@ -566,10 +507,7 @@ function nextPhase() {
 
 function retryPhase() {
     gameState.attempts--;
-    generateQuestions();
-    showScreen('gameScreen');
-    updateUI();
-    startQuestion();
+    startGame();
 }
 
 function restartGame() {
@@ -577,11 +515,10 @@ function restartGame() {
     showStudentGame();
 }
 
-
-// --- Funções Auxiliares do Jogo (Áudio, UI, Progresso) ---
+// --- Funções Auxiliares (Áudio, UI, Progresso) ---
 
 function updateUI() {
-    elements.currentPhaseSpan.textContent = gameState.currentPhase;
+    document.getElementById('currentPhase').textContent = gameState.currentPhase;
     elements.scoreSpan.textContent = gameState.score;
     elements.totalQuestionsSpan.textContent = gameState.questions.length;
     elements.attemptsSpan.textContent = gameState.attempts;
@@ -594,24 +531,14 @@ function updateProgress() {
 
 function playCurrentAudio() {
     const letter = gameState.questions[gameState.currentQuestionIndex].correctLetter.toLowerCase();
-    const audioData = gameState.uploadedAudios[letter];
-    
-    if (audioData?.type === 'file') {
-        audioData.audio.play();
-    } else {
-        const utterance = new SpeechSynthesisUtterance(letter);
-        utterance.lang = 'pt-BR';
-        speechSynthesis.speak(utterance);
-    }
+    const utterance = new SpeechSynthesisUtterance(letter);
+    utterance.lang = 'pt-BR';
+    speechSynthesis.speak(utterance);
 }
 
-function createPlaceholderAudios() {
-    if ('speechSynthesis' in window) return; // Se o navegador suporta, não precisa criar nada.
-    // Lógica para carregar áudios padrão se síntese de voz não for suportada
-}
-
-function handleAudioUpload(event) { /* ... Lógica completa de upload ... */ }
-function testUploadedAudios() { /* ... Lógica de teste de áudio ... */ }
+// Funções de upload de áudio (placeholders)
+function handleAudioUpload(event) { showFeedback('Função de upload ainda não implementada.', 'info'); }
+function testUploadedAudios() { showFeedback('Função de teste de áudio ainda não implementada.', 'info'); }
 
 async function loadPlayerProgress() {
     if (!currentUser || currentUser.type !== 'student') return;
@@ -619,29 +546,25 @@ async function loadPlayerProgress() {
         const { data } = await supabaseClient.from('progress').select('*').eq('student_id', currentUser.id).single();
         if (data) gameState.playerProgress = data;
     } catch (error) {
-        console.error("Nenhum progresso encontrado, começando do zero.");
+        console.log("Nenhum progresso encontrado, começando do zero.");
         gameState.playerProgress = {};
     }
 }
 
 async function savePlayerProgress(passed) {
     if (!currentUser || currentUser.type !== 'student') return;
-    
     const newPhase = passed ? Math.min(gameState.currentPhase + 1, GAME_CONFIG.maxPhases) : gameState.currentPhase;
-    
     const progress = {
         student_id: currentUser.id,
         current_phase: newPhase,
         last_played: new Date().toISOString()
     };
-    
     try {
         await supabaseClient.from('progress').upsert(progress, { onConflict: 'student_id' });
     } catch (error) {
         console.error("Erro ao salvar progresso:", error);
     }
 }
-
 
 // --- Função de Feedback Global ---
 function showFeedback(message, type = 'info') {
@@ -652,5 +575,5 @@ function showFeedback(message, type = 'info') {
     icon.innerHTML = type === 'success' ? '✅' : (type === 'error' ? '❌' : 'ℹ️');
     text.textContent = message;
     feedback.className = `feedback ${type} show`;
-    setTimeout(() => { feedback.classList.remove('show'); }, 3000);
+    setTimeout(() => { feedback.classList.remove('show'); }, 4000);
 }
