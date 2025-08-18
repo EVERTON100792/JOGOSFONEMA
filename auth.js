@@ -91,7 +91,8 @@ async function handleStudentLogin(e) {
         }
 
         // Compara a senha fornecida com o hash armazenado
-        const passwordMatch = bcrypt.compareSync(password, data.password);
+                // Compara a senha fornecida com o hash armazenado
+        const passwordMatch = window.bcrypt.compareSync(password, data.password);
 
         if (!passwordMatch) {
             throw new Error('Usuário ou senha inválidos.');
@@ -108,7 +109,9 @@ async function handleStudentLogin(e) {
             throw new Error('Erro ao carregar dados do aluno.');
         }
 
-        currentUser = { ...studentData, type: 'student' };
+                currentUser = { ...studentData, type: 'student' };
+        // Salva a sessão do aluno no localStorage para persistência
+        localStorage.setItem('studentSession', JSON.stringify({ id: currentUser.id, type: currentUser.type }));
         await showStudentGame();
         showFeedback('Login realizado com sucesso!', 'success');
 
@@ -227,7 +230,8 @@ async function handleCreateStudent(e) {
 
     try {
         // Hash da senha antes de armazenar
-        const hashedPassword = bcrypt.hashSync(password, 10); // 10 é o número de 'salt rounds'
+        // Hash da senha antes de armazenar
+        const hashedPassword = window.bcrypt.hashSync(password, 10); // 10 é o número de 'salt rounds'
 
         const { data, error } = await supabaseClient
             .from('students')
@@ -258,9 +262,10 @@ async function handleCreateStudent(e) {
 
 // === VERIFICAÇÃO INICIAL DA SESSÃO ===
 async function checkSession() {
-    const { data: { session } } = await supabaseClient.auth.getSession();
+    const { data: { session } = {} } = await supabaseClient.auth.getSession(); // Adicionado = {} para desestruturação segura
     
     if (session) {
+        // Handle teacher session (Supabase Auth)
         currentUser = session.user;
         if (currentUser.user_metadata.role === 'teacher') {
             await showTeacherDashboard();
@@ -270,6 +275,34 @@ async function checkSession() {
             showUserTypeScreen();
         }
     } else {
+        // No Supabase Auth session, check for student session in localStorage
+        const studentSession = localStorage.getItem('studentSession');
+        if (studentSession) {
+            try {
+                const { id, type } = JSON.parse(studentSession);
+                if (type === 'student' && id) {
+                    // Fetch student data from DB to ensure it's still valid
+                    const { data: studentData, error: studentError } = await supabaseClient
+                        .from('students')
+                        .select('*')
+                        .eq('id', id)
+                        .single();
+
+                    if (!studentError && studentData) {
+                        currentUser = { ...studentData, type: 'student' };
+                        await showStudentGame();
+                        return; // Exit after handling student session
+                    } else {
+                        console.error('Erro ao carregar dados do aluno da sessão:', studentError?.message);
+                        localStorage.removeItem('studentSession'); // Clear invalid session
+                    }
+                }
+            } catch (e) {
+                console.error('Erro ao parsear sessão do aluno:', e);
+                localStorage.removeItem('studentSession'); // Clear corrupted session
+            }
+        }
+        // If no session (teacher or student) found, show user type screen
         showUserTypeScreen();
     }
 }
