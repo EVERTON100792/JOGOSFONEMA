@@ -144,7 +144,7 @@ async function handleTeacherRegister(e) {
             email, password, options: { data: { full_name: name, role: 'teacher' } }
         });
         if (error) throw error;
-        showFeedback('Cadastro realizado com sucesso! Verifique seu e-mail.', 'success');
+        showFeedback('Cadastro realizado com sucesso! Verifique seu e--mail.', 'success');
     } catch (error) {
         showFeedback(`Erro no cadastro: ${error.message}`, 'error');
     }
@@ -308,8 +308,8 @@ function showStudentGame() {
 }
 
 function initializeGame() {
-    gameState.currentPhase = 1; // Simplificado para sempre começar da fase 1
-    // Lógica para carregar progresso do aluno pode ser adicionada aqui
+    gameState.currentPhase = 1;
+    gameState.attempts = GAME_CONFIG.maxAttempts;
 }
 
 function startGame() {
@@ -343,23 +343,108 @@ function generateLetterOptions(correctLetter) {
 }
 
 function startQuestion() {
-    // ...
+    const currentQuestion = gameState.questions[gameState.currentQuestionIndex];
+    if (!currentQuestion) {
+        endPhase();
+        return;
+    }
+    document.getElementById('nextQuestion').style.display = 'none';
+    updateUI();
+    document.getElementById('questionText').textContent = 'Qual letra faz este som?';
+    renderLetterOptions(currentQuestion.options);
+    setTimeout(playCurrentAudio, 1000);
+}
+
+function renderLetterOptions(options) {
+    const lettersGrid = document.getElementById('lettersGrid');
+    lettersGrid.innerHTML = options.map(letter =>
+        `<button class="letter-button">${letter}</button>`
+    ).join('');
+
+    document.querySelectorAll('.letter-button').forEach(btn => {
+        btn.addEventListener('click', (e) => selectAnswer(e.target.textContent));
+    });
+}
+
+function selectAnswer(selectedLetter) {
+    const buttons = document.querySelectorAll('.letter-button');
+    buttons.forEach(btn => btn.disabled = true);
+
+    const currentQuestion = gameState.questions[gameState.currentQuestionIndex];
+    const isCorrect = selectedLetter === currentQuestion.correctLetter;
+
+    buttons.forEach(btn => {
+        if (btn.textContent === currentQuestion.correctLetter) {
+            btn.classList.add('correct');
+        }
+        if (btn.textContent === selectedLetter && !isCorrect) {
+            btn.classList.add('incorrect');
+        }
+    });
+
+    if (isCorrect) {
+        gameState.score++;
+        showFeedback('Muito bem! Você acertou!', 'success');
+    } else {
+        showFeedback(`Quase! A resposta correta era ${currentQuestion.correctLetter}`, 'error');
+    }
+
+    updateUI();
+    setTimeout(() => {
+        document.getElementById('nextQuestion').style.display = 'block';
+    }, 1500);
+}
+
+function endPhase() {
+    const accuracy = Math.round((gameState.score / gameState.questions.length) * 100);
+    const passed = accuracy >= GAME_CONFIG.minAccuracy;
+    showResultScreen(accuracy, passed);
+}
+
+function showResultScreen(accuracy, passed) {
+    document.getElementById('finalScore').textContent = gameState.score;
+    document.getElementById('accuracy').textContent = accuracy;
+
+    const continueButton = document.getElementById('continueButton');
+    const retryButton = document.getElementById('retryButton');
+    const resultMessage = document.getElementById('resultMessage');
+
+    if (passed) {
+        resultMessage.textContent = 'Você passou de fase! Ótimo trabalho!';
+        continueButton.style.display = gameState.currentPhase < GAME_CONFIG.maxPhases ? 'inline-block' : 'none';
+        retryButton.style.display = 'none';
+    } else {
+        resultMessage.textContent = `Você precisa de ${GAME_CONFIG.minAccuracy}% para passar. Tente novamente!`;
+        continueButton.style.display = 'none';
+        retryButton.style.display = 'inline-block';
+    }
+    showScreen('resultScreen');
+}
+
+function nextPhase() {
+    if (gameState.currentPhase < GAME_CONFIG.maxPhases) {
+        gameState.currentPhase++;
+        startGame();
+    }
+}
+
+function retryPhase() {
+    gameState.attempts--;
+    startGame();
+}
+
+function restartGame() {
+    showStudentGame();
 }
 
 function playCurrentAudio() {
-    // ...
-}
-function nextQuestion() {
-    // ...
-}
-function nextPhase() {
-    // ...
-}
-function retryPhase() {
-    // ...
-}
-function restartGame() {
-    // ...
+    const currentQuestion = gameState.questions[gameState.currentQuestionIndex];
+    if (!currentQuestion) return;
+
+    const letter = currentQuestion.correctLetter;
+    const utterance = new SpeechSynthesisUtterance(letter);
+    utterance.lang = 'pt-BR';
+    speechSynthesis.speak(utterance);
 }
 
 // =======================================================
@@ -404,7 +489,11 @@ function showFeedback(message, type = 'info') {
 function updateUI() {
     const scoreEl = document.getElementById('score');
     const totalEl = document.getElementById('totalQuestions');
+    const attemptsEl = document.getElementById('attempts');
+    const phaseEl = document.getElementById('currentPhase');
+
     if (scoreEl) scoreEl.textContent = gameState.score;
     if (totalEl) totalEl.textContent = gameState.questions.length;
-    // ... completar com outros elementos de UI se necessário
+    if (attemptsEl) attemptsEl.textContent = gameState.attempts;
+    if (phaseEl) phaseEl.textContent = gameState.currentPhase;
 }
