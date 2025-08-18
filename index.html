@@ -9,7 +9,6 @@
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-    <!-- Tela de Seleção de Usuário -->
     <div id="userTypeScreen" class="screen active">
         <div class="container">
             <div class="game-title">
@@ -35,7 +34,6 @@
         </div>
     </div>
 
-    <!-- Tela de Login do Professor -->
     <div id="teacherLoginScreen" class="screen">
         <div class="container">
             <div class="login-container">
@@ -59,7 +57,6 @@
         </div>
     </div>
 
-    <!-- Tela de Registro do Professor -->
     <div id="teacherRegisterScreen" class="screen">
         <div class="container">
             <div class="login-container">
@@ -87,7 +84,6 @@
         </div>
     </div>
 
-    <!-- Tela de Login do Aluno -->
     <div id="studentLoginScreen" class="screen">
         <div class="container">
             <div class="login-container">
@@ -110,7 +106,6 @@
         </div>
     </div>
 
-    <!-- Dashboard do Professor -->
     <div id="teacherDashboard" class="screen">
         <div class="container">
             <div class="dashboard-header">
@@ -135,7 +130,6 @@
         </div>
     </div>
 
-    <!-- Tela do Jogo (renomeando para studentGame) -->
     <div id="startScreen" class="screen">
         <div class="container">
             <div class="game-title">
@@ -180,7 +174,6 @@
         </div>
     </div>
 
-    <!-- Tela do Jogo -->
     <div id="gameScreen" class="screen">
         <div class="game-header">
             <div class="phase-info">
@@ -230,8 +223,7 @@
             </div>
 
             <div class="letters-grid" id="lettersGrid">
-                <!-- Letras serão geradas dinamicamente -->
-            </div>
+                </div>
 
             <div class="game-controls">
                 <button id="repeatAudio" class="control-button">
@@ -244,7 +236,6 @@
         </div>
     </div>
 
-    <!-- Tela de Resultado -->
     <div id="resultScreen" class="screen">
         <div class="container">
             <div class="result-content">
@@ -287,15 +278,13 @@
         </div>
     </div>
 
-    <!-- Feedback Visual -->
-    <div id="feedback" class="feedback">
+    <div id="globalFeedback" class="feedback">
         <div class="feedback-content">
-            <i class="feedback-icon"></i>
+            <span class="feedback-icon"></span>
             <span class="feedback-text"></span>
         </div>
     </div>
 
-    <!-- Modal para Criar Turma -->
     <div id="createClassModal" class="modal">
         <div class="modal-content">
             <h3>Criar Nova Turma</h3>
@@ -312,7 +301,6 @@
         </div>
     </div>
 
-    <!-- Modal para Gerenciar Turma -->
     <div id="manageClassModal" class="modal">
         <div class="modal-content large">
             <h3 id="manageClassTitle">Gerenciar Turma</h3>
@@ -355,8 +343,7 @@
                     </div>
 
                     <div id="studentsList" class="students-list">
-                        <!-- Lista de alunos será carregada dinamicamente -->
-                    </div>
+                        </div>
                 </div>
             </div>
 
@@ -364,8 +351,7 @@
                 <div class="progress-section">
                     <h4>Relatório de Progresso da Turma</h4>
                     <div id="classProgressChart" class="progress-chart">
-                        <!-- Gráfico de progresso será carregado dinamicamente -->
-                    </div>
+                        </div>
                 </div>
             </div>
 
@@ -377,7 +363,7 @@
 
     <script src="https://unpkg.com/bcryptjs@2.4.3/dist/bcrypt.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    
     <script src="script.js" defer></script>
-    <script src="auth.js" defer></script>
 </body>
 </html>
