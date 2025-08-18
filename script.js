@@ -158,41 +158,29 @@ async function handleCreateStudent(e) {
 }
 
 // === Verificação de Sessão ===
-function setupSessionManagement() {
-    supabaseClient.auth.onAuthStateChange(async (event, session) => {
-        const studentSessionData = localStorage.getItem('studentSession');
-
-        if (session) {
-            // Teacher is logged in via Supabase Auth
-            currentUser = session.user;
-            localStorage.removeItem('studentSession'); // Clear student session
-            if (currentUser.user_metadata.role === 'teacher') {
-                await showTeacherDashboard();
-            } else {
-                showUserTypeScreen();
-            }
-        } else if (studentSessionData) {
-            // Student is logged in via custom logic
+async function checkSession() {
+    const { data: { session } } = await supabaseClient.auth.getSession();
+    if (session) {
+        currentUser = session.user;
+        if (currentUser.user_metadata.role === 'teacher') await showTeacherDashboard();
+        else showUserTypeScreen();
+    } else {
+        const studentSession = localStorage.getItem('studentSession');
+        if (studentSession) {
             try {
-                const { id } = JSON.parse(studentSessionData);
+                const { id } = JSON.parse(studentSession);
                 const { data: studentData } = await supabaseClient.from('students').select('*').eq('id', id).single();
                 if (studentData) {
                     currentUser = { ...studentData, type: 'student' };
                     await showStudentGame();
-                } else {
-                    localStorage.removeItem('studentSession');
-                    showUserTypeScreen();
+                    return;
                 }
             } catch (e) {
                 localStorage.removeItem('studentSession');
-                showUserTypeScreen();
             }
-        } else {
-            // No one is logged in
-            currentUser = null;
-            showUserTypeScreen();
         }
-    });
+        showUserTypeScreen();
+    }
 }
 
 // =======================================================
@@ -251,9 +239,43 @@ const elements = {
 // --- Inicialização ---
 document.addEventListener('DOMContentLoaded', initApp);
 
-function initApp() {
-    setupSessionManagement();
+async function initApp() {
     setupAllEventListeners();
+
+    const { data: { session } } = await supabaseClient.auth.getSession();
+    currentUser = session?.user ?? null;
+
+    // Decide a tela inicial com base na sessão
+    if (currentUser && currentUser.user_metadata.role === 'teacher') {
+        await showTeacherDashboard();
+    } else {
+        const studentSession = localStorage.getItem('studentSession');
+        if (studentSession) {
+            try {
+                const { id } = JSON.parse(studentSession);
+                const { data: studentData } = await supabaseClient.from('students').select('*').eq('id', id).single();
+                if (studentData) {
+                    currentUser = { ...studentData, type: 'student' };
+                    await showStudentGame();
+                } else {
+                    showUserTypeScreen();
+                }
+            } catch {
+                showUserTypeScreen();
+            }
+        } else {
+            showUserTypeScreen();
+        }
+    }
+
+    // Configura o listener para futuras mudanças de autenticação (logout, refresh de token)
+    supabaseClient.auth.onAuthStateChange((_event, session) => {
+        currentUser = session?.user ?? null;
+        if (_event === 'SIGNED_OUT') {
+            // Se a sessão for nula (logout), volta para a tela de seleção de usuário
+            showUserTypeScreen();
+        }
+    });
 }
 
 function setupAllEventListeners() {
