@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jogo de Alfabetização - Aprenda as Letras!</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Comic+Neue:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <!-- Tela de Seleção de Usuário -->
+    <div id="userTypeScreen" class="screen active">
+        <div class="container">
+            <div class="game-title">
+                <h1>🌟 Jogo das Letras 🌟</h1>
+                <p>Aprendendo o alfabeto com diversão!</p>
+            </div>
+            
+            <div class="user-selection">
+                <h2>Como você quer acessar?</h2>
+                <div class="user-types">
+                    <button class="user-type-btn" data-type="student">
+                        <i class="fas fa-child"></i>
+                        <span>Sou Aluno</span>
+                        <small>Jogar e aprender</small>
+                    </button>
+                    <button class="user-type-btn" data-type="teacher">
+                        <i class="fas fa-chalkboard-teacher"></i>
+                        <span>Sou Professor</span>
+                        <small>Gerenciar turmas</small>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tela de Login do Professor -->
+    <div id="teacherLoginScreen" class="screen">
+        <div class="container">
+            <div class="login-container">
+                <h2><i class="fas fa-chalkboard-teacher"></i> Login do Professor</h2>
+                <form id="teacherLoginForm" class="login-form">
+                    <div class="form-group">
+                        <label for="teacherEmail">Email:</label>
+                        <input type="email" id="teacherEmail" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="teacherPassword">Senha:</label>
+                        <input type="password" id="teacherPassword" required>
+                    </div>
+                    <button type="submit" class="login-btn">Entrar</button>
+                    <button type="button" class="register-btn" onclick="showTeacherRegister()">Não tenho conta</button>
+                </form>
+                <button class="back-btn" onclick="showUserTypeScreen()">
+                    <i class="fas fa-arrow-left"></i> Voltar
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tela de Registro do Professor -->
+    <div id="teacherRegisterScreen" class="screen">
+        <div class="container">
+            <div class="login-container">
+                <h2><i class="fas fa-user-plus"></i> Cadastro do Professor</h2>
+                <form id="teacherRegisterForm" class="login-form">
+                    <div class="form-group">
+                        <label for="teacherRegName">Nome:</label>
+                        <input type="text" id="teacherRegName" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="teacherRegEmail">Email:</label>
+                        <input type="email" id="teacherRegEmail" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="teacherRegPassword">Senha:</label>
+                        <input type="password" id="teacherRegPassword" required>
+                    </div>
+                    <button type="submit" class="login-btn">Cadastrar</button>
+                    <button type="button" class="register-btn" onclick="showTeacherLogin()">Já tenho conta</button>
+                </form>
+                <button class="back-btn" onclick="showUserTypeScreen()">
+                    <i class="fas fa-arrow-left"></i> Voltar
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tela de Login do Aluno -->
+    <div id="studentLoginScreen" class="screen">
+        <div class="container">
+            <div class="login-container">
+                <h2><i class="fas fa-child"></i> Login do Aluno</h2>
+                <form id="studentLoginForm" class="login-form">
+                    <div class="form-group">
+                        <label for="studentUsername">Nome de usuário:</label>
+                        <input type="text" id="studentUsername" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="studentPassword">Senha:</label>
+                        <input type="password" id="studentPassword" required>
+                    </div>
+                    <button type="submit" class="login-btn">Entrar</button>
+                </form>
+                <button class="back-btn" onclick="showUserTypeScreen()">
+                    <i class="fas fa-arrow-left"></i> Voltar
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Dashboard do Professor -->
+    <div id="teacherDashboard" class="screen">
+        <div class="container">
+            <div class="dashboard-header">
+                <h1>📚 Dashboard do Professor</h1>
+                <div class="teacher-info">
+                    <span id="teacherName">Professor</span>
+                    <button onclick="logout()" class="logout-btn">
+                        <i class="fas fa-sign-out-alt"></i> Sair
+                    </button>
+                </div>
+            </div>
+
+            <div class="dashboard-content">
+                <div class="dashboard-section">
+                    <h2>Minhas Turmas</h2>
+                    <button onclick="showCreateClassModal()" class="create-btn">
+                        <i class="fas fa-plus"></i> Criar Nova Turma
+                    </button>
+                    <div id="classesList" class="classes-grid"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tela do Jogo (renomeando para studentGame) -->
+    <div id="startScreen" class="screen">
+        <div class="container">
+            <div class="game-title">
+                <h1>🌟 Jogo das Letras 🌟</h1>
+                <p>Vamos aprender o alfabeto juntos!</p>
+            </div>
+            <div class="character-mascot">
+                <div class="mascot bounce">
+                    <i class="fas fa-cat"></i>
+                </div>
+                <div class="speech-bubble">
+                    <p>Olá! Eu sou o Gatinho Alfabeto! Vamos brincar?</p>
+                </div>
+            </div>
+            <button id="startButton" class="start-button">
+                <i class="fas fa-play"></i> Começar Aventura
+            </button>
+            <div class="upload-section">
+                <h3><i class="fas fa-microphone"></i> Para Professores</h3>
+                <p>Carregue suas gravações dos sons das letras:</p>
+                <div class="upload-instructions">
+                    <p><i class="fas fa-info-circle"></i> <strong>Como nomear seus arquivos:</strong></p>
+                    <ul>
+                        <li>Primeira letra do nome: <code>a.mp3, b.wav, c.mp3</code></li>
+                        <li>Com prefixo: <code>letra-a.mp3, som-b.wav</code></li>
+                        <li>Qualquer formato de áudio: MP3, WAV, M4A, etc.</li>
+                    </ul>
+                </div>
+                <div class="upload-area">
+                    <input type="file" id="audioUpload" accept="audio/*" multiple>
+                    <label for="audioUpload" class="upload-label">
+                        <i class="fas fa-cloud-upload-alt"></i>
+                        <span>Clique aqui ou arraste os arquivos</span>
+                        <small>Selecione múltiplos arquivos de áudio</small>
+                    </label>
+                </div>
+                <div id="uploadStatus"></div>
+                <button id="testAudioButton" class="test-audio-button" style="display: none;">
+                    <i class="fas fa-play"></i> Testar Áudios Carregados
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tela do Jogo -->
+    <div id="gameScreen" class="screen">
+        <div class="game-header">
+            <div class="phase-info">
+                <h2>Fase <span id="currentPhase">1</span></h2>
+                <div class="progress-bar">
+                    <div id="progressFill" class="progress-fill"></div>
+                </div>
+            </div>
+            <div class="score-info">
+                <div class="score">
+                    <i class="fas fa-star"></i>
+                    <span id="score">0</span>/<span id="totalQuestions">0</span>
+                </div>
+                <div class="attempts">
+                    <i class="fas fa-heart"></i>
+                    <span id="attempts">2</span> tentativas
+                </div>
+            </div>
+        </div>
+
+        <div class="game-content">
+            <div class="question-area">
+                <div class="mascot-helper">
+                    <div class="mascot pulse">
+                        <i class="fas fa-cat"></i>
+                    </div>
+                    <div class="speech-bubble" id="helperText">
+                        Clique no alto-falante para ouvir o som!
+                    </div>
+                </div>
+
+                <div class="audio-section">
+                    <button id="playAudioButton" class="audio-button">
+                        <i class="fas fa-volume-up"></i>
+                        <span>Ouvir Som</span>
+                    </button>
+                    <div class="sound-waves">
+                        <div class="wave"></div>
+                        <div class="wave"></div>
+                        <div class="wave"></div>
+                    </div>
+                </div>
+
+                <div class="question-text">
+                    <h3 id="questionText">Qual letra faz este som?</h3>
+                </div>
+            </div>
+
+            <div class="letters-grid" id="lettersGrid">
+                <!-- Letras serão geradas dinamicamente -->
+            </div>
+
+            <div class="game-controls">
+                <button id="repeatAudio" class="control-button">
+                    <i class="fas fa-redo"></i> Ouvir Novamente
+                </button>
+                <button id="nextQuestion" class="control-button" style="display: none;">
+                    <i class="fas fa-arrow-right"></i> Próxima
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tela de Resultado -->
+    <div id="resultScreen" class="screen">
+        <div class="container">
+            <div class="result-content">
+                <div class="result-icon" id="resultIcon">
+                    <i class="fas fa-trophy"></i>
+                </div>
+                <h2 id="resultTitle">Parabéns!</h2>
+                <div class="result-stats">
+                    <div class="stat">
+                        <i class="fas fa-star"></i>
+                        <span>Acertos: <span id="finalScore">0</span></span>
+                    </div>
+                    <div class="stat">
+                        <i class="fas fa-percentage"></i>
+                        <span>Precisão: <span id="accuracy">0</span>%</span>
+                    </div>
+                </div>
+                <div class="result-message" id="resultMessage">
+                    Você conseguiu! Continue assim!
+                </div>
+                <div class="result-actions">
+                    <button id="continueButton" class="result-button success" style="display: none;">
+                        <i class="fas fa-arrow-right"></i> Próxima Fase
+                    </button>
+                    <button id="retryButton" class="result-button retry" style="display: none;">
+                        <i class="fas fa-redo"></i> Tentar Novamente
+                    </button>
+                    <button id="restartButton" class="result-button">
+                        <i class="fas fa-home"></i> Voltar ao Início
+                    </button>
+                </div>
+            </div>
+            <div class="celebration" id="celebration">
+                <div class="confetti"></div>
+                <div class="confetti"></div>
+                <div class="confetti"></div>
+                <div class="confetti"></div>
+                <div class="confetti"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Feedback Visual -->
+    <div id="feedback" class="feedback">
+        <div class="feedback-content">
+            <i class="feedback-icon"></i>
+            <span class="feedback-text"></span>
+        </div>
+    </div>
+
+    <!-- Modal para Criar Turma -->
+    <div id="createClassModal" class="modal">
+        <div class="modal-content">
+            <h3>Criar Nova Turma</h3>
+            <form id="createClassForm">
+                <div class="form-group">
+                    <label for="className">Nome da Turma:</label>
+                    <input type="text" id="className" required placeholder="Ex: 1º Ano A">
+                </div>
+                <div class="modal-actions">
+                    <button type="submit" class="modal-btn primary">Criar</button>
+                    <button type="button" onclick="closeModal('createClassModal')" class="modal-btn">Cancelar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal para Gerenciar Turma -->
+    <div id="manageClassModal" class="modal">
+        <div class="modal-content large">
+            <h3 id="manageClassTitle">Gerenciar Turma</h3>
+            
+            <div class="modal-tabs">
+                <button class="tab-btn active" onclick="showTab('students')">Alunos</button>
+                <button class="tab-btn" onclick="showTab('progress')">Progresso</button>
+            </div>
+
+            <div id="studentsTab" class="tab-content active">
+                <div class="students-section">
+                    <div class="section-header">
+                        <h4>Alunos da Turma</h4>
+                        <button onclick="showCreateStudentForm()" class="create-btn small">
+                            <i class="fas fa-plus"></i> Adicionar Aluno
+                        </button>
+                    </div>
+                    
+                    <div id="createStudentForm" class="create-form" style="display: none;">
+                        <form id="createStudentFormElement">
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="createStudentName">Nome:</label>
+                                    <input type="text" id="createStudentName" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="createStudentUsername">Usuário:</label>
+                                    <input type="text" id="createStudentUsername" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="createStudentPassword">Senha:</label>
+                                    <input type="password" id="createStudentPassword" required>
+                                </div>
+                            </div>
+                            <div class="form-actions">
+                                <button type="submit" class="btn primary">Criar Aluno</button>
+                                <button type="button" onclick="hideCreateStudentForm()" class="btn">Cancelar</button>
+                            </div>
+                        </form>
+                    </div>
+
+                    <div id="studentsList" class="students-list">
+                        <!-- Lista de alunos será carregada dinamicamente -->
+                    </div>
+                </div>
+            </div>
+
+            <div id="progressTab" class="tab-content">
+                <div class="progress-section">
+                    <h4>Relatório de Progresso da Turma</h4>
+                    <div id="classProgressChart" class="progress-chart">
+                        <!-- Gráfico de progresso será carregado dinamicamente -->
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal-actions">
+                <button type="button" onclick="closeModal('manageClassModal')" class="modal-btn">Fechar</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="script.js"></script>
+    <script src="auth.js"></script>
+</body>
+</html>
