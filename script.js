@@ -1,7 +1,5 @@
-console.log("AVISO: Jogo das Letras - script.js foi carregado. Se você não vir mais nenhuma mensagem, verifique o HTML.");
-
 // =======================================================
-// PARTE 1: AUTENTICAÇÃO E GERENCIAMENTO (SUPABASE)
+// PARTE 1: INICIALIZAÇÃO E CONFIGURAÇÃO
 // =======================================================
 
 const { createClient } = supabase;
@@ -16,48 +14,53 @@ let currentClassId = null;
 // PARTE 2: LÓGICA PRINCIPAL E EVENTOS
 // =======================================================
 
+// A execução começa aqui, após o HTML ser totalmente carregado.
 document.addEventListener('DOMContentLoaded', initApp);
 
 async function initApp() {
-    console.log("AVISO: Aplicação iniciada (DOMContentLoaded). Anexando eventos...");
-    if (!window.bcrypt) {
-        console.error("ERRO CRÍTICO: A biblioteca bcrypt não foi carregada. Verifique a conexão com a internet ou o link no HTML.");
-        alert("ERRO CRÍTICO: A biblioteca de criptografia não carregou. A criação de alunos não funcionará.");
+    // Verifica se as bibliotecas externas carregaram
+    if (!window.supabase || !window.bcrypt) {
+        const errorMsg = "ERRO CRÍTICO: Bibliotecas essenciais (Supabase ou Bcrypt) não carregaram. Verifique a conexão com a internet.";
+        console.error(errorMsg);
+        alert(errorMsg);
         return;
     }
+    
     setupAllEventListeners();
     await checkSession();
 }
 
 function setupAllEventListeners() {
-    // Eventos de Navegação e Autenticação
+    // Navegação inicial
     document.querySelectorAll('.user-type-btn').forEach(btn => btn.addEventListener('click', (e) => {
         const type = e.currentTarget.getAttribute('data-type');
         if (type === 'teacher') showTeacherLogin();
         else if (type === 'student') showStudentLogin();
     }));
 
+    // Formulários de Autenticação
     document.getElementById('teacherLoginForm')?.addEventListener('submit', handleTeacherLogin);
     document.getElementById('teacherRegisterForm')?.addEventListener('submit', handleTeacherRegister);
     document.getElementById('studentLoginForm')?.addEventListener('submit', handleStudentLogin);
     
-    // Eventos do Dashboard
+    // Dashboard do Professor
     document.getElementById('createClassForm')?.addEventListener('submit', handleCreateClass);
-
-    // MUDANÇA IMPORTANTE: Evento de clique direto no botão
     document.getElementById('createStudentSubmitBtn')?.addEventListener('click', handleCreateStudent);
-    
-    console.log("AVISO: Todos os eventos foram anexados com sucesso.");
 }
 
-// === Funções de Autenticação e Sessão ===
+// =======================================================
+// PARTE 3: AUTENTICAÇÃO E SESSÃO
+// =======================================================
 
 async function checkSession() {
     const { data: { session } } = await supabaseClient.auth.getSession();
     if (session) {
         currentUser = session.user;
-        if (currentUser.user_metadata.role === 'teacher') await showTeacherDashboard();
-        else showUserTypeScreen();
+        if (currentUser.user_metadata.role === 'teacher') {
+            await showTeacherDashboard();
+        } else {
+            showUserTypeScreen(); // Se um usuário não professor tem sessão, deslogue ou trate.
+        }
     } else {
         showUserTypeScreen();
     }
@@ -77,7 +80,7 @@ async function handleTeacherLogin(e) {
         showFeedback(`Erro no login: ${error.message}`, 'error');
     }
 }
-// ... (outras funções de login/register permanecem iguais)
+
 async function handleTeacherRegister(e) {
     e.preventDefault();
     const name = document.getElementById('teacherRegName').value;
@@ -97,7 +100,25 @@ async function handleTeacherRegister(e) {
 
 async function handleStudentLogin(e) {
     e.preventDefault();
-    // Lógica de login do aluno
+    const username = document.getElementById('studentUsername').value;
+    const password = document.getElementById('studentPassword').value;
+    try {
+        const { data, error } = await supabaseClient.from('students').select('password, id').eq('username', username).single();
+        if (error || !data) throw new Error('Usuário ou senha inválidos.');
+        
+        const match = await bcrypt.compare(password, data.password);
+        if (!match) throw new Error('Usuário ou senha inválidos.');
+
+        // Se a senha bate, busca o resto dos dados do aluno
+        const { data: studentData, error: studentError } = await supabaseClient.from('students').select('*').eq('id', data.id).single();
+        if (studentError) throw studentError;
+
+        currentUser = { ...studentData, type: 'student' };
+        showStudentGame();
+        showFeedback('Login realizado com sucesso!', 'success');
+    } catch (error) {
+        showFeedback(error.message, 'error');
+    }
 }
 
 async function logout() {
@@ -105,9 +126,12 @@ async function logout() {
     currentUser = null;
     currentClassId = null;
     showUserTypeScreen();
+    showFeedback('Logout realizado.', 'success');
 }
 
-// === Funções do Dashboard do Professor ===
+// =======================================================
+// PARTE 4: DASHBOARD DO PROFESSOR
+// =======================================================
 
 async function showTeacherDashboard() {
     showScreen('teacherDashboard');
@@ -126,13 +150,13 @@ async function loadTeacherClasses() {
         if (error) throw error;
         renderClasses(data);
     } catch (error) {
-        console.error('Erro ao carregar turmas:', error.message);
+        console.error('Erro ao carregar turmas:', error);
     }
 }
 
 function renderClasses(classes) {
     const container = document.getElementById('classesList');
-    container.innerHTML = classes.length === 0 ? '<p>Nenhuma turma criada ainda.</p>' : classes.map(cls => {
+    container.innerHTML = !classes || classes.length === 0 ? '<p>Nenhuma turma criada ainda.</p>' : classes.map(cls => {
         const studentCount = cls.students[0]?.count || 0;
         return `
             <div class="class-card">
@@ -149,11 +173,20 @@ function renderClasses(classes) {
 async function handleCreateClass(e) {
     e.preventDefault();
     const name = document.getElementById('className').value;
+    if (!name) return;
     await supabaseClient.from('classes').insert([{ name, teacher_id: currentUser.id }]);
     closeModal('createClassModal');
     await loadTeacherClasses();
     showFeedback('Turma criada com sucesso!', 'success');
     document.getElementById('createClassForm').reset();
+}
+
+async function handleDeleteClass(classId, className) {
+    if (!confirm(`Tem certeza que deseja excluir a turma "${className}"? Todos os alunos serão removidos.`)) return;
+    await supabaseClient.from('students').delete().eq('class_id', classId);
+    await supabaseClient.from('classes').delete().eq('id', classId);
+    await loadTeacherClasses();
+    showFeedback('Turma excluída com sucesso!', 'success');
 }
 
 async function manageClass(classId, className) {
@@ -166,39 +199,29 @@ async function manageClass(classId, className) {
 
 async function loadClassStudents() {
     const { data, error } = await supabaseClient.from('students').select('*').eq('class_id', currentClassId);
-    if (error) {
-        console.error('Erro ao carregar alunos:', error.message);
-        return;
-    }
+    if (error) return console.error('Erro ao carregar alunos:', error);
     renderStudents(data);
 }
 
 function renderStudents(students) {
-    document.getElementById('studentsList').innerHTML = students.length === 0 ? '<p>Nenhum aluno cadastrado.</p>' : students.map(student => `
+    document.getElementById('studentsList').innerHTML = !students || students.length === 0 ? '<p>Nenhum aluno cadastrado.</p>' : students.map(student => `
         <div class="student-item">
             <h4>${student.name}</h4>
             <p>Usuário: ${student.username}</p>
         </div>`).join('');
 }
 
-
-// A FUNÇÃO MAIS IMPORTANTE E CORRIGIDA
 async function handleCreateStudent(event) {
-    event.preventDefault(); // Previne qualquer comportamento padrão do botão
-    console.log("FUNÇÃO 'handleCreateStudent' ACIONADA PELO CLIQUE!");
-
+    event.preventDefault();
     const username = document.getElementById('createStudentUsername').value;
     const password = document.getElementById('createStudentPassword').value;
     const submitButton = document.getElementById('createStudentSubmitBtn');
 
     if (!username || !password) {
-        showFeedback("Por favor, preencha o nome de usuário e a senha.", "error");
-        return;
+        return showFeedback("Por favor, preencha o nome de usuário e a senha.", "error");
     }
-    
     if (!currentClassId || !currentUser?.id) {
-        showFeedback("Erro: Sessão do professor ou da turma não encontrada. Tente recarregar a página.", "error");
-        return;
+        return showFeedback("Erro de sessão. Tente recarregar a página.", "error");
     }
 
     submitButton.disabled = true;
@@ -206,7 +229,7 @@ async function handleCreateStudent(event) {
 
     try {
         const hashedPassword = await new Promise((resolve, reject) => {
-            window.bcrypt.hash(password, 10, (err, hash) => {
+            bcrypt.hash(password, 10, (err, hash) => {
                 if (err) reject(err);
                 else resolve(hash);
             });
@@ -228,23 +251,26 @@ async function handleCreateStudent(event) {
     } catch (error) {
         const message = error.message.includes('duplicate key') ? 'Este nome de usuário já existe.' : `Erro ao criar aluno: ${error.message}`;
         showFeedback(message, 'error');
-        console.error("ERRO DETALHADO AO CRIAR ALUNO:", error);
     } finally {
         submitButton.disabled = false;
         submitButton.textContent = 'Criar Aluno';
     }
 }
 
-// --- Funções de UI (Telas, Modais, etc.) ---
+// =======================================================
+// PARTE 5: UI HELPERS E LÓGICA DO JOGO
+// =======================================================
 
 function showScreen(screenId) {
     document.querySelectorAll('.screen').forEach(screen => screen.classList.remove('active'));
     document.getElementById(screenId)?.classList.add('active');
 }
+
 function showUserTypeScreen() { showScreen('userTypeScreen'); }
 function showTeacherLogin() { showScreen('teacherLoginScreen'); }
 function showTeacherRegister() { showScreen('teacherRegisterScreen'); }
 function showStudentLogin() { showScreen('studentLoginScreen'); }
+function showStudentGame() { showScreen('startScreen'); /* Lógica do jogo aqui */ }
 function showCreateClassModal() { document.getElementById('createClassModal').classList.add('show'); }
 function closeModal(modalId) { document.getElementById(modalId).classList.remove('show'); }
 function showCreateStudentForm() { document.getElementById('createStudentForm').style.display = 'block'; }
@@ -253,18 +279,14 @@ function hideCreateStudentForm() {
     document.getElementById('createStudentFormElement').reset();
 }
 function showTab(tabName) {
-    document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
-    document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+    document.querySelectorAll('.tab-content, .tab-btn').forEach(el => el.classList.remove('active'));
     document.getElementById(tabName + 'Tab').classList.add('active');
     document.querySelector(`.tab-btn[onclick*="'${tabName}'"]`)?.classList.add('active');
 }
 function showFeedback(message, type = 'info') {
     const feedback = document.getElementById('globalFeedback');
-    const icon = feedback.querySelector('.feedback-icon');
-    const text = feedback.querySelector('.feedback-text');
-    icon.innerHTML = type === 'success' ? '✅' : (type === 'error' ? '❌' : 'ℹ️');
-    text.textContent = message;
+    if (!feedback) return;
+    feedback.querySelector('.feedback-text').textContent = message;
     feedback.className = `feedback ${type} show`;
-    setTimeout(() => { feedback.classList.remove('show'); }, 4000);
+    setTimeout(() => feedback.classList.remove('show'), 4000);
 }
-// ... (outras funções auxiliares e de jogo)
