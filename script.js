@@ -160,6 +160,26 @@ async function handleCreateStudent(e) {
     }
 }
 
+async function handleDeleteClass(classId, className) {
+    const confirmation = confirm(`Tem certeza que deseja excluir a turma "${className}"? Todos os alunos associados também serão removidos.`);
+    if (!confirmation) return;
+
+    try {
+        // Primeiro, excluir os alunos da turma
+        const { error: studentError } = await supabaseClient.from('students').delete().eq('class_id', classId);
+        if (studentError) throw studentError;
+
+        // Depois, excluir a turma
+        const { error: classError } = await supabaseClient.from('classes').delete().eq('id', classId);
+        if (classError) throw classError;
+
+        await loadTeacherClasses();
+        showFeedback('Turma excluída com sucesso!', 'success');
+    } catch (error) {
+        showFeedback(`Erro ao excluir turma: ${error.message}`, 'error');
+    }
+}
+
 // === Verificação de Sessão ===
 async function checkSession() {
     const { data: { session } } = await supabaseClient.auth.getSession();
