@@ -82,16 +82,33 @@ async function handleStudentLogin(e) {
     try {
         const { data, error } = await supabaseClient
             .from('students')
-            .select('*')
+            .select('password') // Seleciona apenas a senha (hash)
             .eq('username', username)
-            .eq('password', password) // ATENÇÃO: Senha em texto plano!
             .single();
 
         if (error || !data) {
             throw new Error('Usuário ou senha inválidos.');
         }
 
-        currentUser = { ...data, type: 'student' };
+        // Compara a senha fornecida com o hash armazenado
+        const passwordMatch = bcrypt.compareSync(password, data.password);
+
+        if (!passwordMatch) {
+            throw new Error('Usuário ou senha inválidos.');
+        }
+
+        // Se a senha corresponder, busca os dados completos do aluno (sem a senha)
+        const { data: studentData, error: studentError } = await supabaseClient
+            .from('students')
+            .select('*')
+            .eq('username', username)
+            .single();
+
+        if (studentError || !studentData) {
+            throw new Error('Erro ao carregar dados do aluno.');
+        }
+
+        currentUser = { ...studentData, type: 'student' };
         await showStudentGame();
         showFeedback('Login realizado com sucesso!', 'success');
 
@@ -209,12 +226,15 @@ async function handleCreateStudent(e) {
     const password = document.getElementById('createStudentPassword').value;
 
     try {
+        // Hash da senha antes de armazenar
+        const hashedPassword = bcrypt.hashSync(password, 10); // 10 é o número de 'salt rounds'
+
         const { data, error } = await supabaseClient
             .from('students')
             .insert([{
                 name,
                 username,
-                password, // ATENÇÃO: Senha em texto plano!
+                password: hashedPassword, // Armazena a senha com hash
                 class_id: currentClassId,
                 teacher_id: currentUser.id
             }]);
