@@ -37,9 +37,7 @@ async function handleTeacherRegister(e) {
 
         if (error) throw error;
 
-        // Após o cadastro, faz o login para pegar os dados do usuário e ir para o dashboard
-        await handleTeacherLogin(e, email, password);
-        showFeedback('Cadastro realizado com sucesso!', 'success');
+        showFeedback('Cadastro realizado com sucesso! Por favor, verifique seu e-mail para confirmar sua conta e fazer login.', 'success');
 
     } catch (error) {
         console.error('Erro no cadastro:', error.message);
@@ -255,3 +253,10 @@ async function checkSession() {
         showUserTypeScreen();
     }
 }
+
+// Listener para mudanças no estado de autenticação
+supabaseClient.auth.onAuthStateChange((event, session) => {
+    if (event === 'SIGNED_IN' || event === 'SIGNED_OUT' || event === 'USER_UPDATED') {
+        checkSession(); // Re-verifica a sessão sempre que o estado de autenticação muda
+    }
+});
