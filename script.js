@@ -158,29 +158,41 @@ async function handleCreateStudent(e) {
 }
 
 // === Verificação de Sessão ===
-async function checkSession() {
-    const { data: { session } } = await supabaseClient.auth.getSession();
-    if (session) {
-        currentUser = session.user;
-        if (currentUser.user_metadata.role === 'teacher') await showTeacherDashboard();
-        else showUserTypeScreen();
-    } else {
-        const studentSession = localStorage.getItem('studentSession');
-        if (studentSession) {
+function setupSessionManagement() {
+    supabaseClient.auth.onAuthStateChange(async (event, session) => {
+        const studentSessionData = localStorage.getItem('studentSession');
+
+        if (session) {
+            // Teacher is logged in via Supabase Auth
+            currentUser = session.user;
+            localStorage.removeItem('studentSession'); // Clear student session
+            if (currentUser.user_metadata.role === 'teacher') {
+                await showTeacherDashboard();
+            } else {
+                showUserTypeScreen();
+            }
+        } else if (studentSessionData) {
+            // Student is logged in via custom logic
             try {
-                const { id } = JSON.parse(studentSession);
+                const { id } = JSON.parse(studentSessionData);
                 const { data: studentData } = await supabaseClient.from('students').select('*').eq('id', id).single();
                 if (studentData) {
                     currentUser = { ...studentData, type: 'student' };
                     await showStudentGame();
-                    return;
+                } else {
+                    localStorage.removeItem('studentSession');
+                    showUserTypeScreen();
                 }
             } catch (e) {
                 localStorage.removeItem('studentSession');
+                showUserTypeScreen();
             }
+        } else {
+            // No one is logged in
+            currentUser = null;
+            showUserTypeScreen();
         }
-        showUserTypeScreen();
-    }
+    });
 }
 
 // =======================================================
@@ -239,8 +251,8 @@ const elements = {
 // --- Inicialização ---
 document.addEventListener('DOMContentLoaded', initApp);
 
-async function initApp() {
-    await checkSession();
+function initApp() {
+    setupSessionManagement();
     setupAllEventListeners();
 }
 
