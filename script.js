@@ -1,7 +1,6 @@
 // =======================================================
-// PARTE 1: CONFIGURAÇÃO INICIAL
+// PARTE 1: CONFIGURAÇÃO INICIAL E SUPABASE
 // =======================================================
-
 const { createClient } = supabase;
 const supabaseUrl = 'https://nxpwxbxhucliudnutyqd.supabase.co';
 const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im54cHd4YnhodWNsaXVkbnV0eXFkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU0ODU4NjcsImV4cCI6MjA3MTA2MTg2N30.m1KbiyPe_K9CK2nBhsxo97A5rai2GtnyVPnpff5isNg';
@@ -9,66 +8,34 @@ const supabaseClient = createClient(supabaseUrl, supabaseKey);
 
 let currentUser = null;
 let currentClassId = null;
-
-const GAME_CONFIG = {
-    minAccuracy: 95,
-    maxAttempts: 2,
-    questionsPerPhase: 10,
-    maxPhases: 3,
-};
-
-let gameState = {
-    currentPhase: 1,
-    score: 0,
-    attempts: GAME_CONFIG.maxAttempts,
-    questions: [],
-    currentQuestionIndex: 0,
-    playerProgress: {},
-    uploadedAudios: {}
-};
-
 const ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
 
+let gameState = {};
 
 // =======================================================
-// PARTE 2: FUNÇÕES DE CRIPTOGRAFIA (SUBSTITUINDO O BCRYPT)
+// PARTE 2: CRIPTOGRAFIA (NATIVA DO NAVEGADOR)
 // =======================================================
-
-/**
- * Converte uma string de senha em um hash seguro usando a API nativa do navegador.
- * @param {string} password A senha em texto plano.
- * @returns {Promise<string>} O hash da senha.
- */
 async function hashPassword(password) {
     const encoder = new TextEncoder();
     const data = encoder.encode(password);
     const hashBuffer = await window.crypto.subtle.digest('SHA-256', data);
     const hashArray = Array.from(new Uint8Array(hashBuffer));
-    const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-    return hashHex;
+    return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
 }
 
-/**
- * Verifica se uma senha em texto plano corresponde a um hash existente.
- * @param {string} password A senha em texto plano para verificar.
- * @param {string} storedHash O hash que está salvo no banco de dados.
- * @returns {Promise<boolean>} True se a senha corresponder, false caso contrário.
- */
 async function verifyPassword(password, storedHash) {
     const newHash = await hashPassword(password);
     return newHash === storedHash;
 }
 
-
 // =======================================================
 // PARTE 3: LÓGICA PRINCIPAL E EVENTOS
 // =======================================================
-
 document.addEventListener('DOMContentLoaded', initApp);
 
 async function initApp() {
     if (!window.supabase) {
-        alert("ERRO CRÍTICO: A biblioteca Supabase (banco de dados) não carregou. Verifique sua conexão com a internet.");
+        alert("ERRO CRÍTICO: O sistema de banco de dados (Supabase) não carregou. Verifique sua conexão com a internet.");
         return;
     }
     setupAllEventListeners();
@@ -76,21 +43,19 @@ async function initApp() {
 }
 
 function setupAllEventListeners() {
-    // Navegação inicial
     document.querySelectorAll('.user-type-btn').forEach(btn => btn.addEventListener('click', (e) => {
         const type = e.currentTarget.getAttribute('data-type');
         if (type === 'teacher') showTeacherLogin();
         else if (type === 'student') showStudentLogin();
     }));
 
-    // Formulários
     document.getElementById('teacherLoginForm')?.addEventListener('submit', handleTeacherLogin);
     document.getElementById('teacherRegisterForm')?.addEventListener('submit', handleTeacherRegister);
     document.getElementById('studentLoginForm')?.addEventListener('submit', handleStudentLogin);
     document.getElementById('createClassForm')?.addEventListener('submit', handleCreateClass);
     document.getElementById('createStudentSubmitBtn')?.addEventListener('click', handleCreateStudent);
+    document.getElementById('uploadAudioBtn')?.addEventListener('click', handleAudioUpload);
 
-    // Controles do Jogo
     document.getElementById('startButton')?.addEventListener('click', startGame);
     document.getElementById('playAudioButton')?.addEventListener('click', playCurrentAudio);
     document.getElementById('repeatAudio')?.addEventListener('click', playCurrentAudio);
@@ -103,16 +68,12 @@ function setupAllEventListeners() {
 // =======================================================
 // PARTE 4: AUTENTICAÇÃO E SESSÃO
 // =======================================================
-
 async function checkSession() {
     const { data: { session } } = await supabaseClient.auth.getSession();
     if (session) {
         currentUser = session.user;
-        if (currentUser.user_metadata.role === 'teacher') {
-            await showTeacherDashboard();
-        } else {
-            showUserTypeScreen();
-        }
+        if (currentUser.user_metadata.role === 'teacher') await showTeacherDashboard();
+        else showUserTypeScreen();
     } else {
         showUserTypeScreen();
     }
@@ -138,13 +99,12 @@ async function handleTeacherRegister(e) {
     const name = document.getElementById('teacherRegName').value;
     const email = document.getElementById('teacherRegEmail').value;
     const password = document.getElementById('teacherRegPassword').value;
-
     try {
         const { error } = await supabaseClient.auth.signUp({
             email, password, options: { data: { full_name: name, role: 'teacher' } }
         });
         if (error) throw error;
-        showFeedback('Cadastro realizado com sucesso! Verifique seu e--mail.', 'success');
+        showFeedback('Cadastro realizado com sucesso! Verifique seu e-mail.', 'success');
     } catch (error) {
         showFeedback(`Erro no cadastro: ${error.message}`, 'error');
     }
@@ -155,17 +115,14 @@ async function handleStudentLogin(e) {
     const username = document.getElementById('studentUsername').value;
     const password = document.getElementById('studentPassword').value;
     try {
-        const { data, error } = await supabaseClient.from('students').select('password, id').eq('username', username).single();
-        if (error || !data) throw new Error('Usuário ou senha inválidos.');
+        const { data: studentData, error } = await supabaseClient.from('students').select('*').eq('username', username).single();
+        if (error || !studentData) throw new Error('Usuário ou senha inválidos.');
         
-        const match = await verifyPassword(password, data.password);
+        const match = await verifyPassword(password, studentData.password);
         if (!match) throw new Error('Usuário ou senha inválidos.');
 
-        const { data: studentData, error: studentError } = await supabaseClient.from('students').select('*').eq('id', data.id).single();
-        if (studentError) throw studentError;
-
         currentUser = { ...studentData, type: 'student' };
-        showStudentGame();
+        await showStudentGame();
         showFeedback('Login realizado com sucesso!', 'success');
     } catch (error) {
         showFeedback(error.message, 'error');
@@ -177,13 +134,11 @@ async function logout() {
     currentUser = null;
     currentClassId = null;
     showUserTypeScreen();
-    showFeedback('Logout realizado.', 'success');
 }
 
 // =======================================================
 // PARTE 5: DASHBOARD DO PROFESSOR
 // =======================================================
-
 async function showTeacherDashboard() {
     showScreen('teacherDashboard');
     await loadTeacherData();
@@ -196,28 +151,16 @@ async function loadTeacherData() {
 }
 
 async function loadTeacherClasses() {
-    try {
-        const { data, error } = await supabaseClient.from('classes').select('*, students(count)').eq('teacher_id', currentUser.id);
-        if (error) throw error;
-        renderClasses(data);
-    } catch (error) {
-        console.error('Erro ao carregar turmas:', error);
-    }
+    const { data, error } = await supabaseClient.from('classes').select('*, students(count)').eq('teacher_id', currentUser.id);
+    if (error) return console.error('Erro ao carregar turmas:', error);
+    renderClasses(data);
 }
 
 function renderClasses(classes) {
     const container = document.getElementById('classesList');
     container.innerHTML = !classes || classes.length === 0 ? '<p>Nenhuma turma criada ainda.</p>' : classes.map(cls => {
         const studentCount = cls.students[0]?.count || 0;
-        return `
-            <div class="class-card">
-                <h3>${cls.name}</h3>
-                <span class="student-count">👥 ${studentCount} aluno(s)</span>
-                <div class="class-card-actions">
-                    <button class="btn primary" onclick="manageClass('${cls.id}', '${cls.name}')">Gerenciar</button>
-                    <button class="btn danger" onclick="handleDeleteClass('${cls.id}', '${cls.name.replace(/'/g, "\\'")}')">Excluir</button>
-                </div>
-            </div>`;
+        return `<div class="class-card"><h3>${cls.name}</h3><span class="student-count">👥 ${studentCount} aluno(s)</span><div class="class-card-actions"><button class="btn primary" onclick="manageClass('${cls.id}', '${cls.name}')">Gerenciar</button><button class="btn danger" onclick="handleDeleteClass('${cls.id}', '${cls.name.replace(/'/g, "\\'")}')">Excluir</button></div></div>`;
     }).join('');
 }
 
@@ -243,9 +186,10 @@ async function handleDeleteClass(classId, className) {
 async function manageClass(classId, className) {
     currentClassId = classId;
     document.getElementById('manageClassTitle').textContent = `Gerenciar: ${className}`;
-    document.getElementById('manageClassModal').classList.add('show');
-    showTab('students');
+    showTab('students', document.querySelector('.tab-btn')); // Ativa a primeira aba por padrão
     await loadClassStudents();
+    await loadStudentProgress();
+    document.getElementById('manageClassModal').classList.add('show');
 }
 
 async function loadClassStudents() {
@@ -255,11 +199,47 @@ async function loadClassStudents() {
 }
 
 function renderStudents(students) {
-    document.getElementById('studentsList').innerHTML = !students || students.length === 0 ? '<p>Nenhum aluno cadastrado.</p>' : students.map(student => `
-        <div class="student-item">
-            <h4>${student.name}</h4>
-            <p>Usuário: ${student.username}</p>
-        </div>`).join('');
+    document.getElementById('studentsList').innerHTML = !students || students.length === 0 ? '<p>Nenhum aluno cadastrado.</p>' : students.map(student => `<div class="student-item"><h4>${student.name}</h4><p>Usuário: ${student.username}</p></div>`).join('');
+}
+
+async function loadStudentProgress() {
+    const progressList = document.getElementById('studentProgressList');
+    progressList.innerHTML = '<p>Carregando...</p>';
+    const { data: students, error: studentsError } = await supabaseClient.from('students').select('id, name').eq('class_id', currentClassId);
+    if (studentsError) return progressList.innerHTML = '<p>Erro ao carregar alunos.</p>';
+    if (students.length === 0) return progressList.innerHTML = '<p>Nenhum aluno nesta turma.</p>';
+
+    const { data: progresses, error: progressError } = await supabaseClient.from('progress').select('*').in('student_id', students.map(s => s.id));
+    if (progressError) return progressList.innerHTML = '<p>Erro ao carregar progresso.</p>';
+
+    let html = students.map(student => {
+        const progress = progresses.find(p => p.student_id === student.id);
+        const phase = progress?.current_phase || 1;
+        const score = progress?.game_state?.score ?? 0;
+        const total = progress?.game_state?.questions?.length || 10;
+        return `<div class="student-item"><h4>${student.name}</h4><p>Fase Atual: ${phase}</p><p>Pontuação na Fase: ${score} / ${total}</p></div>`;
+    }).join('');
+    progressList.innerHTML = html;
+}
+
+async function handleAudioUpload() {
+    const files = document.getElementById('audioUpload').files;
+    if (files.length === 0) return showFeedback('Nenhum arquivo selecionado.', 'error');
+    const statusDiv = document.getElementById('uploadStatus');
+    statusDiv.innerHTML = 'Enviando...';
+    
+    for (const file of files) {
+        const letter = file.name.split('.')[0].toUpperCase();
+        if (!ALPHABET.includes(letter)) {
+            showFeedback(`Arquivo "${file.name}" ignorado. Nome inválido.`, 'error');
+            continue;
+        }
+        const filePath = `${currentUser.id}/${letter}.${file.name.split('.').pop()}`;
+        const { error } = await supabaseClient.storage.from('audio_uploads').upload(filePath, file, { upsert: true });
+        if (error) showFeedback(`Erro ao enviar ${file.name}: ${error.message}`, 'error');
+        else showFeedback(`Áudio da letra ${letter} enviado com sucesso!`, 'success');
+    }
+    statusDiv.innerHTML = 'Envio concluído.';
 }
 
 async function handleCreateStudent(event) {
@@ -273,21 +253,13 @@ async function handleCreateStudent(event) {
 
     submitButton.disabled = true;
     submitButton.textContent = 'Criando...';
-
     try {
         const hashedPassword = await hashPassword(password);
-        const { error } = await supabaseClient.from('students').insert([{
-            name: username,
-            username,
-            password: hashedPassword,
-            class_id: currentClassId,
-            teacher_id: currentUser.id
-        }]);
-
+        const { error } = await supabaseClient.from('students').insert([{ name: username, username, password: hashedPassword, class_id: currentClassId, teacher_id: currentUser.id }]);
         if (error) throw error;
-
         hideCreateStudentForm();
         await loadClassStudents();
+        await loadStudentProgress();
         showFeedback('Aluno criado com sucesso!', 'success');
     } catch (error) {
         const message = error.message.includes('duplicate key') ? 'Este nome de usuário já existe.' : `Erro ao criar aluno: ${error.message}`;
@@ -301,85 +273,84 @@ async function handleCreateStudent(event) {
 // =======================================================
 // PARTE 6: LÓGICA DO JOGO
 // =======================================================
-
-function showStudentGame() {
-    showScreen('startScreen');
-    initializeGame();
-}
-
-function initializeGame() {
-    gameState.currentPhase = 1;
-    gameState.attempts = GAME_CONFIG.maxAttempts;
-}
-
-function startGame() {
-    gameState.attempts = GAME_CONFIG.maxAttempts;
-    generateQuestions();
+async function showStudentGame() {
+    await loadGameState();
     showScreen('gameScreen');
-    updateUI();
     startQuestion();
 }
 
+async function loadGameState() {
+    const { data } = await supabaseClient.from('progress').select('game_state, current_phase').eq('student_id', currentUser.id).single();
+    if (data && data.game_state && data.game_state.questions) {
+        gameState = data.game_state;
+    } else {
+        gameState = {
+            currentPhase: 1,
+            score: 0,
+            attempts: 2,
+            questions: generateQuestions(),
+            currentQuestionIndex: 0,
+            teacherId: currentUser.teacher_id
+        };
+        await saveGameState();
+    }
+}
+
+async function saveGameState() {
+    const { error } = await supabaseClient.from('progress').upsert({
+        student_id: currentUser.id,
+        current_phase: gameState.currentPhase,
+        game_state: gameState,
+        last_played: new Date().toISOString()
+    }, { onConflict: 'student_id' });
+    if (error) console.error("Erro ao salvar progresso:", error);
+}
+
 function generateQuestions() {
-    gameState.questions = [];
-    gameState.currentQuestionIndex = 0;
-    gameState.score = 0;
     const letters = [...ALPHABET].sort(() => 0.5 - Math.random());
-    for (let i = 0; i < GAME_CONFIG.questionsPerPhase; i++) {
+    const questions = [];
+    for (let i = 0; i < 10; i++) {
         const correctLetter = letters[i % letters.length];
         const options = generateLetterOptions(correctLetter);
-        gameState.questions.push({ correctLetter, options });
+        questions.push({ correctLetter, options });
     }
+    return questions;
 }
 
 function generateLetterOptions(correctLetter) {
     const options = new Set([correctLetter]);
     const availableLetters = ALPHABET.filter(l => l !== correctLetter);
     while (options.size < 4) {
-        const randomIndex = Math.floor(Math.random() * availableLetters.length);
-        options.add(availableLetters.splice(randomIndex, 1)[0]);
+        options.add(availableLetters.splice(Math.floor(Math.random() * availableLetters.length), 1)[0]);
     }
     return Array.from(options).sort(() => 0.5 - Math.random());
 }
 
 function startQuestion() {
     const currentQuestion = gameState.questions[gameState.currentQuestionIndex];
-    if (!currentQuestion) {
-        endPhase();
-        return;
-    }
+    if (!currentQuestion) return endPhase();
+    
     document.getElementById('nextQuestion').style.display = 'none';
     updateUI();
     document.getElementById('questionText').textContent = 'Qual letra faz este som?';
     renderLetterOptions(currentQuestion.options);
-    setTimeout(playCurrentAudio, 1000);
+    setTimeout(playCurrentAudio, 500);
 }
 
 function renderLetterOptions(options) {
     const lettersGrid = document.getElementById('lettersGrid');
-    lettersGrid.innerHTML = options.map(letter =>
-        `<button class="letter-button">${letter}</button>`
-    ).join('');
-
-    document.querySelectorAll('.letter-button').forEach(btn => {
-        btn.addEventListener('click', (e) => selectAnswer(e.target.textContent));
-    });
+    lettersGrid.innerHTML = options.map(letter => `<button class="letter-button">${letter}</button>`).join('');
+    lettersGrid.querySelectorAll('.letter-button').forEach(btn => btn.addEventListener('click', (e) => selectAnswer(e.target.textContent)));
 }
 
-function selectAnswer(selectedLetter) {
-    const buttons = document.querySelectorAll('.letter-button');
-    buttons.forEach(btn => btn.disabled = true);
-
+async function selectAnswer(selectedLetter) {
+    document.querySelectorAll('.letter-button').forEach(btn => btn.disabled = true);
     const currentQuestion = gameState.questions[gameState.currentQuestionIndex];
     const isCorrect = selectedLetter === currentQuestion.correctLetter;
 
-    buttons.forEach(btn => {
-        if (btn.textContent === currentQuestion.correctLetter) {
-            btn.classList.add('correct');
-        }
-        if (btn.textContent === selectedLetter && !isCorrect) {
-            btn.classList.add('incorrect');
-        }
+    document.querySelectorAll('.letter-button').forEach(btn => {
+        if (btn.textContent === currentQuestion.correctLetter) btn.classList.add('correct');
+        if (btn.textContent === selectedLetter && !isCorrect) btn.classList.add('incorrect');
     });
 
     if (isCorrect) {
@@ -388,112 +359,113 @@ function selectAnswer(selectedLetter) {
     } else {
         showFeedback(`Quase! A resposta correta era ${currentQuestion.correctLetter}`, 'error');
     }
-
+    
+    await saveGameState();
     updateUI();
-    setTimeout(() => {
-        document.getElementById('nextQuestion').style.display = 'block';
-    }, 1500);
+    setTimeout(() => document.getElementById('nextQuestion').style.display = 'block', 1500);
 }
 
 function endPhase() {
     const accuracy = Math.round((gameState.score / gameState.questions.length) * 100);
-    const passed = accuracy >= GAME_CONFIG.minAccuracy;
-    showResultScreen(accuracy, passed);
+    showResultScreen(accuracy, accuracy >= 70); // Ex: 70% para passar
 }
 
 function showResultScreen(accuracy, passed) {
     document.getElementById('finalScore').textContent = gameState.score;
     document.getElementById('accuracy').textContent = accuracy;
-
-    const continueButton = document.getElementById('continueButton');
-    const retryButton = document.getElementById('retryButton');
-    const resultMessage = document.getElementById('resultMessage');
-
     if (passed) {
-        resultMessage.textContent = 'Você passou de fase! Ótimo trabalho!';
-        continueButton.style.display = gameState.currentPhase < GAME_CONFIG.maxPhases ? 'inline-block' : 'none';
-        retryButton.style.display = 'none';
+        document.getElementById('resultMessage').textContent = 'Você passou de fase! Ótimo trabalho!';
+        document.getElementById('continueButton').style.display = 'inline-block';
+        document.getElementById('retryButton').style.display = 'none';
     } else {
-        resultMessage.textContent = `Você precisa de ${GAME_CONFIG.minAccuracy}% para passar. Tente novamente!`;
-        continueButton.style.display = 'none';
-        retryButton.style.display = 'inline-block';
+        document.getElementById('resultMessage').textContent = `Você precisa de mais acertos para passar. Tente novamente!`;
+        document.getElementById('continueButton').style.display = 'none';
+        document.getElementById('retryButton').style.display = 'inline-block';
     }
     showScreen('resultScreen');
 }
 
-function nextPhase() {
-    if (gameState.currentPhase < GAME_CONFIG.maxPhases) {
-        gameState.currentPhase++;
-        startGame();
+function nextQuestion() {
+    gameState.currentQuestionIndex++;
+    if (gameState.currentQuestionIndex >= gameState.questions.length) {
+        endPhase();
+    } else {
+        startQuestion();
     }
 }
 
-function retryPhase() {
+async function nextPhase() {
+    gameState.currentPhase++;
+    gameState.currentQuestionIndex = 0;
+    gameState.score = 0;
+    gameState.questions = generateQuestions();
+    await saveGameState();
+    showScreen('gameScreen');
+    startQuestion();
+}
+
+async function retryPhase() {
+    gameState.currentQuestionIndex = 0;
+    gameState.score = 0;
     gameState.attempts--;
-    startGame();
+    gameState.questions = generateQuestions(); // Novas perguntas para a tentativa
+    await saveGameState();
+    showScreen('gameScreen');
+    startQuestion();
 }
 
-function restartGame() {
-    showStudentGame();
+async function restartGame() {
+    await showStudentGame();
 }
 
-function playCurrentAudio() {
-    const currentQuestion = gameState.questions[gameState.currentQuestionIndex];
-    if (!currentQuestion) return;
+async function playCurrentAudio() {
+    const letter = gameState.questions[gameState.currentQuestionIndex].correctLetter;
+    const teacherId = gameState.teacherId;
+    const { data } = await supabaseClient.storage.from('audio_uploads').list(teacherId, { search: `${letter}.` });
 
-    const letter = currentQuestion.correctLetter;
-    const utterance = new SpeechSynthesisUtterance(letter);
-    utterance.lang = 'pt-BR';
-    speechSynthesis.speak(utterance);
+    if (data && data.length > 0) {
+        const { data: { publicUrl } } = supabaseClient.storage.from('audio_uploads').getPublicUrl(`${teacherId}/${data[0].name}`);
+        new Audio(publicUrl).play();
+    } else {
+        const utterance = new SpeechSynthesisUtterance(letter);
+        utterance.lang = 'pt-BR';
+        speechSynthesis.speak(utterance);
+    }
 }
 
 // =======================================================
 // PARTE 7: FUNÇÕES DE UI (INTERFACE DO USUÁRIO)
 // =======================================================
-
-function showScreen(screenId) {
-    document.querySelectorAll('.screen').forEach(screen => screen.classList.remove('active'));
-    document.getElementById(screenId)?.classList.add('active');
-}
-
+function showScreen(screenId) { document.querySelectorAll('.screen').forEach(s => s.classList.remove('active')); document.getElementById(screenId)?.classList.add('active'); }
 function showUserTypeScreen() { showScreen('userTypeScreen'); }
 function showTeacherLogin() { showScreen('teacherLoginScreen'); }
 function showTeacherRegister() { showScreen('teacherRegisterScreen'); }
 function showStudentLogin() { showScreen('studentLoginScreen'); }
 function showCreateClassModal() { document.getElementById('createClassModal').classList.add('show'); }
 function closeModal(modalId) { document.getElementById(modalId)?.classList.remove('show'); }
-
-function showCreateStudentForm() {
-    document.getElementById('createStudentForm').style.display = 'block';
+function showCreateStudentForm() { document.getElementById('createStudentForm').style.display = 'block'; }
+function hideCreateStudentForm() { document.getElementById('createStudentForm').style.display = 'none'; document.getElementById('createStudentFormElement').reset(); }
+function showAudioSettingsModal() { document.getElementById('audioSettingsModal').classList.add('show'); }
+function showTab(tabName, clickedButton) {
+    const parent = clickedButton.closest('.modal-tabs');
+    parent.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+    clickedButton.classList.add('active');
+    
+    const contentParent = clickedButton.closest('.modal-content');
+    contentParent.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+    contentParent.querySelector('#' + tabName + 'Tab').classList.add('active');
 }
-
-function hideCreateStudentForm() {
-    document.getElementById('createStudentForm').style.display = 'none';
-    document.getElementById('createStudentFormElement').reset();
-}
-
-function showTab(tabName) {
-    document.querySelectorAll('.tab-content, .tab-btn').forEach(el => el.classList.remove('active'));
-    document.getElementById(tabName + 'Tab')?.classList.add('active');
-    document.querySelector(`.tab-btn[onclick*="'${tabName}'"]`)?.classList.add('active');
-}
-
 function showFeedback(message, type = 'info') {
-    const feedback = document.getElementById('globalFeedback');
-    if (!feedback) return;
-    feedback.querySelector('.feedback-text').textContent = message;
-    feedback.className = `feedback ${type} show`;
-    setTimeout(() => feedback.classList.remove('show'), 4000);
+    const el = document.getElementById('globalFeedback');
+    if (!el) return;
+    el.querySelector('.feedback-text').textContent = message;
+    el.className = `feedback ${type} show`;
+    setTimeout(() => el.classList.remove('show'), 4000);
 }
-
 function updateUI() {
-    const scoreEl = document.getElementById('score');
-    const totalEl = document.getElementById('totalQuestions');
-    const attemptsEl = document.getElementById('attempts');
-    const phaseEl = document.getElementById('currentPhase');
-
-    if (scoreEl) scoreEl.textContent = gameState.score;
-    if (totalEl) totalEl.textContent = gameState.questions.length;
-    if (attemptsEl) attemptsEl.textContent = gameState.attempts;
-    if (phaseEl) phaseEl.textContent = gameState.currentPhase;
+    document.getElementById('score').textContent = gameState.score;
+    document.getElementById('totalQuestions').textContent = gameState.questions.length;
+    document.getElementById('attempts').textContent = gameState.attempts;
+    document.getElementById('currentPhase').textContent = gameState.currentPhase;
+    document.getElementById('progressFill').style.width = `${((gameState.currentQuestionIndex + 1) / gameState.questions.length) * 100}%`;
 }
