@@ -13,7 +13,7 @@ const ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
 let gameState = {};
 
 // =======================================================
-// PARTE 2: CRIPTOGRAFIA (NATIVA DO NAVEGADOR)
+// PARTE 2: CRIPTOGRAFIA E FUNÇÕES UTILITÁRIAS
 // =======================================================
 async function hashPassword(password) {
     const encoder = new TextEncoder();
@@ -26,6 +26,13 @@ async function hashPassword(password) {
 async function verifyPassword(password, storedHash) {
     const newHash = await hashPassword(password);
     return newHash === storedHash;
+}
+
+function generateRandomPassword() {
+    const words = ['sol', 'lua', 'rio', 'mar', 'flor', 'gato', 'cao', 'pato', 'rei', 'luz'];
+    const word = words[Math.floor(Math.random() * words.length)];
+    const number = Math.floor(100 + Math.random() * 900);
+    return `${word}${number}`;
 }
 
 // =======================================================
@@ -55,6 +62,13 @@ function setupAllEventListeners() {
     document.getElementById('createClassForm')?.addEventListener('submit', handleCreateClass);
     document.getElementById('createStudentSubmitBtn')?.addEventListener('click', handleCreateStudent);
     document.getElementById('uploadAudioBtn')?.addEventListener('click', handleAudioUpload);
+
+    document.getElementById('generatePasswordBtn')?.addEventListener('click', () => {
+        const passwordField = document.getElementById('createStudentPassword');
+        passwordField.type = 'text';
+        passwordField.value = generateRandomPassword();
+        setTimeout(() => { passwordField.type = 'password'; }, 2000);
+    });
 
     document.getElementById('startButton')?.addEventListener('click', startGame);
     document.getElementById('playAudioButton')?.addEventListener('click', playCurrentAudio);
@@ -160,7 +174,17 @@ function renderClasses(classes) {
     const container = document.getElementById('classesList');
     container.innerHTML = !classes || classes.length === 0 ? '<p>Nenhuma turma criada ainda.</p>' : classes.map(cls => {
         const studentCount = cls.students[0]?.count || 0;
-        return `<div class="class-card"><h3>${cls.name}</h3><span class="student-count">👥 ${studentCount} aluno(s)</span><div class="class-card-actions"><button class="btn primary" onclick="manageClass('${cls.id}', '${cls.name}')">Gerenciar</button><button class="btn danger" onclick="handleDeleteClass('${cls.id}', '${cls.name.replace(/'/g, "\\'")}')">Excluir</button></div></div>`;
+        return `
+            <div class="class-card">
+                <h3>${cls.name}</h3>
+                <span class="student-count">👥 ${studentCount} aluno(s)</span>
+                <div class="class-card-actions">
+                    <button class="btn primary" onclick="manageClass('${cls.id}', '${cls.name}')">Gerenciar</button>
+                    <button class="btn danger" onclick="handleDeleteClass('${cls.id}', '${cls.name.replace(/'/g, "\\'")}')" title="Excluir Turma">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+            </div>`;
     }).join('');
 }
 
@@ -176,11 +200,20 @@ async function handleCreateClass(e) {
 }
 
 async function handleDeleteClass(classId, className) {
-    if (!confirm(`Tem certeza que deseja excluir a turma "${className}"? Todos os alunos serão removidos.`)) return;
-    await supabaseClient.from('students').delete().eq('class_id', classId);
-    await supabaseClient.from('classes').delete().eq('id', classId);
-    await loadTeacherClasses();
-    showFeedback('Turma excluída com sucesso!', 'success');
+    if (!confirm(`ATENÇÃO!\n\nTem certeza que deseja excluir a turma "${className}"?\n\nTODOS os alunos e seus progressos serão apagados permanentemente. Esta ação não pode ser desfeita.`)) return;
+    
+    showFeedback('Excluindo turma, por favor aguarde...', 'info');
+    
+    // O Supabase com 'ON DELETE CASCADE' apaga alunos e progressos automaticamente ao apagar a turma.
+    const { error } = await supabaseClient.from('classes').delete().eq('id', classId);
+
+    if (error) {
+        showFeedback(`Erro ao excluir turma: ${error.message}`, 'error');
+        console.error("Erro ao excluir turma:", error);
+    } else {
+        showFeedback(`Turma "${className}" excluída com sucesso!`, 'success');
+        await loadTeacherClasses();
+    }
 }
 
 async function manageClass(classId, className) {
@@ -199,7 +232,21 @@ async function loadClassStudents() {
 }
 
 function renderStudents(students) {
-    document.getElementById('studentsList').innerHTML = !students || students.length === 0 ? '<p>Nenhum aluno cadastrado.</p>' : students.map(student => `<div class="student-item"><h4>${student.name}</h4><p>Usuário: ${student.username}</p></div>`).join('');
+    document.getElementById('studentsList').innerHTML = !students || students.length === 0 ? '<p>Nenhum aluno cadastrado.</p>' : students.map(student => `
+        <div class="student-item">
+            <div class="student-info">
+                <h4>${student.name}</h4>
+                <p>Usuário: ${student.username}</p>
+            </div>
+            <div class="student-actions">
+                <button onclick="handleResetStudentPassword('${student.id}', '${student.name}')" class="btn small" title="Resetar Senha">
+                    <i class="fas fa-key"></i>
+                </button>
+                <button onclick="handleDeleteStudent('${student.id}', '${student.name}')" class="btn small danger" title="Excluir Aluno">
+                    <i class="fas fa-trash"></i>
+                </button>
+            </div>
+        </div>`).join('');
 }
 
 async function loadStudentProgress() {
@@ -270,6 +317,34 @@ async function handleCreateStudent(event) {
     }
 }
 
+async function handleDeleteStudent(studentId, studentName) {
+    if (!confirm(`Tem certeza que deseja excluir o aluno "${studentName}"?\n\nTodo o progresso dele será apagado permanentemente.`)) return;
+    const { error } = await supabaseClient.from('students').delete().eq('id', studentId);
+    if (error) {
+        showFeedback(`Erro ao excluir aluno: ${error.message}`, 'error');
+    } else {
+        showFeedback(`Aluno "${studentName}" excluído com sucesso.`, 'success');
+        await loadClassStudents();
+        await loadStudentProgress();
+    }
+}
+
+async function handleResetStudentPassword(studentId, studentName) {
+    const newPassword = generateRandomPassword();
+    if (!prompt(`A nova senha para "${studentName}" é:\n\n${newPassword}\n\nAnote-a e entregue ao aluno. Copie a senha abaixo e clique em OK para confirmar a alteração.`, newPassword)) {
+        return; // Usuário clicou em cancelar
+    }
+    try {
+        const hashedPassword = await hashPassword(newPassword);
+        const { error } = await supabaseClient.from('students').update({ password: hashedPassword }).eq('id', studentId);
+        if (error) throw error;
+        showFeedback(`Senha de "${studentName}" alterada com sucesso!`, 'success');
+    } catch (error) {
+        showFeedback(`Erro ao resetar senha: ${error.message}`, 'error');
+    }
+}
+
+
 // =======================================================
 // PARTE 6: LÓGICA DO JOGO
 // =======================================================
@@ -296,8 +371,8 @@ async function loadGameState() {
             currentQuestionIndex: 0,
             teacherId: currentUser.teacher_id
         };
+        await saveGameState();
     }
-    await saveGameState();
 }
 
 async function saveGameState() {
@@ -363,10 +438,10 @@ async function selectAnswer(selectedLetter) {
     if (isCorrect) {
         gameState.score++;
         showFeedback('Muito bem! Você acertou!', 'success');
-        speak('Acertou'); // NOVO: Feedback por voz
+        speak('Acertou');
     } else {
         showFeedback(`Quase! A resposta correta era ${currentQuestion.correctLetter}`, 'error');
-        speak('Errado'); // NOVO: Feedback por voz
+        speak('Errado');
     }
     
     await saveGameState();
@@ -376,12 +451,12 @@ async function selectAnswer(selectedLetter) {
 
 function nextQuestion() {
     gameState.currentQuestionIndex++;
-    startQuestion(); // A função startQuestion já tem a lógica para chamar endPhase se necessário
+    startQuestion();
 }
 
 function endPhase() {
     const accuracy = Math.round((gameState.score / gameState.questions.length) * 100);
-    showResultScreen(accuracy, accuracy >= 70); // Ex: 70% de acerto para passar
+    showResultScreen(accuracy, accuracy >= 70);
 }
 
 function showResultScreen(accuracy, passed) {
@@ -410,17 +485,15 @@ async function nextPhase() {
 }
 
 async function retryPhase() {
-    // Reseta o estado para tentar a mesma fase novamente
     gameState.currentQuestionIndex = 0;
     gameState.score = 0;
-    gameState.questions = generateQuestions(); // Gera novas perguntas para a mesma fase
+    gameState.questions = generateQuestions();
     await saveGameState();
     showScreen('gameScreen');
     startQuestion();
 }
 
 async function restartGame() {
-    // Leva o aluno para a tela inicial para decidir se quer continuar o jogo salvo
     showScreen('startScreen');
 }
 
@@ -433,11 +506,10 @@ async function playCurrentAudio() {
         const { data: { publicUrl } } = supabaseClient.storage.from('audio_uploads').getPublicUrl(`${teacherId}/${data[0].name}`);
         new Audio(publicUrl).play();
     } else {
-        speak(letter); // Usa a função de falar padrão
+        speak(letter);
     }
 }
 
-// NOVO: Função central para falar textos
 function speak(text) {
     const utterance = new SpeechSynthesisUtterance(text);
     utterance.lang = 'pt-BR';
@@ -457,6 +529,7 @@ function closeModal(modalId) { document.getElementById(modalId)?.classList.remov
 function showCreateStudentForm() { document.getElementById('createStudentForm').style.display = 'block'; }
 function hideCreateStudentForm() { document.getElementById('createStudentForm').style.display = 'none'; document.getElementById('createStudentFormElement').reset(); }
 function showAudioSettingsModal() { document.getElementById('audioSettingsModal').classList.add('show'); }
+
 function showTab(tabName, clickedButton) {
     const parent = clickedButton.closest('.modal-tabs');
     parent.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
@@ -466,13 +539,16 @@ function showTab(tabName, clickedButton) {
     contentParent.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
     contentParent.querySelector('#' + tabName + 'Tab').classList.add('active');
 }
+
 function showFeedback(message, type = 'info') {
     const el = document.getElementById('globalFeedback');
     if (!el) return;
-    el.querySelector('.feedback-text').textContent = message;
+    const textEl = el.querySelector('.feedback-text');
+    if(textEl) textEl.textContent = message;
     el.className = `feedback ${type} show`;
     setTimeout(() => el.classList.remove('show'), 4000);
 }
+
 function updateUI() {
     if(document.getElementById('score')) {
         document.getElementById('score').textContent = gameState.score;
