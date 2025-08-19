@@ -9,10 +9,16 @@ const supabaseClient = createClient(supabaseUrl, supabaseKey);
 let currentUser = null;
 let currentClassId = null;
 const ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
+
 let gameState = {};
 let mediaRecorder;
 let audioChunks = [];
 let timerInterval;
+
+const gameInstructions = {
+    1: "Olá! Nesta fase, ouça o som com atenção e clique na letra correspondente. Boa sorte!",
+    2: "Parabéns! Na fase 2, vamos formar sílabas. Ouça o som e escolha a sílaba correta.",
+};
 
 // =======================================================
 // PARTE 2: CRIPTOGRAFIA E FUNÇÕES UTILITÁRIAS
@@ -52,21 +58,19 @@ async function initApp() {
 }
 
 function setupAllEventListeners() {
-    // Navegação Geral
     document.querySelectorAll('.user-type-btn').forEach(btn => btn.addEventListener('click', (e) => {
         const type = e.currentTarget.getAttribute('data-type');
         if (type === 'teacher') showTeacherLogin();
         else if (type === 'student') showStudentLogin();
     }));
 
-    // Formulários
     document.getElementById('teacherLoginForm')?.addEventListener('submit', handleTeacherLogin);
     document.getElementById('teacherRegisterForm')?.addEventListener('submit', handleTeacherRegister);
     document.getElementById('studentLoginForm')?.addEventListener('submit', handleStudentLogin);
     document.getElementById('createClassForm')?.addEventListener('submit', handleCreateClass);
     document.getElementById('createStudentSubmitBtn')?.addEventListener('click', handleCreateStudent);
-    
-    // Botão de Gerar Senha
+    document.getElementById('uploadAudioBtn')?.addEventListener('click', handleAudioUpload);
+
     document.getElementById('generatePasswordBtn')?.addEventListener('click', () => {
         const passwordField = document.getElementById('createStudentPassword');
         passwordField.type = 'text';
@@ -74,15 +78,11 @@ function setupAllEventListeners() {
         setTimeout(() => { passwordField.type = 'password'; }, 2000);
     });
 
-    // Painel de Áudios
-    document.getElementById('uploadAudioBtn')?.addEventListener('click', handleAudioUpload);
-    
-    // CORREÇÃO: Conexão dos botões de gravação que estava faltando
     document.getElementById('recordBtn')?.addEventListener('click', startRecording);
     document.getElementById('stopBtn')?.addEventListener('click', stopRecording);
     document.getElementById('saveRecordingBtn')?.addEventListener('click', saveRecording);
+    document.getElementById('closeTutorialBtn')?.addEventListener('click', hideTutorial);
 
-    // Controles do Jogo
     document.getElementById('startButton')?.addEventListener('click', startGame);
     document.getElementById('playAudioButton')?.addEventListener('click', playCurrentAudio);
     document.getElementById('repeatAudio')?.addEventListener('click', playCurrentAudio);
@@ -263,10 +263,8 @@ async function loadStudentProgress() {
     const { data: students, error: studentsError } = await supabaseClient.from('students').select('id, name').eq('class_id', currentClassId);
     if (studentsError) return progressList.innerHTML = '<p>Erro ao carregar alunos.</p>';
     if (students.length === 0) return progressList.innerHTML = '<p>Nenhum aluno nesta turma.</p>';
-
     const { data: progresses, error: progressError } = await supabaseClient.from('progress').select('*').in('student_id', students.map(s => s.id));
     if (progressError) return progressList.innerHTML = '<p>Erro ao carregar progresso.</p>';
-
     let html = students.map(student => {
         const progress = progresses.find(p => p.student_id === student.id);
         const phase = progress?.current_phase || 1;
@@ -282,10 +280,8 @@ async function handleCreateStudent(event) {
     const username = document.getElementById('createStudentUsername').value;
     const password = document.getElementById('createStudentPassword').value;
     const submitButton = document.getElementById('createStudentSubmitBtn');
-
     if (!username || !password) return showFeedback("Por favor, preencha todos os campos.", "error");
     if (!currentClassId || !currentUser?.id) return showFeedback("Erro de sessão. Recarregue a página.", "error");
-
     submitButton.disabled = true;
     submitButton.textContent = 'Criando...';
     try {
@@ -319,9 +315,7 @@ async function handleDeleteStudent(studentId, studentName) {
 
 async function handleResetStudentPassword(studentId, studentName) {
     const newPassword = generateRandomPassword();
-    if (!prompt(`A nova senha para "${studentName}" é:\n\n${newPassword}\n\nAnote-a e entregue ao aluno. Copie a senha abaixo e clique em OK para confirmar a alteração.`, newPassword)) {
-        return;
-    }
+    if (!prompt(`A nova senha para "${studentName}" é:\n\n${newPassword}\n\nAnote-a e entregue ao aluno. Copie a senha abaixo e clique em OK para confirmar a alteração.`, newPassword)) return;
     try {
         const hashedPassword = await hashPassword(newPassword);
         const { error } = await supabaseClient.from('students').update({ password: hashedPassword }).eq('id', studentId);
@@ -337,7 +331,6 @@ async function handleAudioUpload() {
     if (files.length === 0) return showFeedback('Nenhum arquivo selecionado.', 'error');
     const statusDiv = document.getElementById('uploadStatus');
     statusDiv.innerHTML = 'Enviando...';
-    
     for (const file of files) {
         const letter = file.name.split('.')[0].toUpperCase();
         if (!ALPHABET.includes(letter)) {
@@ -394,11 +387,9 @@ async function saveRecording() {
     const statusDiv = document.getElementById('recordStatus');
     statusDiv.textContent = `Salvando áudio para a letra ${letter}...`;
     document.getElementById('saveRecordingBtn').disabled = true;
-
     const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
     const file = new File([audioBlob], `${letter}.webm`, { type: 'audio/webm' });
     const filePath = `${currentUser.id}/${file.name}`;
-
     const { error } = await supabaseClient.storage.from('audio_uploads').upload(filePath, file, { upsert: true });
     if (error) {
         showFeedback(`Erro ao salvar gravação: ${error.message}`, 'error');
@@ -435,6 +426,7 @@ async function showStudentGame() {
 
 async function startGame() {
     await loadGameState();
+    await showTutorial(gameState.currentPhase);
     showScreen('gameScreen');
     startQuestion();
 }
@@ -443,6 +435,7 @@ async function loadGameState() {
     const { data } = await supabaseClient.from('progress').select('game_state, current_phase').eq('student_id', currentUser.id).single();
     if (data && data.game_state && data.game_state.questions && data.game_state.currentQuestionIndex < data.game_state.questions.length) {
         gameState = data.game_state;
+        if (!gameState.tutorialsShown) gameState.tutorialsShown = [];
     } else {
         gameState = {
             currentPhase: data?.current_phase || 1,
@@ -450,7 +443,8 @@ async function loadGameState() {
             attempts: 2,
             questions: generateQuestions(),
             currentQuestionIndex: 0,
-            teacherId: currentUser.teacher_id
+            teacherId: currentUser.teacher_id,
+            tutorialsShown: []
         };
         await saveGameState();
     }
@@ -513,7 +507,6 @@ async function selectAnswer(selectedLetter) {
         if (btn.textContent === currentQuestion.correctLetter) btn.classList.add('correct');
         if (btn.textContent === selectedLetter && !isCorrect) btn.classList.add('incorrect');
     });
-
     if (isCorrect) {
         gameState.score++;
         showFeedback('Muito bem! Você acertou!', 'success');
@@ -558,6 +551,7 @@ async function nextPhase() {
     gameState.score = 0;
     gameState.questions = generateQuestions();
     await saveGameState();
+    await showTutorial(gameState.currentPhase);
     showScreen('gameScreen');
     startQuestion();
 }
@@ -587,9 +581,10 @@ async function playCurrentAudio() {
     }
 }
 
-function speak(text) {
+function speak(text, onEndCallback) {
     const utterance = new SpeechSynthesisUtterance(text);
     utterance.lang = 'pt-BR';
+    if (onEndCallback) utterance.onend = onEndCallback;
     speechSynthesis.speak(utterance);
 }
 
@@ -605,11 +600,13 @@ function showCreateClassModal() { document.getElementById('createClassModal').cl
 function closeModal(modalId) { document.getElementById(modalId)?.classList.remove('show'); }
 function showCreateStudentForm() { document.getElementById('createStudentForm').style.display = 'block'; }
 function hideCreateStudentForm() { document.getElementById('createStudentForm').style.display = 'none'; document.getElementById('createStudentFormElement').reset(); }
-function showAudioSettingsModal() { 
+
+function showAudioSettingsModal() {
     const letterSelect = document.getElementById('letterSelect');
     if (letterSelect) letterSelect.innerHTML = ALPHABET.map(letter => `<option value="${letter}">${letter}</option>`).join('');
     document.getElementById('audioSettingsModal').classList.add('show');
 }
+
 function showTab(tabName, clickedButton) {
     const parent = clickedButton.closest('.modal-tabs');
     parent.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
@@ -618,6 +615,7 @@ function showTab(tabName, clickedButton) {
     contentParent.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
     contentParent.querySelector('#' + tabName + 'Tab').classList.add('active');
 }
+
 function showFeedback(message, type = 'info') {
     const el = document.getElementById('globalFeedback');
     if (!el) return;
@@ -626,6 +624,7 @@ function showFeedback(message, type = 'info') {
     el.className = `feedback ${type} show`;
     setTimeout(() => el.classList.remove('show'), 4000);
 }
+
 function updateUI() {
     const gameScreen = document.getElementById('gameScreen');
     if(gameScreen.classList.contains('active')) {
@@ -636,4 +635,22 @@ function updateUI() {
         const progress = gameState.questions.length > 0 ? ((gameState.currentQuestionIndex) / gameState.questions.length) * 100 : 0;
         document.getElementById('progressFill').style.width = `${progress}%`;
     }
+}
+
+async function showTutorial(phaseNumber) {
+    if (gameState.tutorialsShown.includes(phaseNumber)) return;
+    const instruction = gameInstructions[phaseNumber];
+    if (!instruction) return;
+    const overlay = document.getElementById('tutorialOverlay');
+    const mascot = document.getElementById('tutorialMascot');
+    document.getElementById('tutorialText').textContent = instruction;
+    overlay.style.display = 'flex';
+    mascot.classList.add('talking');
+    speak(instruction, () => mascot.classList.remove('talking'));
+    gameState.tutorialsShown.push(phaseNumber);
+    await saveGameState();
+}
+
+function hideTutorial() {
+    document.getElementById('tutorialOverlay').style.display = 'none';
 }
