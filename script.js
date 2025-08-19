@@ -298,7 +298,7 @@ async function manageClass(classId, className) {
 }
 
 async function loadClassStudents() {
-    const { data, error } = await supabaseClient.from('students').select('*').eq('class_id', currentClassId).order('username', { ascending: true });
+    const { data, error } = await supabaseClient.from('students').select('*').eq('class_id', currentClassId).order('name', { ascending: true });
     if (error) {
         console.error('Erro ao carregar alunos:', error);
         document.getElementById('studentsList').innerHTML = '<p>Erro ao carregar alunos.</p>';
@@ -316,14 +316,14 @@ function renderStudents(students) {
     container.innerHTML = students.map(student => `
         <div class="student-item">
             <div class="student-info">
-                <h4>${student.username}</h4>
+                <h4>${student.name}</h4>
                 <p>Usuário: ${student.username}</p>
             </div>
             <div class="student-actions">
-                <button onclick="handleResetStudentPassword('${student.id}', '${student.username}')" class="btn small" title="Resetar Senha">
+                <button onclick="handleResetStudentPassword('${student.id}', '${student.name}')" class="btn small" title="Resetar Senha">
                     <i class="fas fa-key"></i>
                 </button>
-                <button onclick="handleDeleteStudent('${student.id}', '${student.username}')" class="btn small danger" title="Excluir Aluno">
+                <button onclick="handleDeleteStudent('${student.id}', '${student.name}')" class="btn small danger" title="Excluir Aluno">
                     <i class="fas fa-trash"></i>
                 </button>
             </div>
@@ -334,7 +334,7 @@ async function loadStudentProgress() {
     const progressList = document.getElementById('studentProgressList');
     progressList.innerHTML = '<p><i class="fas fa-spinner fa-spin"></i> Carregando progresso...</p>';
     
-    const { data: students, error: studentsError } = await supabaseClient.from('students').select('id, username').eq('class_id', currentClassId);
+    const { data: students, error: studentsError } = await supabaseClient.from('students').select('id, name').eq('class_id', currentClassId);
     if (studentsError) {
         progressList.innerHTML = '<p class="error-text">Erro ao carregar lista de alunos.</p>';
         return;
@@ -355,7 +355,7 @@ async function loadStudentProgress() {
         const progress = progresses.find(p => p.student_id === student.id);
         if (!progress) {
             return `<div class="student-item">
-                        <div class="student-info"><h4>${student.username}</h4><p>Nenhum progresso registrado.</p></div>
+                        <div class="student-info"><h4>${student.name}</h4><p>Nenhum progresso registrado.</p></div>
                     </div>`;
         }
         
@@ -369,7 +369,7 @@ async function loadStudentProgress() {
         return `
             <div class="student-item">
                 <div class="student-info" style="width:100%;">
-                    <h4>${student.username}</h4>
+                    <h4>${student.name}</h4>
                     <p>Fase Atual: ${phase} | Pontuação na Fase: ${score} / ${total}</p>
                     <div class="student-progress-container">
                         <div class="student-progress-bar">
@@ -401,8 +401,9 @@ async function handleCreateStudent(event) {
 
     try {
         const hashedPassword = await hashPassword(password);
+        // AQUI ESTÁ A CORREÇÃO PRINCIPAL
         const { error } = await supabaseClient.from('students').insert([
-            { username: username, password: hashedPassword, class_id: currentClassId, teacher_id: currentUser.id }
+            { name: username, username: username, password: hashedPassword, class_id: currentClassId, teacher_id: currentUser.id }
         ]);
 
         if (error) throw error;
