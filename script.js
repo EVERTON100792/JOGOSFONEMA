@@ -87,7 +87,17 @@ async function initApp() {
         return;
     }
     setupAllEventListeners();
-    await checkSession();
+
+    // LÓGICA DE PERSISTÊNCIA: Verifica se um aluno já está na sessão
+    const studentSession = sessionStorage.getItem('currentUser');
+    if (studentSession) {
+        currentUser = JSON.parse(studentSession);
+        // Se encontrou um aluno, inicia o jogo diretamente
+        await startGame();
+    } else {
+        // Se não, continua com a verificação normal (para professores)
+        await checkSession();
+    }
 }
 
 function setupAllEventListeners() {
@@ -123,6 +133,7 @@ function setupAllEventListeners() {
     document.getElementById('continueButton')?.addEventListener('click', nextPhase);
     document.getElementById('retryButton')?.addEventListener('click', retryPhase);
     document.getElementById('restartButton')?.addEventListener('click', restartGame);
+    document.getElementById('exitGameButton')?.addEventListener('click', handleExitGame);
 }
 
 // =======================================================
@@ -200,6 +211,10 @@ async function handleStudentLogin(e) {
         }
 
         currentUser = { ...studentData, type: 'student' };
+        
+        // SALVA O ALUNO NA SESSÃO DO NAVEGADOR
+        sessionStorage.setItem('currentUser', JSON.stringify(currentUser));
+
         await showStudentGame();
         showFeedback('Login realizado com sucesso!', 'success');
     } catch (error) {
@@ -212,7 +227,16 @@ async function logout() {
     await supabaseClient.auth.signOut();
     currentUser = null;
     currentClassId = null;
+    sessionStorage.removeItem('currentUser'); // Limpa a sessão do aluno também
     showUserTypeScreen();
+}
+
+function handleExitGame() {
+    if (confirm('Tem certeza que deseja sair do jogo? Seu progresso ficará salvo.')) {
+        sessionStorage.removeItem('currentUser');
+        currentUser = null;
+        showUserTypeScreen();
+    }
 }
 
 // =======================================================
@@ -401,7 +425,6 @@ async function handleCreateStudent(event) {
 
     try {
         const hashedPassword = await hashPassword(password);
-        // AQUI ESTÁ A CORREÇÃO PRINCIPAL
         const { error } = await supabaseClient.from('students').insert([
             { name: username, username: username, password: hashedPassword, class_id: currentClassId, teacher_id: currentUser.id }
         ]);
@@ -583,9 +606,14 @@ async function showStudentGame() {
 
 async function startGame() {
     await loadGameState();
-    showScreen('gameScreen');
-    await showTutorial(gameState.currentPhase);
-    startQuestion();
+    // Se o usuário já estava jogando (vindo de um refresh), vai direto pra tela do jogo
+    if (gameState.currentQuestionIndex > 0 || gameState.score > 0) {
+        showScreen('gameScreen');
+        startQuestion();
+    } else {
+        // Se é um novo jogo, mostra a tela inicial com o botão "Começar"
+        showScreen('startScreen');
+    }
 }
 
 async function loadGameState() {
@@ -625,42 +653,26 @@ function generateQuestions(phase) {
     const questionCount = 10;
 
     switch (phase) {
-        case 1: // Fase 1: Identificar Letra pelo Som
+        case 1:
             const letters = [...ALPHABET].sort(() => 0.5 - Math.random());
             for (let i = 0; i < questionCount; i++) {
                 const correctLetter = letters[i % letters.length];
-                questions.push({
-                    type: 'letter_sound',
-                    correctAnswer: correctLetter,
-                    options: generateOptions(correctLetter, ALPHABET, 4)
-                });
+                questions.push({ type: 'letter_sound', correctAnswer: correctLetter, options: generateOptions(correctLetter, ALPHABET, 4) });
             }
             break;
-        case 2: // Fase 2: Identificar Vogal Inicial
+        case 2:
             const words_p2 = [...PHASE_2_WORDS].sort(() => 0.5 - Math.random());
             for (let i = 0; i < questionCount; i++) {
                 const item = words_p2[i % words_p2.length];
-                questions.push({
-                    type: 'initial_vowel',
-                    word: item.word,
-                    image: item.image,
-                    correctAnswer: item.vowel,
-                    options: generateOptions(item.vowel, VOWELS, 4)
-                });
+                questions.push({ type: 'initial_vowel', word: item.word, image: item.image, correctAnswer: item.vowel, options: generateOptions(item.vowel, VOWELS, 4) });
             }
             break;
-        case 3: // Fase 3: Identificar Sílaba Inicial
+        case 3:
              const words_p3 = [...PHASE_3_WORDS].sort(() => 0.5 - Math.random());
              for (let i = 0; i < questionCount; i++) {
                  const item = words_p3[i % words_p3.length];
                  const allSyllables = PHASE_3_WORDS.map(w => w.syllable);
-                 questions.push({
-                     type: 'initial_syllable',
-                     word: item.word,
-                     image: item.image,
-                     correctAnswer: item.syllable,
-                     options: generateOptions(item.syllable, allSyllables, 4)
-                 });
+                 questions.push({ type: 'initial_syllable', word: item.word, image: item.image, correctAnswer: item.syllable, options: generateOptions(item.syllable, allSyllables, 4) });
              }
              break;
         default: 
@@ -679,7 +691,10 @@ function generateOptions(correctItem, sourceArray, count) {
     return Array.from(options).sort(() => 0.5 - Math.random());
 }
 
-function startQuestion() {
+async function startQuestion() {
+    // A chamada para showScreen('gameScreen') foi movida daqui para a função startGame
+    // para evitar que a tela inicial seja pulada em um novo login.
+    
     if (!gameState.questions || gameState.currentQuestionIndex >= gameState.questions.length) {
         return endPhase();
     }
@@ -688,15 +703,9 @@ function startQuestion() {
     updateUI();
 
     switch(currentQuestion.type) {
-        case 'letter_sound':
-            renderPhase1UI(currentQuestion);
-            break;
-        case 'initial_vowel':
-            renderPhase2UI(currentQuestion);
-            break;
-        case 'initial_syllable':
-            renderPhase3UI(currentQuestion);
-            break;
+        case 'letter_sound': renderPhase1UI(currentQuestion); break;
+        case 'initial_vowel': renderPhase2UI(currentQuestion); break;
+        case 'initial_syllable': renderPhase3UI(currentQuestion); break;
     }
     
     renderOptions(currentQuestion.options);
@@ -704,6 +713,7 @@ function startQuestion() {
       setTimeout(playCurrentAudio, 500);
     }
 }
+
 
 function renderPhase1UI(question) {
     document.getElementById('audioQuestionArea').style.display = 'block';
@@ -819,8 +829,10 @@ async function retryPhase() {
 }
 
 async function restartGame() {
+    // Modificado para, em vez de mostrar a tela inicial, recarregar a fase do zero
     showScreen('startScreen');
 }
+
 
 async function playCurrentAudio() {
     const currentQuestion = gameState.questions[gameState.currentQuestionIndex];
