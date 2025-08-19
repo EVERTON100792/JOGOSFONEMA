@@ -186,7 +186,7 @@ async function handleDeleteClass(classId, className) {
 async function manageClass(classId, className) {
     currentClassId = classId;
     document.getElementById('manageClassTitle').textContent = `Gerenciar: ${className}`;
-    showTab('students', document.querySelector('.tab-btn')); // Ativa a primeira aba por padrão
+    showTab('students', document.querySelector('.tab-btn'));
     await loadClassStudents();
     await loadStudentProgress();
     document.getElementById('manageClassModal').classList.add('show');
@@ -274,6 +274,10 @@ async function handleCreateStudent(event) {
 // PARTE 6: LÓGICA DO JOGO
 // =======================================================
 async function showStudentGame() {
+    showScreen('startScreen');
+}
+
+async function startGame() {
     await loadGameState();
     showScreen('gameScreen');
     startQuestion();
@@ -281,22 +285,23 @@ async function showStudentGame() {
 
 async function loadGameState() {
     const { data } = await supabaseClient.from('progress').select('game_state, current_phase').eq('student_id', currentUser.id).single();
-    if (data && data.game_state && data.game_state.questions) {
+    if (data && data.game_state && data.game_state.questions && data.game_state.currentQuestionIndex < data.game_state.questions.length) {
         gameState = data.game_state;
     } else {
         gameState = {
-            currentPhase: 1,
+            currentPhase: data?.current_phase || 1,
             score: 0,
             attempts: 2,
             questions: generateQuestions(),
             currentQuestionIndex: 0,
             teacherId: currentUser.teacher_id
         };
-        await saveGameState();
     }
+    await saveGameState();
 }
 
 async function saveGameState() {
+    if (!currentUser || currentUser.type !== 'student') return;
     const { error } = await supabaseClient.from('progress').upsert({
         student_id: currentUser.id,
         current_phase: gameState.currentPhase,
@@ -327,8 +332,10 @@ function generateLetterOptions(correctLetter) {
 }
 
 function startQuestion() {
+    if (!gameState.questions || gameState.currentQuestionIndex >= gameState.questions.length) {
+        return endPhase();
+    }
     const currentQuestion = gameState.questions[gameState.currentQuestionIndex];
-    if (!currentQuestion) return endPhase();
     
     document.getElementById('nextQuestion').style.display = 'none';
     updateUI();
@@ -356,8 +363,10 @@ async function selectAnswer(selectedLetter) {
     if (isCorrect) {
         gameState.score++;
         showFeedback('Muito bem! Você acertou!', 'success');
+        speak('Acertou'); // NOVO: Feedback por voz
     } else {
         showFeedback(`Quase! A resposta correta era ${currentQuestion.correctLetter}`, 'error');
+        speak('Errado'); // NOVO: Feedback por voz
     }
     
     await saveGameState();
@@ -365,9 +374,14 @@ async function selectAnswer(selectedLetter) {
     setTimeout(() => document.getElementById('nextQuestion').style.display = 'block', 1500);
 }
 
+function nextQuestion() {
+    gameState.currentQuestionIndex++;
+    startQuestion(); // A função startQuestion já tem a lógica para chamar endPhase se necessário
+}
+
 function endPhase() {
     const accuracy = Math.round((gameState.score / gameState.questions.length) * 100);
-    showResultScreen(accuracy, accuracy >= 70); // Ex: 70% para passar
+    showResultScreen(accuracy, accuracy >= 70); // Ex: 70% de acerto para passar
 }
 
 function showResultScreen(accuracy, passed) {
@@ -385,15 +399,6 @@ function showResultScreen(accuracy, passed) {
     showScreen('resultScreen');
 }
 
-function nextQuestion() {
-    gameState.currentQuestionIndex++;
-    if (gameState.currentQuestionIndex >= gameState.questions.length) {
-        endPhase();
-    } else {
-        startQuestion();
-    }
-}
-
 async function nextPhase() {
     gameState.currentPhase++;
     gameState.currentQuestionIndex = 0;
@@ -405,17 +410,18 @@ async function nextPhase() {
 }
 
 async function retryPhase() {
+    // Reseta o estado para tentar a mesma fase novamente
     gameState.currentQuestionIndex = 0;
     gameState.score = 0;
-    gameState.attempts--;
-    gameState.questions = generateQuestions(); // Novas perguntas para a tentativa
+    gameState.questions = generateQuestions(); // Gera novas perguntas para a mesma fase
     await saveGameState();
     showScreen('gameScreen');
     startQuestion();
 }
 
 async function restartGame() {
-    await showStudentGame();
+    // Leva o aluno para a tela inicial para decidir se quer continuar o jogo salvo
+    showScreen('startScreen');
 }
 
 async function playCurrentAudio() {
@@ -427,10 +433,15 @@ async function playCurrentAudio() {
         const { data: { publicUrl } } = supabaseClient.storage.from('audio_uploads').getPublicUrl(`${teacherId}/${data[0].name}`);
         new Audio(publicUrl).play();
     } else {
-        const utterance = new SpeechSynthesisUtterance(letter);
-        utterance.lang = 'pt-BR';
-        speechSynthesis.speak(utterance);
+        speak(letter); // Usa a função de falar padrão
     }
+}
+
+// NOVO: Função central para falar textos
+function speak(text) {
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = 'pt-BR';
+    speechSynthesis.speak(utterance);
 }
 
 // =======================================================
@@ -463,9 +474,12 @@ function showFeedback(message, type = 'info') {
     setTimeout(() => el.classList.remove('show'), 4000);
 }
 function updateUI() {
-    document.getElementById('score').textContent = gameState.score;
-    document.getElementById('totalQuestions').textContent = gameState.questions.length;
-    document.getElementById('attempts').textContent = gameState.attempts;
-    document.getElementById('currentPhase').textContent = gameState.currentPhase;
-    document.getElementById('progressFill').style.width = `${((gameState.currentQuestionIndex + 1) / gameState.questions.length) * 100}%`;
+    if(document.getElementById('score')) {
+        document.getElementById('score').textContent = gameState.score;
+        document.getElementById('totalQuestions').textContent = gameState.questions.length;
+        document.getElementById('attempts').textContent = gameState.attempts;
+        document.getElementById('currentPhase').textContent = gameState.currentPhase;
+        const progress = gameState.questions.length > 0 ? ((gameState.currentQuestionIndex) / gameState.questions.length) * 100 : 0;
+        document.getElementById('progressFill').style.width = `${progress}%`;
+    }
 }
