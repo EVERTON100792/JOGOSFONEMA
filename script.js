@@ -9,8 +9,10 @@ const supabaseClient = createClient(supabaseUrl, supabaseKey);
 let currentUser = null;
 let currentClassId = null;
 const ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
-
 let gameState = {};
+let mediaRecorder;
+let audioChunks = [];
+let timerInterval;
 
 // =======================================================
 // PARTE 2: CRIPTOGRAFIA E FUNÇÕES UTILITÁRIAS
@@ -70,6 +72,10 @@ function setupAllEventListeners() {
         setTimeout(() => { passwordField.type = 'password'; }, 2000);
     });
 
+    document.getElementById('recordBtn')?.addEventListener('click', startRecording);
+    document.getElementById('stopBtn')?.addEventListener('click', stopRecording);
+    document.getElementById('saveRecordingBtn')?.addEventListener('click', saveRecording);
+
     document.getElementById('startButton')?.addEventListener('click', startGame);
     document.getElementById('playAudioButton')?.addEventListener('click', playCurrentAudio);
     document.getElementById('repeatAudio')?.addEventListener('click', playCurrentAudio);
@@ -118,7 +124,7 @@ async function handleTeacherRegister(e) {
             email, password, options: { data: { full_name: name, role: 'teacher' } }
         });
         if (error) throw error;
-        showFeedback('Cadastro realizado com sucesso! Verifique seu e-mail.', 'success');
+        showFeedback('Cadastro realizado! Um link de confirmação foi enviado para o seu e-mail.', 'success');
     } catch (error) {
         showFeedback(`Erro no cadastro: ${error.message}`, 'error');
     }
@@ -201,15 +207,10 @@ async function handleCreateClass(e) {
 
 async function handleDeleteClass(classId, className) {
     if (!confirm(`ATENÇÃO!\n\nTem certeza que deseja excluir a turma "${className}"?\n\nTODOS os alunos e seus progressos serão apagados permanentemente. Esta ação não pode ser desfeita.`)) return;
-    
     showFeedback('Excluindo turma, por favor aguarde...', 'info');
-    
-    // O Supabase com 'ON DELETE CASCADE' apaga alunos e progressos automaticamente ao apagar a turma.
     const { error } = await supabaseClient.from('classes').delete().eq('id', classId);
-
     if (error) {
         showFeedback(`Erro ao excluir turma: ${error.message}`, 'error');
-        console.error("Erro ao excluir turma:", error);
     } else {
         showFeedback(`Turma "${className}" excluída com sucesso!`, 'success');
         await loadTeacherClasses();
@@ -219,7 +220,7 @@ async function handleDeleteClass(classId, className) {
 async function manageClass(classId, className) {
     currentClassId = classId;
     document.getElementById('manageClassTitle').textContent = `Gerenciar: ${className}`;
-    showTab('students', document.querySelector('.tab-btn'));
+    showTab('students', document.querySelector('#manageClassModal .tab-btn'));
     await loadClassStudents();
     await loadStudentProgress();
     document.getElementById('manageClassModal').classList.add('show');
@@ -269,26 +270,6 @@ async function loadStudentProgress() {
     progressList.innerHTML = html;
 }
 
-async function handleAudioUpload() {
-    const files = document.getElementById('audioUpload').files;
-    if (files.length === 0) return showFeedback('Nenhum arquivo selecionado.', 'error');
-    const statusDiv = document.getElementById('uploadStatus');
-    statusDiv.innerHTML = 'Enviando...';
-    
-    for (const file of files) {
-        const letter = file.name.split('.')[0].toUpperCase();
-        if (!ALPHABET.includes(letter)) {
-            showFeedback(`Arquivo "${file.name}" ignorado. Nome inválido.`, 'error');
-            continue;
-        }
-        const filePath = `${currentUser.id}/${letter}.${file.name.split('.').pop()}`;
-        const { error } = await supabaseClient.storage.from('audio_uploads').upload(filePath, file, { upsert: true });
-        if (error) showFeedback(`Erro ao enviar ${file.name}: ${error.message}`, 'error');
-        else showFeedback(`Áudio da letra ${letter} enviado com sucesso!`, 'success');
-    }
-    statusDiv.innerHTML = 'Envio concluído.';
-}
-
 async function handleCreateStudent(event) {
     event.preventDefault();
     const username = document.getElementById('createStudentUsername').value;
@@ -332,7 +313,7 @@ async function handleDeleteStudent(studentId, studentName) {
 async function handleResetStudentPassword(studentId, studentName) {
     const newPassword = generateRandomPassword();
     if (!prompt(`A nova senha para "${studentName}" é:\n\n${newPassword}\n\nAnote-a e entregue ao aluno. Copie a senha abaixo e clique em OK para confirmar a alteração.`, newPassword)) {
-        return; // Usuário clicou em cancelar
+        return;
     }
     try {
         const hashedPassword = await hashPassword(newPassword);
@@ -344,6 +325,99 @@ async function handleResetStudentPassword(studentId, studentName) {
     }
 }
 
+async function handleAudioUpload() {
+    const files = document.getElementById('audioUpload').files;
+    if (files.length === 0) return showFeedback('Nenhum arquivo selecionado.', 'error');
+    const statusDiv = document.getElementById('uploadStatus');
+    statusDiv.innerHTML = 'Enviando...';
+    
+    for (const file of files) {
+        const letter = file.name.split('.')[0].toUpperCase();
+        if (!ALPHABET.includes(letter)) {
+            showFeedback(`Arquivo "${file.name}" ignorado. Nome inválido.`, 'error');
+            continue;
+        }
+        const filePath = `${currentUser.id}/${letter}.${file.name.split('.').pop()}`;
+        const { error } = await supabaseClient.storage.from('audio_uploads').upload(filePath, file, { upsert: true });
+        if (error) showFeedback(`Erro ao enviar ${file.name}: ${error.message}`, 'error');
+        else showFeedback(`Áudio da letra ${letter} enviado com sucesso!`, 'success');
+    }
+    statusDiv.innerHTML = 'Envio concluído.';
+}
+
+async function startRecording() {
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) return alert('Seu navegador não suporta a gravação de áudio.');
+    const statusDiv = document.getElementById('recordStatus');
+    statusDiv.textContent = 'Pedindo permissão para o microfone...';
+    try {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        document.getElementById('recordBtn').disabled = true;
+        document.getElementById('stopBtn').disabled = false;
+        statusDiv.textContent = 'Gravando...';
+        audioChunks = [];
+        mediaRecorder = new MediaRecorder(stream);
+        mediaRecorder.ondataavailable = event => audioChunks.push(event.data);
+        mediaRecorder.onstop = () => {
+            const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+            document.getElementById('audioPlayback').src = URL.createObjectURL(audioBlob);
+            document.getElementById('saveRecordingBtn').disabled = false;
+            stream.getTracks().forEach(track => track.stop());
+        };
+        mediaRecorder.start();
+        startTimer();
+    } catch (err) {
+        statusDiv.textContent = 'Permissão para microfone negada ou não encontrado.';
+        document.getElementById('recordBtn').disabled = false;
+    }
+}
+
+function stopRecording() {
+    if (mediaRecorder && mediaRecorder.state === 'recording') {
+        mediaRecorder.stop();
+        document.getElementById('recordBtn').disabled = false;
+        document.getElementById('stopBtn').disabled = true;
+        document.getElementById('recordStatus').textContent = 'Gravação parada. Ouça e salve.';
+        stopTimer();
+    }
+}
+
+async function saveRecording() {
+    const letter = document.getElementById('letterSelect').value;
+    if (audioChunks.length === 0) return showFeedback('Nenhuma gravação para salvar.', 'error');
+    const statusDiv = document.getElementById('recordStatus');
+    statusDiv.textContent = `Salvando áudio para a letra ${letter}...`;
+    document.getElementById('saveRecordingBtn').disabled = true;
+
+    const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+    const file = new File([audioBlob], `${letter}.webm`, { type: 'audio/webm' });
+    const filePath = `${currentUser.id}/${file.name}`;
+
+    const { error } = await supabaseClient.storage.from('audio_uploads').upload(filePath, file, { upsert: true });
+    if (error) {
+        showFeedback(`Erro ao salvar gravação: ${error.message}`, 'error');
+        statusDiv.textContent = 'Erro ao salvar.';
+    } else {
+        showFeedback(`Áudio da letra ${letter} salvo com sucesso!`, 'success');
+        statusDiv.textContent = 'Salvo com sucesso!';
+    }
+    document.getElementById('saveRecordingBtn').disabled = false;
+}
+
+function startTimer() {
+    let seconds = 0;
+    const timerEl = document.getElementById('recordTimer');
+    timerEl.textContent = '00:00';
+    timerInterval = setInterval(() => {
+        seconds++;
+        const min = Math.floor(seconds / 60).toString().padStart(2, '0');
+        const sec = (seconds % 60).toString().padStart(2, '0');
+        timerEl.textContent = `${min}:${sec}`;
+    }, 1000);
+}
+
+function stopTimer() {
+    clearInterval(timerInterval);
+}
 
 // =======================================================
 // PARTE 6: LÓGICA DO JOGO
@@ -411,7 +485,6 @@ function startQuestion() {
         return endPhase();
     }
     const currentQuestion = gameState.questions[gameState.currentQuestionIndex];
-    
     document.getElementById('nextQuestion').style.display = 'none';
     updateUI();
     document.getElementById('questionText').textContent = 'Qual letra faz este som?';
@@ -429,7 +502,6 @@ async function selectAnswer(selectedLetter) {
     document.querySelectorAll('.letter-button').forEach(btn => btn.disabled = true);
     const currentQuestion = gameState.questions[gameState.currentQuestionIndex];
     const isCorrect = selectedLetter === currentQuestion.correctLetter;
-
     document.querySelectorAll('.letter-button').forEach(btn => {
         if (btn.textContent === currentQuestion.correctLetter) btn.classList.add('correct');
         if (btn.textContent === selectedLetter && !isCorrect) btn.classList.add('incorrect');
@@ -443,7 +515,6 @@ async function selectAnswer(selectedLetter) {
         showFeedback(`Quase! A resposta correta era ${currentQuestion.correctLetter}`, 'error');
         speak('Errado');
     }
-    
     await saveGameState();
     updateUI();
     setTimeout(() => document.getElementById('nextQuestion').style.display = 'block', 1500);
@@ -501,7 +572,6 @@ async function playCurrentAudio() {
     const letter = gameState.questions[gameState.currentQuestionIndex].correctLetter;
     const teacherId = gameState.teacherId;
     const { data } = await supabaseClient.storage.from('audio_uploads').list(teacherId, { search: `${letter}.` });
-
     if (data && data.length > 0) {
         const { data: { publicUrl } } = supabaseClient.storage.from('audio_uploads').getPublicUrl(`${teacherId}/${data[0].name}`);
         new Audio(publicUrl).play();
@@ -528,27 +598,27 @@ function showCreateClassModal() { document.getElementById('createClassModal').cl
 function closeModal(modalId) { document.getElementById(modalId)?.classList.remove('show'); }
 function showCreateStudentForm() { document.getElementById('createStudentForm').style.display = 'block'; }
 function hideCreateStudentForm() { document.getElementById('createStudentForm').style.display = 'none'; document.getElementById('createStudentFormElement').reset(); }
-function showAudioSettingsModal() { document.getElementById('audioSettingsModal').classList.add('show'); }
-
+function showAudioSettingsModal() { 
+    const letterSelect = document.getElementById('letterSelect');
+    if (letterSelect) letterSelect.innerHTML = ALPHABET.map(letter => `<option value="${letter}">${letter}</option>`).join('');
+    document.getElementById('audioSettingsModal').classList.add('show');
+}
 function showTab(tabName, clickedButton) {
     const parent = clickedButton.closest('.modal-tabs');
     parent.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
     clickedButton.classList.add('active');
-    
     const contentParent = clickedButton.closest('.modal-content');
     contentParent.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
     contentParent.querySelector('#' + tabName + 'Tab').classList.add('active');
 }
-
 function showFeedback(message, type = 'info') {
     const el = document.getElementById('globalFeedback');
     if (!el) return;
-    const textEl = el.querySelector('.feedback-text');
-    if(textEl) textEl.textContent = message;
+    const textEl = el.querySelector('.feedback-text') || el;
+    textEl.textContent = message;
     el.className = `feedback ${type} show`;
     setTimeout(() => el.classList.remove('show'), 4000);
 }
-
 function updateUI() {
     if(document.getElementById('score')) {
         document.getElementById('score').textContent = gameState.score;
