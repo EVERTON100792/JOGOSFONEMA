@@ -134,7 +134,6 @@ async function checkSession() {
         if (currentUser.user_metadata.role === 'teacher') {
             await showTeacherDashboard();
         } else {
-            // Se for um usuário logado mas não professor, desloga para evitar confusão
             await logout();
         }
     } else {
@@ -201,7 +200,7 @@ async function logout() {
 }
 
 // =======================================================
-// PARTE 6: DASHBOARD DO PROFESSOR (COMPLETO E CORRIGIDO)
+// PARTE 6: DASHBOARD DO PROFESSOR
 // =======================================================
 async function showTeacherDashboard() {
     showScreen('teacherDashboard');
@@ -237,7 +236,7 @@ function renderClasses(classes) {
                 <h3>${cls.name}</h3>
                 <span class="student-count">👥 ${studentCount} aluno(s)</span>
                 <div class="class-card-actions">
-                    <button class="btn primary" onclick="manageClass('${cls.id}', '${cls.name}')">Gerenciar</button>
+                    <button class="btn primary" onclick="manageClass('${cls.id}', '${cls.name.replace(/'/g, "\\'")}')">Gerenciar</button>
                     <button class="btn danger" onclick="handleDeleteClass('${cls.id}', '${cls.name.replace(/'/g, "\\'")}')" title="Excluir Turma">
                         <i class="fas fa-trash"></i>
                     </button>
@@ -276,7 +275,7 @@ async function handleDeleteClass(classId, className) {
 async function manageClass(classId, className) {
     currentClassId = classId;
     document.getElementById('manageClassTitle').textContent = `Gerenciar: ${className}`;
-    showTab('students', document.querySelector('#manageClassModal .tab-btn'));
+    showTab('studentsTab', document.querySelector('#manageClassModal .tab-btn'));
     await loadClassStudents();
     await loadStudentProgress();
     document.getElementById('manageClassModal').classList.add('show');
@@ -317,20 +316,54 @@ function renderStudents(students) {
 
 async function loadStudentProgress() {
     const progressList = document.getElementById('studentProgressList');
-    progressList.innerHTML = '<p>Carregando...</p>';
-    const { data: students, error: studentsError } = await supabaseClient.from('students').select('id, name').eq('class_id', currentClassId);
-    if (studentsError) return progressList.innerHTML = '<p>Erro ao carregar alunos.</p>';
-    if (students.length === 0) return progressList.innerHTML = '<p>Nenhum aluno nesta turma.</p>';
-    const { data: progresses, error: progressError } = await supabaseClient.from('progress').select('*').in('student_id', students.map(s => s.id));
-    if (progressError) return progressList.innerHTML = '<p>Erro ao carregar progresso.</p>';
+    progressList.innerHTML = '<p><i class="fas fa-spinner fa-spin"></i> Carregando progresso...</p>';
     
+    const { data: students, error: studentsError } = await supabaseClient.from('students').select('id, name').eq('class_id', currentClassId);
+    if (studentsError) {
+        progressList.innerHTML = '<p class="error-text">Erro ao carregar lista de alunos.</p>';
+        return;
+    }
+    if (students.length === 0) {
+        progressList.innerHTML = '<p>Nenhum aluno nesta turma para exibir o progresso.</p>';
+        return;
+    }
+
+    const studentIds = students.map(s => s.id);
+    const { data: progresses, error: progressError } = await supabaseClient.from('progress').select('*').in('student_id', studentIds);
+    if (progressError) {
+        progressList.innerHTML = '<p class="error-text">Erro ao carregar o progresso dos alunos.</p>';
+        return;
+    }
+
     let html = students.map(student => {
         const progress = progresses.find(p => p.student_id === student.id);
-        const phase = progress?.current_phase || 1;
-        const score = progress?.game_state?.score ?? 0;
-        const total = progress?.game_state?.questions?.length || 10;
-        return `<div class="student-item"><h4>${student.name}</h4><p>Fase Atual: ${phase}</p><p>Pontuação na Fase: ${score} / ${total}</p></div>`;
+        if (!progress) {
+            return `<div class="student-item">
+                        <div class="student-info"><h4>${student.name}</h4><p>Nenhum progresso registrado.</p></div>
+                    </div>`;
+        }
+        
+        const phase = progress.current_phase || 1;
+        const state = progress.game_state || {};
+        const score = state.score ?? 0;
+        const total = state.questions?.length || 10;
+        const currentQuestion = state.currentQuestionIndex ?? 0;
+        const percentage = total > 0 ? (currentQuestion / total) * 100 : 0;
+
+        return `
+            <div class="student-item">
+                <div class="student-info" style="width:100%;">
+                    <h4>${student.name}</h4>
+                    <p>Fase Atual: ${phase} | Pontuação na Fase: ${score} / ${total}</p>
+                    <div class="student-progress-container">
+                        <div class="student-progress-bar">
+                            <div class="student-progress-fill" style="width: ${percentage}%;"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>`;
     }).join('');
+
     progressList.innerHTML = html;
 }
 
@@ -352,7 +385,6 @@ async function handleCreateStudent(event) {
 
     try {
         const hashedPassword = await hashPassword(password);
-        // CORREÇÃO: Adicionado o campo 'name' que estava faltando.
         const { error } = await supabaseClient.from('students').insert([
             { name: username, username: username, password: hashedPassword, class_id: currentClassId, teacher_id: currentUser.id }
         ]);
@@ -361,7 +393,7 @@ async function handleCreateStudent(event) {
 
         hideCreateStudentForm();
         await loadClassStudents();
-        await loadStudentProgress(); // Atualiza também a aba de progresso
+        await loadStudentProgress();
         showFeedback('Aluno criado com sucesso!', 'success');
     } catch (error) {
         console.error("Erro ao criar aluno:", error);
@@ -394,9 +426,7 @@ async function handleResetStudentPassword(studentId, studentName) {
     const newPassword = generateRandomPassword();
     const confirmed = prompt(`A nova senha para "${studentName}" é:\n\n${newPassword}\n\nAnote-a e entregue ao aluno. Copie a senha e clique em OK para confirmar a alteração.`, newPassword);
 
-    if (confirmed !== newPassword) { // O usuário cancelou ou não confirmou a senha
-        return;
-    }
+    if (!confirmed) return;
 
     try {
         const hashedPassword = await hashPassword(newPassword);
@@ -513,7 +543,7 @@ function stopTimer() {
 
 
 // =======================================================
-// PARTE 7: LÓGICA DO JOGO (COMPLETA E CORRIGIDA)
+// PARTE 7: LÓGICA DO JOGO
 // =======================================================
 async function showStudentGame() {
     showScreen('startScreen');
@@ -526,12 +556,21 @@ async function startGame() {
     startQuestion();
 }
 
+/**
+ * Carrega o estado do jogo do Supabase.
+ * Se houver um jogo não finalizado, ele é retomado.
+ * Caso contrário, inicia um novo jogo na fase atual do aluno.
+ */
 async function loadGameState() {
     const { data } = await supabaseClient.from('progress').select('game_state, current_phase').eq('student_id', currentUser.id).single();
+    
+    // Condição para retomar o progresso:
+    // Deve haver dados, um game_state, uma lista de perguntas, e o índice da pergunta atual deve ser menor que o total.
     if (data && data.game_state && data.game_state.questions && data.game_state.currentQuestionIndex < data.game_state.questions.length) {
         gameState = data.game_state;
         if (!gameState.tutorialsShown) gameState.tutorialsShown = [];
     } else {
+        // Se não houver progresso para retomar, inicia um novo jogo
         const currentPhase = data?.current_phase || 1;
         gameState = {
             currentPhase: currentPhase,
@@ -542,10 +581,14 @@ async function loadGameState() {
             teacherId: currentUser.teacher_id,
             tutorialsShown: []
         };
-        await saveGameState();
+        await saveGameState(); // Salva o novo estado inicial
     }
 }
 
+/**
+ * Salva o estado atual do jogo no Supabase.
+ * É chamado após cada ação importante do jogador.
+ */
 async function saveGameState() {
     if (!currentUser || currentUser.type !== 'student') return;
     const { error } = await supabaseClient.from('progress').upsert({
@@ -600,7 +643,7 @@ function generateQuestions(phase) {
                  });
              }
              break;
-        default: // Se não houver mais fases, repete a última
+        default: 
              questions = generateQuestions(3);
              break;
     }
@@ -662,7 +705,7 @@ function renderPhase3UI(question) {
     document.getElementById('audioQuestionArea').style.display = 'none';
     document.getElementById('imageQuestionArea').style.display = 'block';
     document.getElementById('imageEmoji').textContent = question.image;
-    document.getElementById('wordDisplay').textContent = `__ ${question.word.substring(question.correctAnswer.length)}`;
+    document.getElementById('wordDisplay').textContent = `__${question.word.substring(question.correctAnswer.length)}`;
     document.getElementById('questionText').textContent = 'Qual sílaba começa esta palavra?';
     document.getElementById('repeatAudio').style.display = 'none';
 }
@@ -696,7 +739,7 @@ async function selectAnswer(selectedAnswer) {
         speak('Tente de novo');
     }
 
-    await saveGameState();
+    await saveGameState(); // Salva o progresso após cada resposta
     updateUI();
     
     if(gameState.attempts <= 0) {
@@ -750,7 +793,6 @@ async function retryPhase() {
     gameState.currentQuestionIndex = 0;
     gameState.score = 0;
     gameState.attempts = 2;
-    // Não precisa gerar novas perguntas, reutiliza as atuais
     await saveGameState();
     showScreen('gameScreen');
     startQuestion();
@@ -778,7 +820,7 @@ async function playCurrentAudio() {
 
 function speak(text, onEndCallback) {
     if (!window.speechSynthesis) return;
-    speechSynthesis.cancel(); // Cancela falas anteriores para não sobrepor
+    speechSynthesis.cancel();
     const utterance = new SpeechSynthesisUtterance(text);
     utterance.lang = 'pt-BR';
     if (onEndCallback) utterance.onend = onEndCallback;
@@ -805,21 +847,27 @@ function showAudioSettingsModal() {
     showTab('uploadFileTab', document.querySelector('#audioSettingsModal .tab-btn'));
 }
 
-function showTab(tabName, clickedButton) {
+/**
+ * CORREÇÃO: Função corrigida para encontrar o ID da aba corretamente.
+ * O bug que impedia o botão "Gerenciar" de funcionar foi resolvido aqui.
+ */
+function showTab(tabId, clickedButton) {
     const parent = clickedButton.closest('.modal-content');
     parent.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
     clickedButton.classList.add('active');
     parent.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
-    parent.querySelector('#' + tabName).classList.add('active');
+    parent.querySelector('#' + tabId).classList.add('active');
 }
 
 function showFeedback(message, type = 'info') {
     const el = document.getElementById('globalFeedback');
     if (!el) return;
-    el.querySelector('.feedback-text').textContent = message;
-    el.className = `feedback ${type}`; // Define a classe de cor
-    el.classList.add('show');
-    setTimeout(() => el.classList.remove('show'), 3000);
+    const textEl = el.querySelector('.feedback-text');
+    if (textEl) textEl.textContent = message;
+    el.className = `show ${type}`;
+    setTimeout(() => {
+        el.className = el.className.replace('show', '');
+    }, 3000);
 }
 
 
