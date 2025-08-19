@@ -52,19 +52,21 @@ async function initApp() {
 }
 
 function setupAllEventListeners() {
+    // Navegação Geral
     document.querySelectorAll('.user-type-btn').forEach(btn => btn.addEventListener('click', (e) => {
         const type = e.currentTarget.getAttribute('data-type');
         if (type === 'teacher') showTeacherLogin();
         else if (type === 'student') showStudentLogin();
     }));
 
+    // Formulários
     document.getElementById('teacherLoginForm')?.addEventListener('submit', handleTeacherLogin);
     document.getElementById('teacherRegisterForm')?.addEventListener('submit', handleTeacherRegister);
     document.getElementById('studentLoginForm')?.addEventListener('submit', handleStudentLogin);
     document.getElementById('createClassForm')?.addEventListener('submit', handleCreateClass);
     document.getElementById('createStudentSubmitBtn')?.addEventListener('click', handleCreateStudent);
-    document.getElementById('uploadAudioBtn')?.addEventListener('click', handleAudioUpload);
-
+    
+    // Botão de Gerar Senha
     document.getElementById('generatePasswordBtn')?.addEventListener('click', () => {
         const passwordField = document.getElementById('createStudentPassword');
         passwordField.type = 'text';
@@ -72,10 +74,15 @@ function setupAllEventListeners() {
         setTimeout(() => { passwordField.type = 'password'; }, 2000);
     });
 
+    // Painel de Áudios
+    document.getElementById('uploadAudioBtn')?.addEventListener('click', handleAudioUpload);
+    
+    // CORREÇÃO: Conexão dos botões de gravação que estava faltando
     document.getElementById('recordBtn')?.addEventListener('click', startRecording);
     document.getElementById('stopBtn')?.addEventListener('click', stopRecording);
     document.getElementById('saveRecordingBtn')?.addEventListener('click', saveRecording);
 
+    // Controles do Jogo
     document.getElementById('startButton')?.addEventListener('click', startGame);
     document.getElementById('playAudioButton')?.addEventListener('click', playCurrentAudio);
     document.getElementById('repeatAudio')?.addEventListener('click', playCurrentAudio);
@@ -620,7 +627,8 @@ function showFeedback(message, type = 'info') {
     setTimeout(() => el.classList.remove('show'), 4000);
 }
 function updateUI() {
-    if(document.getElementById('score')) {
+    const gameScreen = document.getElementById('gameScreen');
+    if(gameScreen.classList.contains('active')) {
         document.getElementById('score').textContent = gameState.score;
         document.getElementById('totalQuestions').textContent = gameState.questions.length;
         document.getElementById('attempts').textContent = gameState.attempts;
