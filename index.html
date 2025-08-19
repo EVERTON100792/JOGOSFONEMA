@@ -117,7 +117,7 @@
             <div class="dashboard-content">
                 <div class="dashboard-section">
                     <h2>Minhas Turmas</h2>
-                    <button onclick="showCreateClassModal()" class="create-btn"><i class="fas fa-plus"></i> Criar Nova Turma</button>
+                    <button onclick="showModal('createClassModal')" class="create-btn"><i class="fas fa-plus"></i> Criar Nova Turma</button>
                     <div id="classesList" class="classes-grid"></div>
                 </div>
                 <div class="dashboard-section">
@@ -150,7 +150,7 @@
 		</div>
 	</div>
 
-	<div id="gameScreen" class="screen">
+    <div id="gameScreen" class="screen">
 		<div class="game-header">
 			<div class="phase-info">
 				<h2>Fase <span id="currentPhase">1</span></h2>
@@ -179,21 +179,18 @@
 						Clique no alto-falante para ouvir o som!
 					</div>
 				</div>
-                
-                <div class="audio-section" id="audioQuestionArea">
+				<div class="audio-section" id="audioQuestionArea">
 					<button id="playAudioButton" class="audio-button">
 						<i class="fas fa-volume-up"></i>
 						<span>Ouvir Som</span>
 					</button>
 				</div>
-
                 <div id="imageQuestionArea" style="display: none;">
                     <div class="image-display">
                         <span id="imageEmoji" class="image-emoji"></span>
                     </div>
                     <h3 id="wordDisplay" class="word-display"></h3>
                 </div>
-
 				<div class="question-text">
 					<h3 id="questionText">Qual letra faz este som?</h3>
 				</div>
@@ -210,7 +207,7 @@
 		</div>
 	</div>
 
-	<div id="resultScreen" class="screen">
+    <div id="resultScreen" class="screen">
 		<div class="container">
 			<div class="result-content">
 				<div class="result-icon" id="resultIcon">
@@ -273,7 +270,7 @@
             <h3 id="manageClassTitle">Gerenciar Turma</h3>
             <div class="modal-tabs">
                 <button class="tab-btn active" onclick="showTab('studentsTab', this)">Alunos</button>
-                <button class="tab-btn" onclick="showTab('studentProgressTab', this)">Progresso dos Alunos</button>
+                <button class="tab-btn" onclick="showTab('studentProgressTab', this)">Progresso</button>
             </div>
             <div id="studentsTab" class="tab-content active">
                 <div class="students-section">
@@ -286,12 +283,15 @@
                             <div class="form-row">
                                 <div class="form-group">
                                     <label for="createStudentUsername">Nome do Aluno (usuário):</label>
-                                    <input type="text" id="createStudentUsername" required autocomplete="username">
+                                    <input type="text" id="createStudentUsername" required>
                                 </div>
-                                <div class="form-group password-group">
+                                <div class="form-group">
                                     <label for="createStudentPassword">Senha:</label>
-                                    <input type="password" id="createStudentPassword" required autocomplete="new-password">
-                                    <button type="button" id="generatePasswordBtn" class="generate-password-btn" title="Gerar senha automática">🪄</button>
+                                    <div class="password-input-group">
+                                        <input type="password" id="createStudentPassword" required autocomplete="new-password">
+                                        <button type="button" id="generatePasswordBtn" class="password-tool-btn" title="Gerar senha automática">🪄</button>
+                                        <button type="button" id="togglePasswordBtn" class="password-tool-btn" title="Mostrar/ocultar senha">👁️</button>
+                                    </div>
                                 </div>
                             </div>
                             <div class="form-actions">
@@ -304,10 +304,8 @@
                 </div>
             </div>
             <div id="studentProgressTab" class="tab-content">
-                <div class="progress-section">
-                    <h4>Relatório de Progresso da Turma</h4>
-                    <div id="studentProgressList" class="students-list"></div>
-                </div>
+                <h4>Relatório de Progresso da Turma</h4>
+                <div id="studentProgressList" class="students-list"></div>
             </div>
             <div class="modal-actions">
                 <button type="button" onclick="closeModal('manageClassModal')" class="modal-btn">Fechar</button>
@@ -324,7 +322,7 @@
             </div>
             <div id="uploadFileTab" class="tab-content active">
                 <div class="upload-section">
-                    <p>Envie os arquivos de áudio (.mp3, .wav, .m4a) para cada letra.</p>
+                    <p>Envie os arquivos de áudio (.mp3, .wav) para cada letra.</p>
                     <div class="upload-instructions">
                         <p><i class="fas fa-info-circle"></i> <strong>Nomeie os arquivos exatamente como a letra.</strong> Ex: <code>A.mp3</code></p>
                     </div>
@@ -340,7 +338,7 @@
                 <div class="record-section">
                     <p>Grave sua voz falando o som de cada letra.</p>
                     <div class="form-group">
-                        <label for="letterSelect">1. Escolha a Letra para Gravar:</label>
+                        <label for="letterSelect">1. Escolha a Letra:</label>
                         <select id="letterSelect"></select>
                     </div>
                     <div class="record-controls">
@@ -353,7 +351,7 @@
                         <audio id="audioPlayback" controls></audio>
                     </div>
                     <div id="recordStatus"></div>
-                    <button id="saveRecordingBtn" class="modal-btn primary" disabled><i class="fas fa-save"></i> Salvar Gravação</button>
+                    <button id="saveRecordingBtn" class="modal-btn primary" disabled><i class="fas fa-save"></i> Salvar</button>
                 </div>
             </div>
             <div class="modal-actions">
@@ -364,14 +362,36 @@
     
     <div id="tutorialOverlay" class="tutorial-overlay">
         <div class="tutorial-content">
-            <div id="tutorialMascot" class="mascot">
-                <i class="fas fa-cat"></i>
-            </div>
-            <div class="speech-bubble" id="tutorialText">
-            </div>
+            <div id="tutorialMascot" class="mascot"><i class="fas fa-cat"></i></div>
+            <div class="speech-bubble" id="tutorialText"></div>
             <button id="closeTutorialBtn" class="start-button">
                 <i class="fas fa-play"></i> Vamos Jogar!
             </button>
+        </div>
+    </div>
+
+    <div id="studentCreatedModal" class="modal">
+        <div class="modal-content">
+            <h3><i class="fas fa-check-circle" style="color: #4ECDC4;"></i> Aluno Criado!</h3>
+            <p>Anote ou copie os dados de login para entregar ao aluno.</p>
+            <div class="credentials-display">
+                <div class="credential-item">
+                    <span>Usuário:</span>
+                    <strong id="confirmStudentUsername"></strong>
+                </div>
+                <div class="credential-item">
+                    <span>Senha:</span>
+                    <strong id="confirmStudentPassword"></strong>
+                </div>
+            </div>
+            <div class="modal-actions">
+                <button type="button" id="copyCredentialsBtn" class="modal-btn">
+                    <i class="fas fa-copy"></i> Copiar Dados
+                </button>
+                <button type="button" onclick="closeModal('studentCreatedModal')" class="modal-btn primary">
+                    Fechar
+                </button>
+            </div>
         </div>
     </div>
 
