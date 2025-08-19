@@ -15,7 +15,6 @@
                 <h1>🌟 Jogo das Letras 🌟</h1>
                 <p>Aprendendo o alfabeto com diversão!</p>
             </div>
-            
             <div class="user-selection">
                 <h2>Como você quer acessar?</h2>
                 <div class="user-types">
@@ -132,110 +131,110 @@
     </div>
 
     <div id="startScreen" class="screen">
- 		<div class="container">
- 			<div class="game-title">
- 				<h1>🌟 Jogo das Letras 🌟</h1>
- 				<p>Vamos aprender o alfabeto juntos!</p>
- 			</div>
- 			<div class="character-mascot">
- 				<div class="mascot bounce">
- 					<i class="fas fa-cat"></i>
- 				</div>
- 				<div class="speech-bubble">
- 					<p>Olá! Eu sou o Gatinho Alfabeto! Vamos brincar?</p>
- 				</div>
- 			</div>
- 			<button id="startButton" class="start-button">
- 				<i class="fas fa-play"></i> Começar Aventura
- 			</button>
- 		</div>
- 	</div>
+        <div class="container">
+            <div class="game-title">
+                <h1>🌟 Jogo das Letras 🌟</h1>
+                <p>Vamos aprender o alfabeto juntos!</p>
+            </div>
+            <div class="character-mascot">
+                <div class="mascot bounce">
+                    <i class="fas fa-cat"></i>
+                </div>
+                <div class="speech-bubble">
+                    <p>Olá! Eu sou o Gatinho Alfabeto! Vamos brincar?</p>
+                </div>
+            </div>
+            <button id="startButton" class="start-button">
+                <i class="fas fa-play"></i> Começar Aventura
+            </button>
+        </div>
+    </div>
 
- 	<div id="gameScreen" class="screen">
- 		<div class="game-header">
- 			<div class="phase-info">
- 				<h2>Fase <span id="currentPhase">1</span></h2>
- 				<div class="progress-bar">
- 					<div id="progressFill" class="progress-fill"></div>
- 				</div>
- 			</div>
- 			<div class="score-info">
- 				<div class="score">
- 					<i class="fas fa-star"></i>
- 					<span id="score">0</span>/<span id="totalQuestions">0</span>
- 				</div>
- 				<div class="attempts">
- 					<i class="fas fa-heart"></i>
- 					<span id="attempts">2</span> tentativas
- 				</div>
- 			</div>
- 		</div>
- 		<div class="game-content">
- 			<div class="question-area">
- 				<div class="mascot-helper">
- 					<div class="mascot pulse">
- 						<i class="fas fa-cat"></i>
- 					</div>
- 					<div class="speech-bubble" id="helperText">
- 						Clique no alto-falante para ouvir o som!
- 					</div>
- 				</div>
- 				<div class="audio-section">
- 					<button id="playAudioButton" class="audio-button">
- 						<i class="fas fa-volume-up"></i>
- 						<span>Ouvir Som</span>
- 					</button>
- 				</div>
- 				<div class="question-text">
- 					<h3 id="questionText">Qual letra faz este som?</h3>
- 				</div>
- 			</div>
- 			<div class="letters-grid" id="lettersGrid"></div>
- 			<div class="game-controls">
- 				<button id="repeatAudio" class="control-button">
- 					<i class="fas fa-redo"></i> Ouvir Novamente
- 				</button>
- 				<button id="nextQuestion" class="control-button" style="display: none;">
- 					<i class="fas fa-arrow-right"></i> Próxima
- 				</button>
- 			</div>
- 		</div>
- 	</div>
+    <div id="gameScreen" class="screen">
+        <div class="game-header">
+            <div class="phase-info">
+                <h2>Fase <span id="currentPhase">1</span></h2>
+                <div class="progress-bar">
+                    <div id="progressFill" class="progress-fill"></div>
+                </div>
+            </div>
+            <div class="score-info">
+                <div class="score">
+                    <i class="fas fa-star"></i>
+                    <span id="score">0</span>/<span id="totalQuestions">0</span>
+                </div>
+                <div class="attempts">
+                    <i class="fas fa-heart"></i>
+                    <span id="attempts">2</span> tentativas
+                </div>
+            </div>
+        </div>
+        <div class="game-content">
+            <div class="question-area">
+                <div class="mascot-helper">
+                    <div class="mascot pulse">
+                        <i class="fas fa-cat"></i>
+                    </div>
+                    <div class="speech-bubble" id="helperText">
+                        Clique no alto-falante para ouvir o som!
+                    </div>
+                </div>
+                <div class="audio-section">
+                    <button id="playAudioButton" class="audio-button">
+                        <i class="fas fa-volume-up"></i>
+                        <span>Ouvir Som</span>
+                    </button>
+                </div>
+                <div class="question-text">
+                    <h3 id="questionText">Qual letra faz este som?</h3>
+                </div>
+            </div>
+            <div class="letters-grid" id="lettersGrid"></div>
+            <div class="game-controls">
+                <button id="repeatAudio" class="control-button">
+                    <i class="fas fa-redo"></i> Ouvir Novamente
+                </button>
+                <button id="nextQuestion" class="control-button" style="display: none;">
+                    <i class="fas fa-arrow-right"></i> Próxima
+                </button>
+            </div>
+        </div>
+    </div>
 
- 	<div id="resultScreen" class="screen">
- 		<div class="container">
- 			<div class="result-content">
- 				<div class="result-icon" id="resultIcon">
- 					<i class="fas fa-trophy"></i>
- 				</div>
- 				<h2 id="resultTitle">Parabéns!</h2>
- 				<div class="result-stats">
- 					<div class="stat">
- 						<i class="fas fa-star"></i>
- 						<span>Acertos: <span id="finalScore">0</span></span>
- 					</div>
- 					<div class="stat">
- 						<i class="fas fa-percentage"></i>
- 						<span>Precisão: <span id="accuracy">0</span>%</span>
- 					</div>
- 				</div>
- 				<div class="result-message" id="resultMessage">
- 					Você conseguiu! Continue assim!
- 				</div>
- 				<div class="result-actions">
- 					<button id="continueButton" class="result-button success" style="display: none;">
- 						<i class="fas fa-arrow-right"></i> Próxima Fase
- 					</button>
- 					<button id="retryButton" class="result-button retry" style="display: none;">
- 						<i class="fas fa-redo"></i> Tentar Novamente
- 					</button>
- 					<button id="restartButton" class="result-button">
- 						<i class="fas fa-home"></i> Voltar ao Início
- 					</button>
- 				</div>
- 			</div>
- 		</div>
- 	</div>
+    <div id="resultScreen" class="screen">
+        <div class="container">
+            <div class="result-content">
+                <div class="result-icon" id="resultIcon">
+                    <i class="fas fa-trophy"></i>
+                </div>
+                <h2 id="resultTitle">Parabéns!</h2>
+                <div class="result-stats">
+                    <div class="stat">
+                        <i class="fas fa-star"></i>
+                        <span>Acertos: <span id="finalScore">0</span></span>
+                    </div>
+                    <div class="stat">
+                        <i class="fas fa-percentage"></i>
+                        <span>Precisão: <span id="accuracy">0</span>%</span>
+                    </div>
+                </div>
+                <div class="result-message" id="resultMessage">
+                    Você conseguiu! Continue assim!
+                </div>
+                <div class="result-actions">
+                    <button id="continueButton" class="result-button success" style="display: none;">
+                        <i class="fas fa-arrow-right"></i> Próxima Fase
+                    </button>
+                    <button id="retryButton" class="result-button retry" style="display: none;">
+                        <i class="fas fa-redo"></i> Tentar Novamente
+                    </button>
+                    <button id="restartButton" class="result-button">
+                        <i class="fas fa-home"></i> Voltar ao Início
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <div id="globalFeedback" class="feedback">
         <div class="feedback-content">
@@ -308,25 +307,45 @@
     </div>
 
     <div id="audioSettingsModal" class="modal">
-        <div class="modal-content">
+        <div class="modal-content large">
             <h3>Gerenciar Áudios das Letras</h3>
-            <div class="upload-section">
-                <p>Envie os arquivos de áudio (.mp3, .wav, .m4a) para cada letra do alfabeto.</p>
-                <div class="upload-instructions">
-                    <p><i class="fas fa-info-circle"></i> <strong>Nomeie os arquivos exatamente como a letra.</strong></p>
-                    <ul>
-                        <li>Exemplos: <code>A.mp3</code>, <code>b.wav</code>, <code>C.m4a</code></li>
-                    </ul>
+            <div class="modal-tabs">
+                <button class="tab-btn active" onclick="showTab('uploadFileTab', this)">Enviar Arquivos</button>
+                <button class="tab-btn" onclick="showTab('recordVoiceTab', this)">Gravar com Microfone</button>
+            </div>
+            <div id="uploadFileTab" class="tab-content active">
+                <div class="upload-section">
+                    <p>Envie os arquivos de áudio (.mp3, .wav, .m4a) para cada letra.</p>
+                    <div class="upload-instructions">
+                        <p><i class="fas fa-info-circle"></i> <strong>Nomeie os arquivos exatamente como a letra.</strong> Ex: <code>A.mp3</code></p>
+                    </div>
+                    <div class="upload-area">
+                        <input type="file" id="audioUpload" accept="audio/*" multiple>
+                        <label for="audioUpload" class="upload-label"><i class="fas fa-cloud-upload-alt"></i><span>Clique para selecionar</span></label>
+                    </div>
+                    <div id="uploadStatus"></div>
+                    <button id="uploadAudioBtn" class="modal-btn primary">Enviar Arquivos</button>
                 </div>
-                <div class="upload-area">
-                    <input type="file" id="audioUpload" accept="audio/*" multiple>
-                    <label for="audioUpload" class="upload-label">
-                        <i class="fas fa-cloud-upload-alt"></i>
-                        <span>Clique para selecionar os arquivos</span>
-                    </label>
+            </div>
+            <div id="recordVoiceTab" class="tab-content">
+                <div class="record-section">
+                    <p>Grave sua voz falando o som de cada letra.</p>
+                    <div class="form-group">
+                        <label for="letterSelect">1. Escolha a Letra para Gravar:</label>
+                        <select id="letterSelect"></select>
+                    </div>
+                    <div class="record-controls">
+                        <button id="recordBtn" class="record-btn"><i class="fas fa-microphone"></i> Gravar</button>
+                        <button id="stopBtn" class="stop-btn" disabled><i class="fas fa-stop"></i> Parar</button>
+                        <span id="recordTimer">00:00</span>
+                    </div>
+                    <div class="audio-playback">
+                        <label>2. Ouça a Gravação:</label>
+                        <audio id="audioPlayback" controls></audio>
+                    </div>
+                    <div id="recordStatus"></div>
+                    <button id="saveRecordingBtn" class="modal-btn primary" disabled><i class="fas fa-save"></i> Salvar Gravação</button>
                 </div>
-                <div id="uploadStatus"></div>
-                <button id="uploadAudioBtn" class="modal-btn primary">Enviar Áudios</button>
             </div>
             <div class="modal-actions">
                 <button type="button" onclick="closeModal('audioSettingsModal')" class="modal-btn">Fechar</button>
