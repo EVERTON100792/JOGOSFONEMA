@@ -1,19 +1,37 @@
 /* ================================================= */
-/* PARTE 1: RESET E ESTILO GLOBAL (REDESIGN V2)    */
+/* PARTE 1: RESET E ESTILO GLOBAL (REDESIGN V3)      */
 /* ================================================= */
+@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;800;900&display=swap');
+
 :root {
-    --primary-color: #5e72e4;
+    /* Paleta de Cores e Gradientes */
+    --primary-color: #6772e5;
     --secondary-color: #f5365c;
     --success-color: #2dce89;
     --warning-color: #fb6340;
-    --light-bg-color: #f4f7fc; /* Fundo ainda mais suave */
-    --dark-text-color: #32325d; /* Texto mais escuro para contraste */
-    --light-text-color: #8898aa;
+    --info-color: #11cdef;
+    
+    /* NOVO: Gradientes para um visual mais moderno */
+    --primary-gradient: linear-gradient(45deg, #6772e5, #5e72e4);
+    --success-gradient: linear-gradient(45deg, #2dce89, #2ad4b8);
+    --warning-gradient: linear-gradient(45deg, #fb6340, #fbb140);
+    
+    /* Tons Neutros Refinados */
+    --light-bg-color: #f6f9fc;
     --white-color: #ffffff;
+    --dark-text-color: #32325d;
+    --light-text-color: #8898aa;
+    --border-color: #e9ecef;
+    
+    /* Estilos de UI */
     --border-radius-md: 12px;
     --border-radius-lg: 20px;
     --shadow-light: 0 4px 6px rgba(50, 50, 93, 0.11), 0 1px 3px rgba(0, 0, 0, 0.08);
     --shadow-medium: 0 7px 14px rgba(50, 50, 93, 0.1), 0 3px 6px rgba(0, 0, 0, 0.08);
+    --shadow-heavy: 0 15px 35px rgba(50, 50, 93, 0.1), 0 5px 15px rgba(0, 0, 0, 0.07);
+    
+    /* NOVO: Transição padrão para consistência */
+    --default-transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
 }
 
 * {
@@ -22,31 +40,37 @@
     box-sizing: border-box;
 }
 
+html {
+    scroll-behavior: smooth;
+}
+
 body {
     font-family: 'Nunito', sans-serif;
-    background-color: var(--light-bg-color);
+    /* NOVO: Fundo em gradiente suave */
+    background: linear-gradient(135deg, var(--light-bg-color) 0%, #e9eef7 100%);
     color: var(--dark-text-color);
     min-height: 100vh;
-    overflow: hidden;
+    overflow: hidden; /* Mantido para controle de telas */
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
 }
 
 /* ================================================= */
-/* PARTE 2: FLUIDEZ E LAYOUT RESPONSIVO            */
+/* PARTE 2: ANIMAÇÕES E LAYOUT RESPONSIVO            */
 /* ================================================= */
 .screen {
-    display: none; 
+    display: none;
     width: 100%;
     min-height: 100vh;
-    padding: 20px; /* Espaçamento base para telas maiores */
+    padding: 20px;
     justify-content: center;
     align-items: center;
     flex-direction: column;
-    animation: fadeIn 0.5s ease-out forwards;
+    /* ANIMAÇÃO: Mais fluida e com escala */
+    animation: scaleInUp 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
 }
 
-/* Ajuste específico para celulares para evitar que os cards colem nas bordas */
 @media (max-width: 768px) {
     .screen {
         padding: 15px;
@@ -57,9 +81,10 @@ body {
     display: flex;
 }
 
-@keyframes fadeIn {
-    from { opacity: 0; transform: translateY(10px); }
-    to { opacity: 1; transform: translateY(0); }
+/* NOVO: Keyframe de animação mais impactante */
+@keyframes scaleInUp {
+    from { opacity: 0; transform: translateY(20px) scale(0.98); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
 }
 
 .container {
@@ -69,31 +94,28 @@ body {
 }
 
 /* ================================================= */
-/* PARTE 3: TELAS INICIAIS E LOGIN (REDESIGN V2)   */
+/* PARTE 3: TELAS INICIAIS E LOGIN                   */
 /* ================================================= */
 .game-title h1 {
-    font-size: clamp(2.5rem, 8vw, 3.8rem); /* Fonte responsiva */
+    font-size: clamp(2.8rem, 8vw, 4rem);
     font-weight: 900;
-    color: #2c3e50;
+    /* NOVO: Texto com gradiente sutil */
+    background: linear-gradient(45deg, #32325d, #424f75);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
     margin-bottom: 0.5rem;
+    text-shadow: 2px 2px 15px rgba(0,0,0,0.05);
 }
 
 .game-title p {
     font-size: clamp(1.1rem, 4vw, 1.5rem);
     color: var(--light-text-color);
-    margin-bottom: 2.5rem;
-}
-
-.user-selection h2 {
-    color: #2c3e50;
-    font-weight: 800;
-    font-size: 1.8rem;
-    margin-bottom: 30px;
+    margin-bottom: 3rem;
 }
 
 .user-types {
     display: flex;
-    gap: 20px;
+    gap: 25px;
     justify-content: center;
     flex-wrap: wrap;
 }
@@ -109,211 +131,288 @@ body {
     align-items: center;
     gap: 15px;
     width: 100%;
-    max-width: 220px; /* Garante que não fiquem muito largos */
+    max-width: 220px;
     border: 2px solid transparent;
-    transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
+    transition: var(--default-transition);
 }
 
+/* EFEITO: Hover mais interativo */
 .user-type-btn:hover {
-    transform: translateY(-5px);
+    transform: translateY(-8px) scale(1.03);
+    box-shadow: var(--shadow-heavy);
     border-color: var(--primary-color);
 }
 
-.user-type-btn i { font-size: 3rem; color: var(--primary-color); }
+.user-type-btn i {
+    font-size: 3rem;
+    background: var(--primary-gradient);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
 .user-type-btn span { font-size: 1.4rem; font-weight: bold; }
-.user-type-btn small { font-size: 1rem; color: var(--light-text-color); }
 
 .login-container {
-    width: 100%;
     max-width: 420px;
-    margin: 0 auto;
-    background: var(--white-color);
-    padding: clamp(20px, 5vw, 40px); /* Padding responsivo */
+    padding: clamp(25px, 5vw, 40px);
     border-radius: var(--border-radius-lg);
-    box-shadow: var(--shadow-medium);
+    box-shadow: var(--shadow-heavy);
+    background: var(--white-color);
+    border-top: 4px solid var(--primary-color);
 }
 
-.login-container h2 {
-    text-align: center;
-    color: var(--dark-text-color);
-    margin-bottom: 30px;
-    font-size: 1.8rem;
-    font-weight: 800;
-}
-
-.login-container h2 i { margin-right: 10px; color: var(--primary-color); }
-.login-form { display: flex; flex-direction: column; gap: 20px; }
-.form-group { display: flex; flex-direction: column; text-align: left; gap: 8px; }
-.form-group label { font-weight: bold; color: var(--dark-text-color); font-size: 1rem; }
 .form-group input, .form-group select {
     padding: 15px;
-    border: 2px solid #dee2e6;
+    border: 1px solid var(--border-color);
     border-radius: var(--border-radius-md);
     font-size: 1rem;
     font-family: 'Nunito', sans-serif;
-    transition: border-color 0.3s ease, box-shadow 0.3s ease;
+    transition: var(--default-transition);
+    background-color: #fdfdff;
 }
+/* EFEITO: Focus com brilho suave */
 .form-group input:focus, .form-group select:focus {
     outline: none;
     border-color: var(--primary-color);
-    box-shadow: 0 0 0 3px rgba(94, 114, 228, 0.2);
+    box-shadow: 0 0 0 4px rgba(103, 114, 229, 0.2);
+    background-color: var(--white-color);
 }
 
 /* ================================================= */
-/* PARTE 4: BOTÕES (REDESIGN V2)                   */
+/* PARTE 4: BOTÕES                                   */
 /* ================================================= */
-.login-btn, .modal-btn.primary, .create-btn {
+.btn {
+    border: none;
+    padding: 15px 25px;
+    border-radius: var(--border-radius-md);
+    font-size: 1.1rem;
+    font-weight: bold;
+    cursor: pointer;
+    transition: var(--default-transition);
+    display: inline-block;
+    text-align: center;
+}
+
+.btn-primary {
+    background: var(--primary-gradient);
+    color: white;
+    box-shadow: var(--shadow-light);
+}
+
+.btn-primary:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--shadow-medium);
+}
+.btn-primary:active {
+    transform: translateY(0px);
+    box-shadow: var(--shadow-light);
+}
+
+.btn-secondary {
+    background: transparent;
+    color: var(--primary-color);
+    border: 2px solid var(--primary-color);
+}
+.btn-secondary:hover {
     background: var(--primary-color);
     color: white;
-    box-shadow: 0 4px 6px rgba(50, 50, 93, 0.11), 0 1px 3px rgba(0, 0, 0, 0.08);
-    border: none; padding: 15px; border-radius: var(--border-radius-md);
-    font-size: 1.1rem; font-weight: bold; cursor: pointer; transition: all 0.3s ease;
-    margin-top: 10px;
+    transform: translateY(-3px);
 }
-.login-btn:hover, .modal-btn.primary:hover, .create-btn:hover { transform: translateY(-2px); }
-
-.register-btn {
-    background: transparent; color: var(--primary-color);
-    border: 2px solid var(--primary-color); padding: 12px;
-    border-radius: var(--border-radius-md); font-size: 1rem;
-    cursor: pointer; transition: all 0.3s ease;
-}
-.register-btn:hover { background: var(--primary-color); color: white; transform: translateY(-2px); }
 
 .back-btn {
-    background: #e9ecef; color: #555; border: none; padding: 10px 20px;
-    border-radius: var(--border-radius-md); cursor: pointer; margin-top: 20px;
-    transition: all 0.3s ease;
+    background: var(--border-color);
+    color: #555;
 }
-.back-btn:hover { background: #ced4da; transform: translateY(-2px); }
+.back-btn:hover {
+    background: #d8dde4;
+}
 
 /* ================================================= */
-/* PARTE 5: DASHBOARD (REDESIGN V2)                */
+/* PARTE 5: DASHBOARD                                */
 /* ================================================= */
 .dashboard-header {
-    display: flex; flex-wrap: wrap; /* Permite quebra de linha em telas pequenas */
-    justify-content: space-between; align-items: center;
-    gap: 15px; /* Espaçamento entre os itens */
-    margin: 0 auto 30px auto; padding: 20px 25px;
-    background: var(--white-color); border-radius: var(--border-radius-md);
-    color: var(--dark-text-color); max-width: 1200px; width: 100%;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: center;
+    gap: 15px;
+    margin: 0 auto 30px auto;
+    padding: 20px 25px;
+    background: var(--white-color);
+    border-radius: var(--border-radius-lg); /* Bordas mais arredondadas */
+    max-width: 1200px;
+    width: 100%;
     box-shadow: var(--shadow-light);
+    border-bottom: 3px solid var(--primary-color);
 }
-.dashboard-header h1 { font-size: clamp(1.5rem, 5vw, 2rem); font-weight: 800; }
 
-.teacher-info { display: flex; align-items: center; gap: 20px; }
-.teacher-info span { font-size: 1.2rem; font-weight: bold; }
-
-.dashboard-content {
-    padding: 30px; background: var(--white-color);
-    border-radius: var(--border-radius-lg); box-shadow: var(--shadow-light);
-    max-width: 1200px; margin: 0 auto; text-align: left;
+.classes-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 25px;
 }
-.dashboard-section h2 { margin-bottom: 20px; font-size: 1.6rem; font-weight: 800; }
 
-.classes-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 25px; }
 .class-card {
-    background: var(--white-color); padding: 25px; border-radius: var(--border-radius-md);
-    transition: all 0.3s ease; border-left: 5px solid var(--primary-color);
+    background: var(--white-color);
+    padding: 25px;
+    border-radius: var(--border-radius-md);
+    transition: var(--default-transition);
+    border-left: 5px solid;
+    /* NOVO: Cores de borda variáveis por card (exemplo) */
+    border-image: var(--primary-gradient) 1;
     box-shadow: var(--shadow-light);
+    cursor: pointer;
 }
-.class-card:hover { transform: translateY(-5px); box-shadow: var(--shadow-medium); }
+.class-card:hover {
+    transform: translateY(-5px) scale(1.02);
+    box-shadow: var(--shadow-medium);
+}
 
 /* ================================================= */
-/* PARTE 6: TELA DO JOGO (REDESIGN V2)             */
+/* PARTE 6: TELA DO JOGO                             */
 /* ================================================= */
 .game-header {
-    display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center;
-    background: rgba(255, 255, 255, 0.8); backdrop-filter: blur(10px);
-    padding: 1rem 1.5rem; border-radius: var(--border-radius-lg);
-    margin-bottom: 2rem; border: 1px solid rgba(0, 0, 0, 0.05);
-    width: 100%; max-width: 1000px;
-    gap: 1rem;
+    background: rgba(255, 255, 255, 0.7);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    box-shadow: var(--shadow-medium);
 }
-.phase-info h2, .score, .attempts { color: var(--dark-text-color); font-weight: 800; }
-.score i, .attempts i { margin-right: 0.5rem; color: #fcc419; }
+
 .progress-bar { width: 200px; height: 12px; background: rgba(0,0,0,0.1); border-radius: 6px; overflow: hidden; }
-.progress-fill { height: 100%; background: var(--success-color); width: 0%; transition: width 0.5s ease; }
-.game-content {
-    background: var(--white-color); border-radius: var(--border-radius-lg);
-    padding: clamp(1.5rem, 5vw, 2.5rem); box-shadow: var(--shadow-medium);
-    max-width: 800px; width: 100%; margin: 0 auto;
-}
+.progress-fill { height: 100%; background: var(--success-gradient); width: 0%; transition: width 0.5s ease-in-out; }
+
+/* ANIMAÇÃO: Botão de áudio pulsante */
 .audio-button {
-    background: linear-gradient(45deg, var(--success-color), #2dd6b4);
+    background: var(--success-gradient);
     box-shadow: 0 6px 20px rgba(45, 206, 137, 0.4);
-    color: white; border: none; border-radius: 50%;
-    width: 130px; height: 130px; cursor: pointer;
-    transition: transform 0.3s ease;
+    width: 130px;
+    height: 130px;
+    animation: pulse 2s infinite cubic-bezier(0.66, 0, 0, 1);
 }
-.audio-button:hover { transform: scale(1.05); }
+.audio-button:hover {
+    animation-play-state: paused; /* Pausa a animação no hover para interagir */
+    transform: scale(1.05);
+}
+.audio-button i { font-size: 4rem; }
 
 .letters-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(90px, 1fr));
-    gap: 1rem; max-width: 600px; margin: 2rem auto;
+    gap: 1rem;
+    max-width: 600px;
+    margin: 2rem auto;
 }
 .letter-button {
-    background: var(--primary-color);
-    color: white; border: none; padding: 1.5rem;
-    font-size: clamp(2rem, 10vw, 2.5rem); /* Fonte responsiva */
-    font-weight: bold; border-radius: var(--border-radius-md);
-    cursor: pointer; box-shadow: var(--shadow-light);
-    transition: all 0.3s ease; aspect-ratio: 1;
-    display: flex; align-items: center; justify-content: center;
+    background: var(--primary-gradient);
+    color: white;
+    border: none;
+    padding: 1.5rem;
+    font-size: clamp(2rem, 10vw, 2.5rem);
+    font-weight: bold;
+    border-radius: var(--border-radius-md);
+    cursor: pointer;
+    box-shadow: var(--shadow-light);
+    transition: var(--default-transition);
+    aspect-ratio: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
-.letter-button:hover { transform: translateY(-5px) scale(1.05); box-shadow: var(--shadow-medium); }
-.letter-button.correct { background: var(--success-color); }
-.letter-button.incorrect { background: var(--secondary-color); }
+.letter-button:hover {
+    transform: translateY(-5px) scale(1.05);
+    box-shadow: var(--shadow-medium);
+}
+/* ANIMAÇÃO: Resposta visual para acerto e erro */
+.letter-button.correct {
+    background: var(--success-gradient);
+    animation: correct-bounce 0.5s ease;
+}
+.letter-button.incorrect {
+    background: var(--secondary-color);
+    animation: incorrect-shake 0.5s ease;
+}
 
 /* ================================================= */
-/* PARTE 7: TELA DE RESULTADO (REDESIGN V2)        */
+/* PARTE 7: TELA DE RESULTADO                        */
 /* ================================================= */
 .result-content {
-    background: var(--white-color); border-radius: var(--border-radius-lg);
-    padding: clamp(2rem, 6vw, 3rem); box-shadow: var(--shadow-medium);
-    max-width: 600px; width: 100%; margin: 0 auto;
+    border-top: 5px solid var(--warning-color);
+    border-image: var(--warning-gradient) 1;
 }
-.result-icon i { color: #ffd600; font-size: 5rem; }
-.result-stats { background: #f8f9fa; border-radius: var(--border-radius-md); padding: 1rem; }
-.result-button {
-    padding: 1rem 2rem; font-size: 1rem; border: none; color: white;
-    border-radius: 50px; font-weight: bold; cursor: pointer; margin: 0.5rem;
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
+
+.result-icon i {
+    color: #ffd600;
+    font-size: 5rem;
+    /* ANIMAÇÃO: Ícone animado ao aparecer */
+    animation: bounceIn 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
-.result-button:hover { transform: translateY(-3px); box-shadow: var(--shadow-medium); }
-.result-button.success { background: var(--success-color); }
-.result-button.retry { background: var(--warning-color); }
 
 /* ================================================= */
-/* PARTE 8: MODAIS E OUTROS (REDESIGN V2)          */
+/* PARTE 8: MODAIS E FEEDBACK GLOBAL                 */
 /* ================================================= */
 .modal {
-    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-    background: rgba(0,0,0,0.5); z-index: 1000;
-    justify-content: center; align-items: center;
-    display: none;
+    /* ... seu código existente ... */
+    /* ANIMAÇÃO: Entrada suave do modal */
+    transition: opacity 0.3s ease;
 }
-.modal.show { display: flex; }
+.modal.show {
+    display: flex;
+    opacity: 1;
+}
 .modal-content {
-    background: white; padding: 30px; border-radius: var(--border-radius-lg);
-    max-width: 500px; width: 95%; max-height: 90vh; overflow-y: auto;
+    /* ... seu código existente ... */
+    transform: scale(0.95);
+    transition: transform 0.3s ease;
 }
-.modal-content.large { max-width: 800px; }
-.tab-btn.active, .tab-btn:hover { color: var(--primary-color); border-bottom-color: var(--primary-color); }
+.modal.show .modal-content {
+    transform: scale(1);
+}
 
 #globalFeedback {
-    position: fixed; bottom: 20px; left: 50%;
-    transform: translate(-50%, 120%);
-    padding: 15px 25px; border-radius: var(--border-radius-md);
-    color: white; font-weight: bold; box-shadow: var(--shadow-medium);
-    z-index: 2000; transition: transform 0.4s ease;
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translate(-50%, 150%); /* Inicia fora da tela */
+    padding: 15px 25px;
+    border-radius: 50px; /* Mais moderno */
+    color: white;
+    font-weight: bold;
+    box-shadow: var(--shadow-heavy);
+    z-index: 2000;
+    transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275); /* Efeito "elástico" */
 }
-#globalFeedback.show { transform: translate(-50%, 0); }
-#globalFeedback.success { background-color: var(--success-color); }
-#globalFeedback.error { background-color: var(--secondary-color); }
-#globalFeedback.info { background-color: var(--primary-color); }
+#globalFeedback.show {
+    transform: translate(-50%, 0);
+}
 
-/* Adicionado para animações e responsividade */
-@keyframes bounce { 0%, 20%, 50%, 80%, 100% { transform: translateY(0); } 40% { transform: translateY(-20px); } 60% { transform: translateY(-10px); } }
-@keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.1); } 100% { transform: scale(1); } }
+/* ================================================= */
+/* PARTE 9: ANIMAÇÕES CUSTOMIZADAS                   */
+/* ================================================= */
+@keyframes pulse {
+    0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(45, 206, 137, 0.7); }
+    70% { transform: scale(1); box-shadow: 0 0 0 20px rgba(45, 206, 137, 0); }
+    100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(45, 206, 137, 0); }
+}
+
+@keyframes correct-bounce {
+    0%   { transform: scale(1); }
+    30%  { transform: scale(1.1) translateY(-5px); }
+    50%  { transform: scale(0.95); }
+    100% { transform: scale(1); }
+}
+
+@keyframes incorrect-shake {
+    0% { transform: translateX(0); }
+    20% { transform: translateX(-10px) rotate(-3deg); }
+    40% { transform: translateX(10px) rotate(3deg); }
+    60% { transform: translateX(-10px) rotate(-3deg); }
+    80% { transform: translateX(10px) rotate(3deg); }
+    100% { transform: translateX(0); }
+}
+
+@keyframes bounceIn {
+    0% { opacity: 0; transform: scale(0.3); }
+    50% { opacity: 1; transform: scale(1.05); }
+    70% { transform: scale(0.9); }
+    100% { transform: scale(1); }
+}
