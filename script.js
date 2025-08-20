@@ -793,13 +793,11 @@ function generateOptions(correctItem, sourceArray, count) {
     return Array.from(options).sort(() => 0.5 - Math.random());
 }
 
-// MODIFICADO: Adicionada trava de segurança no início
 async function startQuestion() {
-    // Se a fase já estiver marcada como concluída, impede o início e vai para a tela de resultados.
     if (gameState.phaseCompleted) {
         const accuracy = gameState.questions.length > 0 ? Math.round((gameState.score / gameState.questions.length) * 100) : 100;
         showResultScreen(accuracy, true);
-        return; // Para a execução da função aqui.
+        return;
     }
 
     await showTutorial(gameState.currentPhase);
@@ -898,6 +896,7 @@ function endPhase() {
     showResultScreen(accuracy, passed);
 }
 
+// MODIFICADO: Muda o texto do botão "restartButton"
 function showResultScreen(accuracy, passed) {
     showScreen('resultScreen');
     document.getElementById('finalScore').textContent = gameState.score;
@@ -906,12 +905,14 @@ function showResultScreen(accuracy, passed) {
     const continueButton = document.getElementById('continueButton');
     const retryButton = document.getElementById('retryButton');
     const resultMessage = document.getElementById('resultMessage');
+    const restartButton = document.getElementById('restartButton');
     
     if (passed) {
         document.getElementById('resultTitle').textContent = 'Parabéns!';
         resultMessage.innerHTML = 'Você completou a atividade designada! 🏆<br>Fale com seu professor(a) para receber uma nova tarefa!';
         continueButton.style.display = 'none';
         retryButton.style.display = 'none';
+        restartButton.innerHTML = '<i class="fas fa-sign-out-alt"></i> Sair'; // Muda para "Sair"
         
         gameState.phaseCompleted = true; 
         saveGameState(); 
@@ -921,6 +922,7 @@ function showResultScreen(accuracy, passed) {
         resultMessage.textContent = 'Você precisa acertar mais para passar. Tente novamente!';
         continueButton.style.display = 'none';
         retryButton.style.display = 'inline-block';
+        restartButton.innerHTML = '<i class="fas fa-home"></i> Voltar ao Início'; // Garante que seja "Voltar ao Início"
         
         gameState.phaseCompleted = false;
         saveGameState();
@@ -952,15 +954,13 @@ async function retryPhase() {
     startQuestion();
 }
 
-// MODIFICADO: Função agora verifica se a fase está concluída.
+// MODIFICADO: Função agora executa logout() se a fase estiver concluída
 async function restartGame() {
     if (gameState.phaseCompleted) {
-        // Se a fase já foi concluída, não deixa o aluno sair da tela de resultados.
-        showFeedback('Atividade já concluída! Fale com seu/sua professor(a) para continuar.', 'info');
-        const accuracy = gameState.questions.length > 0 ? Math.round((gameState.score / gameState.questions.length) * 100) : 100;
-        showResultScreen(accuracy, true);
+        // Se a fase já foi concluída, executa o logout, que leva para a tela de login.
+        logout();
     } else {
-        // Se a fase não foi concluída, permite voltar ao início.
+        // Se a fase não foi concluída (aluno falhou), permite voltar ao início.
         showScreen('startScreen');
     }
 }
