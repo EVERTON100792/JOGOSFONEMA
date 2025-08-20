@@ -12,7 +12,6 @@ let currentClassId = null;
 const ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
 const VOWELS = 'AEIOU'.split('');
 
-// --- MODIFICADO: Adicionadas chaves para áudios customizáveis ---
 const CUSTOM_AUDIO_KEYS = {
     'instruction_1': 'Instrução - Fase 1',
     'instruction_2': 'Instrução - Fase 2',
@@ -27,13 +26,12 @@ let mediaRecorder;
 let audioChunks = [];
 let timerInterval;
 
-// Variáveis globais para o sistema de voz
 let speechReady = false;
 let selectedVoice = null;
 
 
 // =======================================================
-// PARTE 2: CONTEÚDO DO JOGO (NOVAS FASES)
+// PARTE 2: CONTEÚDO DO JOGO (FASES)
 // =======================================================
 
 const gameInstructions = {
@@ -69,7 +67,7 @@ const PHASE_3_WORDS = [
 ];
 
 // =======================================================
-// PARTE 3: CRIPTOGRAFIA E FUNÇÕES UTILITÁRIAS
+// PARTE 3: FUNÇÕES UTILITÁRIAS
 // =======================================================
 async function hashPassword(password) {
     const encoder = new TextEncoder();
@@ -91,6 +89,25 @@ function generateRandomPassword() {
     return `${word}${number}`;
 }
 
+function formatErrorMessage(error) {
+    const message = error.message.toLowerCase();
+    if (message.includes('duplicate key') && message.includes('username')) {
+        return 'Este nome de usuário já existe. Por favor, escolha outro.';
+    }
+    if (message.includes('invalid login credentials')) {
+        return 'Usuário ou senha inválidos. Verifique os dados e tente novamente.';
+    }
+    if (message.includes('to be a valid email')) {
+        return 'Por favor, insira um e-mail válido.';
+    }
+    if (message.includes('password should be at least 6 characters')) {
+        return 'A senha precisa ter no mínimo 6 caracteres.';
+    }
+    console.error("Erro não tratado:", error);
+    return 'Ocorreu um erro inesperado. Por favor, tente mais tarde.';
+}
+
+
 // =======================================================
 // PARTE 4: LÓGICA PRINCIPAL E EVENTOS
 // =======================================================
@@ -105,34 +122,45 @@ async function initApp() {
     initializeSpeech();
     setupAllEventListeners();
 
-    // --- CORRIGIDO: Lógica de persistência da sessão do aluno ---
-    // Verifica se há dados de um aluno na sessionStorage.
-    // A sessionStorage persiste enquanto a aba do navegador estiver aberta,
-    // o que significa que, se o aluno recarregar a página, ele continuará logado.
     const studentSession = sessionStorage.getItem('currentUser');
     if (studentSession) {
         console.log("Sessão de aluno encontrada. Restaurando jogo...");
         currentUser = JSON.parse(studentSession);
-        await startGame(); // Inicia o jogo diretamente para o aluno
+        await startGame();
     } else {
-        await checkSession(); // Se não houver aluno, verifica a sessão do professor
+        await checkSession();
     }
 }
 
 function setupAllEventListeners() {
+    // Navegação entre telas
     document.querySelectorAll('.user-type-btn').forEach(btn => btn.addEventListener('click', (e) => {
         const type = e.currentTarget.getAttribute('data-type');
-        if (type === 'teacher') showTeacherLogin();
-        else if (type === 'student') showStudentLogin();
+        if (type === 'teacher') showScreen('teacherLoginScreen');
+        else if (type === 'student') showScreen('studentLoginScreen');
     }));
 
+    document.querySelectorAll('.back-btn').forEach(btn => btn.addEventListener('click', (e) => {
+        const targetScreen = e.currentTarget.getAttribute('data-target');
+        showScreen(targetScreen);
+    }));
+
+    document.getElementById('showRegisterBtn').addEventListener('click', () => showScreen('teacherRegisterScreen'));
+    document.getElementById('showLoginBtn').addEventListener('click', () => showScreen('teacherLoginScreen'));
+    
+    // Formulários de Autenticação
     document.getElementById('teacherLoginForm')?.addEventListener('submit', handleTeacherLogin);
     document.getElementById('teacherRegisterForm')?.addEventListener('submit', handleTeacherRegister);
     document.getElementById('studentLoginForm')?.addEventListener('submit', handleStudentLogin);
-    document.getElementById('createClassForm')?.addEventListener('submit', handleCreateClass);
-    document.getElementById('createStudentSubmitBtn')?.addEventListener('click', handleCreateStudent);
-    document.getElementById('uploadAudioBtn')?.addEventListener('click', handleAudioUpload);
+    document.getElementById('logoutBtn')?.addEventListener('click', logout);
 
+    // Dashboard do Professor
+    document.getElementById('showCreateClassModalBtn').addEventListener('click', () => showModal('createClassModal'));
+    document.getElementById('showAudioSettingsModalBtn').addEventListener('click', showAudioSettingsModal);
+    document.getElementById('createClassForm')?.addEventListener('submit', handleCreateClass);
+    document.getElementById('showCreateStudentFormBtn').addEventListener('click', showCreateStudentForm);
+    document.getElementById('hideCreateStudentFormBtn').addEventListener('click', hideCreateStudentForm);
+    document.getElementById('createStudentSubmitBtn')?.addEventListener('click', handleCreateStudent);
     document.getElementById('generatePasswordBtn')?.addEventListener('click', () => {
         const passwordField = document.getElementById('createStudentPassword');
         passwordField.type = 'text';
@@ -140,11 +168,7 @@ function setupAllEventListeners() {
         setTimeout(() => { passwordField.type = 'password'; }, 2000);
     });
 
-    document.getElementById('recordBtn')?.addEventListener('click', startRecording);
-    document.getElementById('stopBtn')?.addEventListener('click', stopRecording);
-    document.getElementById('saveRecordingBtn')?.addEventListener('click', saveRecording);
-    document.getElementById('closeTutorialBtn')?.addEventListener('click', hideTutorial);
-
+    // Jogo do Aluno
     document.getElementById('startButton')?.addEventListener('click', () => {
         showScreen('gameScreen');
         startQuestion();
@@ -156,7 +180,36 @@ function setupAllEventListeners() {
     document.getElementById('retryButton')?.addEventListener('click', retryPhase);
     document.getElementById('restartButton')?.addEventListener('click', restartGame);
     document.getElementById('exitGameButton')?.addEventListener('click', handleExitGame);
+    
+    // Modais e Abas
+    document.querySelectorAll('[data-close]').forEach(btn => {
+        btn.addEventListener('click', () => closeModal(btn.getAttribute('data-close')));
+    });
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => showTab(e.currentTarget));
+    });
+
+    // Configurações de Áudio
+    document.getElementById('uploadAudioBtn')?.addEventListener('click', handleAudioUpload);
+    document.getElementById('recordBtn')?.addEventListener('click', startRecording);
+    document.getElementById('stopBtn')?.addEventListener('click', stopRecording);
+    document.getElementById('saveRecordingBtn')?.addEventListener('click', saveRecording);
+    
+    // Tutorial
+    document.getElementById('closeTutorialBtn')?.addEventListener('click', hideTutorial);
+    document.getElementById('copyCredentialsBtn')?.addEventListener('click', handleCopyCredentials);
+    
+    // Toggle de Senha
+    document.querySelectorAll('.password-toggle').forEach(toggle => {
+        toggle.addEventListener('click', () => {
+            const passwordInput = toggle.previousElementSibling;
+            const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+            passwordInput.setAttribute('type', type);
+            toggle.classList.toggle('fa-eye-slash');
+        });
+    });
 }
+
 
 // =======================================================
 // PARTE 5: AUTENTICAÇÃO E SESSÃO
@@ -168,15 +221,20 @@ async function checkSession() {
         if (currentUser.user_metadata.role === 'teacher') {
             await showTeacherDashboard();
         } else {
-            await logout(); // Se for um usuário não professor, desloga
+            await logout();
         }
     } else {
-        showUserTypeScreen();
+        showScreen('userTypeScreen');
     }
 }
 
 async function handleTeacherLogin(e) {
     e.preventDefault();
+    const button = e.target.querySelector('button[type="submit"]');
+    const originalText = button.innerHTML;
+    button.disabled = true;
+    button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Entrando...';
+
     const email = document.getElementById('teacherEmail').value;
     const password = document.getElementById('teacherPassword').value;
     try {
@@ -186,12 +244,20 @@ async function handleTeacherLogin(e) {
         await showTeacherDashboard();
         showFeedback('Login realizado com sucesso!', 'success');
     } catch (error) {
-        showFeedback(`Erro no login: ${error.message}`, 'error');
+        showFeedback(formatErrorMessage(error), 'error');
+    } finally {
+        button.disabled = false;
+        button.innerHTML = originalText;
     }
 }
 
 async function handleTeacherRegister(e) {
     e.preventDefault();
+    const button = e.target.querySelector('button[type="submit"]');
+    const originalText = button.innerHTML;
+    button.disabled = true;
+    button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Cadastrando...';
+
     const name = document.getElementById('teacherRegName').value;
     const email = document.getElementById('teacherRegEmail').value;
     const password = document.getElementById('teacherRegPassword').value;
@@ -201,19 +267,30 @@ async function handleTeacherRegister(e) {
         });
         if (error) throw error;
         showFeedback('Cadastro realizado! Um link de confirmação foi enviado para o seu e-mail.', 'success');
-        showTeacherLogin();
+        showScreen('teacherLoginScreen');
     } catch (error) {
-        showFeedback(`Erro no cadastro: ${error.message}`, 'error');
+        showFeedback(formatErrorMessage(error), 'error');
+    } finally {
+        button.disabled = false;
+        button.innerHTML = originalText;
     }
 }
 
 async function handleStudentLogin(e) {
     e.preventDefault();
+    const button = e.target.querySelector('button[type="submit"]');
+    const originalText = button.innerHTML;
+    button.disabled = true;
+    button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Entrando...';
+
     const username = document.getElementById('studentUsername').value.trim();
     const password = document.getElementById('studentPassword').value.trim();
     
     if (!username || !password) {
-        return showFeedback('Por favor, preencha o usuário e a senha.', 'error');
+        showFeedback('Por favor, preencha o usuário e a senha.', 'error');
+        button.disabled = false;
+        button.innerHTML = originalText;
+        return;
     }
 
     try {
@@ -223,25 +300,21 @@ async function handleStudentLogin(e) {
             .eq('username', username)
             .single();
 
-        if (error || !studentData) {
-            throw new Error('Usuário ou senha inválidos.');
-        }
+        if (error || !studentData) throw new Error('Usuário ou senha inválidos.');
         
         const match = await verifyPassword(password, studentData.password);
-        if (!match) {
-            throw new Error('Usuário ou senha inválidos.');
-        }
+        if (!match) throw new Error('Usuário ou senha inválidos.');
 
         currentUser = { ...studentData, type: 'student' };
-        
-        // --- CORRIGIDO: Salva os dados do aluno na sessionStorage ---
-        // Isso garante que os dados persistam ao recarregar a página.
         sessionStorage.setItem('currentUser', JSON.stringify(currentUser));
 
         await showStudentGame();
         showFeedback('Login realizado com sucesso!', 'success');
     } catch (error) {
-        showFeedback(error.message, 'error');
+        showFeedback(formatErrorMessage(error), 'error');
+    } finally {
+        button.disabled = false;
+        button.innerHTML = originalText;
     }
 }
 
@@ -249,17 +322,15 @@ async function logout() {
     await supabaseClient.auth.signOut();
     currentUser = null;
     currentClassId = null;
-    // --- CORRIGIDO: Limpa a sessionStorage ao sair ---
     sessionStorage.removeItem('currentUser');
-    showUserTypeScreen();
+    showScreen('userTypeScreen');
 }
 
 function handleExitGame() {
     if (confirm('Tem certeza que deseja sair do jogo? Seu progresso ficará salvo.')) {
-        // Apenas o professor usa a função logout() completa. Para o aluno, basta limpar a sessionStorage.
         sessionStorage.removeItem('currentUser');
         currentUser = null;
-        showUserTypeScreen();
+        showScreen('userTypeScreen');
     }
 }
 
@@ -301,8 +372,8 @@ function renderClasses(classes) {
                 <span class="student-count">👥 ${studentCount} aluno(s)</span>
                 <div class="class-card-actions">
                     <button class="btn primary" onclick="manageClass('${cls.id}', '${cls.name.replace(/'/g, "\\'")}')">Gerenciar</button>
-                    <button class="btn danger" onclick="handleDeleteClass('${cls.id}', '${cls.name.replace(/'/g, "\\'")}')" title="Excluir Turma">
-                        <i class="fas fa-trash"></i>
+                    <button class="btn danger" onclick="handleDeleteClass('${cls.id}', '${cls.name.replace(/'/g, "\\'")}')" title="Excluir Turma" aria-label="Excluir Turma ${cls.name}">
+                        <i class="fas fa-trash" aria-hidden="true"></i>
                     </button>
                 </div>
             </div>`;
@@ -339,10 +410,10 @@ async function handleDeleteClass(classId, className) {
 async function manageClass(classId, className) {
     currentClassId = classId;
     document.getElementById('manageClassTitle').textContent = `Gerenciar: ${className}`;
-    showTab('studentsTab', document.querySelector('#manageClassModal .tab-btn'));
+    showTab(document.querySelector('#manageClassModal .tab-btn[data-tab="studentsTab"]'));
     await loadClassStudents();
     await loadStudentProgress();
-    document.getElementById('manageClassModal').classList.add('show');
+    showModal('manageClassModal');
 }
 
 async function loadClassStudents() {
@@ -368,11 +439,11 @@ function renderStudents(students) {
                 <p>Usuário: ${student.username}</p>
             </div>
             <div class="student-actions">
-                <button onclick="handleResetStudentPassword('${student.id}', '${student.name}')" class="btn small" title="Resetar Senha">
-                    <i class="fas fa-key"></i>
+                <button onclick="handleResetStudentPassword('${student.id}', '${student.name}')" class="btn small" title="Resetar Senha" aria-label="Resetar senha do aluno ${student.name}">
+                    <i class="fas fa-key" aria-hidden="true"></i>
                 </button>
-                <button onclick="handleDeleteStudent('${student.id}', '${student.name}')" class="btn small danger" title="Excluir Aluno">
-                    <i class="fas fa-trash"></i>
+                <button onclick="handleDeleteStudent('${student.id}', '${student.name}')" class="btn small danger" title="Excluir Aluno" aria-label="Excluir aluno ${student.name}">
+                    <i class="fas fa-trash" aria-hidden="true"></i>
                 </button>
             </div>
         </div>`).join('');
@@ -495,7 +566,7 @@ async function handleCreateStudent(event) {
     }
 
     submitButton.disabled = true;
-    submitButton.textContent = 'Criando...';
+    submitButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Criando...';
 
     try {
         const hashedPassword = await hashPassword(password);
@@ -508,31 +579,16 @@ async function handleCreateStudent(event) {
         document.getElementById('newStudentUsername').textContent = username;
         document.getElementById('newStudentPassword').textContent = password;
         
-        const copyBtn = document.getElementById('copyCredentialsBtn');
-        copyBtn.onclick = () => {
-            const textToCopy = `Usuário: ${username}\nSenha: ${password}`;
-            navigator.clipboard.writeText(textToCopy).then(() => {
-                showFeedback('Dados copiados!', 'success');
-            }).catch(() => {
-                showFeedback('Erro ao copiar.', 'error');
-            });
-        };
-
-        document.getElementById('studentCreatedModal').classList.add('show');
-
+        showModal('studentCreatedModal');
         hideCreateStudentForm();
         await loadClassStudents();
         await loadStudentProgress();
 
     } catch (error) {
-        console.error("Erro ao criar aluno:", error);
-        const message = error.message.includes('duplicate key') 
-            ? 'Este nome de usuário já existe.' 
-            : `Erro ao criar aluno: ${error.message}`;
-        showFeedback(message, 'error');
+        showFeedback(formatErrorMessage(error), 'error');
     } finally {
         submitButton.disabled = false;
-        submitButton.textContent = 'Criar Aluno';
+        submitButton.innerHTML = 'Criar Aluno';
     }
 }
 
@@ -567,6 +623,17 @@ async function handleResetStudentPassword(studentId, studentName) {
     }
 }
 
+function handleCopyCredentials() {
+    const username = document.getElementById('newStudentUsername').textContent;
+    const password = document.getElementById('newStudentPassword').textContent;
+    const textToCopy = `Dados de acesso ao Jogo das Letras:\nUsuário: ${username}\nSenha: ${password}`;
+    navigator.clipboard.writeText(textToCopy).then(() => {
+        showFeedback('Dados copiados para a área de transferência!', 'success');
+    }).catch(() => {
+        showFeedback('Erro ao copiar. Por favor, anote manualmente.', 'error');
+    });
+}
+
 async function handleAudioUpload() {
     //... (código sem alterações)
 }
@@ -577,15 +644,14 @@ function stopRecording() {
     //... (código sem alterações)
 }
 
-// --- MODIFICADO: Função de salvar gravação para aceitar chaves customizadas ---
 async function saveRecording() {
     if (audioChunks.length === 0) return;
     const saveButton = document.getElementById('saveRecordingBtn');
     saveButton.disabled = true;
     saveButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Salvando...';
     
-    const selectedItem = document.getElementById('letterSelect').value; // Pode ser 'A', 'instruction_1', etc.
-    const audioBlob = new Blob(audioChunks, { type: 'audio/mp3' }); // Salvar como mp3
+    const selectedItem = document.getElementById('letterSelect').value;
+    const audioBlob = new Blob(audioChunks, { type: 'audio/mp3' });
     const fileName = `${selectedItem}.mp3`;
     const filePath = `${currentUser.id}/${fileName}`;
 
@@ -594,12 +660,11 @@ async function saveRecording() {
             .from('audio_uploads')
             .upload(filePath, audioBlob, {
                 cacheControl: '3600',
-                upsert: true, // Sobrescreve se já existir
+                upsert: true,
             });
         if (error) throw error;
         showFeedback(`Áudio para "${selectedItem}" salvo com sucesso!`, 'success');
         
-        // Limpa para a próxima gravação
         audioChunks = [];
         document.getElementById('audioPlayback').src = '';
     } catch (error) {
@@ -621,13 +686,12 @@ function stopTimer() {
 // PARTE 7: LÓGICA DO JOGO
 // =======================================================
 async function showStudentGame() {
-    // Ao logar, o jogo carrega e vai para a tela inicial
     await startGame();
 }
 
 async function startGame() {
     await loadGameState();
-    showScreen('startScreen'); // Sempre mostra a tela inicial antes de ir para o jogo
+    showScreen('startScreen');
 }
 
 async function loadGameState() {
@@ -694,16 +758,16 @@ function generateQuestions(phase) {
             }
             break;
         case 3:
-                 const words_p3 = [...PHASE_3_WORDS].sort(() => 0.5 - Math.random());
-                 for (let i = 0; i < questionCount; i++) {
-                     const item = words_p3[i % words_p3.length];
-                     const allSyllables = PHASE_3_WORDS.map(w => w.syllable);
-                     questions.push({ type: 'initial_syllable', word: item.word, image: item.image, correctAnswer: item.syllable, options: generateOptions(item.syllable, allSyllables, 4) });
-                 }
-                 break;
+             const words_p3 = [...PHASE_3_WORDS].sort(() => 0.5 - Math.random());
+             for (let i = 0; i < questionCount; i++) {
+                 const item = words_p3[i % words_p3.length];
+                 const allSyllables = PHASE_3_WORDS.map(w => w.syllable);
+                 questions.push({ type: 'initial_syllable', word: item.word, image: item.image, correctAnswer: item.syllable, options: generateOptions(item.syllable, allSyllables, 4) });
+             }
+             break;
         default: 
-                 questions = generateQuestions(3);
-                 break;
+             questions = generateQuestions(3);
+             break;
     }
     return questions;
 }
@@ -783,7 +847,6 @@ async function selectAnswer(selectedAnswer) {
     if (isCorrect) {
         gameState.score++;
         showFeedback('Muito bem! Você acertou!', 'success');
-        // --- MODIFICADO: Usa áudio da professora para feedback ---
         playTeacherAudio('feedback_correct', 'Acertou');
         if(currentQuestion.type !== 'letter_sound') {
             document.getElementById('wordDisplay').textContent = currentQuestion.word;
@@ -791,7 +854,6 @@ async function selectAnswer(selectedAnswer) {
     } else {
         gameState.attempts--;
         showFeedback(`Quase! A resposta correta era ${currentQuestion.correctAnswer}`, 'error');
-        // --- MODIFICADO: Usa áudio da professora para feedback ---
         playTeacherAudio('feedback_incorrect', 'Tente de novo');
     }
 
@@ -839,8 +901,6 @@ function showResultScreen(accuracy, passed) {
 }
 
 async function nextPhase() {
-    // Esta função não é mais usada para progressão automática, mas pode ser mantida para futuras lógicas
-    // Por segurança, vamos garantir que ela só funcione se a fase estiver liberada
     const nextPhaseNum = gameState.currentPhase + 1;
     if (nextPhaseNum > currentUser.assigned_phase) return;
 
@@ -867,7 +927,6 @@ async function restartGame() {
     showScreen('startScreen');
 }
 
-// --- MODIFICADO: Função genérica para tocar áudios da professora ---
 async function playTeacherAudio(key, fallbackText, onEndCallback) {
     const teacherId = gameState.teacherId;
     if (!teacherId) {
@@ -885,7 +944,6 @@ async function playTeacherAudio(key, fallbackText, onEndCallback) {
             if (onEndCallback) audio.onended = onEndCallback;
             audio.play();
         } else {
-            // Se o áudio gravado não for encontrado, usa a voz padrão
             speak(fallbackText, onEndCallback);
         }
     } catch (error) {
@@ -899,12 +957,11 @@ async function playCurrentAudio() {
     const currentQuestion = gameState.questions[gameState.currentQuestionIndex];
     if (currentQuestion.type !== 'letter_sound') return;
     const letter = currentQuestion.correctAnswer;
-    // --- MODIFICADO: Usa a nova função genérica ---
-    playTeacherAudio(letter, letter); // O fallback é falar a própria letra
+    playTeacherAudio(letter, letter);
 }
 
 // =======================================================
-// PARTE 8: SISTEMA DE VOZ E UI
+// PARTE 8: SISTEMA DE VOZ E UI (INTERFACE DO USUÁRIO)
 // =======================================================
 
 function initializeSpeech() {
@@ -912,7 +969,7 @@ function initializeSpeech() {
         const voices = speechSynthesis.getVoices();
         if (voices.length > 0) {
             selectedVoice = voices.find(voice => voice.lang === 'pt-BR' && voice.name.includes('Google')) || 
-                                      voices.find(voice => voice.lang === 'pt-BR');
+                            voices.find(voice => voice.lang === 'pt-BR');
             speechReady = true;
             speechSynthesis.removeEventListener('voiceschanged', loadVoices);
         }
@@ -941,44 +998,54 @@ function speak(text, onEndCallback) {
     speechSynthesis.speak(utterance);
 }
 
-function showScreen(screenId) { document.querySelectorAll('.screen').forEach(s => s.classList.remove('active')); document.getElementById(screenId)?.classList.add('active'); }
-function showUserTypeScreen() { showScreen('userTypeScreen'); }
-function showTeacherLogin() { showScreen('teacherLoginScreen'); }
-function showTeacherRegister() { showScreen('teacherRegisterScreen'); }
-function showStudentLogin() { showScreen('studentLoginScreen'); }
-function showCreateClassModal() { document.getElementById('createClassModal').classList.add('show'); }
-function closeModal(modalId) { document.getElementById(modalId)?.classList.remove('show'); }
-function showCreateStudentForm() { document.getElementById('createStudentForm').style.display = 'block'; }
-function hideCreateStudentForm() { document.getElementById('createStudentForm').style.display = 'none'; document.getElementById('createStudentFormElement').reset(); }
+function showScreen(screenId) { 
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active')); 
+    document.getElementById(screenId)?.classList.add('active'); 
+}
 
-// --- MODIFICADO: Preenche o seletor com as letras E os áudios customizáveis ---
+function showModal(modalId) { 
+    document.getElementById(modalId)?.classList.add('show'); 
+}
+
+function closeModal(modalId) { 
+    document.getElementById(modalId)?.classList.remove('show'); 
+}
+
+function showCreateStudentForm() { 
+    document.getElementById('createStudentForm').style.display = 'block'; 
+}
+function hideCreateStudentForm() { 
+    document.getElementById('createStudentForm').style.display = 'none'; 
+    document.getElementById('createStudentFormElement').reset(); 
+}
+
 function showAudioSettingsModal() {
     const letterSelect = document.getElementById('letterSelect');
     if (letterSelect) {
         let optionsHtml = '';
-
-        // Adiciona as opções de áudios customizáveis
         optionsHtml += '<optgroup label="Instruções e Feedbacks">';
         for (const key in CUSTOM_AUDIO_KEYS) {
             optionsHtml += `<option value="${key}">${CUSTOM_AUDIO_KEYS[key]}</option>`;
         }
         optionsHtml += '</optgroup>';
         
-        // Adiciona as letras do alfabeto
         optionsHtml += '<optgroup label="Letras do Alfabeto">';
         optionsHtml += ALPHABET.map(letter => `<option value="${letter}">Letra ${letter}</option>`).join('');
         optionsHtml += '</optgroup>';
 
         letterSelect.innerHTML = optionsHtml;
     }
-    document.getElementById('audioSettingsModal').classList.add('show');
-    showTab('uploadFileTab', document.querySelector('#audioSettingsModal .tab-btn'));
+    showModal('audioSettingsModal');
+    showTab(document.querySelector('#audioSettingsModal .tab-btn[data-tab="uploadFileTab"]'));
 }
 
-function showTab(tabId, clickedButton) {
+function showTab(clickedButton) {
     const parent = clickedButton.closest('.modal-content');
+    const tabId = clickedButton.getAttribute('data-tab');
+
     parent.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
     clickedButton.classList.add('active');
+
     parent.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
     parent.querySelector('#' + tabId).classList.add('active');
 }
@@ -1017,10 +1084,9 @@ async function showTutorial(phaseNumber) {
     const mascot = document.getElementById('tutorialMascot');
     document.getElementById('tutorialText').textContent = instruction;
     
-    overlay.style.display = 'flex';
+    overlay.classList.add('show');
     mascot.classList.add('talking');
     
-    // --- MODIFICADO: Usa a voz da professora para a instrução ---
     const audioKey = `instruction_${phaseNumber}`;
     playTeacherAudio(audioKey, instruction, () => mascot.classList.remove('talking'));
 
@@ -1029,5 +1095,5 @@ async function showTutorial(phaseNumber) {
 }
 
 function hideTutorial() {
-    document.getElementById('tutorialOverlay').style.display = 'none';
+    document.getElementById('tutorialOverlay').classList.remove('show');
 }
