@@ -821,3 +821,40 @@ html, body {
         font-size: 1rem;
     }
 }
+/* ================================================= */
+/* === SOLUÇÃO DEFINITIVA PARA LAYOUT DE TELA === */
+/* ================================================= */
+
+/* Garante que o corpo da página não tenha rolagens inesperadas */
+html, body {
+    height: 100%;
+    overflow: hidden;
+}
+
+/* Força a tela do jogo a se comportar como um aplicativo */
+#gameScreen.active {
+    display: flex;
+    flex-direction: column;
+    height: 100vh; /* Ocupa 100% da altura da tela visível */
+    width: 100vw;  /* Ocupa 100% da largura da tela visível */
+    padding: 15px;
+    box-sizing: border-box; /* Garante que o padding não aumente o tamanho total */
+    justify-content: flex-start;
+    overflow: hidden; /* Desativa a rolagem da tela inteira */
+}
+
+/* O cabeçalho não deve encolher */
+#gameScreen .game-header {
+    flex-shrink: 0;
+    width: 100%;
+    margin-bottom: 15px;
+}
+
+/* A área de conteúdo principal é a única que pode crescer e rolar */
+#gameScreen .game-content {
+    flex-grow: 1; /* Faz este elemento ocupar todo o espaço restante */
+    overflow-y: auto; /* Adiciona rolagem vertical APENAS aqui se necessário */
+    min-height: 0; /* Truque importante para o flexbox funcionar bem com rolagem */
+    width: 100%;
+    padding: 1rem;
+}
