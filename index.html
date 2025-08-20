@@ -120,7 +120,7 @@
                     <button onclick="showCreateClassModal()" class="create-btn"><i class="fas fa-plus"></i> Criar Nova Turma</button>
                     <div id="classesList" class="classes-grid"></div>
                 </div>
-                 <div class="dashboard-section">
+                <div class="dashboard-section">
                     <h2>Configurações</h2>
                     <button onclick="showAudioSettingsModal()" class="create-btn" style="background-color: #5c6bc0;">
                         <i class="fas fa-microphone-alt"></i> Gerenciar Áudios das Letras
@@ -138,10 +138,10 @@
 			</div>
 			<div class="character-mascot">
 				<div class="mascot bounce">
-					<i class="fas fa-robot"></i>
+					<i class="fas fa-cat"></i>
 				</div>
 				<div class="speech-bubble">
-					<p>Olá! Eu sou o Robô do Saber! Vamos começar a aventura?</p>
+					<p>Olá! Eu sou o Gatinho Alfabeto! Vamos brincar?</p>
 				</div>
 			</div>
 			<button id="startButton" class="start-button">
@@ -178,26 +178,26 @@
 			<div class="question-area">
 				<div class="mascot-helper">
 					<div class="mascot pulse">
-						<i class="fas fa-robot"></i>
+						<i class="fas fa-cat"></i>
 					</div>
 					<div class="speech-bubble" id="helperText">
 						Clique no alto-falante para ouvir o som!
 					</div>
 				</div>
-  
-                <div class="audio-section" id="audioQuestionArea">
+  
+                <div class="audio-section" id="audioQuestionArea">
 					<button id="playAudioButton" class="audio-button">
 						<i class="fas fa-volume-up"></i>
 						<span>Ouvir Som</span>
 					</button>
 				</div>
 
-                <div id="imageQuestionArea" style="display: none;">
-                    <div class="image-display">
-                        <span id="imageEmoji" class="image-emoji"></span>
-                    </div>
-                    <h3 id="wordDisplay" class="word-display"></h3>
-                </div>
+                <div id="imageQuestionArea" style="display: none;">
+                    <div class="image-display">
+                        <span id="imageEmoji" class="image-emoji"></span>
+                    </div>
+                    <h3 id="wordDisplay" class="word-display"></h3>
+                </div>
 
 				<div class="question-text">
 					<h3 id="questionText">Qual letra faz este som?</h3>
@@ -321,11 +321,81 @@
     </div>
 
     <div id="audioSettingsModal" class="modal">
-		</div>
-	<div id="tutorialOverlay" class="tutorial-overlay">
-		</div>
-	<div id="studentCreatedModal" class="modal">
-		</div>
+        <div class="modal-content large">
+            <h3>Gerenciar Áudios das Letras</h3>
+            <div class="modal-tabs">
+                <button class="tab-btn active" onclick="showTab('uploadFileTab', this)">Enviar Arquivos</button>
+                <button class="tab-btn" onclick="showTab('recordVoiceTab', this)">Gravar com Microfone</button>
+            </div>
+            <div id="uploadFileTab" class="tab-content active">
+                <div class="upload-section">
+                    <p>Envie os arquivos de áudio (.mp3, .wav, .m4a) para cada letra.</p>
+                    <div class="upload-instructions">
+                        <p><i class="fas fa-info-circle"></i> <strong>Nomeie os arquivos exatamente como a letra.</strong> Ex: <code>A.mp3</code></p>
+                    </div>
+                    <div class="upload-area">
+                        <input type="file" id="audioUpload" accept="audio/*" multiple>
+                        <label for="audioUpload" class="upload-label"><i class="fas fa-cloud-upload-alt"></i><span>Clique para selecionar</span></label>
+                    </div>
+                    <div id="uploadStatus"></div>
+                    <button id="uploadAudioBtn" class="modal-btn primary">Enviar Arquivos</button>
+                </div>
+            </div>
+            <div id="recordVoiceTab" class="tab-content">
+                <div class="record-section">
+                    <p>Grave sua voz falando o som de cada letra.</p>
+                    <div class="form-group">
+                        <label for="letterSelect">1. Escolha a Letra para Gravar:</label>
+                        <select id="letterSelect"></select>
+                    </div>
+                    <div class="record-controls">
+                        <button id="recordBtn" class="record-btn"><i class="fas fa-microphone"></i> Gravar</button>
+                        <button id="stopBtn" class="stop-btn" disabled><i class="fas fa-stop"></i> Parar</button>
+                        <span id="recordTimer">00:00</span>
+                    </div>
+                    <div class="audio-playback">
+                        <label>2. Ouça a Gravação:</label>
+                        <audio id="audioPlayback" controls></audio>
+                    </div>
+                    <div id="recordStatus"></div>
+                    <button id="saveRecordingBtn" class="modal-btn primary" disabled><i class="fas fa-save"></i> Salvar Gravação</button>
+                </div>
+            </div>
+            <div class="modal-actions">
+                <button type="button" onclick="closeModal('audioSettingsModal')" class="modal-btn">Fechar</button>
+            </div>
+        </div>
+    </div>
+    
+    <div id="tutorialOverlay" class="tutorial-overlay">
+        <div class="tutorial-content">
+            <div id="tutorialMascot" class="mascot">
+                <i class="fas fa-cat"></i>
+            </div>
+            <div class="speech-bubble" id="tutorialText">
+            </div>
+            <button id="closeTutorialBtn" class="start-button">
+                <i class="fas fa-play"></i> Vamos Jogar!
+            </button>
+        </div>
+    </div>
+
+    <div id="studentCreatedModal" class="modal">
+        <div class="modal-content">
+            <h3 style="color: #4ECDC4;"><i class="fas fa-check-circle"></i> Aluno Criado com Sucesso!</h3>
+            <p>Anote os dados de acesso abaixo para entregar ao aluno.</p>
+            
+            <div class="credentials-box">
+                <p><strong>Usuário:</strong> <span id="newStudentUsername"></span></p>
+                <p><strong>Senha:</strong> <span id="newStudentPassword" style="font-weight: bold; color: #764ba2;"></span></p>
+            </div>
+    
+            <div class="modal-actions">
+                <button type="button" id="copyCredentialsBtn" class="modal-btn"><i class="fas fa-copy"></i> Copiar Dados</button>
+                <button type="button" onclick="closeModal('studentCreatedModal')" class="modal-btn primary">Fechar</button>
+            </div>
+        </div>
+    </div>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="script.js"></script>
