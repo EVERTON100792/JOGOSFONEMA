@@ -126,9 +126,25 @@ async function initApp() {
     if (studentSession) {
         console.log("Sessão de aluno encontrada. Restaurando jogo...");
         currentUser = JSON.parse(studentSession);
-        await startGame();
+        // MODIFICADO: Em vez de sempre ir para o início, verificamos o estado do jogo
+        await restoreOrStartGame();
     } else {
         await checkSession();
+    }
+}
+
+// NOVA FUNÇÃO: Decide se o jogo continua de onde parou ou vai para a tela de resultados
+async function restoreOrStartGame() {
+    await loadGameState(); // Carrega o progresso do banco de dados
+
+    // Verifica se a fase designada foi concluída com sucesso
+    if (gameState.phaseCompleted) {
+        // Se já completou, mostra a tela de resultados final
+        showResultScreen(Math.round((gameState.score / gameState.questions.length) * 100), true);
+    } else {
+        // Se não completou, leva direto para a tela do jogo
+        showScreen('gameScreen');
+        startQuestion();
     }
 }
 
@@ -499,7 +515,7 @@ async function loadStudentProgress() {
                     <p>Progresso na Fase ${currentPhase}: ${accuracy}% (${score}/${total})</p>
                     <div class="student-progress-container">
                          <div class="student-progress-bar">
-                             <div class="student-progress-fill" style="width: ${accuracy}%;"></div>
+                              <div class="student-progress-fill" style="width: ${accuracy}%;"></div>
                          </div>
                     </div>
                 </div>
@@ -878,6 +894,7 @@ function endPhase() {
     showResultScreen(accuracy, passed);
 }
 
+// MODIFICADO: Adiciona o marcador "phaseCompleted" ao estado do jogo
 function showResultScreen(accuracy, passed) {
     showScreen('resultScreen');
     document.getElementById('finalScore').textContent = gameState.score;
@@ -892,13 +909,23 @@ function showResultScreen(accuracy, passed) {
         resultMessage.innerHTML = 'Você completou a atividade designada! 🏆<br>Fale com seu professor(a) para receber uma nova tarefa!';
         continueButton.style.display = 'none';
         retryButton.style.display = 'none';
+        
+        // Adiciona um marcador de que a fase foi concluída com sucesso
+        gameState.phaseCompleted = true; 
+        saveGameState(); // Salva o estado final
+
     } else {
         document.getElementById('resultTitle').textContent = 'Não desanime!';
         resultMessage.textContent = 'Você precisa acertar mais para passar. Tente novamente!';
         continueButton.style.display = 'none';
         retryButton.style.display = 'inline-block';
+        
+        // Garante que o marcador seja falso se ele não passou
+        gameState.phaseCompleted = false;
+        saveGameState();
     }
 }
+
 
 async function nextPhase() {
     const nextPhaseNum = gameState.currentPhase + 1;
@@ -914,10 +941,12 @@ async function nextPhase() {
     startQuestion();
 }
 
+// MODIFICADO: Reseta o marcador "phaseCompleted" ao tentar novamente
 async function retryPhase() {
     gameState.currentQuestionIndex = 0;
     gameState.score = 0;
     gameState.attempts = 2;
+    gameState.phaseCompleted = false; // Reseta o estado de conclusão
     await saveGameState();
     showScreen('gameScreen');
     startQuestion();
