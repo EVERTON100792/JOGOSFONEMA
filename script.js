@@ -4,7 +4,7 @@
 const { createClient } = supabase;
 // ATENÇÃO: Substitua pelas suas chaves do Supabase se forem diferentes
 const supabaseUrl = 'https://nxpwxbxhucliudnutyqd.supabase.co';
-const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im54cHd4YnhodWNsaXVkbnV0eXFkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU0ODU4NjcsImV4cCI6MjA3MTA2MTg2N30.m1KbiyPe_K9CK2nBhsxo97A5rai2GtnyVPnpff5isNg';
+const supabaseKey = 'eyJhbGciOiJI|=|zI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im54cHd4YnhodWNsaXVkbnV0eXFkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU0ODU4NjcsImV4cCI6MjA3MTA2MTg2N30.m1KbiyPe_K9CK2nBhsxo97A5rai2GtnyVPnpff5isNg';
 const supabaseClient = createClient(supabaseUrl, supabaseKey);
 
 // Chave do professor que tem permissão para gerenciar os áudios do jogo
@@ -206,9 +206,9 @@ function setupAllEventListeners() {
 
     // Configurações de Áudio
     document.getElementById('uploadAudioBtn')?.addEventListener('click', handleAudioUpload);
-    document.getElementById('recordBtn')?.addEventListener('click', startRecording);
-    document.getElementById('stopBtn')?.addEventListener('click', stopRecording);
-    document.getElementById('saveRecordingBtn')?.addEventListener('click', saveRecording);
+    document.getElementById('recordBtn')?.addEventListener('click', startRecording); // MODIFICADO
+    document.getElementById('stopBtn')?.addEventListener('click', stopRecording);   // MODIFICADO
+    document.getElementById('saveRecordingBtn')?.addEventListener('click', saveRecording); // MODIFICADO
     
     // Tutorial
     document.getElementById('closeTutorialBtn')?.addEventListener('click', hideTutorial);
@@ -357,18 +357,16 @@ async function showTeacherDashboard() {
     await loadTeacherData();
 }
 
-// MODIFICADO: Esconde o botão de áudio se não for o Super Admin
 async function loadTeacherData() {
     if (!currentUser) return;
     document.getElementById('teacherName').textContent = currentUser.user_metadata.full_name || 'Professor(a)';
     
     const audioSettingsButton = document.getElementById('showAudioSettingsModalBtn');
     
-    // Verifica se o ID do professor logado é o mesmo do Super Admin
     if (currentUser.id === SUPER_ADMIN_TEACHER_ID) {
-        audioSettingsButton.style.display = 'block'; // Mostra o botão
+        audioSettingsButton.style.display = 'block';
     } else {
-        audioSettingsButton.style.display = 'none';  // Esconde o botão
+        audioSettingsButton.style.display = 'none';
     }
 
     await loadTeacherClasses();
@@ -546,7 +544,7 @@ async function assignPhase(studentId, selectElement) {
     const studentName = selectElement.closest('.student-item').querySelector('h4').textContent;
 
     if (!confirm(`Deseja designar a Fase ${newPhase} para o aluno ${studentName}?\n\nAtenção: O progresso na fase atual será reiniciado para que ele comece a nova atividade do zero.`)) {
-        await loadStudentProgress(); // Recarrega para reverter a seleção visualmente
+        await loadStudentProgress();
         return;
     }
 
@@ -660,25 +658,121 @@ function handleCopyCredentials() {
     });
 }
 
+
+// #####################################################################
+// ### INÍCIO DA SEÇÃO DE GRAVAÇÃO DE ÁUDIO - TOTALMENTE REFEITA ###
+// #####################################################################
+
 async function handleAudioUpload() {
-    //... (código sem alterações)
+    // Esta função permanece a mesma
+    const files = document.getElementById('audioUpload').files;
+    if (files.length === 0) return showFeedback('Nenhum arquivo selecionado.', 'error');
+    
+    const uploadStatus = document.getElementById('uploadStatus');
+    uploadStatus.innerHTML = `<p><i class="fas fa-spinner fa-spin"></i> Enviando ${files.length} arquivo(s)...</p>`;
+    
+    let successCount = 0;
+    let errorCount = 0;
+
+    for (const file of files) {
+        const fileName = file.name.split('.').slice(0, -1).join('.').toUpperCase();
+        const filePath = `${currentUser.id}/${fileName}.${file.name.split('.').pop()}`;
+        
+        try {
+            const { error } = await supabaseClient.storage
+                .from('audio_uploads')
+                .upload(filePath, file, { upsert: true });
+            if (error) throw error;
+            successCount++;
+        } catch (error) {
+            console.error(`Erro ao enviar ${file.name}:`, error);
+            errorCount++;
+        }
+    }
+    
+    uploadStatus.innerHTML = `<p style="color: green;">${successCount} áudios enviados com sucesso!</p>`;
+    if (errorCount > 0) {
+        uploadStatus.innerHTML += `<p style="color: red;">Falha ao enviar ${errorCount} áudios.</p>`;
+    }
 }
+
 async function startRecording() {
-    //... (código sem alterações)
+    const recordBtn = document.getElementById('recordBtn');
+    const stopBtn = document.getElementById('stopBtn');
+    const statusEl = document.getElementById('recordStatus');
+
+    recordBtn.disabled = true;
+    statusEl.textContent = 'Pedindo permissão para o microfone...';
+
+    try {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        
+        const options = { mimeType: 'audio/webm; codecs=opus' };
+        if (!MediaRecorder.isTypeSupported(options.mimeType)) {
+            console.warn(`${options.mimeType} não é suportado. Tentando alternativa.`);
+            options.mimeType = 'audio/webm';
+            if (!MediaRecorder.isTypeSupported(options.mimeType)) {
+                alert("Seu navegador não suporta a gravação de áudio neste formato (WebM). Tente usar Chrome ou Firefox.");
+                statusEl.textContent = 'Gravação não suportada.';
+                recordBtn.disabled = false;
+                return;
+            }
+        }
+
+        audioChunks = [];
+        mediaRecorder = new MediaRecorder(stream, options);
+
+        mediaRecorder.addEventListener('dataavailable', event => {
+            audioChunks.push(event.data);
+        });
+
+        mediaRecorder.addEventListener('stop', () => {
+            const audioBlob = new Blob(audioChunks, { type: options.mimeType });
+            const audioUrl = URL.createObjectURL(audioBlob);
+            document.getElementById('audioPlayback').src = audioUrl;
+            document.getElementById('saveRecordingBtn').disabled = false;
+            
+            // Para a faixa do microfone para que o ícone de gravação suma do navegador
+            stream.getTracks().forEach(track => track.stop());
+        });
+
+        mediaRecorder.start();
+        statusEl.textContent = 'Gravando...';
+        stopBtn.disabled = false;
+        startTimer();
+
+    } catch (err) {
+        console.error("Erro ao iniciar gravação:", err);
+        alert("Não foi possível iniciar a gravação. Por favor, verifique se você permitiu o acesso ao microfone no seu navegador.");
+        statusEl.textContent = 'Falha ao iniciar. Verifique as permissões.';
+        recordBtn.disabled = false;
+    }
 }
+
 function stopRecording() {
-    //... (código sem alterações)
+    if (mediaRecorder && mediaRecorder.state === 'recording') {
+        mediaRecorder.stop();
+        stopTimer();
+        document.getElementById('recordBtn').disabled = false;
+        document.getElementById('stopBtn').disabled = true;
+        document.getElementById('recordStatus').textContent = 'Gravação parada. Ouça e salve.';
+    }
 }
 
 async function saveRecording() {
-    if (audioChunks.length === 0) return;
+    if (audioChunks.length === 0) {
+        return showFeedback("Nenhum áudio gravado para salvar.", "error");
+    }
     const saveButton = document.getElementById('saveRecordingBtn');
     saveButton.disabled = true;
     saveButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Salvando...';
     
     const selectedItem = document.getElementById('letterSelect').value;
-    const audioBlob = new Blob(audioChunks, { type: 'audio/mp3' });
-    const fileName = `${selectedItem}.mp3`;
+    const mimeType = mediaRecorder.mimeType || 'audio/webm';
+    const fileExtension = mimeType.split('/')[1].split(';')[0];
+
+    const audioBlob = new Blob(audioChunks, { type: mimeType });
+    const fileName = `${selectedItem}.${fileExtension}`;
     const filePath = `${currentUser.id}/${fileName}`;
 
     try {
@@ -689,23 +783,43 @@ async function saveRecording() {
                 upsert: true,
             });
         if (error) throw error;
+        
         showFeedback(`Áudio para "${selectedItem}" salvo com sucesso!`, 'success');
         
         audioChunks = [];
         document.getElementById('audioPlayback').src = '';
+        document.getElementById('recordStatus').textContent = 'Pronto para gravar outra letra.';
+
     } catch (error) {
         showFeedback(`Erro ao salvar gravação: ${error.message}`, 'error');
+        console.error("Erro no upload para o Supabase:", error);
     } finally {
         saveButton.disabled = false;
         saveButton.innerHTML = '<i class="fas fa-save"></i> Salvar Gravação';
     }
 }
+
 function startTimer() {
-    //... (código sem alterações)
+    stopTimer();
+    let seconds = 0;
+    const timerEl = document.getElementById('recordTimer');
+    timerEl.textContent = '00:00';
+    
+    timerInterval = setInterval(() => {
+        seconds++;
+        const mins = Math.floor(seconds / 60).toString().padStart(2, '0');
+        const secs = (seconds % 60).toString().padStart(2, '0');
+        timerEl.textContent = `${mins}:${secs}`;
+    }, 1000);
 }
+
 function stopTimer() {
-    //... (código sem alterações)
+    clearInterval(timerInterval);
 }
+
+// #####################################################################
+// ### FIM DA SEÇÃO DE GRAVAÇÃO DE ÁUDIO ###
+// #####################################################################
 
 
 // =======================================================
@@ -975,7 +1089,6 @@ async function restartGame() {
     }
 }
 
-// MODIFICADO: Força o uso do ID do Super Admin
 async function playTeacherAudio(key, fallbackText, onEndCallback) {
     const teacherId = SUPER_ADMIN_TEACHER_ID; 
 
