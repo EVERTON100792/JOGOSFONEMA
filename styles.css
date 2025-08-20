@@ -389,3 +389,38 @@ input[type="file"] { display: none; }
 @keyframes correct-bounce { 0% { transform: scale(1); } 30% { transform: scale(1.1) translateY(-5px); } 50% { transform: scale(0.95); } 100% { transform: scale(1); } }
 @keyframes incorrect-shake { 0% { transform: translateX(0); } 20% { transform: translateX(-10px); } 40% { transform: translateX(10px); } 60% { transform: translateX(-10px); } 80% { transform: translateX(10px); } 100% { transform: translateX(0); } }
 @keyframes bounceIn { 0% { opacity: 0; transform: scale(0.3); } 50% { opacity: 1; transform: scale(1.05); } 70% { transform: scale(0.9); } 100% { transform: scale(1); } }
+/* ================================================= */
+/* PARTE 11: AJUSTES FINOS DE RESPONSIVIDADE         */
+/* ================================================= */
+
+/* Ajustes para celulares (telas menores que 480px) */
+@media (max-width: 480px) {
+    .game-title h1 {
+        font-size: 2.2rem; /* Diminui um pouco o título principal */
+    }
+
+    .login-container {
+        padding: 25px 20px; /* Reduz o padding interno para dar mais espaço */
+        margin: 15px 0; /* Adiciona uma margem vertical */
+    }
+
+    .login-form {
+        gap: 15px; /* Diminui o espaço entre os campos do formulário */
+    }
+
+    .user-types {
+        flex-direction: column; /* Coloca os cards um embaixo do outro */
+        align-items: center;
+        gap: 25px;
+    }
+
+    .user-type-btn {
+        width: 100%;
+        max-width: 300px; /* Limita a largura máxima em telas pequenas */
+    }
+
+    .game-header {
+        flex-direction: column; /* Empilha os itens do header do jogo */
+        gap: 1rem;
+    }
+}
