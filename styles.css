@@ -752,3 +752,72 @@ html, body {
     width: 100%;
     padding: 1rem;
 }
+
+/* ===================================================== */
+/* === AJUSTES FINOS PARA TELAS BAIXAS (CELULARES) === */
+/* ===================================================== */
+
+/* Estas regras só se aplicam se a altura da tela for 740px ou menos */
+@media (max-height: 740px) {
+    #gameScreen .game-content {
+        padding: 1rem; /* Diminui o padding interno */
+        display: flex;
+        flex-direction: column;
+    }
+
+    #gameScreen .question-area {
+        margin-bottom: 1rem; /* Menos espaço abaixo da pergunta */
+    }
+
+    #gameScreen .mascot-helper {
+        margin-bottom: 0.5rem; /* Menos espaço para o mascote */
+    }
+
+    #gameScreen .mascot-helper .mascot {
+        font-size: 2.5rem; /* Mascote um pouco menor */
+        margin-bottom: 0.5rem;
+    }
+    
+    #gameScreen .speech-bubble {
+        padding: 0.5rem 1rem;
+    }
+    
+    #gameScreen .speech-bubble p {
+        font-size: 0.9rem;
+    }
+
+    #gameScreen .audio-section {
+        margin: 0.5rem 0; /* Menos margem vertical */
+    }
+
+    #gameScreen .audio-button {
+        width: 90px; /* Botão de áudio menor */
+        height: 90px;
+    }
+     #gameScreen .audio-button i {
+        font-size: 1.5rem;
+    }
+    #gameScreen .audio-button span {
+        font-size: 0.8rem;
+    }
+
+    #gameScreen .question-text h3 {
+        font-size: 1.2rem; /* Texto da pergunta menor */
+        margin: 0.5rem 0;
+    }
+
+    #gameScreen .letters-grid {
+        margin: 1rem 0; /* Menos margem vertical */
+        gap: 0.5rem; /* Espaço menor entre os botões */
+        flex-grow: 1; /* Permite que a grade cresça para preencher o espaço */
+    }
+
+    #gameScreen .game-controls {
+        margin-top: 1rem; /* Menos espaço acima do botão 'Ouvir Novamente' */
+    }
+    
+    #gameScreen .control-button {
+        padding: 0.8rem 1.5rem;
+        font-size: 1rem;
+    }
+}
