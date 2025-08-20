@@ -3,14 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Jogo das Letras 2.0 - Aprenda com Estilo!</title>
-    
+    <title>Jogo de Alfabetização - Aprenda as Letras!</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;800;900&display=swap" rel="stylesheet">
-    
+    <link href="https://fonts.googleapis.com/css2?family=Comic+Neue:wght@400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
@@ -49,12 +44,15 @@
                     </div>
                     <div class="form-group">
                         <label for="teacherPassword">Senha:</label>
-                        <input type="password" id="teacherPassword" required autocomplete="current-password">
+                        <div class="password-wrapper">
+                            <input type="password" id="teacherPassword" required autocomplete="current-password">
+                            <i class="fas fa-eye password-toggle" aria-label="Mostrar/ocultar senha"></i>
+                        </div>
                     </div>
                     <button type="submit" class="login-btn">Entrar</button>
-                    <button type="button" class="register-btn" onclick="showTeacherRegister()">Não tenho conta</button>
+                    <button type="button" class="register-btn" id="showRegisterBtn">Não tenho conta</button>
                 </form>
-                <button class="back-btn" onclick="showUserTypeScreen()">
+                <button class="back-btn" data-target="userTypeScreen">
                     <i class="fas fa-arrow-left"></i> Voltar
                 </button>
             </div>
@@ -76,12 +74,15 @@
                     </div>
                     <div class="form-group">
                         <label for="teacherRegPassword">Senha:</label>
-                        <input type="password" id="teacherRegPassword" required autocomplete="new-password">
+                         <div class="password-wrapper">
+                            <input type="password" id="teacherRegPassword" required autocomplete="new-password">
+                            <i class="fas fa-eye password-toggle" aria-label="Mostrar/ocultar senha"></i>
+                        </div>
                     </div>
                     <button type="submit" class="login-btn">Cadastrar</button>
-                    <button type="button" class="register-btn" onclick="showTeacherLogin()">Já tenho conta</button>
+                    <button type="button" class="register-btn" id="showLoginBtn">Já tenho conta</button>
                 </form>
-                <button class="back-btn" onclick="showUserTypeScreen()">
+                 <button class="back-btn" data-target="userTypeScreen">
                     <i class="fas fa-arrow-left"></i> Voltar
                 </button>
             </div>
@@ -99,11 +100,14 @@
                     </div>
                     <div class="form-group">
                         <label for="studentPassword">Senha:</label>
-                        <input type="password" id="studentPassword" required autocomplete="current-password">
+                        <div class="password-wrapper">
+                            <input type="password" id="studentPassword" required autocomplete="current-password">
+                            <i class="fas fa-eye password-toggle" aria-label="Mostrar/ocultar senha"></i>
+                        </div>
                     </div>
                     <button type="submit" class="login-btn">Entrar</button>
                 </form>
-                <button class="back-btn" onclick="showUserTypeScreen()">
+                <button class="back-btn" data-target="userTypeScreen">
                     <i class="fas fa-arrow-left"></i> Voltar
                 </button>
             </div>
@@ -116,18 +120,20 @@
                 <h1>📚 Dashboard do Professor</h1>
                 <div class="teacher-info">
                     <span id="teacherName">Professor</span>
-                    <button onclick="logout()" class="logout-btn"><i class="fas fa-sign-out-alt"></i> Sair</button>
+                    <button id="logoutBtn" class="logout-btn" aria-label="Sair da conta">
+                        <i class="fas fa-sign-out-alt"></i> Sair
+                    </button>
                 </div>
             </div>
             <div class="dashboard-content">
                 <div class="dashboard-section">
                     <h2>Minhas Turmas</h2>
-                    <button onclick="showCreateClassModal()" class="create-btn"><i class="fas fa-plus"></i> Criar Nova Turma</button>
+                    <button id="showCreateClassModalBtn" class="create-btn"><i class="fas fa-plus"></i> Criar Nova Turma</button>
                     <div id="classesList" class="classes-grid"></div>
                 </div>
                 <div class="dashboard-section">
                     <h2>Configurações</h2>
-                    <button onclick="showAudioSettingsModal()" class="create-btn" style="background-color: #5c6bc0;">
+                    <button id="showAudioSettingsModalBtn" class="create-btn" style="background-color: #5c6bc0;">
                         <i class="fas fa-microphone-alt"></i> Gerenciar Áudios das Letras
                     </button>
                 </div>
@@ -189,9 +195,9 @@
 						Clique no alto-falante para ouvir o som!
 					</div>
 				</div>
- 
+  
                 <div class="audio-section" id="audioQuestionArea">
-					<button id="playAudioButton" class="audio-button">
+					<button id="playAudioButton" class="audio-button" aria-label="Ouvir o som da letra">
 						<i class="fas fa-volume-up"></i>
 						<span>Ouvir Som</span>
 					</button>
@@ -255,7 +261,7 @@
 		</div>
 	</div>
 
-    <div id="globalFeedback">
+    <div id="globalFeedback" aria-live="polite">
         <div class="feedback-content">
             <span class="feedback-icon"></span>
             <span class="feedback-text"></span>
@@ -272,7 +278,7 @@
                 </div>
                 <div class="modal-actions">
                     <button type="submit" class="modal-btn primary">Criar</button>
-                    <button type="button" onclick="closeModal('createClassModal')" class="modal-btn">Cancelar</button>
+                    <button type="button" class="modal-btn" data-close="createClassModal">Cancelar</button>
                 </div>
             </form>
         </div>
@@ -282,14 +288,14 @@
         <div class="modal-content large">
             <h3 id="manageClassTitle">Gerenciar Turma</h3>
             <div class="modal-tabs">
-                <button class="tab-btn active" onclick="showTab('studentsTab', this)">Alunos</button>
-                <button class="tab-btn" onclick="showTab('studentProgressTab', this)">Progresso dos Alunos</button>
+                <button class="tab-btn active" data-tab="studentsTab">Alunos</button>
+                <button class="tab-btn" data-tab="studentProgressTab">Progresso dos Alunos</button>
             </div>
             <div id="studentsTab" class="tab-content active">
                 <div class="students-section">
                     <div class="section-header">
                         <h4>Alunos da Turma</h4>
-                        <button onclick="showCreateStudentForm()" class="create-btn small"><i class="fas fa-plus"></i> Adicionar Aluno</button>
+                        <button id="showCreateStudentFormBtn" class="create-btn small"><i class="fas fa-plus"></i> Adicionar Aluno</button>
                     </div>
                     <div id="createStudentForm" class="create-form" style="display: none;">
                         <form id="createStudentFormElement">
@@ -306,7 +312,7 @@
                             </div>
                             <div class="form-actions">
                                 <button type="button" id="createStudentSubmitBtn" class="btn primary">Criar Aluno</button>
-                                <button type="button" onclick="hideCreateStudentForm()" class="btn">Cancelar</button>
+                                <button type="button" id="hideCreateStudentFormBtn" class="btn">Cancelar</button>
                             </div>
                         </form>
                     </div>
@@ -320,7 +326,7 @@
                 </div>
             </div>
             <div class="modal-actions">
-                <button type="button" onclick="closeModal('manageClassModal')" class="modal-btn">Fechar</button>
+                <button type="button" class="modal-btn" data-close="manageClassModal">Fechar</button>
             </div>
         </div>
     </div>
@@ -329,8 +335,8 @@
         <div class="modal-content large">
             <h3>Gerenciar Áudios das Letras</h3>
             <div class="modal-tabs">
-                <button class="tab-btn active" onclick="showTab('uploadFileTab', this)">Enviar Arquivos</button>
-                <button class="tab-btn" onclick="showTab('recordVoiceTab', this)">Gravar com Microfone</button>
+                <button class="tab-btn active" data-tab="uploadFileTab">Enviar Arquivos</button>
+                <button class="tab-btn" data-tab="recordVoiceTab">Gravar com Microfone</button>
             </div>
             <div id="uploadFileTab" class="tab-content active">
                 <div class="upload-section">
@@ -354,8 +360,8 @@
                         <select id="letterSelect"></select>
                     </div>
                     <div class="record-controls">
-                        <button id="recordBtn" class="record-btn"><i class="fas fa-microphone"></i> Gravar</button>
-                        <button id="stopBtn" class="stop-btn" disabled><i class="fas fa-stop"></i> Parar</button>
+                        <button id="recordBtn" class="record-btn" aria-label="Iniciar gravação"><i class="fas fa-microphone"></i> Gravar</button>
+                        <button id="stopBtn" class="stop-btn" disabled aria-label="Parar gravação"><i class="fas fa-stop"></i> Parar</button>
                         <span id="recordTimer">00:00</span>
                     </div>
                     <div class="audio-playback">
@@ -367,7 +373,7 @@
                 </div>
             </div>
             <div class="modal-actions">
-                <button type="button" onclick="closeModal('audioSettingsModal')" class="modal-btn">Fechar</button>
+                <button type="button" class="modal-btn" data-close="audioSettingsModal">Fechar</button>
             </div>
         </div>
     </div>
@@ -387,23 +393,22 @@
 
     <div id="studentCreatedModal" class="modal">
         <div class="modal-content">
-            <h3 style="color: #2dce89;"><i class="fas fa-check-circle"></i> Aluno Criado com Sucesso!</h3>
+            <h3 style="color: #4ECDC4;"><i class="fas fa-check-circle"></i> Aluno Criado com Sucesso!</h3>
             <p>Anote os dados de acesso abaixo para entregar ao aluno.</p>
             
             <div class="credentials-box">
                 <p><strong>Usuário:</strong> <span id="newStudentUsername"></span></p>
-                <p><strong>Senha:</strong> <span id="newStudentPassword" style="font-weight: bold; color: #5e72e4;"></span></p>
+                <p><strong>Senha:</strong> <span id="newStudentPassword" style="font-weight: bold; color: #764ba2;"></span></p>
             </div>
     
             <div class="modal-actions">
                 <button type="button" id="copyCredentialsBtn" class="modal-btn"><i class="fas fa-copy"></i> Copiar Dados</button>
-                <button type="button" onclick="closeModal('studentCreatedModal')" class="modal-btn primary">Fechar</button>
+                <button type="button" class="modal-btn primary" data-close="studentCreatedModal">Fechar</button>
             </div>
         </div>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    
     <script src="script.js"></script>
 </body>
 </html>
