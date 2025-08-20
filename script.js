@@ -92,7 +92,7 @@ async function initApp() {
         return;
     }
     
-    initializeSpeech(); // Inicia o carregamento das vozes
+    initializeSpeech();
     setupAllEventListeners();
 
     const studentSession = sessionStorage.getItem('currentUser');
@@ -204,7 +204,7 @@ async function handleStudentLogin(e) {
     try {
         const { data: studentData, error } = await supabaseClient
             .from('students')
-            .select('*')
+            .select('*, assigned_phase')
             .eq('username', username)
             .single();
 
@@ -245,7 +245,7 @@ function handleExitGame() {
 }
 
 // =======================================================
-// PARTE 6: DASHBOARD DO PROFESSOR (sem alterações)
+// PARTE 6: DASHBOARD DO PROFESSOR
 // =======================================================
 async function showTeacherDashboard() {
     showScreen('teacherDashboard');
@@ -362,8 +362,12 @@ function renderStudents(students) {
 async function loadStudentProgress() {
     const progressList = document.getElementById('studentProgressList');
     progressList.innerHTML = '<p><i class="fas fa-spinner fa-spin"></i> Carregando progresso...</p>';
-    
-    const { data: students, error: studentsError } = await supabaseClient.from('students').select('id, name').eq('class_id', currentClassId);
+
+    const { data: students, error: studentsError } = await supabaseClient
+        .from('students')
+        .select('id, name, assigned_phase')
+        .eq('class_id', currentClassId);
+
     if (studentsError) {
         progressList.innerHTML = '<p class="error-text">Erro ao carregar lista de alunos.</p>';
         return;
@@ -374,7 +378,11 @@ async function loadStudentProgress() {
     }
 
     const studentIds = students.map(s => s.id);
-    const { data: progresses, error: progressError } = await supabaseClient.from('progress').select('*').in('student_id', studentIds);
+    const { data: progresses, error: progressError } = await supabaseClient
+        .from('progress')
+        .select('*')
+        .in('student_id', studentIds);
+
     if (progressError) {
         progressList.innerHTML = '<p class="error-text">Erro ao carregar o progresso dos alunos.</p>';
         return;
@@ -382,35 +390,77 @@ async function loadStudentProgress() {
 
     let html = students.map(student => {
         const progress = progresses.find(p => p.student_id === student.id);
-        if (!progress) {
-            return `<div class="student-item">
-                        <div class="student-info"><h4>${student.name}</h4><p>Nenhum progresso registrado.</p></div>
-                    </div>`;
-        }
-        
-        const phase = progress.current_phase || 1;
-        const state = progress.game_state || {};
-        const score = state.score ?? 0;
-        const total = state.questions?.length || 10;
-        const currentQuestion = state.currentQuestionIndex ?? 0;
-        const percentage = total > 0 ? (currentQuestion / total) * 100 : 0;
+        const assignedPhase = student.assigned_phase || 1;
+        const currentPhase = progress?.current_phase || 'N/A';
+        const score = progress?.game_state?.score ?? 0;
+        const total = progress?.game_state?.questions?.length || 10;
+        const accuracy = total > 0 ? Math.round((score / total) * 100) : 0;
+
+        const phaseOptions = [1, 2, 3].map(phaseNum =>
+            `<option value="${phaseNum}" ${assignedPhase === phaseNum ? 'selected' : ''}>
+                Fase ${phaseNum}
+            </option>`
+        ).join('');
 
         return `
             <div class="student-item">
                 <div class="student-info" style="width:100%;">
                     <h4>${student.name}</h4>
-                    <p>Fase Atual: ${phase} | Pontuação na Fase: ${score} / ${total}</p>
+                    <p>Progresso na Fase ${currentPhase}: ${accuracy}% (${score}/${total})</p>
                     <div class="student-progress-container">
-                        <div class="student-progress-bar">
-                            <div class="student-progress-fill" style="width: ${percentage}%;"></div>
-                        </div>
+                         <div class="student-progress-bar">
+                             <div class="student-progress-fill" style="width: ${accuracy}%;"></div>
+                         </div>
                     </div>
+                </div>
+                <div class="student-actions">
+                    <label for="phase-select-${student.id}" class="select-label">Designar Fase:</label>
+                    <select id="phase-select-${student.id}" class="phase-select" onchange="assignPhase('${student.id}', this)">
+                        ${phaseOptions}
+                    </select>
                 </div>
             </div>`;
     }).join('');
 
     progressList.innerHTML = html;
 }
+
+async function assignPhase(studentId, selectElement) {
+    const newPhase = parseInt(selectElement.value);
+    const studentName = selectElement.closest('.student-item').querySelector('h4').textContent;
+
+    if (!confirm(`Deseja designar a Fase ${newPhase} para o aluno ${studentName}?\n\nAtenção: O progresso na fase atual será reiniciado para que ele comece a nova atividade do zero.`)) {
+        await loadStudentProgress(); // Recarrega para reverter a seleção visualmente
+        return;
+    }
+
+    try {
+        const { error: assignError } = await supabaseClient
+            .from('students')
+            .update({ assigned_phase: newPhase })
+            .eq('id', studentId);
+        if (assignError) throw assignError;
+
+        const newGameState = {
+            currentPhase: newPhase, score: 0, attempts: 2,
+            questions: generateQuestions(newPhase), currentQuestionIndex: 0, tutorialsShown: []
+        };
+
+        const { error: progressError } = await supabaseClient
+            .from('progress')
+            .upsert({ 
+                student_id: studentId, current_phase: newPhase,
+                game_state: newGameState, last_played: new Date().toISOString()
+            }, { onConflict: 'student_id' });
+        if (progressError) throw progressError;
+
+        showFeedback(`Fase ${newPhase} designada para ${studentName} com sucesso!`, 'success');
+        await loadStudentProgress();
+    } catch (error) {
+        showFeedback(`Erro ao designar fase: ${error.message}`, 'error');
+    }
+}
+
 
 async function handleCreateStudent(event) {
     event.preventDefault();
@@ -527,31 +577,37 @@ async function showStudentGame() {
 
 async function startGame() {
     await loadGameState();
-    if (gameState.currentQuestionIndex > 0) {
-        showScreen('gameScreen');
-        await showTutorial(gameState.currentPhase);
-        startQuestion();
-    } else {
-        showScreen('startScreen');
-    }
+    showScreen('startScreen');
 }
 
 async function loadGameState() {
-    const { data } = await supabaseClient.from('progress').select('game_state, current_phase').eq('student_id', currentUser.id).single();
-    
-    if (data && data.game_state && data.game_state.questions && data.game_state.currentQuestionIndex < data.game_state.questions.length) {
-        gameState = data.game_state;
+    const { data: progressData } = await supabaseClient
+        .from('progress')
+        .select('game_state, current_phase')
+        .eq('student_id', currentUser.id)
+        .single();
+
+    const assignedPhase = currentUser.assigned_phase || 1;
+    const savedPhase = progressData?.current_phase;
+
+    if (progressData && savedPhase !== assignedPhase) {
+        gameState = {
+            currentPhase: assignedPhase, score: 0, attempts: 2,
+            questions: generateQuestions(assignedPhase), currentQuestionIndex: 0,
+            teacherId: currentUser.teacher_id, tutorialsShown: []
+        };
+        await saveGameState();
+        return;
+    }
+
+    if (progressData && progressData.game_state && progressData.game_state.questions) {
+        gameState = progressData.game_state;
         if (!gameState.tutorialsShown) gameState.tutorialsShown = [];
     } else {
-        const currentPhase = data?.current_phase || 1;
         gameState = {
-            currentPhase: currentPhase,
-            score: 0,
-            attempts: 2,
-            questions: generateQuestions(currentPhase),
-            currentQuestionIndex: 0,
-            teacherId: currentUser.teacher_id,
-            tutorialsShown: []
+            currentPhase: assignedPhase, score: 0, attempts: 2,
+            questions: generateQuestions(assignedPhase), currentQuestionIndex: 0,
+            teacherId: currentUser.teacher_id, tutorialsShown: []
         };
         await saveGameState();
     }
@@ -704,7 +760,7 @@ function nextQuestion() {
 
 function endPhase() {
     const accuracy = gameState.questions.length > 0 ? Math.round((gameState.score / gameState.questions.length) * 100) : 0;
-    const passed = accuracy >= 70 && gameState.attempts > 0;
+    const passed = accuracy >= 70;
     showResultScreen(accuracy, passed);
 }
 
@@ -712,21 +768,31 @@ function showResultScreen(accuracy, passed) {
     showScreen('resultScreen');
     document.getElementById('finalScore').textContent = gameState.score;
     document.getElementById('accuracy').textContent = accuracy;
+    
+    const continueButton = document.getElementById('continueButton');
+    const retryButton = document.getElementById('retryButton');
+    const resultMessage = document.getElementById('resultMessage');
+    
     if (passed) {
         document.getElementById('resultTitle').textContent = 'Parabéns!';
-        document.getElementById('resultMessage').textContent = 'Você passou de fase! Ótimo trabalho!';
-        document.getElementById('continueButton').style.display = 'inline-block';
-        document.getElementById('retryButton').style.display = 'none';
+        resultMessage.innerHTML = 'Você completou a atividade designada! 🏆<br>Fale com seu professor(a) para receber uma nova tarefa!';
+        continueButton.style.display = 'none';
+        retryButton.style.display = 'none';
     } else {
         document.getElementById('resultTitle').textContent = 'Não desanime!';
-        document.getElementById('resultMessage').textContent = 'Você precisa acertar mais para passar. Tente novamente!';
-        document.getElementById('continueButton').style.display = 'none';
-        document.getElementById('retryButton').style.display = 'inline-block';
+        resultMessage.textContent = 'Você precisa acertar mais para passar. Tente novamente!';
+        continueButton.style.display = 'none';
+        retryButton.style.display = 'inline-block';
     }
 }
 
 async function nextPhase() {
-    gameState.currentPhase++;
+    // Esta função não é mais usada para progressão automática, mas pode ser mantida para futuras lógicas
+    // Por segurança, vamos garantir que ela só funcione se a fase estiver liberada
+    const nextPhaseNum = gameState.currentPhase + 1;
+    if (nextPhaseNum > currentUser.assigned_phase) return;
+
+    gameState.currentPhase = nextPhaseNum;
     gameState.currentQuestionIndex = 0;
     gameState.score = 0;
     gameState.attempts = 2;
@@ -748,6 +814,7 @@ async function retryPhase() {
 async function restartGame() {
     showScreen('startScreen');
 }
+
 
 async function playCurrentAudio() {
     const currentQuestion = gameState.questions[gameState.currentQuestionIndex];
