@@ -126,23 +126,19 @@ async function initApp() {
     if (studentSession) {
         console.log("Sessão de aluno encontrada. Restaurando jogo...");
         currentUser = JSON.parse(studentSession);
-        // MODIFICADO: Em vez de sempre ir para o início, verificamos o estado do jogo
         await restoreOrStartGame();
     } else {
         await checkSession();
     }
 }
 
-// NOVA FUNÇÃO: Decide se o jogo continua de onde parou ou vai para a tela de resultados
 async function restoreOrStartGame() {
-    await loadGameState(); // Carrega o progresso do banco de dados
+    await loadGameState(); 
 
-    // Verifica se a fase designada foi concluída com sucesso
     if (gameState.phaseCompleted) {
-        // Se já completou, mostra a tela de resultados final
-        showResultScreen(Math.round((gameState.score / gameState.questions.length) * 100), true);
+        const accuracy = gameState.questions.length > 0 ? Math.round((gameState.score / gameState.questions.length) * 100) : 100;
+        showResultScreen(accuracy, true);
     } else {
-        // Se não completou, leva direto para a tela do jogo
         showScreen('gameScreen');
         startQuestion();
     }
@@ -797,7 +793,15 @@ function generateOptions(correctItem, sourceArray, count) {
     return Array.from(options).sort(() => 0.5 - Math.random());
 }
 
+// MODIFICADO: Adicionada trava de segurança no início
 async function startQuestion() {
+    // Se a fase já estiver marcada como concluída, impede o início e vai para a tela de resultados.
+    if (gameState.phaseCompleted) {
+        const accuracy = gameState.questions.length > 0 ? Math.round((gameState.score / gameState.questions.length) * 100) : 100;
+        showResultScreen(accuracy, true);
+        return; // Para a execução da função aqui.
+    }
+
     await showTutorial(gameState.currentPhase);
     
     if (!gameState.questions || gameState.currentQuestionIndex >= gameState.questions.length) {
@@ -894,7 +898,6 @@ function endPhase() {
     showResultScreen(accuracy, passed);
 }
 
-// MODIFICADO: Adiciona o marcador "phaseCompleted" ao estado do jogo
 function showResultScreen(accuracy, passed) {
     showScreen('resultScreen');
     document.getElementById('finalScore').textContent = gameState.score;
@@ -910,9 +913,8 @@ function showResultScreen(accuracy, passed) {
         continueButton.style.display = 'none';
         retryButton.style.display = 'none';
         
-        // Adiciona um marcador de que a fase foi concluída com sucesso
         gameState.phaseCompleted = true; 
-        saveGameState(); // Salva o estado final
+        saveGameState(); 
 
     } else {
         document.getElementById('resultTitle').textContent = 'Não desanime!';
@@ -920,7 +922,6 @@ function showResultScreen(accuracy, passed) {
         continueButton.style.display = 'none';
         retryButton.style.display = 'inline-block';
         
-        // Garante que o marcador seja falso se ele não passou
         gameState.phaseCompleted = false;
         saveGameState();
     }
@@ -941,19 +942,27 @@ async function nextPhase() {
     startQuestion();
 }
 
-// MODIFICADO: Reseta o marcador "phaseCompleted" ao tentar novamente
 async function retryPhase() {
     gameState.currentQuestionIndex = 0;
     gameState.score = 0;
     gameState.attempts = 2;
-    gameState.phaseCompleted = false; // Reseta o estado de conclusão
+    gameState.phaseCompleted = false; 
     await saveGameState();
     showScreen('gameScreen');
     startQuestion();
 }
 
+// MODIFICADO: Função agora verifica se a fase está concluída.
 async function restartGame() {
-    showScreen('startScreen');
+    if (gameState.phaseCompleted) {
+        // Se a fase já foi concluída, não deixa o aluno sair da tela de resultados.
+        showFeedback('Atividade já concluída! Fale com seu/sua professor(a) para continuar.', 'info');
+        const accuracy = gameState.questions.length > 0 ? Math.round((gameState.score / gameState.questions.length) * 100) : 100;
+        showResultScreen(accuracy, true);
+    } else {
+        // Se a fase não foi concluída, permite voltar ao início.
+        showScreen('startScreen');
+    }
 }
 
 async function playTeacherAudio(key, fallbackText, onEndCallback) {
