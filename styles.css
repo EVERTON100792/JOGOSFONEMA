@@ -1,19 +1,19 @@
 /* ================================================= */
-/* PARTE 1: RESET E ESTILO GLOBAL (REDESIGN)       */
+/* PARTE 1: RESET E ESTILO GLOBAL (REDESIGN V2)    */
 /* ================================================= */
 :root {
     --primary-color: #5e72e4;
     --secondary-color: #f5365c;
     --success-color: #2dce89;
     --warning-color: #fb6340;
-    --light-bg-color: #f0f4f8;
-    --dark-text-color: #34495e;
+    --light-bg-color: #f4f7fc; /* Fundo ainda mais suave */
+    --dark-text-color: #32325d; /* Texto mais escuro para contraste */
     --light-text-color: #8898aa;
     --white-color: #ffffff;
     --border-radius-md: 12px;
     --border-radius-lg: 20px;
-    --shadow-light: 0 4px 15px rgba(0, 0, 0, 0.05);
-    --shadow-medium: 0 6px 25px rgba(0, 0, 0, 0.1);
+    --shadow-light: 0 4px 6px rgba(50, 50, 93, 0.11), 0 1px 3px rgba(0, 0, 0, 0.08);
+    --shadow-medium: 0 7px 14px rgba(50, 50, 93, 0.1), 0 3px 6px rgba(0, 0, 0, 0.08);
 }
 
 * {
@@ -27,46 +27,40 @@ body {
     background-color: var(--light-bg-color);
     color: var(--dark-text-color);
     min-height: 100vh;
-    overflow: hidden; /* Previne scroll indesejado durante transições */
+    overflow: hidden;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
 }
 
 /* ================================================= */
-/* PARTE 2: FLUIDEZ - TRANSIÇÕES DE TELA (CORRIGIDO) */
+/* PARTE 2: FLUIDEZ E LAYOUT RESPONSIVO            */
 /* ================================================= */
 .screen {
-    /* Todas as telas ficam invisíveis por padrão */
     display: none; 
-    
-    /* Estilização padrão para centralizar conteúdo */
     width: 100%;
     min-height: 100vh;
-    padding: 20px;
+    padding: 20px; /* Espaçamento base para telas maiores */
     justify-content: center;
     align-items: center;
     flex-direction: column;
-
-    /* Animação de entrada */
     animation: fadeIn 0.5s ease-out forwards;
 }
 
+/* Ajuste específico para celulares para evitar que os cards colem nas bordas */
+@media (max-width: 768px) {
+    .screen {
+        padding: 15px;
+    }
+}
+
 .screen.active {
-    /* A classe .active torna a tela visível e aplica o display flex */
     display: flex;
 }
 
 @keyframes fadeIn {
-    from {
-        opacity: 0;
-        transform: translateY(10px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
 }
-
 
 .container {
     max-width: 1200px;
@@ -75,17 +69,17 @@ body {
 }
 
 /* ================================================= */
-/* PARTE 3: TELAS INICIAIS E LOGIN (REDESIGN)      */
+/* PARTE 3: TELAS INICIAIS E LOGIN (REDESIGN V2)   */
 /* ================================================= */
 .game-title h1 {
-    font-size: 3.8rem;
+    font-size: clamp(2.5rem, 8vw, 3.8rem); /* Fonte responsiva */
     font-weight: 900;
     color: #2c3e50;
     margin-bottom: 0.5rem;
 }
 
 .game-title p {
-    font-size: 1.5rem;
+    font-size: clamp(1.1rem, 4vw, 1.5rem);
     color: var(--light-text-color);
     margin-bottom: 2.5rem;
 }
@@ -99,7 +93,7 @@ body {
 
 .user-types {
     display: flex;
-    gap: 30px;
+    gap: 20px;
     justify-content: center;
     flex-wrap: wrap;
 }
@@ -107,14 +101,15 @@ body {
 .user-type-btn {
     background-color: var(--white-color);
     color: var(--dark-text-color);
-    padding: 40px 30px;
+    padding: 30px;
     border-radius: var(--border-radius-lg);
     box-shadow: var(--shadow-medium);
     display: flex;
     flex-direction: column;
     align-items: center;
     gap: 15px;
-    min-width: 220px;
+    width: 100%;
+    max-width: 220px; /* Garante que não fiquem muito largos */
     border: 2px solid transparent;
     transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
 }
@@ -124,24 +119,16 @@ body {
     border-color: var(--primary-color);
 }
 
-.user-type-btn i {
-    font-size: 3rem;
-    color: var(--primary-color);
-}
-.user-type-btn span {
-    font-size: 1.4rem;
-    font-weight: bold;
-}
-.user-type-btn small {
-    font-size: 1rem;
-    color: var(--light-text-color);
-}
+.user-type-btn i { font-size: 3rem; color: var(--primary-color); }
+.user-type-btn span { font-size: 1.4rem; font-weight: bold; }
+.user-type-btn small { font-size: 1rem; color: var(--light-text-color); }
 
 .login-container {
+    width: 100%;
     max-width: 420px;
     margin: 0 auto;
     background: var(--white-color);
-    padding: 40px;
+    padding: clamp(20px, 5vw, 40px); /* Padding responsivo */
     border-radius: var(--border-radius-lg);
     box-shadow: var(--shadow-medium);
 }
@@ -154,30 +141,10 @@ body {
     font-weight: 800;
 }
 
-.login-container h2 i {
-    margin-right: 10px;
-    color: var(--primary-color);
-}
-
-.login-form {
-    display: flex;
-    flex-direction: column;
-    gap: 20px;
-}
-
-.form-group {
-    display: flex;
-    flex-direction: column;
-    text-align: left;
-    gap: 8px;
-}
-
-.form-group label {
-    font-weight: bold;
-    color: var(--dark-text-color);
-    font-size: 1rem;
-}
-
+.login-container h2 i { margin-right: 10px; color: var(--primary-color); }
+.login-form { display: flex; flex-direction: column; gap: 20px; }
+.form-group { display: flex; flex-direction: column; text-align: left; gap: 8px; }
+.form-group label { font-weight: bold; color: var(--dark-text-color); font-size: 1rem; }
 .form-group input, .form-group select {
     padding: 15px;
     border: 2px solid #dee2e6;
@@ -186,7 +153,6 @@ body {
     font-family: 'Nunito', sans-serif;
     transition: border-color 0.3s ease, box-shadow 0.3s ease;
 }
-
 .form-group input:focus, .form-group select:focus {
     outline: none;
     border-color: var(--primary-color);
@@ -194,298 +160,160 @@ body {
 }
 
 /* ================================================= */
-/* PARTE 4: BOTÕES (SISTEMA DE DESIGN)             */
+/* PARTE 4: BOTÕES (REDESIGN V2)                   */
 /* ================================================= */
 .login-btn, .modal-btn.primary, .create-btn {
     background: var(--primary-color);
     color: white;
-    box-shadow: 0 4px 15px rgba(94, 114, 228, 0.4);
-    border: none;
-    padding: 15px;
-    border-radius: var(--border-radius-md);
-    font-size: 1.1rem;
-    font-weight: bold;
-    cursor: pointer;
-    transition: all 0.3s ease;
+    box-shadow: 0 4px 6px rgba(50, 50, 93, 0.11), 0 1px 3px rgba(0, 0, 0, 0.08);
+    border: none; padding: 15px; border-radius: var(--border-radius-md);
+    font-size: 1.1rem; font-weight: bold; cursor: pointer; transition: all 0.3s ease;
     margin-top: 10px;
 }
-.login-btn:hover, .modal-btn.primary:hover, .create-btn:hover {
-    transform: translateY(-2px);
-}
-
+.login-btn:hover, .modal-btn.primary:hover, .create-btn:hover { transform: translateY(-2px); }
 
 .register-btn {
-    background: transparent;
-    color: var(--primary-color);
-    border: 2px solid var(--primary-color);
-    padding: 12px;
-    border-radius: var(--border-radius-md);
-    font-size: 1rem;
-    cursor: pointer;
-    transition: all 0.3s ease;
+    background: transparent; color: var(--primary-color);
+    border: 2px solid var(--primary-color); padding: 12px;
+    border-radius: var(--border-radius-md); font-size: 1rem;
+    cursor: pointer; transition: all 0.3s ease;
 }
 .register-btn:hover { background: var(--primary-color); color: white; transform: translateY(-2px); }
 
 .back-btn {
-    background: #e9ecef;
-    color: #555;
-    border: none;
-    padding: 10px 20px;
-    border-radius: var(--border-radius-md);
-    cursor: pointer;
-    margin-top: 20px;
+    background: #e9ecef; color: #555; border: none; padding: 10px 20px;
+    border-radius: var(--border-radius-md); cursor: pointer; margin-top: 20px;
     transition: all 0.3s ease;
 }
 .back-btn:hover { background: #ced4da; transform: translateY(-2px); }
 
 /* ================================================= */
-/* PARTE 5: DASHBOARD DO PROFESSOR (REDESIGN)      */
+/* PARTE 5: DASHBOARD (REDESIGN V2)                */
 /* ================================================= */
 .dashboard-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin: 0 auto 40px auto;
-    padding: 20px 30px;
-    background: var(--white-color);
-    border-radius: var(--border-radius-md);
-    color: var(--dark-text-color);
-    max-width: 1200px;
-    width: 100%;
+    display: flex; flex-wrap: wrap; /* Permite quebra de linha em telas pequenas */
+    justify-content: space-between; align-items: center;
+    gap: 15px; /* Espaçamento entre os itens */
+    margin: 0 auto 30px auto; padding: 20px 25px;
+    background: var(--white-color); border-radius: var(--border-radius-md);
+    color: var(--dark-text-color); max-width: 1200px; width: 100%;
     box-shadow: var(--shadow-light);
 }
-.dashboard-header h1 { margin: 0; font-size: 2rem; font-weight: 800; }
+.dashboard-header h1 { font-size: clamp(1.5rem, 5vw, 2rem); font-weight: 800; }
 
 .teacher-info { display: flex; align-items: center; gap: 20px; }
 .teacher-info span { font-size: 1.2rem; font-weight: bold; }
 
-.logout-btn {
-    background: #f1f3f5;
-    color: var(--dark-text-color);
-    border: none;
-    padding: 10px 15px;
-    border-radius: 8px;
-    cursor: pointer;
-    transition: all 0.3s ease;
-}
-.logout-btn:hover { background: #e9ecef; }
-
 .dashboard-content {
-    padding: 30px;
-    background: var(--white-color);
-    border-radius: var(--border-radius-lg);
-    box-shadow: var(--shadow-light);
-    max-width: 1200px;
-    margin: 0 auto;
-    text-align: left;
+    padding: 30px; background: var(--white-color);
+    border-radius: var(--border-radius-lg); box-shadow: var(--shadow-light);
+    max-width: 1200px; margin: 0 auto; text-align: left;
 }
+.dashboard-section h2 { margin-bottom: 20px; font-size: 1.6rem; font-weight: 800; }
 
-.dashboard-section { margin-bottom: 40px; }
-.dashboard-section h2 { color: var(--dark-text-color); margin-bottom: 20px; font-size: 1.6rem; font-weight: 800; }
-
-.classes-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-    gap: 25px;
-}
-
+.classes-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 25px; }
 .class-card {
-    background: #f8f9fa;
-    padding: 25px;
-    border-radius: var(--border-radius-md);
-    box-shadow: none;
-    transition: all 0.3s ease;
-    border-left: 5px solid var(--primary-color);
-    border: 1px solid #e9ecef;
+    background: var(--white-color); padding: 25px; border-radius: var(--border-radius-md);
+    transition: all 0.3s ease; border-left: 5px solid var(--primary-color);
+    box-shadow: var(--shadow-light);
 }
-.class-card:hover {
-    transform: translateY(-5px);
-    box-shadow: var(--shadow-medium);
-}
-.class-card h3 { color: var(--dark-text-color); margin: 0 0 15px 0; font-size: 1.4rem; font-weight: 800;}
-.student-count { color: var(--light-text-color); font-size: 0.9rem; font-weight: bold; }
-.class-card-actions { display: flex; gap: 10px; margin-top: 15px; justify-content: flex-end; }
-
-.btn { padding: 8px 15px; border: none; border-radius: 8px; cursor: pointer; font-size: 0.9rem; transition: all 0.3s ease; font-weight: bold; }
-.btn.primary { background: var(--primary-color); color: white; }
-.btn.danger { background: var(--secondary-color); color: white; }
-.btn.small { padding: 6px 10px; }
+.class-card:hover { transform: translateY(-5px); box-shadow: var(--shadow-medium); }
 
 /* ================================================= */
-/* PARTE 6: TELA DO JOGO (REDESIGN)                */
+/* PARTE 6: TELA DO JOGO (REDESIGN V2)             */
 /* ================================================= */
 .game-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    background: rgba(255, 255, 255, 0.6);
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
-    padding: 1rem 2rem;
-    border-radius: var(--border-radius-lg);
-    margin-bottom: 2rem;
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    width: 100%;
-    max-width: 1000px;
+    display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center;
+    background: rgba(255, 255, 255, 0.8); backdrop-filter: blur(10px);
+    padding: 1rem 1.5rem; border-radius: var(--border-radius-lg);
+    margin-bottom: 2rem; border: 1px solid rgba(0, 0, 0, 0.05);
+    width: 100%; max-width: 1000px;
+    gap: 1rem;
 }
 .phase-info h2, .score, .attempts { color: var(--dark-text-color); font-weight: 800; }
 .score i, .attempts i { margin-right: 0.5rem; color: #fcc419; }
 .progress-bar { width: 200px; height: 12px; background: rgba(0,0,0,0.1); border-radius: 6px; overflow: hidden; }
 .progress-fill { height: 100%; background: var(--success-color); width: 0%; transition: width 0.5s ease; }
-.exit-button { background-color: rgba(255, 255, 255, 0.5); border: 1px solid rgba(0, 0, 0, 0.1); color: var(--dark-text-color); padding: 10px 15px; border-radius: var(--border-radius-md); cursor: pointer; transition: all 0.3s ease; font-weight: bold; }
-.exit-button:hover { background-color: var(--secondary-color); color: white; border-color: transparent; }
 .game-content {
-    background: var(--white-color);
-    border-radius: var(--border-radius-lg);
-    padding: 2.5rem;
-    box-shadow: var(--shadow-medium);
-    max-width: 800px;
-    width: 100%;
-    margin: 0 auto;
+    background: var(--white-color); border-radius: var(--border-radius-lg);
+    padding: clamp(1.5rem, 5vw, 2.5rem); box-shadow: var(--shadow-medium);
+    max-width: 800px; width: 100%; margin: 0 auto;
 }
-.mascot-helper .mascot { font-size: 3rem; color: var(--secondary-color); margin-bottom: 1rem; }
-.speech-bubble { background: #f1f3f5; border-radius: 15px; padding: 1rem 1.5rem; color: var(--dark-text-color); font-weight: bold; }
-.speech-bubble::before { border-bottom-color: #f1f3f5; }
 .audio-button {
     background: linear-gradient(45deg, var(--success-color), #2dd6b4);
     box-shadow: 0 6px 20px rgba(45, 206, 137, 0.4);
-    color: white; border: none; padding: 1.5rem 2rem; border-radius: 50%;
-    width: 130px; height: 130px;
-    cursor: pointer;
+    color: white; border: none; border-radius: 50%;
+    width: 130px; height: 130px; cursor: pointer;
     transition: transform 0.3s ease;
 }
 .audio-button:hover { transform: scale(1.05); }
-.image-display {
-    background: linear-gradient(135deg, #fce38a 0%, #f38181 100%);
-    border-radius: var(--border-radius-lg); padding: 1rem; margin: 0 auto 1rem auto;
-    max-width: 250px; box-shadow: var(--shadow-light);
-}
-.image-emoji { font-size: 5rem; }
-.word-display { font-size: 2.8rem; font-weight: 900; color: #2c3e50; letter-spacing: 5px; margin: 1rem 0; }
-.question-text h3 { color: var(--dark-text-color); font-size: 1.5rem; margin: 1rem 0; font-weight: 800;}
 
-.letters-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); gap: 1rem; max-width: 600px; margin: 2rem auto; }
+.letters-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(90px, 1fr));
+    gap: 1rem; max-width: 600px; margin: 2rem auto;
+}
 .letter-button {
-    background: linear-gradient(45deg, #6e82e4, #5267d4);
-    color: white; border: none; padding: 1.5rem; font-size: 2.5rem; font-weight: bold;
-    border-radius: var(--border-radius-md); cursor: pointer; box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-    transition: all 0.3s ease; aspect-ratio: 1; display: flex; align-items: center; justify-content: center;
+    background: var(--primary-color);
+    color: white; border: none; padding: 1.5rem;
+    font-size: clamp(2rem, 10vw, 2.5rem); /* Fonte responsiva */
+    font-weight: bold; border-radius: var(--border-radius-md);
+    cursor: pointer; box-shadow: var(--shadow-light);
+    transition: all 0.3s ease; aspect-ratio: 1;
+    display: flex; align-items: center; justify-content: center;
 }
 .letter-button:hover { transform: translateY(-5px) scale(1.05); box-shadow: var(--shadow-medium); }
-.letter-button.correct { background: linear-gradient(45deg, var(--success-color), #28a745); }
-.letter-button.incorrect { background: linear-gradient(45deg, var(--secondary-color), #dc3545); }
+.letter-button.correct { background: var(--success-color); }
+.letter-button.incorrect { background: var(--secondary-color); }
 
 /* ================================================= */
-/* PARTE 7: TELA DE RESULTADO E MODAIS (REDESIGN)  */
+/* PARTE 7: TELA DE RESULTADO (REDESIGN V2)        */
 /* ================================================= */
-.result-content { background: var(--white-color); border-radius: var(--border-radius-lg); padding: 3rem; box-shadow: var(--shadow-medium); max-width: 600px; margin: 0 auto; }
+.result-content {
+    background: var(--white-color); border-radius: var(--border-radius-lg);
+    padding: clamp(2rem, 6vw, 3rem); box-shadow: var(--shadow-medium);
+    max-width: 600px; width: 100%; margin: 0 auto;
+}
 .result-icon i { color: #ffd600; font-size: 5rem; }
-#resultTitle { font-weight: 800; color: var(--dark-text-color); }
 .result-stats { background: #f8f9fa; border-radius: var(--border-radius-md); padding: 1rem; }
 .result-button {
-    padding: 1rem 2rem;
-    font-size: 1.1rem;
-    border: none;
-    color: white;
-    border-radius: 50px;
-    font-weight: bold;
-    cursor: pointer;
-    margin: 0.5rem;
-    transition: transform 0.2s ease;
+    padding: 1rem 2rem; font-size: 1rem; border: none; color: white;
+    border-radius: 50px; font-weight: bold; cursor: pointer; margin: 0.5rem;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
-.result-button:hover { transform: translateY(-3px); }
+.result-button:hover { transform: translateY(-3px); box-shadow: var(--shadow-medium); }
 .result-button.success { background: var(--success-color); }
 .result-button.retry { background: var(--warning-color); }
 
+/* ================================================= */
+/* PARTE 8: MODAIS E OUTROS (REDESIGN V2)          */
+/* ================================================= */
 .modal {
-    position: fixed;
-    top: 0; left: 0; width: 100%; height: 100%;
-    background: rgba(0,0,0,0.5);
-    z-index: 1000;
-    justify-content: center;
-    align-items: center;
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0,0,0,0.5); z-index: 1000;
+    justify-content: center; align-items: center;
     display: none;
 }
 .modal.show { display: flex; }
-.modal-content { background: white; padding: 30px; border-radius: var(--border-radius-lg); max-width: 500px; width: 90%; max-height: 90vh; overflow-y: auto; }
+.modal-content {
+    background: white; padding: 30px; border-radius: var(--border-radius-lg);
+    max-width: 500px; width: 95%; max-height: 90vh; overflow-y: auto;
+}
 .modal-content.large { max-width: 800px; }
-.modal-content h3 { font-weight: 800; }
-.modal-actions { display: flex; gap: 15px; justify-content: flex-end; margin-top: 25px; }
-.modal-btn { background: #e9ecef; border: none; font-weight: bold; border-radius: var(--border-radius-md); padding: 12px 25px; }
-.modal-btn.primary { background: var(--primary-color); color: white; }
-.modal-tabs { border-bottom: 2px solid #e9ecef; }
-.tab-btn { background: none; border: none; font-weight: bold; transition: all 0.3s ease; padding: 15px 25px; cursor: pointer; color: var(--light-text-color); border-bottom: 3px solid transparent;}
 .tab-btn.active, .tab-btn:hover { color: var(--primary-color); border-bottom-color: var(--primary-color); }
-.tab-content { display: none; }
-.tab-content.active { display: block; }
 
-.create-form, .upload-instructions, .record-section { background: #f8f9fa; border-radius: var(--border-radius-md); border: 1px solid #e9ecef; padding: 20px; }
-.student-item { background: #f8f9fa; border: 1px solid #e9ecef; border-radius: var(--border-radius-md); padding: 15px; }
-
-/* ================================================= */
-/* PARTE 8: ELEMENTOS DIVERSOS (REDESIGN)          */
-/* ================================================= */
 #globalFeedback {
-    position: fixed;
-    bottom: 20px;
-    left: 50%;
-    transform: translate(-50%, 100px);
-    padding: 15px 25px;
-    border-radius: var(--border-radius-md);
-    color: white;
-    font-weight: bold;
-    box-shadow: var(--shadow-medium);
-    z-index: 2000;
-    opacity: 0;
-    visibility: hidden;
-    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    position: fixed; bottom: 20px; left: 50%;
+    transform: translate(-50%, 120%);
+    padding: 15px 25px; border-radius: var(--border-radius-md);
+    color: white; font-weight: bold; box-shadow: var(--shadow-medium);
+    z-index: 2000; transition: transform 0.4s ease;
 }
-#globalFeedback.show {
-    opacity: 1;
-    visibility: visible;
-    transform: translate(-50%, 0);
-}
+#globalFeedback.show { transform: translate(-50%, 0); }
 #globalFeedback.success { background-color: var(--success-color); }
 #globalFeedback.error { background-color: var(--secondary-color); }
 #globalFeedback.info { background-color: var(--primary-color); }
 
-.tutorial-overlay {
-    position: fixed;
-    top: 0; left: 0; width: 100%; height: 100%;
-    background: rgba(0,0,0,0.7);
-    z-index: 5000;
-    justify-content: center;
-    align-items: center;
-    display: none;
-}
-.tutorial-content .mascot { color: var(--secondary-color); }
-
-.credentials-box {
-    background-color: #f8f9fa;
-    border: 1px solid #e9ecef;
-    border-radius: 8px;
-    padding: 20px;
-    margin: 20px 0;
-    text-align: left;
-    font-size: 1.1rem;
-}
-.phase-select {
-    border-radius: 8px;
-    border: 2px solid #dee2e6;
-    background-color: white;
-    font-family: 'Nunito', sans-serif;
-    font-size: 1rem;
-    padding: 8px;
-    cursor: pointer;
-}
-.phase-select:hover { border-color: var(--primary-color); }
-.phase-select:focus { outline: none; border-color: var(--primary-color); box-shadow: 0 0 5px rgba(94, 114, 228, 0.5); }
-
-/* Animações e Responsividade */
+/* Adicionado para animações e responsividade */
 @keyframes bounce { 0%, 20%, 50%, 80%, 100% { transform: translateY(0); } 40% { transform: translateY(-20px); } 60% { transform: translateY(-10px); } }
 @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.1); } 100% { transform: scale(1); } }
-
-@media (max-width: 768px) {
-    .game-header { flex-direction: column; gap: 1rem; align-items: stretch; padding: 1rem; }
-    .letters-grid { grid-template-columns: repeat(2, 1fr); }
-}
