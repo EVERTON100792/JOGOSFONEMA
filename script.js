@@ -7,6 +7,9 @@ const supabaseUrl = 'https://nxpwxbxhucliudnutyqd.supabase.co';
 const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im54cHd4YnhodWNsaXVkbnV0eXFkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU0ODU4NjcsImV4cCI6MjA3MTA2MTg2N30.m1KbiyPe_K9CK2nBhsxo97A5rai2GtnyVPnpff5isNg';
 const supabaseClient = createClient(supabaseUrl, supabaseKey);
 
+// Chave do professor que tem permissão para gerenciar os áudios do jogo
+const SUPER_ADMIN_TEACHER_ID = '324576d3-4b9f-4d9a-99fb-0c64be5683c3'; 
+
 let currentUser = null;
 let currentClassId = null;
 const ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
@@ -354,9 +357,20 @@ async function showTeacherDashboard() {
     await loadTeacherData();
 }
 
+// MODIFICADO: Esconde o botão de áudio se não for o Super Admin
 async function loadTeacherData() {
     if (!currentUser) return;
     document.getElementById('teacherName').textContent = currentUser.user_metadata.full_name || 'Professor(a)';
+    
+    const audioSettingsButton = document.getElementById('showAudioSettingsModalBtn');
+    
+    // Verifica se o ID do professor logado é o mesmo do Super Admin
+    if (currentUser.id === SUPER_ADMIN_TEACHER_ID) {
+        audioSettingsButton.style.display = 'block'; // Mostra o botão
+    } else {
+        audioSettingsButton.style.display = 'none';  // Esconde o botão
+    }
+
     await loadTeacherClasses();
 }
 
@@ -896,7 +910,6 @@ function endPhase() {
     showResultScreen(accuracy, passed);
 }
 
-// MODIFICADO: Muda o texto do botão "restartButton"
 function showResultScreen(accuracy, passed) {
     showScreen('resultScreen');
     document.getElementById('finalScore').textContent = gameState.score;
@@ -912,7 +925,7 @@ function showResultScreen(accuracy, passed) {
         resultMessage.innerHTML = 'Você completou a atividade designada! 🏆<br>Fale com seu professor(a) para receber uma nova tarefa!';
         continueButton.style.display = 'none';
         retryButton.style.display = 'none';
-        restartButton.innerHTML = '<i class="fas fa-sign-out-alt"></i> Sair'; // Muda para "Sair"
+        restartButton.innerHTML = '<i class="fas fa-sign-out-alt"></i> Sair';
         
         gameState.phaseCompleted = true; 
         saveGameState(); 
@@ -922,7 +935,7 @@ function showResultScreen(accuracy, passed) {
         resultMessage.textContent = 'Você precisa acertar mais para passar. Tente novamente!';
         continueButton.style.display = 'none';
         retryButton.style.display = 'inline-block';
-        restartButton.innerHTML = '<i class="fas fa-home"></i> Voltar ao Início'; // Garante que seja "Voltar ao Início"
+        restartButton.innerHTML = '<i class="fas fa-home"></i> Voltar ao Início';
         
         gameState.phaseCompleted = false;
         saveGameState();
@@ -954,21 +967,20 @@ async function retryPhase() {
     startQuestion();
 }
 
-// MODIFICADO: Função agora executa logout() se a fase estiver concluída
 async function restartGame() {
     if (gameState.phaseCompleted) {
-        // Se a fase já foi concluída, executa o logout, que leva para a tela de login.
         logout();
     } else {
-        // Se a fase não foi concluída (aluno falhou), permite voltar ao início.
         showScreen('startScreen');
     }
 }
 
+// MODIFICADO: Força o uso do ID do Super Admin
 async function playTeacherAudio(key, fallbackText, onEndCallback) {
-    const teacherId = gameState.teacherId;
+    const teacherId = SUPER_ADMIN_TEACHER_ID; 
+
     if (!teacherId) {
-        console.warn("ID do professor não encontrado, usando voz padrão.");
+        console.warn("ID do Super Admin não foi definido, usando voz padrão.");
         speak(fallbackText, onEndCallback);
         return;
     }
