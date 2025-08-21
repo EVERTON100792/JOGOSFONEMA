@@ -873,7 +873,10 @@ async function saveGameState() {
         game_state: gameState,
         last_played: new Date().toISOString()
     }, { onConflict: 'student_id' });
-    if (error) console.error("Erro ao salvar progresso:", error);
+    if (error) {
+        console.error("Erro ao salvar progresso:", error);
+        showFeedback(`Erro ao salvar o progresso: ${error.message}`, 'error');
+    }
 }
 
 function generateQuestions(phase) {
