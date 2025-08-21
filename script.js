@@ -71,6 +71,14 @@ const PHASE_3_WORDS = [
 // PARTE 3: FUNÇÕES UTILITÁRIAS
 // =======================================================
 
+async function hashPassword(password) {
+    const encoder = new TextEncoder();
+    const data = encoder.encode(password);
+    const hashBuffer = await window.crypto.subtle.digest('SHA-256', data);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
 function generateRandomPassword() {
     const words = ['sol', 'lua', 'rio', 'mar', 'flor', 'gato', 'cao', 'pato', 'rei', 'luz'];
     const word = words[Math.floor(Math.random() * words.length)];
@@ -86,7 +94,7 @@ function formatErrorMessage(error) {
     if (message.includes('duplicate key') && message.includes('username')) {
         return 'Este nome de usuário já existe. Por favor, escolha outro.';
     }
-     if (message.includes('invalid login credentials')) {
+    if (message.includes('invalid login credentials')) {
         return 'Usuário ou senha inválidos. Verifique os dados e tente novamente.';
     }
     if (message.includes('to be a valid email') || message.includes('invalid email')) {
@@ -98,7 +106,6 @@ function formatErrorMessage(error) {
     console.error("Erro não tratado:", error);
     return `Ocorreu um erro inesperado: ${error.message}`;
 }
-
 
 // =======================================================
 // PARTE 4: LÓGICA PRINCIPAL E EVENTOS
@@ -214,7 +221,6 @@ function setupAllEventListeners() {
     });
 }
 
-
 // =======================================================
 // PARTE 5: AUTENTICAÇÃO E SESSÃO
 // =======================================================
@@ -307,28 +313,11 @@ async function handleStudentLogin(e) {
             return showFeedback('Usuário ou senha inválidos.', 'error');
         }
 
-        const { data: teacher, error: teacherError } = await supabaseClient
-            .from('classes')
-            .select('teacher_id')
-            .eq('id', students[0].class_id)
-            .single();
-
-        if (teacherError || !teacher) {
-            return showFeedback('Erro ao encontrar o professor da turma.', 'error');
-        }
-
-        // Precisamos do e-mail do professor para reconstruir o e-mail do aluno
-        const { data: { user } } = await supabaseClient.auth.admin.getUserById(teacher.teacher_id);
-        const teacherEmail = user.email;
-        const [localPart, domain] = teacherEmail.split('@');
-
         let loggedInUser = null;
         let loginError = null;
 
         for (const student of students) {
-            const sanitizedUsername = username.toLowerCase().replace(/\s+/g, '');
-            const classIdPart = student.class_id.substring(0, 4);
-            const studentEmail = `${localPart}+${sanitizedUsername}${classIdPart}@${domain}`;
+            const studentEmail = `${username.toLowerCase().replace(/\s+/g, '')}${student.class_id.substring(0, 4)}@example.com`;
 
             const { data, error } = await supabaseClient.auth.signInWithPassword({
                 email: studentEmail,
@@ -362,7 +351,6 @@ async function handleStudentLogin(e) {
         button.innerHTML = originalText;
     }
 }
-
 
 async function logout() {
     await supabaseClient.auth.signOut();
@@ -615,7 +603,7 @@ async function handleCreateStudent(event) {
     if (!username || !password) {
         return showFeedback("Por favor, preencha o nome e a senha do aluno.", "error");
     }
-    if (!currentClassId || !currentUser?.id || !currentUser.email) {
+    if (!currentClassId || !currentUser?.id) {
         return showFeedback("Erro de sessão do professor. Por favor, faça login novamente.", "error");
     }
 
@@ -623,12 +611,7 @@ async function handleCreateStudent(event) {
     submitButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Criando...';
 
     try {
-        const teacherEmail = currentUser.email;
-        const [localPart, domain] = teacherEmail.split('@');
-        const sanitizedUsername = username.toLowerCase().replace(/\s+/g, '');
-        const classIdPart = currentClassId.substring(0, 4);
-
-        const studentEmail = `${localPart}+${sanitizedUsername}${classIdPart}@${domain}`;
+        const studentEmail = `${username.toLowerCase().replace(/\s+/g, '')}${currentClassId.substring(0, 4)}@example.com`;
 
         const { data: authData, error: authError } = await supabaseClient.auth.signUp({
             email: studentEmail,
@@ -649,9 +632,19 @@ async function handleCreateStudent(event) {
         }
         
         const studentId = authData.user.id;
+        
+        const hashedPassword = await hashPassword(password);
 
         const { error: studentError } = await supabaseClient.from('students').insert([
-            { id: studentId, name: username, username: username, class_id: currentClassId, teacher_id: currentUser.id, assigned_phase: 1 }
+            { 
+                id: studentId, 
+                name: username, 
+                username: username, 
+                password: hashedPassword, 
+                class_id: currentClassId, 
+                teacher_id: currentUser.id, 
+                assigned_phase: 1 
+            }
         ]);
 
         if (studentError) {
@@ -693,18 +686,11 @@ async function handleCreateStudent(event) {
     }
 }
 
-
 async function handleDeleteStudent(studentId, studentName) {
     if (!confirm(`Tem certeza que deseja excluir o aluno "${studentName}"?\n\nTodo o progresso dele será apagado permanentemente.`)) return;
     
     showFeedback(`Excluindo ${studentName}...`, 'info');
     try {
-        // Esta é uma função de admin e requer que a chave de serviço esteja configurada
-        // em um ambiente seguro, como uma Edge Function. Não vai funcionar diretamente
-        // no navegador com a chave anônima.
-        // const { error: adminError } = await supabaseClient.auth.admin.deleteUser(studentId);
-        // if(adminError) throw new Error(`Não foi possível excluir o usuário da autenticação: ${adminError.message}`);
-
         const { error } = await supabaseClient.from('students').delete().eq('id', studentId);
         if (error) throw error;
 
@@ -730,7 +716,6 @@ function handleCopyCredentials() {
         showFeedback('Erro ao copiar. Por favor, anote manualmente.', 'error');
     });
 }
-
 
 // #####################################################################
 // ### SEÇÃO DE GRAVAÇÃO DE ÁUDIO ###
@@ -887,7 +872,6 @@ function startTimer() {
 function stopTimer() {
     clearInterval(timerInterval);
 }
-
 
 // =======================================================
 // PARTE 7: LÓGICA DO JOGO
@@ -1130,7 +1114,6 @@ function showResultScreen(accuracy, passed) {
     }
 }
 
-
 async function nextPhase() {
     const nextPhaseNum = gameState.currentPhase + 1;
     if (nextPhaseNum > currentUser.assigned_phase) return;
@@ -1188,7 +1171,6 @@ async function playTeacherAudio(key, fallbackText, onEndCallback) {
         speak(fallbackText, onEndCallback);
     }
 }
-
 
 async function playCurrentAudio() {
     const currentQuestion = gameState.questions[gameState.currentQuestionIndex];
@@ -1297,7 +1279,6 @@ function showFeedback(message, type = 'info') {
         el.className = el.className.replace('show', '');
     }, 4000);
 }
-
 
 function updateUI() {
     const gameScreen = document.getElementById('gameScreen');
