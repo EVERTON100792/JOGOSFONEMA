@@ -323,7 +323,7 @@ async function handleStudentLogin(e) {
             return showFeedback('Usuário ou senha inválidos.', 'error');
         }
 
-        const studentEmail = `${username.toLowerCase().replace(/\s+/g, '.')}.${student.class_id.substring(0, 4)}@jogofonema.com`;
+        const studentEmail = `${username.toLowerCase().replace(/\s+/g, '-')}-${student.class_id.substring(0, 4)}@jogofonema.com`;
 
         const { data, error } = await supabaseClient.auth.signInWithPassword({
             email: studentEmail,
@@ -612,7 +612,7 @@ async function handleCreateStudent(event) {
     submitButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Criando...';
 
     try {
-        const studentEmail = `${username.toLowerCase().replace(/\s+/g, '.')}.${currentClassId.substring(0, 4)}@jogofonema.com`;
+        const studentEmail = `${username.toLowerCase().replace(/\s+/g, '-')}-${currentClassId.substring(0, 4)}@jogofonema.com`;
 
         // 1. Create a Supabase Auth user for the student
         const { data: authData, error: authError } = await supabaseClient.auth.signUp({
