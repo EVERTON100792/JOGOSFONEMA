@@ -8,7 +8,7 @@ const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS
 const supabaseClient = createClient(supabaseUrl, supabaseKey);
 
 // Chave do professor que tem permissão para gerenciar os áudios do jogo
-const SUPER_ADMIN_TEACHER_ID = '433773dc-3905-44b5-991a-4781497d6a74'; 
+const SUPER_ADMIN_TEACHER_ID = '433773dc-3905-44b5-991a-4781497d6a74';
 
 let currentUser = null;
 let currentClassId = null;
@@ -139,7 +139,7 @@ async function initApp() {
 }
 
 async function restoreOrStartGame() {
-    await loadGameState(); 
+    await loadGameState();
 
     if (gameState.phaseCompleted) {
         const accuracy = gameState.questions.length > 0 ? Math.round((gameState.score / gameState.questions.length) * 100) : 100;
@@ -232,19 +232,27 @@ function setupAllEventListeners() {
 // =======================================================
 // PARTE 5: AUTENTICAÇÃO E SESSÃO
 // =======================================================
+
+// ##################################################
+// ## INÍCIO DA FUNÇÃO CORRIGIDA ##
+// ##################################################
 async function checkSession() {
     const { data: { session } } = await supabaseClient.auth.getSession();
+    
+    // CORREÇÃO: A lógica anterior era muito restrita e deslogava professores válidos.
+    // Agora, se existe uma sessão de autenticação do Supabase, assumimos que é um professor,
+    // pois os alunos usam um sistema de sessão diferente (sessionStorage).
     if (session && session.user) {
         currentUser = session.user;
-        if (currentUser.user_metadata.role === 'teacher') {
-            await showTeacherDashboard();
-        } else {
-            await logout();
-        }
+        await showTeacherDashboard(); // Vai direto para o dashboard do professor.
     } else {
+        // Se não há sessão de professor (nem de aluno, verificado em initApp), mostra a tela de escolha.
         showScreen('userTypeScreen');
     }
 }
+// ##################################################
+// ## FIM DA FUNÇÃO CORRIGIDA ##
+// ##################################################
 
 async function handleTeacherLogin(e) {
     e.preventDefault();
@@ -366,7 +374,6 @@ async function loadTeacherData() {
     
     const audioSettingsButton = document.getElementById('showAudioSettingsModalBtn');
     
-    // *** CORREÇÃO DO ERRO DE DIGITAÇÃO AQUI ***
     if (currentUser.id === SUPER_ADMIN_TEACHER_ID) {
         audioSettingsButton.style.display = 'block';
     } else {
@@ -412,6 +419,8 @@ async function handleCreateClass(e) {
     e.preventDefault();
     const name = document.getElementById('className').value;
     if (!name) return;
+    
+    // Com a sessão corrigida, currentUser.id será válido aqui.
     const { error } = await supabaseClient.from('classes').insert([{ name, teacher_id: currentUser.id }]);
     if (error) {
         showFeedback(`Erro ao criar turma: ${error.message}`, 'error');
@@ -566,7 +575,7 @@ async function assignPhase(studentId, selectElement) {
 
         const { error: progressError } = await supabaseClient
             .from('progress')
-            .upsert({ 
+            .upsert({
                 student_id: studentId, current_phase: newPhase,
                 game_state: newGameState, last_played: new Date().toISOString()
             }, { onConflict: 'student_id' });
@@ -832,9 +841,6 @@ async function startGame() {
     showScreen('startScreen');
 }
 
-// ##################################################
-// ## INÍCIO DA FUNÇÃO CORRIGIDA ##
-// ##################################################
 async function loadGameState() {
     // 1. Busca os dados mais recentes do aluno para garantir que a 'assigned_phase' está atualizada.
     //    Isso evita o problema de usar dados antigos salvos no navegador.
@@ -895,9 +901,6 @@ async function loadGameState() {
         await saveGameState();
     }
 }
-// ##################################################
-// ## FIM DA FUNÇÃO CORRIGIDA ##
-// ##################################################
 
 async function saveGameState() {
     if (!currentUser || currentUser.type !== 'student') return;
@@ -1073,8 +1076,8 @@ function showResultScreen(accuracy, passed) {
         retryButton.style.display = 'none';
         restartButton.innerHTML = '<i class="fas fa-sign-out-alt"></i> Sair';
         
-        gameState.phaseCompleted = true; 
-        saveGameState(); 
+        gameState.phaseCompleted = true;
+        saveGameState();
 
     } else {
         document.getElementById('resultTitle').textContent = 'Não desanime!';
@@ -1107,7 +1110,7 @@ async function retryPhase() {
     gameState.currentQuestionIndex = 0;
     gameState.score = 0;
     gameState.attempts = 2;
-    gameState.phaseCompleted = false; 
+    gameState.phaseCompleted = false;
     await saveGameState();
     showScreen('gameScreen');
     startQuestion();
@@ -1122,7 +1125,7 @@ async function restartGame() {
 }
 
 async function playTeacherAudio(key, fallbackText, onEndCallback) {
-    const teacherId = SUPER_ADMIN_TEACHER_ID; 
+    const teacherId = SUPER_ADMIN_TEACHER_ID;
 
     if (!teacherId) {
         console.warn("ID do Super Admin não foi definido, usando voz padrão.");
@@ -1163,7 +1166,7 @@ function initializeSpeech() {
     function loadVoices() {
         const voices = speechSynthesis.getVoices();
         if (voices.length > 0) {
-            selectedVoice = voices.find(voice => voice.lang === 'pt-BR' && voice.name.includes('Google')) || 
+            selectedVoice = voices.find(voice => voice.lang === 'pt-BR' && voice.name.includes('Google')) ||
                             voices.find(voice => voice.lang === 'pt-BR');
             speechReady = true;
             speechSynthesis.removeEventListener('voiceschanged', loadVoices);
@@ -1193,25 +1196,25 @@ function speak(text, onEndCallback) {
     speechSynthesis.speak(utterance);
 }
 
-function showScreen(screenId) { 
-    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active')); 
-    document.getElementById(screenId)?.classList.add('active'); 
+function showScreen(screenId) {
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    document.getElementById(screenId)?.classList.add('active');
 }
 
-function showModal(modalId) { 
-    document.getElementById(modalId)?.classList.add('show'); 
+function showModal(modalId) {
+    document.getElementById(modalId)?.classList.add('show');
 }
 
-function closeModal(modalId) { 
-    document.getElementById(modalId)?.classList.remove('show'); 
+function closeModal(modalId) {
+    document.getElementById(modalId)?.classList.remove('show');
 }
 
-function showCreateStudentForm() { 
-    document.getElementById('createStudentForm').style.display = 'block'; 
+function showCreateStudentForm() {
+    document.getElementById('createStudentForm').style.display = 'block';
 }
-function hideCreateStudentForm() { 
-    document.getElementById('createStudentForm').style.display = 'none'; 
-    document.getElementById('createStudentFormElement').reset(); 
+function hideCreateStudentForm() {
+    document.getElementById('createStudentForm').style.display = 'none';
+    document.getElementById('createStudentFormElement').reset();
 }
 
 function showAudioSettingsModal() {
