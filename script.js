@@ -22,6 +22,7 @@ const CUSTOM_AUDIO_KEYS = {
     'feedback_incorrect': 'Feedback - Erro'
 };
 
+
 let gameState = {};
 let mediaRecorder;
 let audioChunks = [];
@@ -70,13 +71,17 @@ const PHASE_3_WORDS = [
 // =======================================================
 // PARTE 3: FUNÇÕES UTILITÁRIAS
 // =======================================================
-
 async function hashPassword(password) {
     const encoder = new TextEncoder();
     const data = encoder.encode(password);
     const hashBuffer = await window.crypto.subtle.digest('SHA-256', data);
     const hashArray = Array.from(new Uint8Array(hashBuffer));
     return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+async function verifyPassword(password, storedHash) {
+    const newHash = await hashPassword(password);
+    return newHash === storedHash;
 }
 
 function generateRandomPassword() {
@@ -97,15 +102,16 @@ function formatErrorMessage(error) {
     if (message.includes('invalid login credentials')) {
         return 'Usuário ou senha inválidos. Verifique os dados e tente novamente.';
     }
-    if (message.includes('to be a valid email') || message.includes('invalid email')) {
-        return 'O e-mail gerado internamente é inválido. Tente usar um nome de usuário mais simples.';
+    if (message.includes('to be a valid email')) {
+        return 'Por favor, insira um e-mail válido.';
     }
     if (message.includes('password should be at least 6 characters')) {
         return 'A senha precisa ter no mínimo 6 caracteres.';
     }
     console.error("Erro não tratado:", error);
-    return `Ocorreu um erro inesperado: ${error.message}`;
+    return 'Ocorreu um erro inesperado. Por favor, tente mais tarde.';
 }
+
 
 // =======================================================
 // PARTE 4: LÓGICA PRINCIPAL E EVENTOS
@@ -221,6 +227,7 @@ function setupAllEventListeners() {
     });
 }
 
+
 // =======================================================
 // PARTE 5: AUTENTICAÇÃO E SESSÃO
 // =======================================================
@@ -296,54 +303,33 @@ async function handleStudentLogin(e) {
     const username = document.getElementById('studentUsername').value.trim();
     const password = document.getElementById('studentPassword').value.trim();
     
-    if (!username || !password) {
-        showFeedback('Por favor, preencha o usuário e a senha.', 'error');
-        button.disabled = false;
-        button.innerHTML = originalText;
-        return;
-    }
-
     try {
-        const { data: students, error: studentError } = await supabaseClient
+        const { data: studentData, error } = await supabaseClient
             .from('students')
-            .select('class_id, assigned_phase, teacher_id, id')
-            .eq('username', username);
+            .select('*, assigned_phase')
+            .eq('username', username)
+            .single();
 
-        if (studentError || !students || students.length === 0) {
-            return showFeedback('Usuário ou senha inválidos.', 'error');
+        if (error && error.message !== 'JSON object requested, multiple (or no) rows returned') {
+            throw error;
         }
 
-        let loggedInUser = null;
-        let loginError = null;
-
-        for (const student of students) {
-            const studentEmail = `${username.toLowerCase().replace(/\s+/g, '')}${student.class_id.substring(0, 4)}@example.com`;
-
-            const { data, error } = await supabaseClient.auth.signInWithPassword({
-                email: studentEmail,
-                password: password,
-            });
-
-            if (!error && data.user) {
-                loggedInUser = { ...data.user, ...student, type: 'student', id: data.user.id };
-                break;
-            } else {
-                loginError = error;
-            }
+        if (!studentData) {
+            throw new Error('Usuário ou senha inválidos.');
         }
         
-        if (loggedInUser) {
-            currentUser = loggedInUser;
-            sessionStorage.setItem('currentUser', JSON.stringify(currentUser));
-            await showStudentGame();
-            showFeedback('Login realizado com sucesso!', 'success');
-        } else {
-             if (loginError && loginError.message.includes('Invalid login credentials')) {
-                return showFeedback('Usuário ou senha inválidos.', 'error');
-            }
-            return showFeedback(formatErrorMessage(loginError), 'error');
+        const match = await verifyPassword(password, studentData.password);
+
+        if (!match) {
+            throw new Error('Usuário ou senha inválidos.');
         }
 
+        currentUser = { ...studentData, type: 'student' };
+        sessionStorage.setItem('currentUser', JSON.stringify(currentUser));
+
+        await showStudentGame();
+        showFeedback('Login realizado com sucesso!', 'success');
+        
     } catch (error) {
         showFeedback(formatErrorMessage(error), 'error');
     } finally {
@@ -502,9 +488,10 @@ async function loadStudentProgress() {
         .eq('class_id', currentClassId);
 
     if (studentsError) {
-        progressList.innerHTML = '<p class="error-text">Erro ao carregar lista de alunos.</p>';
+        progressList.innerHTML = `<p style="color:red;">Erro ao carregar alunos: ${studentsError.message}</p>`;
         return;
     }
+
     if (students.length === 0) {
         progressList.innerHTML = '<p>Nenhum aluno nesta turma para exibir o progresso.</p>';
         return;
@@ -517,16 +504,16 @@ async function loadStudentProgress() {
         .in('student_id', studentIds);
 
     if (progressError) {
-        progressList.innerHTML = '<p class="error-text">Erro ao carregar o progresso dos alunos.</p>';
+        progressList.innerHTML = `<p style="color:red;">Erro ao carregar progresso: ${progressError.message}</p>`;
         return;
     }
 
     let html = students.map(student => {
-        const progress = progresses.find(p => p.student_id === student.id);
+        const progress = progresses.find(p => p.student_id === student.id) || {};
         const assignedPhase = student.assigned_phase || 1;
-        const currentPhase = progress?.current_phase || 'N/A';
-        const score = progress?.game_state?.score ?? 0;
-        const total = progress?.game_state?.questions?.length || 10;
+        const currentPhase = progress.current_phase || 'N/A';
+        const score = progress.game_state?.score ?? 0;
+        const total = progress.game_state?.questions?.length || 10;
         const accuracy = total > 0 ? Math.round((score / total) * 100) : 0;
 
         const phaseOptions = [1, 2, 3].map(phaseNum =>
@@ -542,7 +529,7 @@ async function loadStudentProgress() {
                     <p>Progresso na Fase ${currentPhase}: ${accuracy}% (${score}/${total})</p>
                     <div class="student-progress-container">
                          <div class="student-progress-bar">
-                               <div class="student-progress-fill" style="width: ${accuracy}%;"></div>
+                              <div class="student-progress-fill" style="width: ${accuracy}%;"></div>
                          </div>
                     </div>
                 </div>
@@ -563,6 +550,7 @@ async function assignPhase(studentId, selectElement) {
     const studentName = selectElement.closest('.student-item').querySelector('h4').textContent;
 
     if (!confirm(`Deseja designar a Fase ${newPhase} para o aluno ${studentName}?\n\nAtenção: O progresso na fase atual será reiniciado para que ele comece a nova atividade do zero.`)) {
+        // Recarrega o progresso para resetar a seleção visual no dropdown
         await loadStudentProgress();
         return;
     }
@@ -594,6 +582,7 @@ async function assignPhase(studentId, selectElement) {
     }
 }
 
+
 async function handleCreateStudent(event) {
     event.preventDefault();
     const username = document.getElementById('createStudentUsername').value.trim();
@@ -604,71 +593,19 @@ async function handleCreateStudent(event) {
         return showFeedback("Por favor, preencha o nome e a senha do aluno.", "error");
     }
     if (!currentClassId || !currentUser?.id) {
-        return showFeedback("Erro de sessão do professor. Por favor, faça login novamente.", "error");
+        return showFeedback("Erro de sessão. Por favor, feche e abra o gerenciador de turmas.", "error");
     }
 
     submitButton.disabled = true;
     submitButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Criando...';
 
     try {
-        const studentEmail = `${username.toLowerCase().replace(/\s+/g, '')}${currentClassId.substring(0, 4)}@example.com`;
-
-        const { data: authData, error: authError } = await supabaseClient.auth.signUp({
-            email: studentEmail,
-            password: password,
-            options: {
-                data: {
-                    full_name: username,
-                    role: 'student'
-                }
-            }
-        });
-
-        if (authError) {
-            if (authError.message.includes('User already registered')) {
-                throw new Error('Este nome de usuário já está em uso nesta turma.');
-            }
-            throw authError;
-        }
-        
-        const studentId = authData.user.id;
-        
         const hashedPassword = await hashPassword(password);
-
-        const { error: studentError } = await supabaseClient.from('students').insert([
-            { 
-                id: studentId, 
-                name: username, 
-                username: username, 
-                password: hashedPassword, 
-                class_id: currentClassId, 
-                teacher_id: currentUser.id, 
-                assigned_phase: 1 
-            }
+        const { error } = await supabaseClient.from('students').insert([
+            { name: username, username: username, password: hashedPassword, class_id: currentClassId, teacher_id: currentUser.id }
         ]);
 
-        if (studentError) {
-            console.error("Erro ao inserir na tabela de alunos, um usuário órfão pode ter sido criado na autenticação.", studentError);
-            throw studentError;
-        }
-
-        const initialGameState = {
-            currentPhase: 1,
-            score: 0,
-            attempts: 2,
-            questions: generateQuestions(1),
-            currentQuestionIndex: 0,
-            teacherId: currentUser.id,
-            tutorialsShown: []
-        };
-        const { error: progressError } = await supabaseClient.from('progress').insert([
-            { student_id: studentId, current_phase: 1, game_state: initialGameState, last_played: new Date().toISOString() }
-        ]);
-
-        if (progressError) {
-            console.error("Erro ao criar progresso inicial:", progressError);
-            throw new Error("O aluno foi criado, mas houve um erro ao iniciar seu progresso.");
-        }
+        if (error) throw error;
 
         document.getElementById('newStudentUsername').textContent = username;
         document.getElementById('newStudentPassword').textContent = password;
@@ -686,24 +623,35 @@ async function handleCreateStudent(event) {
     }
 }
 
+
 async function handleDeleteStudent(studentId, studentName) {
     if (!confirm(`Tem certeza que deseja excluir o aluno "${studentName}"?\n\nTodo o progresso dele será apagado permanentemente.`)) return;
     
-    showFeedback(`Excluindo ${studentName}...`, 'info');
-    try {
-        const { error } = await supabaseClient.from('students').delete().eq('id', studentId);
-        if (error) throw error;
-
+    const { error } = await supabaseClient.from('students').delete().eq('id', studentId);
+    
+    if (error) {
+        showFeedback(`Erro ao excluir aluno: ${error.message}`, 'error');
+    } else {
         showFeedback(`Aluno "${studentName}" excluído com sucesso.`, 'success');
         await loadClassStudents();
         await loadStudentProgress();
-    } catch (error) {
-        showFeedback(`Erro ao excluir aluno: ${error.message}. O usuário pode precisar ser removido manualmente do painel do Supabase.`, 'error');
     }
 }
 
 async function handleResetStudentPassword(studentId, studentName) {
-    showFeedback("A funcionalidade de resetar senha será implementada futuramente. Por enquanto, a melhor forma é excluir e criar o aluno novamente.", "info");
+    const newPassword = generateRandomPassword();
+    const confirmed = prompt(`A nova senha para "${studentName}" é:\n\n${newPassword}\n\nAnote-a e entregue ao aluno. Copie a senha e clique em OK para confirmar a alteração.`, newPassword);
+
+    if (!confirmed) return;
+
+    try {
+        const hashedPassword = await hashPassword(newPassword);
+        const { error } = await supabaseClient.from('students').update({ password: hashedPassword }).eq('id', studentId);
+        if (error) throw error;
+        showFeedback(`Senha de "${studentName}" alterada com sucesso!`, 'success');
+    } catch (error) {
+        showFeedback(`Erro ao resetar senha: ${error.message}`, 'error');
+    }
 }
 
 function handleCopyCredentials() {
@@ -717,10 +665,10 @@ function handleCopyCredentials() {
     });
 }
 
-// #####################################################################
-// ### SEÇÃO DE GRAVAÇÃO DE ÁUDIO ###
-// #####################################################################
 
+// =======================================================
+// SEÇÃO DE GRAVAÇÃO DE ÁUDIO
+// =======================================================
 async function handleAudioUpload() {
     const files = document.getElementById('audioUpload').files;
     if (files.length === 0) return showFeedback('Nenhum arquivo selecionado.', 'error');
@@ -766,10 +714,9 @@ async function startRecording() {
         
         const options = { mimeType: 'audio/webm; codecs=opus' };
         if (!MediaRecorder.isTypeSupported(options.mimeType)) {
-            console.warn(`${options.mimeType} não é suportado. Tentando alternativa.`);
             options.mimeType = 'audio/webm';
             if (!MediaRecorder.isTypeSupported(options.mimeType)) {
-                alert("Seu navegador não suporta a gravação de áudio neste formato (WebM). Tente usar Chrome ou Firefox.");
+                alert("Seu navegador não suporta a gravação de áudio. Tente usar Chrome ou Firefox.");
                 statusEl.textContent = 'Gravação não suportada.';
                 recordBtn.disabled = false;
                 return;
@@ -873,6 +820,7 @@ function stopTimer() {
     clearInterval(timerInterval);
 }
 
+
 // =======================================================
 // PARTE 7: LÓGICA DO JOGO
 // =======================================================
@@ -886,15 +834,11 @@ async function startGame() {
 }
 
 async function loadGameState() {
-    const { data: progressData, error } = await supabaseClient
+    const { data: progressData } = await supabaseClient
         .from('progress')
         .select('game_state, current_phase')
         .eq('student_id', currentUser.id)
         .single();
-
-    if (error && error.code !== 'PGRST116') { // PGRST116 = 0 rows
-        console.error("Erro ao carregar estado do jogo:", error);
-    }
 
     const assignedPhase = currentUser.assigned_phase || 1;
     const savedPhase = progressData?.current_phase;
@@ -930,10 +874,7 @@ async function saveGameState() {
         game_state: gameState,
         last_played: new Date().toISOString()
     }, { onConflict: 'student_id' });
-    if (error) {
-        console.error("Erro ao salvar progresso:", error);
-        showFeedback(`Erro ao salvar o progresso: ${error.message}`, 'error');
-    }
+    if (error) console.error("Erro ao salvar progresso:", error);
 }
 
 function generateQuestions(phase) {
@@ -1114,6 +1055,7 @@ function showResultScreen(accuracy, passed) {
     }
 }
 
+
 async function nextPhase() {
     const nextPhaseNum = gameState.currentPhase + 1;
     if (nextPhaseNum > currentUser.assigned_phase) return;
@@ -1171,6 +1113,7 @@ async function playTeacherAudio(key, fallbackText, onEndCallback) {
         speak(fallbackText, onEndCallback);
     }
 }
+
 
 async function playCurrentAudio() {
     const currentQuestion = gameState.questions[gameState.currentQuestionIndex];
@@ -1277,8 +1220,9 @@ function showFeedback(message, type = 'info') {
     el.className = `show ${type}`;
     setTimeout(() => {
         el.className = el.className.replace('show', '');
-    }, 4000);
+    }, 3000);
 }
+
 
 function updateUI() {
     const gameScreen = document.getElementById('gameScreen');
