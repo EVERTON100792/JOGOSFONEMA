@@ -30,7 +30,7 @@ body {
 .screen.active {
     display: flex;
     flex-direction: column;
-    justify-content: center; /* Mantido como center para telas de login/dashboard */
+    justify-content: center;
     align-items: center;
     opacity: 1;
     visibility: visible;
@@ -169,6 +169,10 @@ body {
     width: 100%;
 }
 
+.phase-info {
+    text-align: left; /* Garante alinhamento à esquerda */
+}
+
 .phase-info h2 {
     color: #fff;
     font-size: 1.5rem;
@@ -180,25 +184,21 @@ body {
 /* ================================== */
 
 .progress-bar {
-    width: 100%; /* Ocupa a largura disponível no header */
-    max-width: 250px; /* Define uma largura máxima */
-    height: 18px; /* Um pouco mais alta para melhor visualização */
-    background-color: rgba(0, 0, 0, 0.15); /* Fundo mais escuro para contraste */
+    width: 100%;
+    max-width: 250px;
+    height: 18px;
+    background-color: rgba(0, 0, 0, 0.15);
     border-radius: 20px;
     overflow: hidden;
     border: 1px solid rgba(255, 255, 255, 0.2);
-    box-shadow: inset 0 2px 4px rgba(0,0,0,0.2); /* Sombra interna para profundidade */
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.2);
 }
 
 .progress-fill {
     height: 100%;
     width: 0%;
-    border-radius: 20px;
-    
-    /* O gradiente de cor principal */
+    border-radius: 20px 0 0 20px; /* Arredonda cantos apenas onde a barra cresce */
     background-color: #4ECDC4;
-    
-    /* Camada por cima com listras animadas */
     background-image: repeating-linear-gradient(
         -45deg,
         rgba(255, 255, 255, 0.25),
@@ -206,18 +206,11 @@ body {
         transparent 10px,
         transparent 20px
     );
-    
-    /* Define o tamanho do padrão de listras */
     background-size: 40px 40px;
-    
-    /* Transição suave para o preenchimento */
     transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
-    
-    /* Aplica a animação que criamos abaixo */
     animation: animate-stripes 1.5s linear infinite;
 }
 
-/* Animação que move a posição do fundo (as listras) */
 @keyframes animate-stripes {
     from {
         background-position: 40px 0;
@@ -226,7 +219,6 @@ body {
         background-position: 0 0;
     }
 }
-
 
 .score-info {
     text-align: right;
@@ -245,9 +237,7 @@ body {
 
 /* Botão de Sair do Jogo */
 .game-actions {
-    position: absolute;
-    top: 15px;
-    right: 20px;
+    /* Removido o posicionamento absoluto para melhor fluxo */
 }
 
 .exit-button {
@@ -267,7 +257,6 @@ body {
     background-color: rgba(255, 82, 82, 0.8);
     border-color: rgba(255, 255, 255, 0.8);
 }
-
 
 /* Conteúdo do Jogo */
 .game-content {
@@ -295,7 +284,6 @@ body {
     margin-bottom: 1rem;
 }
 
-/* Área da Pergunta de Áudio (Fase 1) */
 .audio-section {
     margin: 1rem 0;
     position: relative;
@@ -335,7 +323,6 @@ body {
     font-size: 0.9rem;
 }
 
-/* Área da Pergunta de Imagem (Fase 2 e 3) */
 #imageQuestionArea {
     margin: 1rem 0;
 }
@@ -369,7 +356,6 @@ body {
     margin: 1rem 0;
 }
 
-/* Grade de Opções (Letras, Vogais, Sílabas) */
 .letters-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
@@ -385,7 +371,7 @@ body {
     color: white;
     border: none;
     padding: 1.5rem;
-    font-size: 2.5rem;
+    font-size: clamp(1.5rem, 4vw, 2.5rem); /* Fonte responsiva */
     font-weight: bold;
     border-radius: 20px;
     cursor: pointer;
@@ -395,6 +381,8 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
+    word-break: break-word; /* Garante que palavras longas não quebrem o layout */
+    height: auto;
 }
 
 .letter-button:hover:not(:disabled) {
@@ -429,13 +417,11 @@ body {
     75% { transform: translateX(10px); }
 }
 
-/* Controles do Jogo */
 .game-controls {
     text-align: center;
     margin-top: 2rem;
 }
 
-/* Tela de Resultado */
 .result-content {
     background: rgba(255,255,255,0.95);
     border-radius: 30px;
@@ -491,13 +477,11 @@ body {
     margin-top: 2rem;
 }
 
-
-/* Feedback Global */
 #globalFeedback {
     position: fixed;
     bottom: 20px;
     left: 50%;
-    transform: translate(-50%, 100px); /* Começa fora da tela */
+    transform: translate(-50%, 100px);
     padding: 15px 25px;
     border-radius: 50px;
     color: white;
@@ -512,7 +496,7 @@ body {
 #globalFeedback.show {
     opacity: 1;
     visibility: visible;
-    transform: translate(-50%, 0); /* Entra na tela */
+    transform: translate(-50%, 0);
 }
 
 #globalFeedback.success { background-color: #4ecdc4; }
@@ -520,8 +504,6 @@ body {
 #globalFeedback.info { background-color: #667eea; }
 #globalFeedback .feedback-content { display: flex; align-items: center; gap: 10px; }
 
-
-/* Responsividade */
 @media (max-width: 768px) {
     .screen.active {
         padding-left: 10px;
@@ -529,7 +511,6 @@ body {
     }
     .game-title h1 { font-size: 2.5rem; }
     .game-header { flex-direction: column; gap: 1rem; align-items: stretch; padding: 1rem; }
-    .game-actions { top: 10px; right: 10px; }
     .progress-bar { width: 100%; max-width: none; }
     .letters-grid { grid-template-columns: repeat(2, 1fr); gap: 0.8rem; }
     .letter-button { font-size: 2rem; padding: 1rem; }
@@ -547,7 +528,6 @@ body {
     .letter-button { font-size: 1.8rem; border-radius: 15px; }
 }
 
-/* === SELEÇÃO DE USUÁRIO === */
 .user-selection { text-align: center; margin: 40px 0; }
 .user-selection h2 { color: #fff; text-shadow: 1px 1px 3px rgba(0,0,0,0.2); margin-bottom: 30px; font-size: 1.8rem; }
 .user-types { display: flex; gap: 30px; justify-content: center; flex-wrap: wrap; }
@@ -557,7 +537,6 @@ body {
 .user-type-btn span { font-size: 1.4rem; font-weight: bold; }
 .user-type-btn small { font-size: 1rem; opacity: 0.9; }
 
-/* === LOGIN E REGISTRO === */
 .login-container { max-width: 400px; margin: 0 auto; background: white; padding: 40px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
 .login-container h2 { text-align: center; color: #2C3E50; margin-bottom: 30px; font-size: 1.8rem; }
 .login-container h2 i { margin-right: 10px; color: #4ECDC4; }
@@ -577,7 +556,6 @@ body {
 .back-btn { background: #E0E0E0; color: #555; border: none; padding: 10px 20px; border-radius: 10px; cursor: pointer; margin-top: 20px; transition: all 0.3s ease; }
 .back-btn:hover { background: #D0D0D0; }
 
-/* === DASHBOARD === */
 .dashboard-header { display: flex; justify-content: space-between; align-items: center; margin: 0 auto 40px auto; padding: 20px; background: rgba(255,255,255,0.2); backdrop-filter: blur(10px); border-radius: 15px; color: white; max-width: 1200px; width: 100%; }
 .dashboard-header h1 { margin: 0; font-size: 2rem; }
 .teacher-info { display: flex; align-items: center; gap: 20px; }
@@ -598,7 +576,6 @@ body {
 .btn.danger { background: #ff6b6b; color: white; }
 .btn.small { padding: 6px 10px; }
 
-/* === MODAIS === */
 .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: center; opacity: 0; visibility: hidden; transition: opacity 0.4s ease, visibility 0.4s; }
 .modal.show { display: flex; opacity: 1; visibility: visible; }
 .modal-content { background: white; padding: 30px; border-radius: 15px; max-width: 500px; width: 90%; max-height: 90vh; overflow-y: auto; transform: scale(0.95); transition: transform 0.4s ease; }
@@ -618,34 +595,16 @@ body {
 .form-row { display: grid; grid-template-columns: 1fr; gap: 15px; align-items: end; }
 .form-actions { display: flex; gap: 10px; margin-top: 15px; }
 
-/* LISTA DE ALUNOS E PROGRESSO */
 .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
 .students-list { display: grid; gap: 15px; }
 .student-item { background: #f8f9fa; padding: 15px; border-radius: 10px; border: 1px solid #E0E0E0; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }
 .student-info h4 { margin: 0 0 5px 0; color: #2C3E50; }
 .student-info p { margin: 0; color: #666; font-size: 0.9rem; }
 
-/* Barra de Progresso do Aluno */
-.student-progress-container {
-    width: 100%;
-    margin-top: 8px;
-}
-.student-progress-bar {
-    width: 100%;
-    height: 10px;
-    background-color: #e0e0e0;
-    border-radius: 5px;
-    overflow: hidden;
-}
-.student-progress-fill {
-    height: 100%;
-    background-color: #4ECDC4;
-    width: 0%;
-    transition: width 0.5s ease;
-}
+.student-progress-container { width: 100%; margin-top: 8px; }
+.student-progress-bar { width: 100%; height: 10px; background-color: #e0e0e0; border-radius: 5px; overflow: hidden; }
+.student-progress-fill { height: 100%; background-color: #4ECDC4; width: 0%; transition: width 0.5s ease; }
 
-
-/* UPLOAD DE ÁUDIO E GRAVAÇÃO */
 .upload-instructions, .record-section { background: #f8f9fa; padding: 20px; border-radius: 10px; margin-bottom: 20px; }
 .upload-instructions strong { color: #764ba2; }
 .upload-area { margin: 20px 0; }
@@ -659,203 +618,73 @@ body {
 .record-btn:disabled, .stop-btn:disabled { background: #ccc; cursor: not-allowed; }
 #audioPlayback { width: 100%; }
 
-/* TUTORIAL */
 .tutorial-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 5000; justify-content: center; align-items: center; opacity: 0; transition: opacity 0.4s ease; }
 .tutorial-overlay.show { display: flex; opacity: 1; }
 
-/* Estilo para a caixa de credenciais na confirmação */
-.credentials-box {
-    background-color: #f8f9fa;
-    border: 1px solid #e0e0e0;
-    border-radius: 8px;
-    padding: 20px;
-    margin: 20px 0;
-    text-align: left;
-    font-size: 1.1rem;
-}
+.credentials-box { background-color: #f8f9fa; border: 1px solid #e0e0e0; border-radius: 8px; padding: 20px; margin: 20px 0; text-align: left; font-size: 1.1rem; }
+.credentials-box p { margin-bottom: 10px; }
 
-.credentials-box p {
-    margin-bottom: 10px;
-}
+.student-actions { display: flex; flex-direction: column; align-items: flex-start; gap: 5px; }
+.select-label { font-size: 0.8em; color: #555; font-weight: bold; }
+.phase-select { padding: 8px; border-radius: 8px; border: 2px solid #ddd; background-color: white; font-family: 'Comic Neue', cursive; font-size: 1rem; cursor: pointer; transition: all 0.2s ease; }
+.phase-select:hover { border-color: #764ba2; }
+.phase-select:focus { outline: none; border-color: #764ba2; box-shadow: 0 0 5px rgba(118, 75, 162, 0.5); }
 
-/* Estilos para o Menu de Designação de Fase */
-.student-actions {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 5px;
-}
+.password-wrapper { position: relative; display: flex; align-items: center; }
+.password-wrapper input { width: 100%; padding-right: 45px; }
+.password-toggle { position: absolute; right: 15px; cursor: pointer; color: #aaa; transition: color 0.2s ease; }
+.password-toggle:hover { color: #333; }
 
-.select-label {
-    font-size: 0.8em;
-    color: #555;
-    font-weight: bold;
-}
+.fa-spinner { animation: spin 1s linear infinite; }
+@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
 
-.phase-select {
-    padding: 8px;
-    border-radius: 8px;
-    border: 2px solid #ddd;
-    background-color: white;
-    font-family: 'Comic Neue', cursive;
-    font-size: 1rem;
-    cursor: pointer;
-    transition: all 0.2s ease;
-}
-
-.phase-select:hover {
-    border-color: #764ba2;
-}
-
-.phase-select:focus {
-    outline: none;
-    border-color: #764ba2;
-    box-shadow: 0 0 5px rgba(118, 75, 162, 0.5);
-}
-
-
-/* ================================== */
-/* === ESTILOS DE MELHORIA DE UX === */
-/* ================================== */
-
-/* Wrapper para o campo de senha */
-.password-wrapper {
-    position: relative;
-    display: flex;
-    align-items: center;
-}
-
-.password-wrapper input {
-    width: 100%;
-    padding-right: 45px; /* Espaço para o ícone */
-}
-
-/* Ícone de mostrar/ocultar senha */
-.password-toggle {
-    position: absolute;
-    right: 15px;
-    cursor: pointer;
-    color: #aaa;
-    transition: color 0.2s ease;
-}
-
-.password-toggle:hover {
-    color: #333;
-}
-
-/* Ícone de carregamento (spinner) para botões */
-.fa-spinner {
-    animation: spin 1s linear infinite;
-}
-
-@keyframes spin {
-    from { transform: rotate(0deg); }
-    to { transform: rotate(360deg); }
-}
-
-/* ================================================= */
-/* === SOLUÇÃO DEFINITIVA PARA LAYOUT DE TELA === */
-/* ================================================= */
-
-/* Garante que o corpo da página não tenha rolagens inesperadas */
 html, body {
     height: 100%;
     overflow: hidden;
 }
 
-/* Força a tela do jogo a se comportar como um aplicativo */
 #gameScreen.active {
     display: flex;
     flex-direction: column;
-    height: 100vh; /* Ocupa 100% da altura da tela visível */
-    width: 100vw;  /* Ocupa 100% da largura da tela visível */
+    height: 100vh;
+    width: 100vw;
     padding: 15px;
-    box-sizing: border-box; /* Garante que o padding não aumente o tamanho total */
+    box-sizing: border-box;
     justify-content: flex-start;
-    overflow: hidden; /* Desativa a rolagem da tela inteira */
+    overflow: hidden;
 }
 
-/* O cabeçalho não deve encolher */
 #gameScreen .game-header {
     flex-shrink: 0;
     width: 100%;
     margin-bottom: 15px;
 }
 
-/* A área de conteúdo principal é a única que pode crescer e rolar */
 #gameScreen .game-content {
-    flex-grow: 1; /* Faz este elemento ocupar todo o espaço restante */
-    overflow-y: auto; /* Adiciona rolagem vertical APENAS aqui se necessário */
-    min-height: 0; /* Truque importante para o flexbox funcionar bem com rolagem */
+    flex-grow: 1;
+    overflow-y: auto;
+    min-height: 0;
     width: 100%;
     padding: 1rem;
 }
 
-/* ===================================================== */
-/* === AJUSTES FINOS PARA TELAS BAIXAS (CELULARES) === */
-/* ===================================================== */
-
-/* Estas regras só se aplicam se a altura da tela for 740px ou menos */
 @media (max-height: 740px) {
     #gameScreen .game-content {
-        padding: 1rem; /* Diminui o padding interno */
+        padding: 1rem;
         display: flex;
         flex-direction: column;
     }
-
-    #gameScreen .question-area {
-        margin-bottom: 1rem; /* Menos espaço abaixo da pergunta */
-    }
-
-    #gameScreen .mascot-helper {
-        margin-bottom: 0.5rem; /* Menos espaço para o mascote */
-    }
-
-    #gameScreen .mascot-helper .mascot {
-        font-size: 2.5rem; /* Mascote um pouco menor */
-        margin-bottom: 0.5rem;
-    }
-    
-    #gameScreen .speech-bubble {
-        padding: 0.5rem 1rem;
-    }
-    
-    #gameScreen .speech-bubble p {
-        font-size: 0.9rem;
-    }
-
-    #gameScreen .audio-section {
-        margin: 0.5rem 0; /* Menos margem vertical */
-    }
-
-    #gameScreen .audio-button {
-        width: 90px; /* Botão de áudio menor */
-        height: 90px;
-    }
-     #gameScreen .audio-button i {
-        font-size: 1.5rem;
-    }
-    #gameScreen .audio-button span {
-        font-size: 0.8rem;
-    }
-
-    #gameScreen .question-text h3 {
-        font-size: 1.2rem; /* Texto da pergunta menor */
-        margin: 0.5rem 0;
-    }
-
-    #gameScreen .letters-grid {
-        margin: 1rem 0; /* Menos margem vertical */
-        gap: 0.5rem; /* Espaço menor entre os botões */
-        flex-grow: 1; /* Permite que a grade cresça para preencher o espaço */
-    }
-
-    #gameScreen .game-controls {
-        margin-top: 1rem; /* Menos espaço acima do botão 'Ouvir Novamente' */
-    }
-    
-    #gameScreen .control-button {
-        padding: 0.8rem 1.5rem;
-        font-size: 1rem;
-    }
+    #gameScreen .question-area { margin-bottom: 1rem; }
+    #gameScreen .mascot-helper { margin-bottom: 0.5rem; }
+    #gameScreen .mascot-helper .mascot { font-size: 2.5rem; margin-bottom: 0.5rem; }
+    #gameScreen .speech-bubble { padding: 0.5rem 1rem; }
+    #gameScreen .speech-bubble p { font-size: 0.9rem; }
+    #gameScreen .audio-section { margin: 0.5rem 0; }
+    #gameScreen .audio-button { width: 90px; height: 90px; }
+    #gameScreen .audio-button i { font-size: 1.5rem; }
+    #gameScreen .audio-button span { font-size: 0.8rem; }
+    #gameScreen .question-text h3 { font-size: 1.2rem; margin: 0.5rem 0; }
+    #gameScreen .letters-grid { margin: 1rem 0; gap: 0.5rem; flex-grow: 1; }
+    #gameScreen .game-controls { margin-top: 1rem; }
+    #gameScreen .control-button { padding: 0.8rem 1.5rem; font-size: 1rem; }
 }
