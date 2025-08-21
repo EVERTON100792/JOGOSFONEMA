@@ -638,13 +638,32 @@ async function handleCreateStudent(event) {
 
         // 2. Insert the student into the 'students' table, linking it to the auth user
         const { error: studentError } = await supabaseClient.from('students').insert([
-            { id: studentId, name: username, username: username, password: hashedPassword, class_id: currentClassId, teacher_id: currentUser.id }
+            { id: studentId, name: username, username: username, password: hashedPassword, class_id: currentClassId, teacher_id: currentUser.id, assigned_phase: 1 }
         ]);
 
         if (studentError) {
             // If this fails, we should probably delete the created auth user to avoid orphans
             // await supabaseClient.auth.admin.deleteUser(studentId); // This requires admin privileges
             throw studentError;
+        }
+
+        // 3. Create initial progress state for the new student
+        const initialGameState = {
+            currentPhase: 1,
+            score: 0,
+            attempts: 2,
+            questions: generateQuestions(1),
+            currentQuestionIndex: 0,
+            teacherId: currentUser.id,
+            tutorialsShown: []
+        };
+        const { error: progressError } = await supabaseClient.from('progress').insert([
+            { student_id: studentId, current_phase: 1, game_state: initialGameState, last_played: new Date().toISOString() }
+        ]);
+
+        if (progressError) {
+            console.error("Erro ao criar progresso inicial:", progressError);
+            throw new Error("O aluno foi criado, mas houve um erro ao iniciar seu progresso.");
         }
 
         document.getElementById('newStudentUsername').textContent = username;
