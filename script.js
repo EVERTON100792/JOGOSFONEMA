@@ -527,7 +527,7 @@ async function loadStudentProgress() {
                     <p>Progresso na Fase ${currentPhase}: ${accuracy}% (${score}/${total})</p>
                     <div class="student-progress-container">
                          <div class="student-progress-bar">
-                              <div class="student-progress-fill" style="width: ${accuracy}%;"></div>
+                               <div class="student-progress-fill" style="width: ${accuracy}%;"></div>
                          </div>
                     </div>
                 </div>
@@ -832,30 +832,61 @@ async function startGame() {
     showScreen('startScreen');
 }
 
+// ##################################################
+// ## INÍCIO DA FUNÇÃO CORRIGIDA ##
+// ##################################################
 async function loadGameState() {
+    // 1. Busca os dados mais recentes do aluno para garantir que a 'assigned_phase' está atualizada.
+    //    Isso evita o problema de usar dados antigos salvos no navegador.
+    const { data: studentData, error: studentError } = await supabaseClient
+        .from('students')
+        .select('assigned_phase, teacher_id')
+        .eq('id', currentUser.id)
+        .single();
+
+    // 2. Se houver um erro (ex: aluno deletado), impede o progresso para evitar mais problemas.
+    if (studentError || !studentData) {
+        console.error("Erro ao buscar dados atualizados do aluno:", studentError);
+        alert("Não foi possível carregar seus dados mais recentes. Por favor, faça o login novamente.");
+        await logout(); // Força o logout para obter uma sessão nova e limpa.
+        return;
+    }
+
+    // 3. Atualiza o objeto 'currentUser' em memória e no 'sessionStorage' com os dados do banco.
+    currentUser.assigned_phase = studentData.assigned_phase;
+    currentUser.teacher_id = studentData.teacher_id;
+    sessionStorage.setItem('currentUser', JSON.stringify(currentUser));
+    
+    // Agora 'assignedPhase' sempre usará o valor mais recente do banco de dados.
+    const assignedPhase = currentUser.assigned_phase || 1;
+
     const { data: progressData } = await supabaseClient
         .from('progress')
         .select('game_state, current_phase')
         .eq('student_id', currentUser.id)
         .single();
-
-    const assignedPhase = currentUser.assigned_phase || 1;
+        
     const savedPhase = progressData?.current_phase;
 
+    // Esta comparação agora funciona corretamente, pois usa a 'assignedPhase' atualizada.
     if (progressData && savedPhase !== assignedPhase) {
+        // Se a fase salva for diferente da designada, o jogo é reiniciado para a nova fase.
+        console.log(`Fase alterada pelo professor. Reiniciando da fase ${savedPhase} para a ${assignedPhase}.`);
         gameState = {
             currentPhase: assignedPhase, score: 0, attempts: 2,
             questions: generateQuestions(assignedPhase), currentQuestionIndex: 0,
             teacherId: currentUser.teacher_id, tutorialsShown: []
         };
         await saveGameState();
-        return;
+        return; // Importante para não continuar a execução da função.
     }
-
+    
     if (progressData && progressData.game_state && progressData.game_state.questions) {
+        // Continua o jogo de onde parou se a fase for a mesma.
         gameState = progressData.game_state;
         if (!gameState.tutorialsShown) gameState.tutorialsShown = [];
     } else {
+        // Inicia um novo estado de jogo se não houver progresso salvo.
         gameState = {
             currentPhase: assignedPhase, score: 0, attempts: 2,
             questions: generateQuestions(assignedPhase), currentQuestionIndex: 0,
@@ -864,6 +895,9 @@ async function loadGameState() {
         await saveGameState();
     }
 }
+// ##################################################
+// ## FIM DA FUNÇÃO CORRIGIDA ##
+// ##################################################
 
 async function saveGameState() {
     if (!currentUser || currentUser.type !== 'student') return;
@@ -898,9 +932,9 @@ function generateQuestions(phase) {
         case 3:
              const words_p3 = [...PHASE_3_WORDS].sort(() => 0.5 - Math.random());
              for (let i = 0; i < questionCount; i++) {
-                 const item = words_p3[i % words_p3.length];
-                 const allSyllables = PHASE_3_WORDS.map(w => w.syllable);
-                 questions.push({ type: 'initial_syllable', word: item.word, image: item.image, correctAnswer: item.syllable, options: generateOptions(item.syllable, allSyllables, 4) });
+                  const item = words_p3[i % words_p3.length];
+                  const allSyllables = PHASE_3_WORDS.map(w => w.syllable);
+                  questions.push({ type: 'initial_syllable', word: item.word, image: item.image, correctAnswer: item.syllable, options: generateOptions(item.syllable, allSyllables, 4) });
              }
              break;
         default: 
@@ -1097,164 +1131,4 @@ async function playTeacherAudio(key, fallbackText, onEndCallback) {
     }
 
     try {
-        const { data } = await supabaseClient.storage.from('audio_uploads').list(teacherId, { search: `${key}.` });
-
-        if (data && data.length > 0) {
-            const { data: { publicUrl } } = supabaseClient.storage.from('audio_uploads').getPublicUrl(`${teacherId}/${data[0].name}`);
-            const audio = new Audio(publicUrl);
-            if (onEndCallback) audio.onended = onEndCallback;
-            audio.play();
-        } else {
-            speak(fallbackText, onEndCallback);
-        }
-    } catch (error) {
-        console.error("Erro ao buscar áudio personalizado:", error);
-        speak(fallbackText, onEndCallback);
-    }
-}
-
-
-async function playCurrentAudio() {
-    const currentQuestion = gameState.questions[gameState.currentQuestionIndex];
-    if (currentQuestion.type !== 'letter_sound') return;
-    const letter = currentQuestion.correctAnswer;
-    playTeacherAudio(letter, letter);
-}
-
-// =======================================================
-// PARTE 8: SISTEMA DE VOZ E UI (INTERFACE DO USUÁRIO)
-// =======================================================
-
-function initializeSpeech() {
-    function loadVoices() {
-        const voices = speechSynthesis.getVoices();
-        if (voices.length > 0) {
-            selectedVoice = voices.find(voice => voice.lang === 'pt-BR' && voice.name.includes('Google')) || 
-                            voices.find(voice => voice.lang === 'pt-BR');
-            speechReady = true;
-            speechSynthesis.removeEventListener('voiceschanged', loadVoices);
-        }
-    }
-    speechSynthesis.addEventListener('voiceschanged', loadVoices);
-    loadVoices();
-}
-
-function speak(text, onEndCallback) {
-    if (!window.speechSynthesis) return;
-    
-    if (!speechReady) {
-        setTimeout(() => speak(text, onEndCallback), 100);
-        return;
-    }
-
-    speechSynthesis.cancel();
-    const utterance = new SpeechSynthesisUtterance(text);
-    utterance.lang = 'pt-BR';
-    
-    if (selectedVoice) {
-        utterance.voice = selectedVoice;
-    }
-    
-    if (onEndCallback) utterance.onend = onEndCallback;
-    speechSynthesis.speak(utterance);
-}
-
-function showScreen(screenId) { 
-    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active')); 
-    document.getElementById(screenId)?.classList.add('active'); 
-}
-
-function showModal(modalId) { 
-    document.getElementById(modalId)?.classList.add('show'); 
-}
-
-function closeModal(modalId) { 
-    document.getElementById(modalId)?.classList.remove('show'); 
-}
-
-function showCreateStudentForm() { 
-    document.getElementById('createStudentForm').style.display = 'block'; 
-}
-function hideCreateStudentForm() { 
-    document.getElementById('createStudentForm').style.display = 'none'; 
-    document.getElementById('createStudentFormElement').reset(); 
-}
-
-function showAudioSettingsModal() {
-    const letterSelect = document.getElementById('letterSelect');
-    if (letterSelect) {
-        let optionsHtml = '';
-        optionsHtml += '<optgroup label="Instruções e Feedbacks">';
-        for (const key in CUSTOM_AUDIO_KEYS) {
-            optionsHtml += `<option value="${key}">${CUSTOM_AUDIO_KEYS[key]}</option>`;
-        }
-        optionsHtml += '</optgroup>';
-        
-        optionsHtml += '<optgroup label="Letras do Alfabeto">';
-        optionsHtml += ALPHABET.map(letter => `<option value="${letter}">Letra ${letter}</option>`).join('');
-        optionsHtml += '</optgroup>';
-
-        letterSelect.innerHTML = optionsHtml;
-    }
-    showModal('audioSettingsModal');
-    showTab(document.querySelector('#audioSettingsModal .tab-btn[data-tab="uploadFileTab"]'));
-}
-
-function showTab(clickedButton) {
-    const parent = clickedButton.closest('.modal-content');
-    const tabId = clickedButton.getAttribute('data-tab');
-
-    parent.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
-    clickedButton.classList.add('active');
-
-    parent.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
-    parent.querySelector('#' + tabId).classList.add('active');
-}
-
-function showFeedback(message, type = 'info') {
-    const el = document.getElementById('globalFeedback');
-    if (!el) return;
-    const textEl = el.querySelector('.feedback-text');
-    if (textEl) textEl.textContent = message;
-    el.className = `show ${type}`;
-    setTimeout(() => {
-        el.className = el.className.replace('show', '');
-    }, 3000);
-}
-
-
-function updateUI() {
-    const gameScreen = document.getElementById('gameScreen');
-    if(gameScreen.classList.contains('active') && gameState.questions && gameState.questions.length > 0) {
-        document.getElementById('score').textContent = gameState.score;
-        document.getElementById('totalQuestions').textContent = gameState.questions.length;
-        document.getElementById('attempts').textContent = `${gameState.attempts} tentativa(s)`;
-        document.getElementById('currentPhase').textContent = gameState.currentPhase;
-        const progress = ((gameState.currentQuestionIndex) / gameState.questions.length) * 100;
-        document.getElementById('progressFill').style.width = `${progress}%`;
-    }
-}
-
-async function showTutorial(phaseNumber) {
-    if (gameState.tutorialsShown.includes(phaseNumber)) return;
-
-    const instruction = gameInstructions[phaseNumber];
-    if (!instruction) return;
-
-    const overlay = document.getElementById('tutorialOverlay');
-    const mascot = document.getElementById('tutorialMascot');
-    document.getElementById('tutorialText').textContent = instruction;
-    
-    overlay.classList.add('show');
-    mascot.classList.add('talking');
-    
-    const audioKey = `instruction_${phaseNumber}`;
-    playTeacherAudio(audioKey, instruction, () => mascot.classList.remove('talking'));
-
-    gameState.tutorialsShown.push(phaseNumber);
-    await saveGameState();
-}
-
-function hideTutorial() {
-    document.getElementById('tutorialOverlay').classList.remove('show');
-}
+        const { data } = await supabaseClient.storage.from('audio_uploads').list(teacherId, { search: `${key}.
