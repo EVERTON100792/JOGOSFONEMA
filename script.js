@@ -1131,4 +1131,164 @@ async function playTeacherAudio(key, fallbackText, onEndCallback) {
     }
 
     try {
-        const { data } = await supabaseClient.storage.from('audio_uploads').list(teacherId, { search: `${key}.
+        const { data } = await supabaseClient.storage.from('audio_uploads').list(teacherId, { search: `${key}.` });
+
+        if (data && data.length > 0) {
+            const { data: { publicUrl } } = supabaseClient.storage.from('audio_uploads').getPublicUrl(`${teacherId}/${data[0].name}`);
+            const audio = new Audio(publicUrl);
+            if (onEndCallback) audio.onended = onEndCallback;
+            audio.play();
+        } else {
+            speak(fallbackText, onEndCallback);
+        }
+    } catch (error) {
+        console.error("Erro ao buscar áudio personalizado:", error);
+        speak(fallbackText, onEndCallback);
+    }
+}
+
+
+async function playCurrentAudio() {
+    const currentQuestion = gameState.questions[gameState.currentQuestionIndex];
+    if (currentQuestion.type !== 'letter_sound') return;
+    const letter = currentQuestion.correctAnswer;
+    playTeacherAudio(letter, letter);
+}
+
+// =======================================================
+// PARTE 8: SISTEMA DE VOZ E UI (INTERFACE DO USUÁRIO)
+// =======================================================
+
+function initializeSpeech() {
+    function loadVoices() {
+        const voices = speechSynthesis.getVoices();
+        if (voices.length > 0) {
+            selectedVoice = voices.find(voice => voice.lang === 'pt-BR' && voice.name.includes('Google')) || 
+                            voices.find(voice => voice.lang === 'pt-BR');
+            speechReady = true;
+            speechSynthesis.removeEventListener('voiceschanged', loadVoices);
+        }
+    }
+    speechSynthesis.addEventListener('voiceschanged', loadVoices);
+    loadVoices();
+}
+
+function speak(text, onEndCallback) {
+    if (!window.speechSynthesis) return;
+    
+    if (!speechReady) {
+        setTimeout(() => speak(text, onEndCallback), 100);
+        return;
+    }
+
+    speechSynthesis.cancel();
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = 'pt-BR';
+    
+    if (selectedVoice) {
+        utterance.voice = selectedVoice;
+    }
+    
+    if (onEndCallback) utterance.onend = onEndCallback;
+    speechSynthesis.speak(utterance);
+}
+
+function showScreen(screenId) { 
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active')); 
+    document.getElementById(screenId)?.classList.add('active'); 
+}
+
+function showModal(modalId) { 
+    document.getElementById(modalId)?.classList.add('show'); 
+}
+
+function closeModal(modalId) { 
+    document.getElementById(modalId)?.classList.remove('show'); 
+}
+
+function showCreateStudentForm() { 
+    document.getElementById('createStudentForm').style.display = 'block'; 
+}
+function hideCreateStudentForm() { 
+    document.getElementById('createStudentForm').style.display = 'none'; 
+    document.getElementById('createStudentFormElement').reset(); 
+}
+
+function showAudioSettingsModal() {
+    const letterSelect = document.getElementById('letterSelect');
+    if (letterSelect) {
+        let optionsHtml = '';
+        optionsHtml += '<optgroup label="Instruções e Feedbacks">';
+        for (const key in CUSTOM_AUDIO_KEYS) {
+            optionsHtml += `<option value="${key}">${CUSTOM_AUDIO_KEYS[key]}</option>`;
+        }
+        optionsHtml += '</optgroup>';
+        
+        optionsHtml += '<optgroup label="Letras do Alfabeto">';
+        optionsHtml += ALPHABET.map(letter => `<option value="${letter}">Letra ${letter}</option>`).join('');
+        optionsHtml += '</optgroup>';
+
+        letterSelect.innerHTML = optionsHtml;
+    }
+    showModal('audioSettingsModal');
+    showTab(document.querySelector('#audioSettingsModal .tab-btn[data-tab="uploadFileTab"]'));
+}
+
+function showTab(clickedButton) {
+    const parent = clickedButton.closest('.modal-content');
+    const tabId = clickedButton.getAttribute('data-tab');
+
+    parent.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+    clickedButton.classList.add('active');
+
+    parent.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+    parent.querySelector('#' + tabId).classList.add('active');
+}
+
+function showFeedback(message, type = 'info') {
+    const el = document.getElementById('globalFeedback');
+    if (!el) return;
+    const textEl = el.querySelector('.feedback-text');
+    if (textEl) textEl.textContent = message;
+    el.className = `show ${type}`;
+    setTimeout(() => {
+        el.className = el.className.replace('show', '');
+    }, 3000);
+}
+
+
+function updateUI() {
+    const gameScreen = document.getElementById('gameScreen');
+    if(gameScreen.classList.contains('active') && gameState.questions && gameState.questions.length > 0) {
+        document.getElementById('score').textContent = gameState.score;
+        document.getElementById('totalQuestions').textContent = gameState.questions.length;
+        document.getElementById('attempts').textContent = `${gameState.attempts} tentativa(s)`;
+        document.getElementById('currentPhase').textContent = gameState.currentPhase;
+        const progress = ((gameState.currentQuestionIndex) / gameState.questions.length) * 100;
+        document.getElementById('progressFill').style.width = `${progress}%`;
+    }
+}
+
+async function showTutorial(phaseNumber) {
+    if (gameState.tutorialsShown.includes(phaseNumber)) return;
+
+    const instruction = gameInstructions[phaseNumber];
+    if (!instruction) return;
+
+    const overlay = document.getElementById('tutorialOverlay');
+    const mascot = document.getElementById('tutorialMascot');
+    document.getElementById('tutorialText').textContent = instruction;
+    
+    overlay.classList.add('show');
+    mascot.classList.add('talking');
+    
+    const audioKey = `instruction_${phaseNumber}`;
+    playTeacherAudio(audioKey, instruction, () => mascot.classList.remove('talking'));
+
+    gameState.tutorialsShown.push(phaseNumber);
+    await saveGameState();
+}
+
+function hideTutorial() {
+    document.getElementById('tutorialOverlay').classList.remove('show');
+}
