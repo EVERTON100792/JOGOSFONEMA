@@ -312,22 +312,37 @@ async function handleStudentLogin(e) {
     }
 
     try {
-        const { data: studentData, error } = await supabaseClient
+        // We need to find the student's class_id first to construct the email.
+        const { data: student, error: studentError } = await supabaseClient
             .from('students')
-            .select('*, assigned_phase')
+            .select('class_id, assigned_phase, teacher_id, id')
             .eq('username', username)
             .single();
 
-        if (error || !studentData) throw new Error('Usuário ou senha inválidos.');
-        
-        const match = await verifyPassword(password, studentData.password);
-        if (!match) throw new Error('Usuário ou senha inválidos.');
+        if (studentError || !student) {
+            return showFeedback('Usuário ou senha inválidos.', 'error');
+        }
 
-        currentUser = { ...studentData, type: 'student' };
+        const studentEmail = `${username.toLowerCase().replace(/\s+/g, '.')}.${student.class_id.substring(0, 4)}@jogofonema.com`;
+
+        const { data, error } = await supabaseClient.auth.signInWithPassword({
+            email: studentEmail,
+            password: password,
+        });
+
+        if (error) {
+            if (error.message.includes('Invalid login credentials')) {
+                return showFeedback('Usuário ou senha inválidos.', 'error');
+            }
+            return showFeedback(formatErrorMessage(error), 'error');
+        }
+
+        currentUser = { ...data.user, ...student, type: 'student', id: data.user.id };
         sessionStorage.setItem('currentUser', JSON.stringify(currentUser));
 
         await showStudentGame();
         showFeedback('Login realizado com sucesso!', 'success');
+
     } catch (error) {
         showFeedback(formatErrorMessage(error), 'error');
     } finally {
@@ -597,12 +612,40 @@ async function handleCreateStudent(event) {
     submitButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Criando...';
 
     try {
+        const studentEmail = `${username.toLowerCase().replace(/\s+/g, '.')}.${currentClassId.substring(0, 4)}@jogofonema.com`;
+
+        // 1. Create a Supabase Auth user for the student
+        const { data: authData, error: authError } = await supabaseClient.auth.signUp({
+            email: studentEmail,
+            password: password,
+            options: {
+                data: {
+                    full_name: username,
+                    role: 'student'
+                }
+            }
+        });
+
+        if (authError) {
+            if (authError.message.includes('User already registered')) {
+                throw new Error('Este nome de usuário já está em uso nesta turma.');
+            }
+            throw authError;
+        }
+        
+        const studentId = authData.user.id;
         const hashedPassword = await hashPassword(password);
-        const { error } = await supabaseClient.from('students').insert([
-            { name: username, username: username, password: hashedPassword, class_id: currentClassId, teacher_id: currentUser.id }
+
+        // 2. Insert the student into the 'students' table, linking it to the auth user
+        const { error: studentError } = await supabaseClient.from('students').insert([
+            { id: studentId, name: username, username: username, password: hashedPassword, class_id: currentClassId, teacher_id: currentUser.id }
         ]);
 
-        if (error) throw error;
+        if (studentError) {
+            // If this fails, we should probably delete the created auth user to avoid orphans
+            // await supabaseClient.auth.admin.deleteUser(studentId); // This requires admin privileges
+            throw studentError;
+        }
 
         document.getElementById('newStudentUsername').textContent = username;
         document.getElementById('newStudentPassword').textContent = password;
