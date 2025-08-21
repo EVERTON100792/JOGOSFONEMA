@@ -88,11 +88,11 @@ function formatErrorMessage(error) {
     if (message.includes('duplicate key') && message.includes('username')) {
         return 'Este nome de usuário já existe. Por favor, escolha outro.';
     }
-    if (message.includes('invalid login credentials')) {
+     if (message.includes('invalid login credentials')) {
         return 'Usuário ou senha inválidos. Verifique os dados e tente novamente.';
     }
-    if (message.includes('to be a valid email')) {
-        return 'Por favor, insira um e-mail válido.';
+    if (message.includes('to be a valid email') || message.includes('invalid email')) {
+        return 'O e-mail gerado internamente é inválido. Tente usar um nome de usuário mais simples.';
     }
     if (message.includes('password should be at least 6 characters')) {
         return 'A senha precisa ter no mínimo 6 caracteres.';
@@ -318,7 +318,8 @@ async function handleStudentLogin(e) {
 
         // 2. Tenta fazer login para cada aluno encontrado até encontrar a combinação certa
         for (const student of students) {
-            const studentEmail = `${username.toLowerCase().replace(/\s+/g, '')}${student.class_id.substring(0, 4)}@jogofonema.com`;
+            // CORREÇÃO: Usa @example.com para construir o e-mail
+            const studentEmail = `${username.toLowerCase().replace(/\s+/g, '')}${student.class_id.substring(0, 4)}@example.com`;
 
             const { data, error } = await supabaseClient.auth.signInWithPassword({
                 email: studentEmail,
@@ -620,7 +621,8 @@ async function handleCreateStudent(event) {
     submitButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Criando...';
 
     try {
-        const studentEmail = `${username.toLowerCase().replace(/\s+/g, '')}${currentClassId.substring(0, 4)}@jogofonema.com`;
+        // CORREÇÃO: Usa @example.com para o e-mail, que é um domínio aceito para testes
+        const studentEmail = `${username.toLowerCase().replace(/\s+/g, '')}${currentClassId.substring(0, 4)}@example.com`;
 
         // 1. Cria o usuário no sistema de autenticação do Supabase
         const { data: authData, error: authError } = await supabaseClient.auth.signUp({
