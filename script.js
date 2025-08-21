@@ -93,9 +93,6 @@ function generateRandomPassword() {
 }
 
 function formatErrorMessage(error) {
-    if (!error || !error.message) {
-        return 'Ocorreu um erro inesperado. Por favor, tente mais tarde.';
-    }
     const message = error.message.toLowerCase();
     if (message.includes('duplicate key') && message.includes('username')) {
         return 'Este nome de usuário já existe. Por favor, escolha outro.';
@@ -366,7 +363,6 @@ async function loadTeacherData() {
     
     const audioSettingsButton = document.getElementById('showAudioSettingsModalBtn');
     
-    // *** CORREÇÃO DO ERRO DE DIGITAÇÃO AQUI ***
     if (currentUser.id === SUPER_ADMIN_TEACHER_ID) {
         audioSettingsButton.style.display = 'block';
     } else {
