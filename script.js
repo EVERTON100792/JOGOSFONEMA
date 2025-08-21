@@ -72,18 +72,6 @@ const PHASE_3_WORDS = [
 // =======================================================
 // PARTE 3: FUNÇÕES UTILITÁRIAS
 // =======================================================
-async function hashPassword(password) {
-    const encoder = new TextEncoder();
-    const data = encoder.encode(password);
-    const hashBuffer = await window.crypto.subtle.digest('SHA-256', data);
-    const hashArray = Array.from(new Uint8Array(hashBuffer));
-    return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-}
-
-async function verifyPassword(password, storedHash) {
-    const newHash = await hashPassword(password);
-    return newHash === storedHash;
-}
 
 function generateRandomPassword() {
     const words = ['sol', 'lua', 'rio', 'mar', 'flor', 'gato', 'cao', 'pato', 'rei', 'luz'];
@@ -294,6 +282,9 @@ async function handleTeacherRegister(e) {
     }
 }
 
+// =======================================================
+// FUNÇÃO DE LOGIN DE ALUNO CORRIGIDA
+// =======================================================
 async function handleStudentLogin(e) {
     e.preventDefault();
     const button = e.target.querySelector('button[type="submit"]');
@@ -312,36 +303,50 @@ async function handleStudentLogin(e) {
     }
 
     try {
-        // We need to find the student's class_id first to construct the email.
-        const { data: student, error: studentError } = await supabaseClient
+        // 1. Encontra todos os alunos com o mesmo username (pode haver em turmas diferentes)
+        const { data: students, error: studentError } = await supabaseClient
             .from('students')
             .select('class_id, assigned_phase, teacher_id, id')
-            .eq('username', username)
-            .single();
+            .eq('username', username);
 
-        if (studentError || !student) {
+        if (studentError || !students || students.length === 0) {
             return showFeedback('Usuário ou senha inválidos.', 'error');
         }
 
-        const studentEmail = `${username.toLowerCase().replace(/\s+/g, '-')}-${student.class_id.substring(0, 4)}@jogofonema.com`;
+        let loggedInUser = null;
+        let loginError = null;
 
-        const { data, error } = await supabaseClient.auth.signInWithPassword({
-            email: studentEmail,
-            password: password,
-        });
+        // 2. Tenta fazer login para cada aluno encontrado até encontrar a combinação certa
+        for (const student of students) {
+            const studentEmail = `${username.toLowerCase().replace(/\s+/g, '')}${student.class_id.substring(0, 4)}@jogofonema.com`;
 
-        if (error) {
-            if (error.message.includes('Invalid login credentials')) {
+            const { data, error } = await supabaseClient.auth.signInWithPassword({
+                email: studentEmail,
+                password: password,
+            });
+
+            if (!error && data.user) {
+                // Sucesso! Combinação encontrada.
+                loggedInUser = { ...data.user, ...student, type: 'student', id: data.user.id };
+                break; // Para o loop assim que o login for bem-sucedido
+            } else {
+                loginError = error; // Guarda o último erro para referência
+            }
+        }
+        
+        // 3. Verifica se o login foi bem-sucedido
+        if (loggedInUser) {
+            currentUser = loggedInUser;
+            sessionStorage.setItem('currentUser', JSON.stringify(currentUser));
+            await showStudentGame();
+            showFeedback('Login realizado com sucesso!', 'success');
+        } else {
+            // Se o loop terminar e ninguém logou, as credenciais estão erradas.
+             if (loginError && loginError.message.includes('Invalid login credentials')) {
                 return showFeedback('Usuário ou senha inválidos.', 'error');
             }
-            return showFeedback(formatErrorMessage(error), 'error');
+            return showFeedback(formatErrorMessage(loginError), 'error');
         }
-
-        currentUser = { ...data.user, ...student, type: 'student', id: data.user.id };
-        sessionStorage.setItem('currentUser', JSON.stringify(currentUser));
-
-        await showStudentGame();
-        showFeedback('Login realizado com sucesso!', 'success');
 
     } catch (error) {
         showFeedback(formatErrorMessage(error), 'error');
@@ -350,6 +355,7 @@ async function handleStudentLogin(e) {
         button.innerHTML = originalText;
     }
 }
+
 
 async function logout() {
     await supabaseClient.auth.signOut();
@@ -381,7 +387,6 @@ async function loadTeacherData() {
     
     const audioSettingsButton = document.getElementById('showAudioSettingsModalBtn');
     
-    // *** CORREÇÃO DO ERRO DE DIGITAÇÃO AQUI ***
     if (currentUser.id === SUPER_ADMIN_TEACHER_ID) {
         audioSettingsButton.style.display = 'block';
     } else {
@@ -542,7 +547,7 @@ async function loadStudentProgress() {
                     <p>Progresso na Fase ${currentPhase}: ${accuracy}% (${score}/${total})</p>
                     <div class="student-progress-container">
                          <div class="student-progress-bar">
-                              <div class="student-progress-fill" style="width: ${accuracy}%;"></div>
+                               <div class="student-progress-fill" style="width: ${accuracy}%;"></div>
                          </div>
                     </div>
                 </div>
@@ -595,6 +600,9 @@ async function assignPhase(studentId, selectElement) {
 }
 
 
+// =======================================================
+// FUNÇÃO DE CRIAÇÃO DE ALUNO CORRIGIDA
+// =======================================================
 async function handleCreateStudent(event) {
     event.preventDefault();
     const username = document.getElementById('createStudentUsername').value.trim();
@@ -612,9 +620,9 @@ async function handleCreateStudent(event) {
     submitButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Criando...';
 
     try {
-        const studentEmail = `${username.toLowerCase().replace(/\s+/g, '-')}-${currentClassId.substring(0, 4)}@jogofonema.com`;
+        const studentEmail = `${username.toLowerCase().replace(/\s+/g, '')}${currentClassId.substring(0, 4)}@jogofonema.com`;
 
-        // 1. Create a Supabase Auth user for the student
+        // 1. Cria o usuário no sistema de autenticação do Supabase
         const { data: authData, error: authError } = await supabaseClient.auth.signUp({
             email: studentEmail,
             password: password,
@@ -634,20 +642,18 @@ async function handleCreateStudent(event) {
         }
         
         const studentId = authData.user.id;
-        const hashedPassword = await hashPassword(password);
 
-        // 2. Insert the student into the 'students' table, linking it to the auth user
+        // 2. Insere os dados do aluno na tabela 'students' (sem a senha)
         const { error: studentError } = await supabaseClient.from('students').insert([
-            { id: studentId, name: username, username: username, password: hashedPassword, class_id: currentClassId, teacher_id: currentUser.id, assigned_phase: 1 }
+            { id: studentId, name: username, username: username, class_id: currentClassId, teacher_id: currentUser.id, assigned_phase: 1 }
         ]);
 
         if (studentError) {
-            // If this fails, we should probably delete the created auth user to avoid orphans
-            // await supabaseClient.auth.admin.deleteUser(studentId); // This requires admin privileges
+            console.error("Erro ao inserir na tabela de alunos, um usuário órfão pode ter sido criado na autenticação.", studentError);
             throw studentError;
         }
 
-        // 3. Create initial progress state for the new student
+        // 3. Cria o estado inicial de progresso para o aluno
         const initialGameState = {
             currentPhase: 1,
             score: 0,
@@ -686,6 +692,10 @@ async function handleCreateStudent(event) {
 async function handleDeleteStudent(studentId, studentName) {
     if (!confirm(`Tem certeza que deseja excluir o aluno "${studentName}"?\n\nTodo o progresso dele será apagado permanentemente.`)) return;
     
+    // ATENÇÃO: A forma correta de excluir um aluno seria deletar também
+    // o usuário do sistema de autenticação, o que requer chaves de admin
+    // e não deve ser feito no lado do cliente. Esta função apaga apenas
+    // os dados da tabela 'students' e o progresso (em cascata).
     const { error } = await supabaseClient.from('students').delete().eq('id', studentId);
     
     if (error) {
@@ -699,18 +709,16 @@ async function handleDeleteStudent(studentId, studentName) {
 
 async function handleResetStudentPassword(studentId, studentName) {
     const newPassword = generateRandomPassword();
-    const confirmed = prompt(`A nova senha para "${studentName}" é:\n\n${newPassword}\n\nAnote-a e entregue ao aluno. Copie a senha e clique em OK para confirmar a alteração.`, newPassword);
-
-    if (!confirmed) return;
-
-    try {
-        const hashedPassword = await hashPassword(newPassword);
-        const { error } = await supabaseClient.from('students').update({ password: hashedPassword }).eq('id', studentId);
-        if (error) throw error;
-        showFeedback(`Senha de "${studentName}" alterada com sucesso!`, 'success');
-    } catch (error) {
-        showFeedback(`Erro ao resetar senha: ${error.message}`, 'error');
+    const confirmed = prompt(`GERADOR DE NOVA SENHA:\n\nA nova senha para "${studentName}" é:\n\n${newPassword}\n\nCopie esta senha e clique em OK para confirmar a alteração. AVISO: esta funcionalidade ainda está em desenvolvimento e pode não funcionar como esperado.`, newPassword);
+    
+    if (!confirmed || confirmed !== newPassword) {
+        showFeedback("Alteração de senha cancelada.", "info");
+        return;
     }
+    
+    showFeedback("A funcionalidade de resetar senha direto pelo painel será implementada futuramente. Por enquanto, a melhor forma é excluir e criar o aluno novamente.", "info");
+    // A implementação correta (supabase.auth.admin.updateUserById) requer
+    // uma chamada de servidor (Edge Function) por segurança.
 }
 
 function handleCopyCredentials() {
