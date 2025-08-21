@@ -8,7 +8,7 @@ const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS
 const supabaseClient = createClient(supabaseUrl, supabaseKey);
 
 // Chave do professor que tem permissão para gerenciar os áudios do jogo
-const SUPER_ADMIN_TEACHER_ID = '324576d3-4b9f-4d9a-99fb-0c64be5683c3'; 
+const SUPER_ADMIN_TEACHER_ID = '433773dc-3905-44b5-991a-4781497d6a74'; 
 
 let currentUser = null;
 let currentClassId = null;
