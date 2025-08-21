@@ -2,7 +2,6 @@
 // PARTE 1: CONFIGURAÇÃO INICIAL E SUPABASE
 // =======================================================
 const { createClient } = supabase;
-// CHAVES DE ACESSO CORRIGIDAS
 const supabaseUrl = 'https://nxpwxbxhucliudnutyqd.supabase.co';
 const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im54cHd4YnhodWNsaXVkbnV0eXFkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU0ODU4NjcsImV4cCI6MjA3MTA2MTg2N30.m1KbiyPe_K9CK2nBhsxo97A5rai2GtnyVPnpff5isNg';
 const supabaseClient = createClient(supabaseUrl, supabaseKey);
@@ -22,7 +21,6 @@ const CUSTOM_AUDIO_KEYS = {
     'feedback_correct': 'Feedback - Acerto',
     'feedback_incorrect': 'Feedback - Erro'
 };
-
 
 let gameState = {};
 let mediaRecorder;
@@ -98,7 +96,7 @@ function formatErrorMessage(error) {
         return 'A senha precisa ter no mínimo 6 caracteres.';
     }
     console.error("Erro não tratado:", error);
-    return 'Ocorreu um erro inesperado. Por favor, tente mais tarde.';
+    return `Ocorreu um erro inesperado: ${error.message}`;
 }
 
 
@@ -282,9 +280,6 @@ async function handleTeacherRegister(e) {
     }
 }
 
-// =======================================================
-// FUNÇÃO DE LOGIN DE ALUNO CORRIGIDA
-// =======================================================
 async function handleStudentLogin(e) {
     e.preventDefault();
     const button = e.target.querySelector('button[type="submit"]');
@@ -303,7 +298,6 @@ async function handleStudentLogin(e) {
     }
 
     try {
-        // 1. Encontra todos os alunos com o mesmo username (pode haver em turmas diferentes)
         const { data: students, error: studentError } = await supabaseClient
             .from('students')
             .select('class_id, assigned_phase, teacher_id, id')
@@ -313,13 +307,28 @@ async function handleStudentLogin(e) {
             return showFeedback('Usuário ou senha inválidos.', 'error');
         }
 
+        const { data: teacher, error: teacherError } = await supabaseClient
+            .from('classes')
+            .select('teacher_id')
+            .eq('id', students[0].class_id)
+            .single();
+
+        if (teacherError || !teacher) {
+            return showFeedback('Erro ao encontrar o professor da turma.', 'error');
+        }
+
+        // Precisamos do e-mail do professor para reconstruir o e-mail do aluno
+        const { data: { user } } = await supabaseClient.auth.admin.getUserById(teacher.teacher_id);
+        const teacherEmail = user.email;
+        const [localPart, domain] = teacherEmail.split('@');
+
         let loggedInUser = null;
         let loginError = null;
 
-        // 2. Tenta fazer login para cada aluno encontrado até encontrar a combinação certa
         for (const student of students) {
-            // CORREÇÃO: Usa @example.com para construir o e-mail
-            const studentEmail = `${username.toLowerCase().replace(/\s+/g, '')}${student.class_id.substring(0, 4)}@example.com`;
+            const sanitizedUsername = username.toLowerCase().replace(/\s+/g, '');
+            const classIdPart = student.class_id.substring(0, 4);
+            const studentEmail = `${localPart}+${sanitizedUsername}${classIdPart}@${domain}`;
 
             const { data, error } = await supabaseClient.auth.signInWithPassword({
                 email: studentEmail,
@@ -327,22 +336,19 @@ async function handleStudentLogin(e) {
             });
 
             if (!error && data.user) {
-                // Sucesso! Combinação encontrada.
                 loggedInUser = { ...data.user, ...student, type: 'student', id: data.user.id };
-                break; // Para o loop assim que o login for bem-sucedido
+                break;
             } else {
-                loginError = error; // Guarda o último erro para referência
+                loginError = error;
             }
         }
         
-        // 3. Verifica se o login foi bem-sucedido
         if (loggedInUser) {
             currentUser = loggedInUser;
             sessionStorage.setItem('currentUser', JSON.stringify(currentUser));
             await showStudentGame();
             showFeedback('Login realizado com sucesso!', 'success');
         } else {
-            // Se o loop terminar e ninguém logou, as credenciais estão erradas.
              if (loginError && loginError.message.includes('Invalid login credentials')) {
                 return showFeedback('Usuário ou senha inválidos.', 'error');
             }
@@ -600,10 +606,6 @@ async function assignPhase(studentId, selectElement) {
     }
 }
 
-
-// =======================================================
-// FUNÇÃO DE CRIAÇÃO DE ALUNO CORRIGIDA
-// =======================================================
 async function handleCreateStudent(event) {
     event.preventDefault();
     const username = document.getElementById('createStudentUsername').value.trim();
@@ -613,18 +615,21 @@ async function handleCreateStudent(event) {
     if (!username || !password) {
         return showFeedback("Por favor, preencha o nome e a senha do aluno.", "error");
     }
-    if (!currentClassId || !currentUser?.id) {
-        return showFeedback("Erro de sessão. Por favor, feche e abra o gerenciador de turmas.", "error");
+    if (!currentClassId || !currentUser?.id || !currentUser.email) {
+        return showFeedback("Erro de sessão do professor. Por favor, faça login novamente.", "error");
     }
 
     submitButton.disabled = true;
     submitButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Criando...';
 
     try {
-        // CORREÇÃO: Usa @example.com para o e-mail, que é um domínio aceito para testes
-        const studentEmail = `${username.toLowerCase().replace(/\s+/g, '')}${currentClassId.substring(0, 4)}@example.com`;
+        const teacherEmail = currentUser.email;
+        const [localPart, domain] = teacherEmail.split('@');
+        const sanitizedUsername = username.toLowerCase().replace(/\s+/g, '');
+        const classIdPart = currentClassId.substring(0, 4);
 
-        // 1. Cria o usuário no sistema de autenticação do Supabase
+        const studentEmail = `${localPart}+${sanitizedUsername}${classIdPart}@${domain}`;
+
         const { data: authData, error: authError } = await supabaseClient.auth.signUp({
             email: studentEmail,
             password: password,
@@ -645,7 +650,6 @@ async function handleCreateStudent(event) {
         
         const studentId = authData.user.id;
 
-        // 2. Insere os dados do aluno na tabela 'students' (sem a senha)
         const { error: studentError } = await supabaseClient.from('students').insert([
             { id: studentId, name: username, username: username, class_id: currentClassId, teacher_id: currentUser.id, assigned_phase: 1 }
         ]);
@@ -655,7 +659,6 @@ async function handleCreateStudent(event) {
             throw studentError;
         }
 
-        // 3. Cria o estado inicial de progresso para o aluno
         const initialGameState = {
             currentPhase: 1,
             score: 0,
@@ -694,33 +697,27 @@ async function handleCreateStudent(event) {
 async function handleDeleteStudent(studentId, studentName) {
     if (!confirm(`Tem certeza que deseja excluir o aluno "${studentName}"?\n\nTodo o progresso dele será apagado permanentemente.`)) return;
     
-    // ATENÇÃO: A forma correta de excluir um aluno seria deletar também
-    // o usuário do sistema de autenticação, o que requer chaves de admin
-    // e não deve ser feito no lado do cliente. Esta função apaga apenas
-    // os dados da tabela 'students' e o progresso (em cascata).
-    const { error } = await supabaseClient.from('students').delete().eq('id', studentId);
-    
-    if (error) {
-        showFeedback(`Erro ao excluir aluno: ${error.message}`, 'error');
-    } else {
+    showFeedback(`Excluindo ${studentName}...`, 'info');
+    try {
+        // Esta é uma função de admin e requer que a chave de serviço esteja configurada
+        // em um ambiente seguro, como uma Edge Function. Não vai funcionar diretamente
+        // no navegador com a chave anônima.
+        // const { error: adminError } = await supabaseClient.auth.admin.deleteUser(studentId);
+        // if(adminError) throw new Error(`Não foi possível excluir o usuário da autenticação: ${adminError.message}`);
+
+        const { error } = await supabaseClient.from('students').delete().eq('id', studentId);
+        if (error) throw error;
+
         showFeedback(`Aluno "${studentName}" excluído com sucesso.`, 'success');
         await loadClassStudents();
         await loadStudentProgress();
+    } catch (error) {
+        showFeedback(`Erro ao excluir aluno: ${error.message}. O usuário pode precisar ser removido manualmente do painel do Supabase.`, 'error');
     }
 }
 
 async function handleResetStudentPassword(studentId, studentName) {
-    const newPassword = generateRandomPassword();
-    const confirmed = prompt(`GERADOR DE NOVA SENHA:\n\nA nova senha para "${studentName}" é:\n\n${newPassword}\n\nCopie esta senha e clique em OK para confirmar a alteração. AVISO: esta funcionalidade ainda está em desenvolvimento e pode não funcionar como esperado.`, newPassword);
-    
-    if (!confirmed || confirmed !== newPassword) {
-        showFeedback("Alteração de senha cancelada.", "info");
-        return;
-    }
-    
-    showFeedback("A funcionalidade de resetar senha direto pelo painel será implementada futuramente. Por enquanto, a melhor forma é excluir e criar o aluno novamente.", "info");
-    // A implementação correta (supabase.auth.admin.updateUserById) requer
-    // uma chamada de servidor (Edge Function) por segurança.
+    showFeedback("A funcionalidade de resetar senha será implementada futuramente. Por enquanto, a melhor forma é excluir e criar o aluno novamente.", "info");
 }
 
 function handleCopyCredentials() {
@@ -905,11 +902,15 @@ async function startGame() {
 }
 
 async function loadGameState() {
-    const { data: progressData } = await supabaseClient
+    const { data: progressData, error } = await supabaseClient
         .from('progress')
         .select('game_state, current_phase')
         .eq('student_id', currentUser.id)
         .single();
+
+    if (error && error.code !== 'PGRST116') { // PGRST116 = 0 rows
+        console.error("Erro ao carregar estado do jogo:", error);
+    }
 
     const assignedPhase = currentUser.assigned_phase || 1;
     const savedPhase = progressData?.current_phase;
@@ -1294,7 +1295,7 @@ function showFeedback(message, type = 'info') {
     el.className = `show ${type}`;
     setTimeout(() => {
         el.className = el.className.replace('show', '');
-    }, 3000);
+    }, 4000);
 }
 
 
