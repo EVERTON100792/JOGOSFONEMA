@@ -2,9 +2,9 @@
 // PARTE 1: CONFIGURAÇÃO INICIAL E SUPABASE
 // =======================================================
 const { createClient } = supabase;
-// ATENÇÃO: Substitua pelas suas chaves do Supabase se forem diferentes
+// CHAVES DE ACESSO CORRIGIDAS
 const supabaseUrl = 'https://nxpwxbxhucliudnutyqd.supabase.co';
-const supabaseKey = 'eyJhbGciOiJI|=|zI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im54cHd4YnhodWNsaXVkbnV0eXFkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU0ODU4NjcsImV4cCI6MjA3MTA2MTg2N30.m1KbiyPe_K9CK2nBhsxo97A5rai2GtnyVPnpff5isNg';
+const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im54cHd4YnhodWNsaXVkbnV0eXFkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU0ODU4NjcsImV4cCI6MjA3MTA2MTg2N30.m1KbiyPe_K9CK2nBhsxo97A5rai2GtnyVPnpff5isNg';
 const supabaseClient = createClient(supabaseUrl, supabaseKey);
 
 // Chave do professor que tem permissão para gerenciar os áudios do jogo
@@ -206,9 +206,9 @@ function setupAllEventListeners() {
 
     // Configurações de Áudio
     document.getElementById('uploadAudioBtn')?.addEventListener('click', handleAudioUpload);
-    document.getElementById('recordBtn')?.addEventListener('click', startRecording); // MODIFICADO
-    document.getElementById('stopBtn')?.addEventListener('click', stopRecording);   // MODIFICADO
-    document.getElementById('saveRecordingBtn')?.addEventListener('click', saveRecording); // MODIFICADO
+    document.getElementById('recordBtn')?.addEventListener('click', startRecording);
+    document.getElementById('stopBtn')?.addEventListener('click', stopRecording);
+    document.getElementById('saveRecordingBtn')?.addEventListener('click', saveRecording);
     
     // Tutorial
     document.getElementById('closeTutorialBtn')?.addEventListener('click', hideTutorial);
@@ -660,11 +660,10 @@ function handleCopyCredentials() {
 
 
 // #####################################################################
-// ### INÍCIO DA SEÇÃO DE GRAVAÇÃO DE ÁUDIO - TOTALMENTE REFEITA ###
+// ### SEÇÃO DE GRAVAÇÃO DE ÁUDIO ###
 // #####################################################################
 
 async function handleAudioUpload() {
-    // Esta função permanece a mesma
     const files = document.getElementById('audioUpload').files;
     if (files.length === 0) return showFeedback('Nenhum arquivo selecionado.', 'error');
     
@@ -732,7 +731,6 @@ async function startRecording() {
             document.getElementById('audioPlayback').src = audioUrl;
             document.getElementById('saveRecordingBtn').disabled = false;
             
-            // Para a faixa do microfone para que o ícone de gravação suma do navegador
             stream.getTracks().forEach(track => track.stop());
         });
 
@@ -816,10 +814,6 @@ function startTimer() {
 function stopTimer() {
     clearInterval(timerInterval);
 }
-
-// #####################################################################
-// ### FIM DA SEÇÃO DE GRAVAÇÃO DE ÁUDIO ###
-// #####################################################################
 
 
 // =======================================================
