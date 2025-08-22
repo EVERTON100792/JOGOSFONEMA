@@ -137,7 +137,10 @@ function formatErrorMessage(error) {
         return 'Este nome de usuário já existe. Por favor, escolha outro.';
     }
     if (message.includes('invalid login credentials')) {
-        return 'Usuário ou senha inválidos. Verifique os dados e tente novamente.';
+        return 'E-mail ou senha inválidos. Verifique os dados e tente novamente.';
+    }
+    if (message.includes('email not confirmed')) {
+        return 'E-mail não confirmado. Verifique sua caixa de entrada e spam.';
     }
     if (message.includes('to be a valid email')) {
         return 'Por favor, insira um e-mail válido.';
@@ -145,8 +148,12 @@ function formatErrorMessage(error) {
     if (message.includes('password should be at least 6 characters')) {
         return 'A senha precisa ter no mínimo 6 caracteres.';
     }
+    // Mensagem de erro da nossa validação de perfil de professor
+    if(message.includes('esta conta não é de um professor')) {
+        return 'Login falhou: Esta conta não tem permissão de professor.';
+    }
     console.error("Erro não tratado:", error);
-    return 'Ocorreu um erro inesperado. Por favor, tente mais tarde.';
+    return 'Ocorreu um erro inesperado. Tente novamente.';
 }
 
 
@@ -296,6 +303,7 @@ async function checkSession() {
     }
 }
 
+// VERSÃO CORRIGIDA E MAIS ROBUSTA DA FUNÇÃO DE LOGIN DO PROFESSOR
 async function handleTeacherLogin(e) {
     e.preventDefault();
     const button = e.target.querySelector('button[type="submit"]');
@@ -305,19 +313,51 @@ async function handleTeacherLogin(e) {
 
     const email = document.getElementById('teacherEmail').value;
     const password = document.getElementById('teacherPassword').value;
+    console.log("Tentando login para o professor com o e-mail:", email);
+
     try {
         const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
-        if (error) throw error;
+
+        if (error) {
+            console.error("Erro retornado diretamente pelo Supabase:", error.message);
+            throw error;
+        }
+
+        if (!data.user) {
+            // Caso raro, mas é uma boa prática verificar
+            throw new Error("Login parece ter funcionado, mas nenhum dado de usuário foi retornado.");
+        }
+        
+        console.log("1. Autenticação no Supabase foi bem-sucedida. Usuário:", data.user.id);
+
+        // =================================================================
+        // VALIDAÇÃO CRÍTICA ADICIONADA AQUI: O usuário é um professor?
+        // =================================================================
+        if (data.user.user_metadata?.role !== 'teacher') {
+            console.warn("ALERTA: Login bem-sucedido, mas a conta não tem o perfil de 'teacher'.", data.user.user_metadata);
+            // Desloga o usuário imediatamente para evitar uma sessão inválida
+            await supabaseClient.auth.signOut(); 
+            throw new Error("As credenciais estão corretas, mas esta conta não é de um professor.");
+        }
+
+        console.log("2. Verificação de perfil 'teacher' passou. Carregando o dashboard...");
+        
         currentUser = data.user;
         await showTeacherDashboard();
+
+        console.log("3. Dashboard do professor carregado com sucesso.");
         showFeedback('Login realizado com sucesso!', 'success');
+
     } catch (error) {
+        console.error("Falha final no processo de login:", error);
+        // A função formatErrorMessage irá traduzir o erro para o usuário
         showFeedback(formatErrorMessage(error), 'error');
     } finally {
         button.disabled = false;
         button.innerHTML = originalText;
     }
 }
+
 
 async function handleTeacherRegister(e) {
     e.preventDefault();
@@ -1569,7 +1609,7 @@ function showFeedback(message, type = 'info') {
     el.className = `show ${type}`;
     setTimeout(() => {
         el.className = el.className.replace('show', '');
-    }, 3000);
+    }, 4000);
 }
 
 
