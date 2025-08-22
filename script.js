@@ -60,7 +60,6 @@ const PHASE_2_WORDS = [
     { word: 'URSO', image: '🐻', vowel: 'U' }
 ];
 
-// NOVA FASE 3: Encontro das Vogais
 const PHASE_3_ENCONTROS = [
     { word: 'PEIXE', image: '🐠', encontro: 'EI' },
     { word: 'BOI', image: '🐂', encontro: 'OI' },
@@ -75,7 +74,6 @@ const PHASE_3_ENCONTROS = [
 ];
 const VOWEL_ENCOUNTERS = ['AI', 'EI', 'OI', 'UI', 'AU', 'EU', 'ÃO', 'ÃE', 'UA', 'ÉU'];
 
-// NOVA FASE 4: Palavra Completa
 const PHASE_4_WORDS = [
     { word: 'BOLA', image: '⚽', options: ['BOLO', 'BALA', 'BULA'] },
     { word: 'CASA', image: '🏠', options: ['COPO', 'COLA', 'CAJU'] },
@@ -89,7 +87,6 @@ const PHASE_4_WORDS = [
     { word: 'PATO', image: '🦆', options: ['PÉ', 'POTE', 'PIPA'] }
 ];
 
-// NOVA FASE 5: Sílaba Final
 const PHASE_5_WORDS = [
     { word: 'BOLO', image: '🎂', syllable: 'LO' },
     { word: 'CASA', image: '🏠', syllable: 'SA' },
@@ -148,7 +145,6 @@ function formatErrorMessage(error) {
     if (message.includes('password should be at least 6 characters')) {
         return 'A senha precisa ter no mínimo 6 caracteres.';
     }
-    // Mensagem de erro da nossa validação de perfil de professor
     if(message.includes('esta conta não é de um professor')) {
         return 'Login falhou: Esta conta não tem permissão de professor.';
     }
@@ -194,7 +190,6 @@ async function restoreOrStartGame() {
 }
 
 function setupAllEventListeners() {
-    // Navegação entre telas
     document.querySelectorAll('.user-type-btn').forEach(btn => btn.addEventListener('click', (e) => {
         const type = e.currentTarget.getAttribute('data-type');
         if (type === 'teacher') showScreen('teacherLoginScreen');
@@ -209,13 +204,11 @@ function setupAllEventListeners() {
     document.getElementById('showRegisterBtn').addEventListener('click', () => showScreen('teacherRegisterScreen'));
     document.getElementById('showLoginBtn').addEventListener('click', () => showScreen('teacherLoginScreen'));
     
-    // Formulários de Autenticação
     document.getElementById('teacherLoginForm')?.addEventListener('submit', handleTeacherLogin);
     document.getElementById('teacherRegisterForm')?.addEventListener('submit', handleTeacherRegister);
     document.getElementById('studentLoginForm')?.addEventListener('submit', handleStudentLogin);
     document.getElementById('logoutBtn')?.addEventListener('click', logout);
 
-    // Dashboard do Professor
     document.getElementById('showCreateClassModalBtn').addEventListener('click', () => showModal('createClassModal'));
     document.getElementById('showAudioSettingsModalBtn').addEventListener('click', showAudioSettingsModal);
     document.getElementById('createClassForm')?.addEventListener('submit', handleCreateClass);
@@ -229,7 +222,6 @@ function setupAllEventListeners() {
         setTimeout(() => { passwordField.type = 'password'; }, 2000);
     });
 
-    // Jogo do Aluno
     document.getElementById('startButton')?.addEventListener('click', () => {
         showScreen('gameScreen');
         startQuestion();
@@ -242,7 +234,6 @@ function setupAllEventListeners() {
     document.getElementById('restartButton')?.addEventListener('click', restartGame);
     document.getElementById('exitGameButton')?.addEventListener('click', handleExitGame);
     
-    // Modais e Abas
     document.querySelectorAll('[data-close]').forEach(btn => {
         btn.addEventListener('click', () => closeModal(btn.getAttribute('data-close')));
     });
@@ -250,17 +241,14 @@ function setupAllEventListeners() {
         btn.addEventListener('click', (e) => showTab(e.currentTarget));
     });
 
-    // Configurações de Áudio
     document.getElementById('uploadAudioBtn')?.addEventListener('click', handleAudioUpload);
     document.getElementById('recordBtn')?.addEventListener('click', startRecording);
     document.getElementById('stopBtn')?.addEventListener('click', stopRecording);
     document.getElementById('saveRecordingBtn')?.addEventListener('click', saveRecording);
     
-    // Tutorial
     document.getElementById('closeTutorialBtn')?.addEventListener('click', hideTutorial);
     document.getElementById('copyCredentialsBtn')?.addEventListener('click', handleCopyCredentials);
     
-    // Toggle de Senha
     document.querySelectorAll('.password-toggle').forEach(toggle => {
         toggle.addEventListener('click', () => {
             const passwordInput = toggle.previousElementSibling;
@@ -270,7 +258,6 @@ function setupAllEventListeners() {
         });
     });
 
-    // === NOVOS EVENTOS - FASE 1, 2, 3 ===
     document.querySelectorAll('.sort-btn').forEach(button => {
         button.addEventListener('click', (e) => {
             const sortBy = e.currentTarget.dataset.sort;
@@ -303,7 +290,6 @@ async function checkSession() {
     }
 }
 
-// VERSÃO CORRIGIDA E MAIS ROBUSTA DA FUNÇÃO DE LOGIN DO PROFESSOR
 async function handleTeacherLogin(e) {
     e.preventDefault();
     const button = e.target.querySelector('button[type="submit"]');
@@ -324,18 +310,13 @@ async function handleTeacherLogin(e) {
         }
 
         if (!data.user) {
-            // Caso raro, mas é uma boa prática verificar
             throw new Error("Login parece ter funcionado, mas nenhum dado de usuário foi retornado.");
         }
         
         console.log("1. Autenticação no Supabase foi bem-sucedida. Usuário:", data.user.id);
-
-        // =================================================================
-        // VALIDAÇÃO CRÍTICA ADICIONADA AQUI: O usuário é um professor?
-        // =================================================================
+        
         if (data.user.user_metadata?.role !== 'teacher') {
             console.warn("ALERTA: Login bem-sucedido, mas a conta não tem o perfil de 'teacher'.", data.user.user_metadata);
-            // Desloga o usuário imediatamente para evitar uma sessão inválida
             await supabaseClient.auth.signOut(); 
             throw new Error("As credenciais estão corretas, mas esta conta não é de um professor.");
         }
@@ -350,14 +331,12 @@ async function handleTeacherLogin(e) {
 
     } catch (error) {
         console.error("Falha final no processo de login:", error);
-        // A função formatErrorMessage irá traduzir o erro para o usuário
         showFeedback(formatErrorMessage(error), 'error');
     } finally {
         button.disabled = false;
         button.innerHTML = originalText;
     }
 }
-
 
 async function handleTeacherRegister(e) {
     e.preventDefault();
@@ -478,6 +457,7 @@ async function loadTeacherClasses() {
     renderClasses(data);
 }
 
+// FUNÇÃO ATUALIZADA para usar addEventListener
 function renderClasses(classes) {
     const container = document.getElementById('classesList');
     if (!classes || classes.length === 0) {
@@ -486,19 +466,40 @@ function renderClasses(classes) {
     }
     container.innerHTML = classes.map(cls => {
         const studentCount = cls.students[0]?.count || 0;
+        // Usamos data-attributes para passar informações para o JS de forma segura
         return `
-            <div class="class-card">
+            <div class="class-card" data-class-id="${cls.id}" data-class-name="${cls.name.replace(/"/g, "&quot;").replace(/'/g, "&#39;")}
+">
                 <h3>${cls.name}</h3>
                 <span class="student-count">👥 ${studentCount} aluno(s)</span>
                 <div class="class-card-actions">
-                    <button class="btn primary" onclick="manageClass('${cls.id}', '${cls.name.replace(/'/g, "\\'")}')">Gerenciar</button>
-                    <button class="btn danger" onclick="handleDeleteClass('${cls.id}', '${cls.name.replace(/'/g, "\\'")}')" title="Excluir Turma" aria-label="Excluir Turma ${cls.name}">
+                    <button class="btn primary manage-btn">Gerenciar</button>
+                    <button class="btn danger delete-btn" title="Excluir Turma">
                         <i class="fas fa-trash" aria-hidden="true"></i>
                     </button>
                 </div>
             </div>`;
     }).join('');
+
+    addEventListenersToClassCards();
 }
+
+// NOVA FUNÇÃO para adicionar os eventos de clique de forma robusta
+function addEventListenersToClassCards() {
+    document.querySelectorAll('.class-card').forEach(card => {
+        const classId = card.dataset.classId;
+        const className = card.dataset.className;
+
+        card.querySelector('.manage-btn')?.addEventListener('click', () => {
+            manageClass(classId, className);
+        });
+
+        card.querySelector('.delete-btn')?.addEventListener('click', () => {
+            handleDeleteClass(classId, className);
+        });
+    });
+}
+
 
 async function handleCreateClass(e) {
     e.preventDefault();
@@ -534,7 +535,7 @@ async function manageClass(classId, className) {
     showModal('manageClassModal');
 
     await loadClassStudents();
-    await loadStudentProgress(); // Carrega por padrão com a ordenação 'last_played'
+    await loadStudentProgress();
     await loadDifficultyReports();
 }
 
@@ -551,7 +552,7 @@ async function loadClassStudents() {
         currentClassStudents = [];
         return;
     }
-    currentClassStudents = data; // Armazena para uso nos relatórios
+    currentClassStudents = data;
     renderStudents(data);
 }
 
@@ -568,10 +569,10 @@ function renderStudents(students) {
                 <p>Usuário: ${student.username}</p>
             </div>
             <div class="student-actions">
-                <button onclick="handleResetStudentPassword('${student.id}', '${student.name}')" class="btn small" title="Resetar Senha" aria-label="Resetar senha do aluno ${student.name}">
+                <button onclick="handleResetStudentPassword('${student.id}', '${student.name.replace(/'/g, "\\'")}')" class="btn small" title="Resetar Senha">
                     <i class="fas fa-key" aria-hidden="true"></i>
                 </button>
-                <button onclick="handleDeleteStudent('${student.id}', '${student.name}')" class="btn small danger" title="Excluir Aluno" aria-label="Excluir aluno ${student.name}">
+                <button onclick="handleDeleteStudent('${student.id}', '${student.name.replace(/'/g, "\\'")}')" class="btn small danger" title="Excluir Aluno">
                     <i class="fas fa-trash" aria-hidden="true"></i>
                 </button>
             </div>
@@ -582,7 +583,7 @@ function renderStudents(students) {
 // PARTE 6.1: IMPLEMENTAÇÃO - RELATÓRIOS (FASE 1, 2, 3)
 // =======================================================
 
-async function loadStudentProgress(sortBy = 'last_played', sortOrder = 'desc') {
+async function loadStudentProgress(sortBy = 'last_played') {
     const progressList = document.getElementById('studentProgressList');
     progressList.innerHTML = '<p><i class="fas fa-spinner fa-spin"></i> Carregando progresso...</p>';
 
@@ -623,7 +624,6 @@ async function loadStudentProgress(sortBy = 'last_played', sortOrder = 'desc') {
         };
     });
 
-    // Lógica de Ordenação
     processedData.sort((a, b) => {
         if (sortBy === 'name') return a.name.localeCompare(b.name);
         if (sortBy === 'progress') return b.accuracy - a.accuracy;
@@ -685,7 +685,7 @@ async function assignPhase(studentId, selectElement) {
     const studentName = selectElement.closest('.student-item').querySelector('h4').textContent.trim();
 
     if (!confirm(`Deseja designar a Fase ${newPhase} para o aluno ${studentName}?\n\nAtenção: O progresso na fase atual será reiniciado para que ele comece a nova atividade do zero.`)) {
-        await loadStudentProgress(); // Reseta a seleção visual
+        await loadStudentProgress();
         return;
     }
 
@@ -774,7 +774,6 @@ async function loadIndividualReport(studentId) {
         return;
     }
     
-    // Gráfico de Desempenho
     const performanceByPhase = data.reduce((acc, err) => {
         acc[err.phase] = (acc[err.phase] || 0) + 1;
         return acc;
@@ -782,7 +781,6 @@ async function loadIndividualReport(studentId) {
 
     renderPerformanceChart(performanceByPhase);
 
-    // Top 5 Erros
     const errorCounts = data.reduce((acc, { question_data }) => {
         const key = question_data?.correctAnswer || 'desconhecido';
         acc[key] = (acc[key] || 0) + 1;
@@ -792,7 +790,6 @@ async function loadIndividualReport(studentId) {
     const top5 = Object.entries(errorCounts).sort(([, a], [, b]) => b - a).slice(0, 5);
     renderTop5Errors(top5);
 
-    // Sugestão Inteligente
     generateIntelligentSuggestion(top5);
 }
 
@@ -800,7 +797,6 @@ function renderPerformanceChart(performanceData) {
     const container = document.getElementById('performanceChart');
     const totalPhases = 5;
     let html = '';
-    // Assumindo que o jogo tem 10 questões por fase
     const totalQuestionsPerPhase = 10;
 
     for(let i = 1; i <= totalPhases; i++){
@@ -861,7 +857,6 @@ async function exportReportsToPDF() {
     doc.setFontSize(11);
     doc.setTextColor(100);
 
-    // Mapa de Calor da Turma
     doc.setFontSize(14);
     doc.text('Mapa de Calor da Turma', 14, 40);
     const heatmapItems = Array.from(document.querySelectorAll('#classHeatmap .heatmap-item')).map(item => [item.textContent.trim(), item.title.split(' - ')[1]]);
@@ -876,13 +871,11 @@ async function exportReportsToPDF() {
         doc.text('Nenhum erro registrado para a turma.', 14, 45);
     }
     
-    // Relatório Individual
     if (studentId) {
         doc.addPage();
         doc.setFontSize(18);
         doc.text(`Relatório Individual: ${studentName}`, 14, 22);
 
-        // Top 5 Erros
         doc.setFontSize(14);
         doc.text('Top 5 Maiores Dificuldades', 14, 40);
         const top5Errors = Array.from(document.querySelectorAll('#top5Errors li')).map(li => {
@@ -900,7 +893,6 @@ async function exportReportsToPDF() {
             doc.text('Nenhum erro registrado.', 14, 45);
         }
 
-        // Sugestão
         doc.setFontSize(14);
         const suggestionY = doc.autoTable.previous.finalY + 15;
         doc.text('Sugestão', 14, suggestionY);
@@ -1207,7 +1199,6 @@ async function saveGameState() {
     if (error) console.error("Erro ao salvar progresso:", error);
 }
 
-// === NOVA FUNÇÃO PARA REGISTRAR ERROS ===
 async function logError(question, incorrectAnswer) {
     if (!currentUser || currentUser.type !== 'student') return;
     const errorLog = {
@@ -1223,34 +1214,33 @@ async function logError(question, incorrectAnswer) {
     }
 }
 
-
 function generateQuestions(phase) {
     let questions = [];
     const questionCount = 10;
 
     switch (phase) {
-        case 1: // Fase 1: Som da Letra (sem alteração)
+        case 1:
             const letters = [...ALPHABET].sort(() => 0.5 - Math.random());
             for (let i = 0; i < questionCount; i++) {
                 const correctLetter = letters[i % letters.length];
                 questions.push({ type: 'letter_sound', correctAnswer: correctLetter, options: generateOptions(correctLetter, ALPHABET, 4) });
             }
             break;
-        case 2: // Fase 2: Vogal Inicial (sem alteração)
+        case 2:
             const words_p2 = [...PHASE_2_WORDS].sort(() => 0.5 - Math.random());
             for (let i = 0; i < questionCount; i++) {
                 const item = words_p2[i % words_p2.length];
                 questions.push({ type: 'initial_vowel', word: item.word, image: item.image, correctAnswer: item.vowel, options: generateOptions(item.vowel, VOWELS, 4) });
             }
             break;
-        case 3: // NOVA Fase 3: Encontro Vocálico
+        case 3:
             const words_p3 = [...PHASE_3_ENCONTROS].sort(() => 0.5 - Math.random());
             for (let i = 0; i < questionCount; i++) {
                 const item = words_p3[i % words_p3.length];
                 questions.push({ type: 'vowel_encounter', word: item.word, image: item.image, correctAnswer: item.encontro, options: generateOptions(item.encontro, VOWEL_ENCOUNTERS, 4) });
             }
             break;
-        case 4: // NOVA Fase 4: Palavra Completa
+        case 4:
             const words_p4 = [...PHASE_4_WORDS].sort(() => 0.5 - Math.random());
             for (let i = 0; i < questionCount; i++) {
                 const item = words_p4[i % words_p4.length];
@@ -1258,7 +1248,7 @@ function generateQuestions(phase) {
                 questions.push({ type: 'full_word', image: item.image, correctAnswer: item.word, options: options });
             }
             break;
-        case 5: // NOVA Fase 5: Sílaba Final
+        case 5:
             const words_p5 = [...PHASE_5_WORDS].sort(() => 0.5 - Math.random());
             for (let i = 0; i < questionCount; i++) {
                 const item = words_p5[i % words_p5.length];
@@ -1266,13 +1256,11 @@ function generateQuestions(phase) {
             }
             break;
         default: 
-            // Se uma fase inválida for atribuída, volta para a última fase válida
             questions = generateQuestions(5);
             break;
     }
     return questions;
 }
-
 
 function generateOptions(correctItem, sourceArray, count) {
     const options = new Set([correctItem]);
@@ -1329,37 +1317,33 @@ function renderPhase2UI(question) {
     document.getElementById('repeatAudio').style.display = 'none';
 }
 
-function renderPhase3UI(question) { // NOVA Fase 3
+function renderPhase3UI(question) {
     document.getElementById('audioQuestionArea').style.display = 'none';
     document.getElementById('imageQuestionArea').style.display = 'block';
     document.getElementById('imageEmoji').textContent = question.image;
-    // Substitui o encontro vocálico por __
     document.getElementById('wordDisplay').textContent = question.word.replace(question.correctAnswer, '__');
     document.getElementById('questionText').textContent = 'Qual encontro de vogais completa a palavra?';
     document.getElementById('repeatAudio').style.display = 'none';
 }
 
-function renderPhase4UI(question) { // NOVA Fase 4
+function renderPhase4UI(question) {
     document.getElementById('audioQuestionArea').style.display = 'none';
     document.getElementById('imageQuestionArea').style.display = 'block';
     document.getElementById('imageEmoji').textContent = question.image;
-    // Não mostra a palavra, pois a resposta é a própria palavra
     document.getElementById('wordDisplay').textContent = `?`;
     document.getElementById('questionText').textContent = 'Qual é o nome desta figura?';
     document.getElementById('repeatAudio').style.display = 'none';
 }
 
-function renderPhase5UI(question) { // NOVA Fase 5
+function renderPhase5UI(question) {
     document.getElementById('audioQuestionArea').style.display = 'none';
     document.getElementById('imageQuestionArea').style.display = 'block';
     document.getElementById('imageEmoji').textContent = question.image;
-    // Mostra o início da palavra e oculta a sílaba final
     const visiblePart = question.word.slice(0, -question.correctAnswer.length);
     document.getElementById('wordDisplay').textContent = `${visiblePart}__`;
     document.getElementById('questionText').textContent = 'Qual sílaba termina esta palavra?';
     document.getElementById('repeatAudio').style.display = 'none';
 }
-
 
 function renderOptions(options) {
     const lettersGrid = document.getElementById('lettersGrid');
@@ -1388,7 +1372,7 @@ async function selectAnswer(selectedAnswer) {
         gameState.attempts--;
         showFeedback(`Quase! A resposta correta era ${currentQuestion.correctAnswer}`, 'error');
         playTeacherAudio('feedback_incorrect', 'Tente de novo');
-        await logError(currentQuestion, selectedAnswer); // Registra o erro
+        await logError(currentQuestion, selectedAnswer);
     }
 
     await saveGameState();
@@ -1443,7 +1427,6 @@ function showResultScreen(accuracy, passed) {
         saveGameState();
     }
 }
-
 
 async function nextPhase() {
     const nextPhaseNum = gameState.currentPhase + 1;
