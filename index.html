@@ -195,7 +195,7 @@
 						Clique no alto-falante para ouvir o som!
 					</div>
 				</div>
-  
+ 
                 <div class="audio-section" id="audioQuestionArea">
 					<button id="playAudioButton" class="audio-button" aria-label="Ouvir o som da letra">
 						<i class="fas fa-volume-up"></i>
@@ -321,7 +321,18 @@
             </div>
             <div id="studentProgressTab" class="tab-content">
                 <div class="progress-section">
-                    <h4>Relatório de Progresso da Turma</h4>
+                    <div class="section-header">
+                        <h4>Relatório de Progresso da Turma</h4>
+                        <div class="sort-buttons">
+                            <span>Ordenar por:</span>
+                            <button class="btn small sort-btn" data-sort="name">
+                                <i class="fas fa-font"></i> Nome
+                            </button>
+                            <button class="btn small sort-btn active" data-sort="last_played">
+                                <i class="fas fa-clock"></i> Último Acesso
+                            </button>
+                        </div>
+                    </div>
                     <div id="studentProgressList" class="students-list"></div>
                 </div>
             </div>
