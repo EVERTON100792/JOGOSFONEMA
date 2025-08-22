@@ -48,56 +48,36 @@ const gameInstructions = {
 };
 
 const PHASE_2_WORDS = [
-    { word: 'ABELHA', image: '🐝', vowel: 'A' },
-    { word: 'ELEFANTE', image: '🐘', vowel: 'E' },
-    { word: 'IGREJA', image: '⛪', vowel: 'I' },
-    { word: 'ÔNIBUS', image: '🚌', vowel: 'O' },
-    { word: 'UVA', image: '🍇', vowel: 'U' },
-    { word: 'AVIÃO', image: '✈️', vowel: 'A' },
-    { word: 'ESTRELA', image: '⭐', vowel: 'E' },
-    { word: 'ÍNDIO', image: '🏹', vowel: 'I' },
-    { word: 'OVO', image: '🥚', vowel: 'O' },
-    { word: 'URSO', image: '🐻', vowel: 'U' }
+    { word: 'ABELHA', image: '🐝', vowel: 'A' }, { word: 'ELEFANTE', image: '🐘', vowel: 'E' },
+    { word: 'IGREJA', image: '⛪', vowel: 'I' }, { word: 'ÔNIBUS', image: '🚌', vowel: 'O' },
+    { word: 'UVA', image: '🍇', vowel: 'U' }, { word: 'AVIÃO', image: '✈️', vowel: 'A' },
+    { word: 'ESTRELA', image: '⭐', vowel: 'E' }, { word: 'ÍNDIO', image: '🏹', vowel: 'I' },
+    { word: 'OVO', image: '🥚', vowel: 'O' }, { word: 'URSO', image: '🐻', vowel: 'U' }
 ];
 
 const PHASE_3_ENCONTROS = [
-    { word: 'PEIXE', image: '🐠', encontro: 'EI' },
-    { word: 'BOI', image: '🐂', encontro: 'OI' },
-    { word: 'CAIXA', image: '📦', encontro: 'AI' },
-    { word: 'PAI', image: '👨‍👧', encontro: 'AI' },
-    { word: 'CÉU', image: '🌌', encontro: 'EU' },
-    { word: 'LUA', image: '🌙', encontro: 'UA' },
-    { word: 'LEÃO', image: '🦁', encontro: 'ÃO' },
-    { word: 'MÃE', image: '👩‍👦', encontro: 'ÃE' },
-    { word: 'PÃO', image: '🍞', encontro: 'ÃO' },
-    { word: 'CHAPÉU', image: '🤠', encontro: 'ÉU' }
+    { word: 'PEIXE', image: '🐠', encontro: 'EI' }, { word: 'BOI', image: '🐂', encontro: 'OI' },
+    { word: 'CAIXA', image: '📦', encontro: 'AI' }, { word: 'PAI', image: '👨‍👧', encontro: 'AI' },
+    { word: 'CÉU', image: '🌌', encontro: 'EU' }, { word: 'LUA', image: '🌙', encontro: 'UA' },
+    { word: 'LEÃO', image: '🦁', encontro: 'ÃO' }, { word: 'MÃE', image: '👩‍👦', encontro: 'ÃE' },
+    { word: 'PÃO', image: '🍞', encontro: 'ÃO' }, { word: 'CHAPÉU', image: '🤠', encontro: 'ÉU' }
 ];
 const VOWEL_ENCOUNTERS = ['AI', 'EI', 'OI', 'UI', 'AU', 'EU', 'ÃO', 'ÃE', 'UA', 'ÉU'];
 
 const PHASE_4_WORDS = [
-    { word: 'BOLA', image: '⚽', options: ['BOLO', 'BALA', 'BULA'] },
-    { word: 'CASA', image: '🏠', options: ['COPO', 'COLA', 'CAJU'] },
-    { word: 'DADO', image: '🎲', options: ['DEDO', 'DIA', 'DOCE'] },
-    { word: 'GATO', image: '🐈', options: ['GALO', 'GELO', 'GOTA'] },
-    { word: 'MACACO', image: '🐒', options: ['MALA', 'MAPA', 'MEIA'] },
-    { word: 'SAPO', image: '🐸', options: ['SAPATO', 'SOFÁ', 'SUCO'] },
-    { word: 'UVA', image: '🍇', options: ['UNHA', 'URUBU', 'UM'] },
-    { word: 'SOL', image: '☀️', options: ['SAL', 'SETE', 'SAPO'] },
-    { word: 'LUA', image: '🌙', options: ['LAMA', 'LATA', 'LEÃO'] },
-    { word: 'PATO', image: '🦆', options: ['PÉ', 'POTE', 'PIPA'] }
+    { word: 'BOLA', image: '⚽', options: ['BOLO', 'BALA', 'BULA'] }, { word: 'CASA', image: '🏠', options: ['COPO', 'COLA', 'CAJU'] },
+    { word: 'DADO', image: '🎲', options: ['DEDO', 'DIA', 'DOCE'] }, { word: 'GATO', image: '🐈', options: ['GALO', 'GELO', 'GOTA'] },
+    { word: 'MACACO', image: '🐒', options: ['MALA', 'MAPA', 'MEIA'] }, { word: 'SAPO', image: '🐸', options: ['SAPATO', 'SOFÁ', 'SUCO'] },
+    { word: 'UVA', image: '🍇', options: ['UNHA', 'URUBU', 'UM'] }, { word: 'SOL', image: '☀️', options: ['SAL', 'SETE', 'SAPO'] },
+    { word: 'LUA', image: '🌙', options: ['LAMA', 'LATA', 'LEÃO'] }, { word: 'PATO', image: '🦆', options: ['PÉ', 'POTE', 'PIPA'] }
 ];
 
 const PHASE_5_WORDS = [
-    { word: 'BOLO', image: '🎂', syllable: 'LO' },
-    { word: 'CASA', image: '🏠', syllable: 'SA' },
-    { word: 'DADO', image: '🎲', syllable: 'DO' },
-    { word: 'FACA', image: '🔪', syllable: 'CA' },
-    { word: 'GATO', image: '🐈', syllable: 'TO' },
-    { word: 'MACACO', image: '🐒', syllable: 'CO' },
-    { word: 'PATO', image: '🦆', syllable: 'TO' },
-    { word: 'SAPO', image: '🐸', syllable: 'PO' },
-    { word: 'VACA', image: '🐄', syllable: 'CA' },
-    { word: 'JANELA', image: '🖼️', syllable: 'LA' }
+    { word: 'BOLO', image: '🎂', syllable: 'LO' }, { word: 'CASA', image: '🏠', syllable: 'SA' },
+    { word: 'DADO', image: '🎲', syllable: 'DO' }, { word: 'FACA', image: '🔪', syllable: 'CA' },
+    { word: 'GATO', image: '🐈', syllable: 'TO' }, { word: 'MACACO', image: '🐒', syllable: 'CO' },
+    { word: 'PATO', image: '🦆', syllable: 'TO' }, { word: 'SAPO', image: '🐸', syllable: 'PO' },
+    { word: 'VACA', image: '🐄', syllable: 'CA' }, { word: 'JANELA', image: '🖼️', syllable: 'LA' }
 ];
 const ALL_END_SYLLABLES = ['LO', 'SA', 'DO', 'CA', 'TO', 'CO', 'PO', 'LA', 'NE', 'JA'];
 
@@ -457,7 +437,6 @@ async function loadTeacherClasses() {
     renderClasses(data);
 }
 
-// FUNÇÃO ATUALIZADA para usar addEventListener
 function renderClasses(classes) {
     const container = document.getElementById('classesList');
     if (!classes || classes.length === 0) {
@@ -466,7 +445,6 @@ function renderClasses(classes) {
     }
     container.innerHTML = classes.map(cls => {
         const studentCount = cls.students[0]?.count || 0;
-        // Usamos data-attributes para passar informações para o JS de forma segura
         return `
             <div class="class-card" data-class-id="${cls.id}" data-class-name="${cls.name.replace(/"/g, "&quot;").replace(/'/g, "&#39;")}
 ">
@@ -484,7 +462,6 @@ function renderClasses(classes) {
     addEventListenersToClassCards();
 }
 
-// NOVA FUNÇÃO para adicionar os eventos de clique de forma robusta
 function addEventListenersToClassCards() {
     document.querySelectorAll('.class-card').forEach(card => {
         const classId = card.dataset.classId;
@@ -499,7 +476,6 @@ function addEventListenersToClassCards() {
         });
     });
 }
-
 
 async function handleCreateClass(e) {
     e.preventDefault();
@@ -529,9 +505,11 @@ async function handleDeleteClass(classId, className) {
 }
 
 async function manageClass(classId, className) {
+    console.log(`Gerenciando turma: ${className} (${classId})`);
     currentClassId = classId;
     document.getElementById('manageClassTitle').textContent = `Gerenciar: ${className}`;
     showTab(document.querySelector('#manageClassModal .tab-btn[data-tab="studentsTab"]'));
+    
     showModal('manageClassModal');
 
     await loadClassStudents();
@@ -569,19 +547,36 @@ function renderStudents(students) {
                 <p>Usuário: ${student.username}</p>
             </div>
             <div class="student-actions">
-                <button onclick="handleResetStudentPassword('${student.id}', '${student.name.replace(/'/g, "\\'")}')" class="btn small" title="Resetar Senha">
+                <button class="btn small reset-password-btn" data-student-id="${student.id}" data-student-name="${student.name.replace(/"/g, "&quot;")}" title="Resetar Senha">
                     <i class="fas fa-key" aria-hidden="true"></i>
                 </button>
-                <button onclick="handleDeleteStudent('${student.id}', '${student.name.replace(/'/g, "\\'")}')" class="btn small danger" title="Excluir Aluno">
+                <button class="btn small danger delete-student-btn" data-student-id="${student.id}" data-student-name="${student.name.replace(/"/g, "&quot;")}" title="Excluir Aluno">
                     <i class="fas fa-trash" aria-hidden="true"></i>
                 </button>
             </div>
         </div>`).join('');
+
+    addEventListenersToStudentItems();
 }
 
-// =======================================================
-// PARTE 6.1: IMPLEMENTAÇÃO - RELATÓRIOS (FASE 1, 2, 3)
-// =======================================================
+function addEventListenersToStudentItems() {
+    document.querySelectorAll('.reset-password-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            const studentId = e.currentTarget.dataset.studentId;
+            const studentName = e.currentTarget.dataset.studentName;
+            handleResetStudentPassword(studentId, studentName);
+        });
+    });
+
+    document.querySelectorAll('.delete-student-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            const studentId = e.currentTarget.dataset.studentId;
+            const studentName = e.currentTarget.dataset.studentName;
+            handleDeleteStudent(studentId, studentName);
+        });
+    });
+}
+
 
 async function loadStudentProgress(sortBy = 'last_played') {
     const progressList = document.getElementById('studentProgressList');
@@ -612,14 +607,9 @@ async function loadStudentProgress(sortBy = 'last_played') {
         const lastPlayed = progress.last_played ? new Date(progress.last_played) : null;
         
         return {
-            id: student.id,
-            name: student.name,
-            assigned_phase: student.assigned_phase || 1,
-            current_phase: progress.current_phase || 'N/A',
-            accuracy: accuracy,
-            score: score,
-            total: total,
-            last_played: lastPlayed,
+            id: student.id, name: student.name, assigned_phase: student.assigned_phase || 1,
+            current_phase: progress.current_phase || 'N/A', accuracy: accuracy,
+            score: score, total: total, last_played: lastPlayed,
             isActive: lastPlayed && lastPlayed > sevenDaysAgo
         };
     });
@@ -628,8 +618,7 @@ async function loadStudentProgress(sortBy = 'last_played') {
         if (sortBy === 'name') return a.name.localeCompare(b.name);
         if (sortBy === 'progress') return b.accuracy - a.accuracy;
         if (sortBy === 'last_played') {
-            if (!a.last_played) return 1;
-            if (!b.last_played) return -1;
+            if (!a.last_played) return 1; if (!b.last_played) return -1;
             return b.last_played - a.last_played;
         }
         return 0;
@@ -670,7 +659,7 @@ function renderStudentProgress(data) {
                 </div>
                 <div class="student-actions">
                     <label for="phase-select-${student.id}" class="select-label">Designar Fase:</label>
-                    <select id="phase-select-${student.id}" class="phase-select" onchange="assignPhase('${student.id}', this)">
+                    <select id="phase-select-${student.id}" class="phase-select" data-student-id="${student.id}">
                         ${phaseOptions}
                     </select>
                 </div>
@@ -678,15 +667,21 @@ function renderStudentProgress(data) {
     }).join('');
 
     progressList.innerHTML = html;
+    
+    document.querySelectorAll('.phase-select').forEach(select => {
+        select.addEventListener('change', (e) => {
+            const studentId = e.currentTarget.dataset.studentId;
+            assignPhase(studentId, e.currentTarget);
+        });
+    });
 }
 
 async function assignPhase(studentId, selectElement) {
     const newPhase = parseInt(selectElement.value);
     const studentName = selectElement.closest('.student-item').querySelector('h4').textContent.trim();
 
-    if (!confirm(`Deseja designar a Fase ${newPhase} para o aluno ${studentName}?\n\nAtenção: O progresso na fase atual será reiniciado para que ele comece a nova atividade do zero.`)) {
-        await loadStudentProgress();
-        return;
+    if (!confirm(`Deseja designar a Fase ${newPhase} para o aluno ${studentName}?\n\nAtenção: O progresso na fase atual será reiniciado.`)) {
+        await loadStudentProgress(); return;
     }
 
     try {
@@ -715,7 +710,6 @@ async function loadDifficultyReports() {
     });
 
     document.getElementById('individualReportContent').style.display = 'none';
-    
     await loadClassHeatmap();
 }
 
@@ -724,18 +718,10 @@ async function loadClassHeatmap() {
     heatmapContainer.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Carregando mapa de calor...';
 
     const { data, error } = await supabaseClient.from('student_errors')
-        .select('question_data')
-        .eq('class_id', currentClassId);
+        .select('question_data').eq('class_id', currentClassId);
 
-    if (error) {
-        heatmapContainer.textContent = 'Erro ao carregar dados.';
-        return;
-    }
-
-    if (data.length === 0) {
-        heatmapContainer.textContent = 'Nenhum erro registrado para esta turma ainda.';
-        return;
-    }
+    if (error) { heatmapContainer.textContent = 'Erro ao carregar dados.'; return; }
+    if (data.length === 0) { heatmapContainer.textContent = 'Nenhum erro registrado para esta turma ainda.'; return; }
     
     const errorCounts = data.reduce((acc, { question_data }) => {
         const key = question_data?.correctAnswer || 'desconhecido';
@@ -744,7 +730,6 @@ async function loadClassHeatmap() {
     }, {});
     
     const maxErrors = Math.max(...Object.values(errorCounts));
-
     const sortedErrors = Object.entries(errorCounts).sort(([,a],[,b]) => b-a);
 
     heatmapContainer.innerHTML = sortedErrors.map(([item, count]) => {
@@ -1338,7 +1323,6 @@ function renderPhase4UI(question) {
 function renderPhase5UI(question) {
     document.getElementById('audioQuestionArea').style.display = 'none';
     document.getElementById('imageQuestionArea').style.display = 'block';
-    document.getElementById('imageEmoji').textContent = question.image;
     const visiblePart = question.word.slice(0, -question.correctAnswer.length);
     document.getElementById('wordDisplay').textContent = `${visiblePart}__`;
     document.getElementById('questionText').textContent = 'Qual sílaba termina esta palavra?';
