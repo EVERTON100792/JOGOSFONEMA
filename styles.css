@@ -524,12 +524,11 @@ body {
 .login-container h2 { text-align: center; color: #2C3E50; margin-bottom: 30px; font-size: 1.8rem; }
 .login-container h2 i { margin-right: 10px; color: #4ECDC4; }
 .login-form { display: flex; flex-direction: column; gap: 20px; }
-.form-group { display: flex; flex-direction: column; text-align: left; gap: 8px; position: relative; }
+.form-group { display: flex; flex-direction: column; text-align: left; gap: 8px; }
 .form-group label { font-weight: bold; color: #2C3E50; font-size: 1rem; }
-.form-group input, .form-group select { padding: 15px; border: 2px solid #E0E0E0; border-radius: 10px; font-size: 1rem; font-family: inherit; transition: border-color 0.3s ease; width: 100%; }
+.form-group input, .form-group select { padding: 15px; border: 2px solid #E0E0E0; border-radius: 10px; font-size: 1rem; font-family: inherit; transition: border-color 0.3s ease; }
 .form-group input:focus, .form-group select:focus { outline: none; border-color: #4ECDC4; }
-.password-wrapper { position: relative; }
-.password-toggle { position: absolute; right: 15px; top: 50%; transform: translateY(-50%); cursor: pointer; color: #aaa; }
+.password-group { position: relative; }
 .generate-password-btn { position: absolute; right: 10px; top: 50%; transform: translateY(10%); background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #aaa; transition: color 0.3s; }
 .generate-password-btn:hover { color: #764ba2; }
 .login-btn, .modal-btn.primary, .create-btn { background: linear-gradient(145deg, #4ECDC4, #45B7B8); color: white; border: none; padding: 15px; border-radius: 10px; font-size: 1.1rem; font-weight: bold; cursor: pointer; transition: all 0.3s ease; margin-top: 10px; }
@@ -576,32 +575,37 @@ body {
 .tab-btn { background: none; border: none; padding: 15px 25px; cursor: pointer; font-size: 1rem; color: #666; border-bottom: 3px solid transparent; transition: all 0.3s ease; }
 .tab-btn.active, .tab-btn:hover { color: #4ECDC4; border-bottom-color: #4ECDC4; }
 .tab-content { display: none; }
-.tab-content.active { display: block; animation: fadeIn 0.5s ease; }
-@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-
+.tab-content.active { display: block; }
 .create-form { background: #F8F9FA; padding: 20px; border-radius: 10px; margin: 20px 0; }
 .form-row { display: grid; grid-template-columns: 1fr; gap: 15px; align-items: end; }
 .form-actions { display: flex; gap: 10px; margin-top: 15px; }
 
 /* LISTA DE ALUNOS E PROGRESSO */
-.section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-wrap: wrap; gap: 10px;}
+.section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
 .students-list { display: grid; gap: 15px; }
 .student-item { background: #f8f9fa; padding: 15px; border-radius: 10px; border: 1px solid #E0E0E0; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }
-.student-info { flex-grow: 1; }
-.student-info h4 { margin: 0 0 5px 0; color: #2C3E50; display: flex; align-items: center; gap: 8px;}
+.student-info h4 { margin: 0 0 5px 0; color: #2C3E50; }
 .student-info p { margin: 0; color: #666; font-size: 0.9rem; }
-.status-icon { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
-.status-icon.active { background-color: #4ECDC4; box-shadow: 0 0 5px #4ECDC4; }
-.status-icon.inactive { background-color: #E0E0E0; }
 
 /* Barra de Progresso do Aluno */
-.student-progress-container { width: 100%; margin-top: 8px; }
-.student-progress-bar { width: 100%; height: 10px; background-color: #e0e0e0; border-radius: 5px; overflow: hidden; }
-.student-progress-fill { height: 100%; background-color: #4ECDC4; width: 0%; transition: width 0.5s ease; }
-.sort-options { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
-.sort-btn { background: #f0f0f0; border: 1px solid #ddd; padding: 5px 10px; border-radius: 5px; cursor: pointer; transition: all 0.2s; }
-.sort-btn.active { background: #4ECDC4; color: white; border-color: #4ECDC4; }
-.sort-btn i { margin-left: 5px; }
+.student-progress-container {
+    width: 100%;
+    margin-top: 8px;
+}
+.student-progress-bar {
+    width: 100%;
+    height: 10px;
+    background-color: #e0e0e0;
+    border-radius: 5px;
+    overflow: hidden;
+}
+.student-progress-fill {
+    height: 100%;
+    background-color: #4ECDC4;
+    width: 0%;
+    transition: width 0.5s ease;
+}
+
 
 /* UPLOAD DE ÁUDIO E GRAVAÇÃO */
 .upload-instructions, .record-section { background: #f8f9fa; padding: 20px; border-radius: 10px; margin-bottom: 20px; }
@@ -622,34 +626,235 @@ body {
 .tutorial-overlay.show { display: flex; opacity: 1; }
 
 /* Estilo para a caixa de credenciais na confirmação */
-.credentials-box { background-color: #f8f9fa; border: 1px solid #e0e0e0; border-radius: 8px; padding: 20px; margin: 20px 0; text-align: left; font-size: 1.1rem; }
-.credentials-box p { margin-bottom: 10px; }
+.credentials-box {
+    background-color: #f8f9fa;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    padding: 20px;
+    margin: 20px 0;
+    text-align: left;
+    font-size: 1.1rem;
+}
+
+.credentials-box p {
+    margin-bottom: 10px;
+}
 
 /* Estilos para o Menu de Designação de Fase */
-.student-actions { display: flex; flex-direction: column; align-items: flex-start; gap: 5px; }
-.select-label { font-size: 0.8em; color: #555; }
-.phase-select { padding: 5px; border-radius: 5px; border: 1px solid #ccc; font-family: inherit; }
+.student-actions {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 5px;
+}
 
-/* === NOVOS ESTILOS PARA RELATÓRIOS === */
-.reports-section h4 { color: #2c3e50; margin-bottom: 5px; }
-.report-subtitle { font-size: 0.9rem; color: #666; margin-bottom: 15px; }
-.report-container { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; }
-.report-column { background: #f8f9fa; padding: 20px; border-radius: 10px; border-top: 4px solid #4ecdc4; }
-.heatmap-container { display: grid; grid-template-columns: repeat(auto-fill, minmax(40px, 1fr)); gap: 5px; margin-top: 15px; }
-.heatmap-item { aspect-ratio: 1; display: flex; align-items: center; justify-content: center; font-weight: bold; color: white; border-radius: 5px; font-size: 0.9rem; position: relative; }
-.heatmap-item .tooltip { visibility: hidden; width: 120px; background-color: #555; color: #fff; text-align: center; border-radius: 6px; padding: 5px 0; position: absolute; z-index: 1; bottom: 125%; left: 50%; margin-left: -60px; opacity: 0; transition: opacity 0.3s; }
-.heatmap-item:hover .tooltip { visibility: visible; opacity: 1; }
-.top-errors-list { list-style: none; padding: 0; margin-top: 15px; }
-.top-errors-list li { background: #fff; border: 1px solid #eee; padding: 10px; border-radius: 5px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; font-size: 0.95rem; }
-.error-item { font-weight: bold; color: #d9534f; }
-.error-count { background: #d9534f; color: white; border-radius: 50px; padding: 2px 8px; font-size: 0.8rem; }
-.suggestion-box { background: #eef7f7; border-left: 4px solid #4ecdc4; padding: 15px; margin-top: 15px; border-radius: 5px; color: #333; font-style: italic; }
-.chart-container { width: 100%; margin-top: 15px; }
-.chart-bar { display: flex; align-items: center; margin-bottom: 8px; font-size: 0.9rem; }
-.bar-label { width: 60px; }
-.bar-wrapper { flex-grow: 1; background-color: #e9ecef; border-radius: 5px; }
-.bar-fill { height: 20px; background-color: #4ecdc4; border-radius: 5px; text-align: right; color: white; padding-right: 5px; line-height: 20px; white-space: nowrap; transition: width 0.5s ease-in-out; }
+.select-label {
+    font-size: 0.8em;
+    color: #555;
+    font-weight: bold;
+}
 
-@media (max-width: 768px) {
-    .report-container { grid-template-columns: 1fr; }
+.phase-select {
+    padding: 8px;
+    border-radius: 8px;
+    border: 2px solid #ddd;
+    background-color: white;
+    font-family: 'Comic Neue', cursive;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.phase-select:hover {
+    border-color: #764ba2;
+}
+
+.phase-select:focus {
+    outline: none;
+    border-color: #764ba2;
+    box-shadow: 0 0 5px rgba(118, 75, 162, 0.5);
+}
+
+
+/* ================================== */
+/* === ESTILOS DE MELHORIA DE UX === */
+/* ================================== */
+
+/* Wrapper para o campo de senha */
+.password-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.password-wrapper input {
+    width: 100%;
+    padding-right: 45px; /* Espaço para o ícone */
+}
+
+/* Ícone de mostrar/ocultar senha */
+.password-toggle {
+    position: absolute;
+    right: 15px;
+    cursor: pointer;
+    color: #aaa;
+    transition: color 0.2s ease;
+}
+
+.password-toggle:hover {
+    color: #333;
+}
+
+/* Ícone de carregamento (spinner) para botões */
+.fa-spinner {
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+/* ================================================= */
+/* === SOLUÇÃO DEFINITIVA PARA LAYOUT DE TELA === */
+/* ================================================= */
+
+/* Garante que o corpo da página não tenha rolagens inesperadas */
+html, body {
+    height: 100%;
+    overflow: hidden;
+}
+
+/* Força a tela do jogo a se comportar como um aplicativo */
+#gameScreen.active {
+    display: flex;
+    flex-direction: column;
+    height: 100vh; /* Ocupa 100% da altura da tela visível */
+    width: 100vw;  /* Ocupa 100% da largura da tela visível */
+    padding: 15px;
+    box-sizing: border-box; /* Garante que o padding não aumente o tamanho total */
+    justify-content: flex-start;
+    overflow: hidden; /* Desativa a rolagem da tela inteira */
+}
+
+/* O cabeçalho não deve encolher */
+#gameScreen .game-header {
+    flex-shrink: 0;
+    width: 100%;
+    margin-bottom: 15px;
+}
+
+/* A área de conteúdo principal é a única que pode crescer e rolar */
+#gameScreen .game-content {
+    flex-grow: 1; /* Faz este elemento ocupar todo o espaço restante */
+    overflow-y: auto; /* Adiciona rolagem vertical APENAS aqui se necessário */
+    min-height: 0; /* Truque importante para o flexbox funcionar bem com rolagem */
+    width: 100%;
+    padding: 1rem;
+}
+
+/* ===================================================== */
+/* === AJUSTES FINOS PARA TELAS BAIXAS (CELULARES) === */
+/* ===================================================== */
+
+/* Estas regras só se aplicam se a altura da tela for 740px ou menos */
+@media (max-height: 740px) {
+    #gameScreen .game-content {
+        padding: 1rem; /* Diminui o padding interno */
+        display: flex;
+        flex-direction: column;
+    }
+
+    #gameScreen .question-area {
+        margin-bottom: 1rem; /* Menos espaço abaixo da pergunta */
+    }
+
+    #gameScreen .mascot-helper {
+        margin-bottom: 0.5rem; /* Menos espaço para o mascote */
+    }
+
+    #gameScreen .mascot-helper .mascot {
+        font-size: 2.5rem; /* Mascote um pouco menor */
+        margin-bottom: 0.5rem;
+    }
+    
+    #gameScreen .speech-bubble {
+        padding: 0.5rem 1rem;
+    }
+    
+    #gameScreen .speech-bubble p {
+        font-size: 0.9rem;
+    }
+
+    #gameScreen .audio-section {
+        margin: 0.5rem 0; /* Menos margem vertical */
+    }
+
+    #gameScreen .audio-button {
+        width: 90px; /* Botão de áudio menor */
+        height: 90px;
+    }
+     #gameScreen .audio-button i {
+        font-size: 1.5rem;
+    }
+    #gameScreen .audio-button span {
+        font-size: 0.8rem;
+    }
+
+    #gameScreen .question-text h3 {
+        font-size: 1.2rem; /* Texto da pergunta menor */
+        margin: 0.5rem 0;
+    }
+
+    #gameScreen .letters-grid {
+        margin: 1rem 0; /* Menos margem vertical */
+        gap: 0.5rem; /* Espaço menor entre os botões */
+        flex-grow: 1; /* Permite que a grade cresça para preencher o espaço */
+    }
+
+    #gameScreen .game-controls {
+        margin-top: 1rem; /* Menos espaço acima do botão 'Ouvir Novamente' */
+    }
+    
+    #gameScreen .control-button {
+        padding: 0.8rem 1.5rem;
+        font-size: 1rem;
+    }
+}
+/* ================================================= */
+/* === SOLUÇÃO DEFINITIVA PARA LAYOUT DE TELA === */
+/* ================================================= */
+
+/* Garante que o corpo da página não tenha rolagens inesperadas */
+html, body {
+    height: 100%;
+    overflow: hidden;
+}
+
+/* Força a tela do jogo a se comportar como um aplicativo */
+#gameScreen.active {
+    display: flex;
+    flex-direction: column;
+    height: 100vh; /* Ocupa 100% da altura da tela visível */
+    width: 100vw;  /* Ocupa 100% da largura da tela visível */
+    padding: 15px;
+    box-sizing: border-box; /* Garante que o padding não aumente o tamanho total */
+    justify-content: flex-start;
+    overflow: hidden; /* Desativa a rolagem da tela inteira */
+}
+
+/* O cabeçalho não deve encolher */
+#gameScreen .game-header {
+    flex-shrink: 0;
+    width: 100%;
+    margin-bottom: 15px;
+}
+
+/* A área de conteúdo principal é a única que pode crescer e rolar */
+#gameScreen .game-content {
+    flex-grow: 1; /* Faz este elemento ocupar todo o espaço restante */
+    overflow-y: auto; /* Adiciona rolagem vertical APENAS aqui se necessário */
+    min-height: 0; /* Truque importante para o flexbox funcionar bem com rolagem */
+    width: 100%;
+    padding: 1rem;
 }
