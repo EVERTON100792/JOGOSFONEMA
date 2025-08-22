@@ -11,8 +11,8 @@ const SUPER_ADMIN_TEACHER_ID = 'd88211f7-9f98-47b8-8e57-54bf767f42d6';
 
 let currentUser = null;
 let currentClassId = null;
-// NOVA VARIÁVEL GLOBAL PARA ARMAZENAR DADOS DE PROGRESSO
-let studentProgressData = []; 
+let studentProgressData = []; // Armazena dados de progresso para reordenar
+let currentChart = null; // Gerencia a instância do gráfico para evitar duplicação
 const ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
 const VOWELS = 'AEIOU'.split('');
 
@@ -25,7 +25,6 @@ const CUSTOM_AUDIO_KEYS = {
     'feedback_correct': 'Feedback - Acerto',
     'feedback_incorrect': 'Feedback - Erro'
 };
-
 
 let gameState = {};
 let mediaRecorder;
@@ -61,7 +60,6 @@ const PHASE_2_WORDS = [
     { word: 'URSO', image: '🐻', vowel: 'U' }
 ];
 
-// NOVA FASE 3: Encontro das Vogais
 const PHASE_3_ENCONTROS = [
     { word: 'PEIXE', image: '🐠', encontro: 'EI' },
     { word: 'BOI', image: '🐂', encontro: 'OI' },
@@ -76,7 +74,6 @@ const PHASE_3_ENCONTROS = [
 ];
 const VOWEL_ENCOUNTERS = ['AI', 'EI', 'OI', 'UI', 'AU', 'EU', 'ÃO', 'ÃE', 'UA', 'ÉU'];
 
-// NOVA FASE 4: Palavra Completa
 const PHASE_4_WORDS = [
     { word: 'BOLA', image: '⚽', options: ['BOLO', 'BALA', 'BULA'] },
     { word: 'CASA', image: '🏠', options: ['COPO', 'COLA', 'CAJU'] },
@@ -90,7 +87,6 @@ const PHASE_4_WORDS = [
     { word: 'PATO', image: '🦆', options: ['PÉ', 'POTE', 'PIPA'] }
 ];
 
-// NOVA FASE 5: Sílaba Final
 const PHASE_5_WORDS = [
     { word: 'BOLO', image: '🎂', syllable: 'LO' },
     { word: 'CASA', image: '🏠', syllable: 'SA' },
@@ -240,7 +236,7 @@ function setupAllEventListeners() {
     document.querySelectorAll('[data-close]').forEach(btn => {
         btn.addEventListener('click', () => closeModal(btn.getAttribute('data-close')));
     });
-    document.querySelectorAll('.tab-btn').forEach(btn => {
+    document.querySelectorAll('#manageClassModal .tab-btn').forEach(btn => {
         btn.addEventListener('click', (e) => showTab(e.currentTarget));
     });
 
@@ -264,13 +260,13 @@ function setupAllEventListeners() {
         });
     });
 
-    // *** NOVO EVENTO: Botões de ordenação ***
+    // Botões de ordenação
     document.querySelectorAll('.sort-btn').forEach(btn => {
         btn.addEventListener('click', (e) => {
             const sortBy = e.currentTarget.dataset.sort;
             document.querySelectorAll('.sort-btn').forEach(b => b.classList.remove('active'));
             e.currentTarget.classList.add('active');
-            renderStudentProgress(sortBy); // Re-renderiza a lista com a nova ordenação
+            renderStudentProgress(sortBy);
         });
     });
 }
@@ -487,9 +483,23 @@ async function handleDeleteClass(classId, className) {
 async function manageClass(classId, className) {
     currentClassId = classId;
     document.getElementById('manageClassTitle').textContent = `Gerenciar: ${className}`;
+    
+    const modal = document.getElementById('manageClassModal');
+    modal.querySelectorAll('.tab-btn').forEach(btn => {
+        const tabId = btn.dataset.tab;
+        // Evita adicionar múltiplos listeners se o modal for reaberto
+        if (!btn.getAttribute('data-listener')) {
+            btn.setAttribute('data-listener', 'true');
+            btn.addEventListener('click', () => {
+                if (tabId === 'studentsTab') loadClassStudents();
+                else if (tabId === 'studentProgressTab') loadStudentProgress();
+                else if (tabId === 'reportsTab') loadDifficultyReports();
+            });
+        }
+    });
+
     showTab(document.querySelector('#manageClassModal .tab-btn[data-tab="studentsTab"]'));
     await loadClassStudents();
-    await loadStudentProgress(); // Carrega os dados de progresso
     showModal('manageClassModal');
 }
 
@@ -530,19 +540,9 @@ async function loadStudentProgress() {
     const progressList = document.getElementById('studentProgressList');
     progressList.innerHTML = '<p><i class="fas fa-spinner fa-spin"></i> Carregando progresso...</p>';
 
-    // Unir dados dos alunos com os de progresso
     const { data, error } = await supabaseClient
         .from('students')
-        .select(`
-            id,
-            name,
-            assigned_phase,
-            progress (
-                current_phase,
-                game_state,
-                last_played
-            )
-        `)
+        .select(`id, name, assigned_phase, progress ( current_phase, game_state, last_played )`)
         .eq('class_id', currentClassId);
 
     if (error) {
@@ -555,17 +555,13 @@ async function loadStudentProgress() {
         return;
     }
     
-    // Armazena os dados brutos para re-ordenar depois
     studentProgressData = data; 
-
-    // Renderiza a lista com a ordenação padrão (último acesso)
     renderStudentProgress('last_played');
 }
 
 function renderStudentProgress(sortBy = 'last_played') {
     const progressList = document.getElementById('studentProgressList');
 
-    // *** LÓGICA DE ORDENAÇÃO ***
     const sortedData = [...studentProgressData].sort((a, b) => {
         if (sortBy === 'name') {
             return a.name.localeCompare(b.name);
@@ -586,7 +582,6 @@ function renderStudentProgress(sortBy = 'last_played') {
         const total = progress.game_state?.questions?.length || 10;
         const accuracy = total > 0 ? Math.round((score / total) * 100) : 0;
 
-        // *** LÓGICA DE STATUS E ÚLTIMO ACESSO ***
         let lastPlayedStr = 'Nunca jogou';
         let statusClass = 'inactive';
         if (progress.last_played) {
@@ -629,7 +624,6 @@ function renderStudentProgress(sortBy = 'last_played') {
 
     progressList.innerHTML = html || '<p>Nenhum aluno para exibir.</p>';
 }
-
 
 async function assignPhase(studentId, selectElement) {
     const newPhase = parseInt(selectElement.value);
@@ -752,7 +746,7 @@ function handleCopyCredentials() {
 
 
 // =======================================================
-// SEÇÃO DE GRAVAÇÃO DE ÁUDIO
+// PARTE 7: SEÇÃO DE GRAVAÇÃO DE ÁUDIO
 // =======================================================
 async function handleAudioUpload() {
     const files = document.getElementById('audioUpload').files;
@@ -907,7 +901,7 @@ function stopTimer() {
 
 
 // =======================================================
-// PARTE 7: LÓGICA DO JOGO
+// PARTE 8: LÓGICA DO JOGO
 // =======================================================
 async function showStudentGame() {
     await startGame();
@@ -967,28 +961,28 @@ function generateQuestions(phase) {
     const questionCount = 10;
 
     switch (phase) {
-        case 1: // Fase 1: Som da Letra (sem alteração)
+        case 1:
             const letters = [...ALPHABET].sort(() => 0.5 - Math.random());
             for (let i = 0; i < questionCount; i++) {
                 const correctLetter = letters[i % letters.length];
                 questions.push({ type: 'letter_sound', correctAnswer: correctLetter, options: generateOptions(correctLetter, ALPHABET, 4) });
             }
             break;
-        case 2: // Fase 2: Vogal Inicial (sem alteração)
+        case 2:
             const words_p2 = [...PHASE_2_WORDS].sort(() => 0.5 - Math.random());
             for (let i = 0; i < questionCount; i++) {
                 const item = words_p2[i % words_p2.length];
                 questions.push({ type: 'initial_vowel', word: item.word, image: item.image, correctAnswer: item.vowel, options: generateOptions(item.vowel, VOWELS, 4) });
             }
             break;
-        case 3: // NOVA Fase 3: Encontro Vocálico
+        case 3:
             const words_p3 = [...PHASE_3_ENCONTROS].sort(() => 0.5 - Math.random());
             for (let i = 0; i < questionCount; i++) {
                 const item = words_p3[i % words_p3.length];
                 questions.push({ type: 'vowel_encounter', word: item.word, image: item.image, correctAnswer: item.encontro, options: generateOptions(item.encontro, VOWEL_ENCOUNTERS, 4) });
             }
             break;
-        case 4: // NOVA Fase 4: Palavra Completa
+        case 4:
             const words_p4 = [...PHASE_4_WORDS].sort(() => 0.5 - Math.random());
             for (let i = 0; i < questionCount; i++) {
                 const item = words_p4[i % words_p4.length];
@@ -996,7 +990,7 @@ function generateQuestions(phase) {
                 questions.push({ type: 'full_word', image: item.image, correctAnswer: item.word, options: options });
             }
             break;
-        case 5: // NOVA Fase 5: Sílaba Final
+        case 5:
             const words_p5 = [...PHASE_5_WORDS].sort(() => 0.5 - Math.random());
             for (let i = 0; i < questionCount; i++) {
                 const item = words_p5[i % words_p5.length];
@@ -1004,7 +998,6 @@ function generateQuestions(phase) {
             }
             break;
         default: 
-            // Se uma fase inválida for atribuída, volta para a última fase válida
             questions = generateQuestions(5);
             break;
     }
@@ -1067,31 +1060,28 @@ function renderPhase2UI(question) {
     document.getElementById('repeatAudio').style.display = 'none';
 }
 
-function renderPhase3UI(question) { // NOVA Fase 3
+function renderPhase3UI(question) {
     document.getElementById('audioQuestionArea').style.display = 'none';
     document.getElementById('imageQuestionArea').style.display = 'block';
     document.getElementById('imageEmoji').textContent = question.image;
-    // Substitui o encontro vocálico por __
     document.getElementById('wordDisplay').textContent = question.word.replace(question.correctAnswer, '__');
     document.getElementById('questionText').textContent = 'Qual encontro de vogais completa a palavra?';
     document.getElementById('repeatAudio').style.display = 'none';
 }
 
-function renderPhase4UI(question) { // NOVA Fase 4
+function renderPhase4UI(question) {
     document.getElementById('audioQuestionArea').style.display = 'none';
     document.getElementById('imageQuestionArea').style.display = 'block';
     document.getElementById('imageEmoji').textContent = question.image;
-    // Não mostra a palavra, pois a resposta é a própria palavra
     document.getElementById('wordDisplay').textContent = `?`;
     document.getElementById('questionText').textContent = 'Qual é o nome desta figura?';
     document.getElementById('repeatAudio').style.display = 'none';
 }
 
-function renderPhase5UI(question) { // NOVA Fase 5
+function renderPhase5UI(question) {
     document.getElementById('audioQuestionArea').style.display = 'none';
     document.getElementById('imageQuestionArea').style.display = 'block';
     document.getElementById('imageEmoji').textContent = question.image;
-    // Mostra o início da palavra e oculta a sílaba final
     const visiblePart = question.word.slice(0, -question.correctAnswer.length);
     document.getElementById('wordDisplay').textContent = `${visiblePart}__`;
     document.getElementById('questionText').textContent = 'Qual sílaba termina esta palavra?';
@@ -1125,11 +1115,10 @@ async function selectAnswer(selectedAnswer) {
     } else {
         gameState.attempts--;
         
-        // *** NOVA IMPLEMENTAÇÃO: Registrar o erro do aluno ***
         logStudentError({
             question: currentQuestion,
             selectedAnswer: selectedAnswer
-        }).catch(console.error); // Chama a função de log sem bloquear a UI
+        }).catch(console.error);
 
         showFeedback(`Quase! A resposta correta era ${currentQuestion.correctAnswer}`, 'error');
         playTeacherAudio('feedback_incorrect', 'Tente de novo');
@@ -1256,7 +1245,7 @@ async function playCurrentAudio() {
 }
 
 // =======================================================
-// PARTE 8: SISTEMA DE VOZ E UI (INTERFACE DO USUÁRIO)
+// PARTE 9: SISTEMA DE VOZ E UI
 // =======================================================
 
 function initializeSpeech() {
@@ -1394,7 +1383,7 @@ function hideTutorial() {
 }
 
 // =======================================================
-// PARTE 9: LOG DE ERROS (NOVA IMPLEMENTAÇÃO)
+// PARTE 10: LOG DE ERROS
 // =======================================================
 async function logStudentError({ question, selectedAnswer }) {
     if (!currentUser || currentUser.type !== 'student') {
@@ -1413,7 +1402,6 @@ async function logStudentError({ question, selectedAnswer }) {
         error_timestamp: new Date().toISOString()
     };
 
-    // ATENÇÃO: Usando o nome da tabela 'studant_errors' conforme solicitado.
     const { error } = await supabaseClient
         .from('studant_errors')
         .insert([errorData]);
@@ -1424,3 +1412,208 @@ async function logStudentError({ question, selectedAnswer }) {
         console.log('Erro do aluno registrado com sucesso:', errorData);
     }
 }
+
+// =======================================================
+// PARTE 11: RELATÓRIOS DE DIFICULDADE
+// =======================================================
+async function loadDifficultyReports() {
+    const heatmapContainer = document.getElementById('classHeatmap');
+    const individualReportsContainer = document.getElementById('individualReports');
+    heatmapContainer.innerHTML = '<p><i class="fas fa-spinner fa-spin"></i> Carregando dados da turma...</p>';
+    individualReportsContainer.innerHTML = '<p><i class="fas fa-spinner fa-spin"></i> Carregando dados dos alunos...</p>';
+
+    const { data: errors, error } = await supabaseClient
+        .from('studant_errors')
+        .select('*')
+        .eq('class_id', currentClassId);
+
+    if (error) {
+        console.error('Erro ao buscar relatórios:', error);
+        heatmapContainer.innerHTML = '<p style="color:red;">Não foi possível carregar os relatórios.</p>';
+        individualReportsContainer.innerHTML = '';
+        return;
+    }
+    
+    const { data: students, error: studentsError } = await supabaseClient
+        .from('students')
+        .select('id, name')
+        .eq('class_id', currentClassId);
+
+    if (studentsError) {
+        console.error('Erro ao buscar alunos para relatórios:', studentsError);
+        individualReportsContainer.innerHTML = '<p style="color:red;">Não foi possível carregar os alunos.</p>';
+        return;
+    }
+
+    renderClassHeatmap(errors);
+    renderIndividualReports(students, errors);
+}
+
+function renderClassHeatmap(errors) {
+    const heatmapContainer = document.getElementById('classHeatmap');
+    const sectionHeader = heatmapContainer.closest('.report-section').querySelector('h4');
+
+    sectionHeader.querySelector('.view-chart-btn')?.remove();
+
+    if (errors.length === 0) {
+        heatmapContainer.innerHTML = '<p>Nenhum erro registrado para esta turma ainda. Continue incentivando os alunos a jogar!</p>';
+        return;
+    }
+
+    const errorCounts = errors.reduce((acc, error) => {
+        const key = error.correct_answer;
+        acc[key] = (acc[key] || 0) + 1;
+        return acc;
+    }, {});
+
+    const sortedErrors = Object.entries(errorCounts).sort(([, a], [, b]) => b - a);
+    const maxErrors = sortedErrors.length > 0 ? sortedErrors[0][1] : 0;
+
+    heatmapContainer.innerHTML = sortedErrors.map(([item, count]) => {
+        const barWidth = maxErrors > 0 ? (count / maxErrors) * 100 : 0;
+        return `
+            <div class="heatmap-item">
+                <div class="item-label">${item}</div>
+                <div class="item-details">
+                    <span class="item-count">${count} erro(s)</span>
+                    <div class="item-bar-container">
+                        <div class="item-bar" style="width: ${barWidth}%;"></div>
+                    </div>
+                </div>
+            </div>
+        `;
+    }).join('');
+
+    const chartButton = document.createElement('button');
+    chartButton.className = 'btn small view-chart-btn';
+    chartButton.innerHTML = '<i class="fas fa-chart-bar"></i> Ver Gráfico';
+    chartButton.onclick = () => {
+        const chartLabels = sortedErrors.map(([item]) => item);
+        const chartData = sortedErrors.map(([, count]) => count);
+        
+        displayChartModal(
+            'Gráfico de Dificuldades da Turma',
+            chartLabels,
+            chartData
+        );
+    };
+    sectionHeader.appendChild(chartButton);
+}
+
+function renderIndividualReports(students, allErrors) {
+    const container = document.getElementById('individualReports');
+    if (students.length === 0) {
+        container.innerHTML = '<p>Nenhum aluno nesta turma.</p>';
+        return;
+    }
+    
+    container.innerHTML = students.map(student => `
+        <div class="student-item student-report-item" data-student-id="${student.id}">
+            <div class="student-info">
+                <h4>${student.name}</h4>
+            </div>
+            <i class="fas fa-chevron-down"></i>
+        </div>
+        <div class="student-errors-details" id="errors-for-${student.id}" style="display: none;"></div>
+    `).join('');
+    
+    container.querySelectorAll('.student-report-item').forEach(item => {
+        item.addEventListener('click', () => {
+            const studentId = item.dataset.studentId;
+            const detailsContainer = document.getElementById(`errors-for-${studentId}`);
+            
+            const isVisible = detailsContainer.style.display === 'block';
+            detailsContainer.style.display = isVisible ? 'none' : 'block';
+            item.querySelector('i').classList.toggle('fa-chevron-down');
+            item.querySelector('i').classList.toggle('fa-chevron-up');
+
+            if (!isVisible) {
+                const studentErrors = allErrors.filter(e => e.student_id === studentId);
+                
+                if (studentErrors.length === 0) {
+                    detailsContainer.innerHTML = '<p>Este aluno ainda não cometeu erros. Ótimo trabalho!</p>';
+                    return;
+                }
+                
+                const errorCounts = studentErrors.reduce((acc, error) => {
+                    const key = error.correct_answer;
+                    acc[key] = (acc[key] || 0) + 1;
+                    return acc;
+                }, {});
+                
+                const top5Errors = Object.entries(errorCounts)
+                    .sort(([, a], [, b]) => b - a)
+                    .slice(0, 5);
+
+                detailsContainer.innerHTML = `
+                    <ul>
+                        ${top5Errors.map(([item, count]) => `
+                            <li>
+                                <span class="error-item">"${item}"</span>
+                                <span class="error-count">${count} vezes</span>
+                            </li>
+                        `).join('')}
+                    </ul>
+                `;
+            }
+        });
+    });
+}
+
+// =======================================================
+// PARTE 12: LÓGICA DE GRÁFICOS
+// =======================================================
+function displayChartModal(title, labels, data) {
+    const modal = document.getElementById('chartModal');
+    const titleEl = document.getElementById('chartModalTitle');
+    const ctx = document.getElementById('myChartCanvas').getContext('2d');
+
+    titleEl.textContent = title;
+
+    if (currentChart) {
+        currentChart.destroy();
+    }
+
+    currentChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Nº de Erros',
+                data: data,
+                backgroundColor: 'rgba(118, 75, 162, 0.6)',
+                borderColor: 'rgba(118, 75, 162, 1)',
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        stepSize: 1 
+                    }
+                }
+            },
+            plugins: {
+                legend: {
+                    display: false
+                },
+                title: {
+                    display: true,
+                    text: 'Itens com maior quantidade de erros na turma',
+                    font: {
+                        size: 16,
+                        family: "'Comic Neue', cursive"
+                    }
+                }
+            }
+        }
+    });
+
+    showModal('chartModal');
+}
+
+// FIM DO SCRIPT
