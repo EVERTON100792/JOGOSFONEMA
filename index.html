@@ -195,7 +195,7 @@
 						Clique no alto-falante para ouvir o som!
 					</div>
 				</div>
- 
+  
                 <div class="audio-section" id="audioQuestionArea">
 					<button id="playAudioButton" class="audio-button" aria-label="Ouvir o som da letra">
 						<i class="fas fa-volume-up"></i>
@@ -289,10 +289,8 @@
             <h3 id="manageClassTitle">Gerenciar Turma</h3>
             <div class="modal-tabs">
                 <button class="tab-btn active" data-tab="studentsTab">Alunos</button>
-                <button class="tab-btn" data-tab="studentProgressTab">Progresso</button>
-                <button class="tab-btn" data-tab="reportsTab">Relatórios de Dificuldade</button>
+                <button class="tab-btn" data-tab="studentProgressTab">Progresso dos Alunos</button>
             </div>
-            
             <div id="studentsTab" class="tab-content active">
                 <div class="students-section">
                     <div class="section-header">
@@ -321,56 +319,12 @@
                     <div id="studentsList" class="students-list"></div>
                 </div>
             </div>
-
             <div id="studentProgressTab" class="tab-content">
                 <div class="progress-section">
-                    <div class="section-header">
-                        <h4>Relatório de Progresso da Turma</h4>
-                        <div class="sort-options">
-                            <span>Ordenar por:</span>
-                            <button class="sort-btn" data-sort="name">Nome <i class="fas fa-sort"></i></button>
-                            <button class="sort-btn" data-sort="progress">Progresso <i class="fas fa-sort"></i></button>
-                            <button class="sort-btn active" data-sort="last_played">Último Acesso <i class="fas fa-sort-down"></i></button>
-                        </div>
-                    </div>
+                    <h4>Relatório de Progresso da Turma</h4>
                     <div id="studentProgressList" class="students-list"></div>
                 </div>
             </div>
-
-            <div id="reportsTab" class="tab-content">
-                <div class="reports-section">
-                     <div class="section-header">
-                        <h4>Análise de Dificuldades</h4>
-                        <button id="exportPdfBtn" class="create-btn small" style="background-color: #c05c8a;"><i class="fas fa-file-pdf"></i> Exportar PDF</button>
-                    </div>
-                    <div class="report-container">
-                        <div class="report-column">
-                            <h4><i class="fas fa-bullseye"></i> Mapa de Calor da Turma</h4>
-                            <p class="report-subtitle">Erros mais comuns em toda a turma.</p>
-                            <div id="classHeatmap" class="heatmap-container">Carregando...</div>
-                        </div>
-                        <div class="report-column">
-                            <h4><i class="fas fa-user-graduate"></i> Análise Individual</h4>
-                             <div class="form-group">
-                                <label for="reportStudentSelect">Selecione um aluno:</label>
-                                <select id="reportStudentSelect"></select>
-                            </div>
-                            <div id="individualReportContent" style="display: none;">
-                                <hr>
-                                <h5><i class="fas fa-chart-bar"></i> Desempenho por Fase</h5>
-                                <div id="performanceChart" class="chart-container"></div>
-                                <hr>
-                                <h5><i class="fas fa-exclamation-triangle"></i> Top 5 Maiores Dificuldades</h5>
-                                <ul id="top5Errors" class="top-errors-list"></ul>
-                                <hr>
-                                <h5><i class="fas fa-lightbulb"></i> Sugestões</h5>
-                                <p id="intelligentSuggestion" class="suggestion-box"></p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
             <div class="modal-actions">
                 <button type="button" class="modal-btn" data-close="manageClassModal">Fechar</button>
             </div>
@@ -424,4 +378,37 @@
         </div>
     </div>
     
-    <div id="tutorialOverlay" class="tutoria
+    <div id="tutorialOverlay" class="tutorial-overlay">
+        <div class="tutorial-content">
+            <div id="tutorialMascot" class="mascot">
+                <i class="fas fa-cat"></i>
+            </div>
+            <div class="speech-bubble" id="tutorialText">
+            </div>
+            <button id="closeTutorialBtn" class="start-button">
+                <i class="fas fa-play"></i> Vamos Jogar!
+            </button>
+        </div>
+    </div>
+
+    <div id="studentCreatedModal" class="modal">
+        <div class="modal-content">
+            <h3 style="color: #4ECDC4;"><i class="fas fa-check-circle"></i> Aluno Criado com Sucesso!</h3>
+            <p>Anote os dados de acesso abaixo para entregar ao aluno.</p>
+            
+            <div class="credentials-box">
+                <p><strong>Usuário:</strong> <span id="newStudentUsername"></span></p>
+                <p><strong>Senha:</strong> <span id="newStudentPassword" style="font-weight: bold; color: #764ba2;"></span></p>
+            </div>
+    
+            <div class="modal-actions">
+                <button type="button" id="copyCredentialsBtn" class="modal-btn"><i class="fas fa-copy"></i> Copiar Dados</button>
+                <button type="button" class="modal-btn primary" data-close="studentCreatedModal">Fechar</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="script.js"></script>
+</body>
+</html>
