@@ -2,17 +2,17 @@
 // PARTE 1: CONFIGURAÇÃO INICIAL E SUPABASE
 // =======================================================
 const { createClient } = supabase;
+// Substitua pelas suas chaves do Supabase
 const supabaseUrl = 'https://nxpwxbxhucliudnutyqd.supabase.co';
 const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im54cHd4YnhodWNsaXVkbnV0eXFkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU0ODU4NjcsImV4cCI6MjA3MTA2MTg2N30.m1KbiyPe_K9CK2nBhsxo97A5rai2GtnyVPnpff5isNg';
 const supabaseClient = createClient(supabaseUrl, supabaseKey);
 
 // Chave do professor que tem permissão para gerenciar os áudios do jogo
-const SUPER_ADMIN_TEACHER_ID = 'd88211f7-9f98-47b8-8e57-54bf767f42d6'; 
+const SUPER_ADMIN_TEACHER_ID = 'd88211f7-9f98-47b8-8e57-54bf767f42d6';
 
 let currentUser = null;
 let currentClassId = null;
-// NOVA VARIÁVEL GLOBAL PARA ARMAZENAR DADOS DE PROGRESSO
-let studentProgressData = []; 
+let studentProgressData = [];
 const ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
 const VOWELS = 'AEIOU'.split('');
 
@@ -61,7 +61,6 @@ const PHASE_2_WORDS = [
     { word: 'URSO', image: '🐻', vowel: 'U' }
 ];
 
-// NOVA FASE 3: Encontro das Vogais
 const PHASE_3_ENCONTROS = [
     { word: 'PEIXE', image: '🐠', encontro: 'EI' },
     { word: 'BOI', image: '🐂', encontro: 'OI' },
@@ -76,7 +75,6 @@ const PHASE_3_ENCONTROS = [
 ];
 const VOWEL_ENCOUNTERS = ['AI', 'EI', 'OI', 'UI', 'AU', 'EU', 'ÃO', 'ÃE', 'UA', 'ÉU'];
 
-// NOVA FASE 4: Palavra Completa
 const PHASE_4_WORDS = [
     { word: 'BOLA', image: '⚽', options: ['BOLO', 'BALA', 'BULA'] },
     { word: 'CASA', image: '🏠', options: ['COPO', 'COLA', 'CAJU'] },
@@ -90,7 +88,6 @@ const PHASE_4_WORDS = [
     { word: 'PATO', image: '🦆', options: ['PÉ', 'POTE', 'PIPA'] }
 ];
 
-// NOVA FASE 5: Sílaba Final
 const PHASE_5_WORDS = [
     { word: 'BOLO', image: '🎂', syllable: 'LO' },
     { word: 'CASA', image: '🏠', syllable: 'SA' },
@@ -134,7 +131,7 @@ function formatErrorMessage(error) {
         return 'Ocorreu um erro inesperado. Por favor, tente mais tarde.';
     }
     const message = error.message.toLowerCase();
-    if (message.includes('duplicate key') && message.includes('username')) {
+    if (message.includes('duplicate key') && (message.includes('username') || message.includes('name'))) {
         return 'Este nome de usuário já existe. Por favor, escolha outro.';
     }
     if (message.includes('invalid login credentials')) {
@@ -147,7 +144,7 @@ function formatErrorMessage(error) {
         return 'A senha precisa ter no mínimo 6 caracteres.';
     }
     console.error("Erro não tratado:", error);
-    return 'Ocorreu um erro inesperado. Por favor, tente mais tarde.';
+    return `Ocorreu um erro inesperado: ${error.message}`;
 }
 
 
@@ -176,16 +173,21 @@ async function initApp() {
 }
 
 async function restoreOrStartGame() {
-    await loadGameState(); 
+    await loadGameState();
 
     if (gameState.phaseCompleted) {
         const accuracy = gameState.questions.length > 0 ? Math.round((gameState.score / gameState.questions.length) * 100) : 100;
         showResultScreen(accuracy, true);
-    } else {
+    } else if (gameState.currentQuestionIndex > 0) {
+        // Se o aluno parou no meio da fase, ele vai direto para o jogo
         showScreen('gameScreen');
         startQuestion();
+    } else {
+        // Se ele está no começo da fase, vai para a tela de start
+        showScreen('startScreen');
     }
 }
+
 
 function setupAllEventListeners() {
     // Navegação entre telas
@@ -264,13 +266,13 @@ function setupAllEventListeners() {
         });
     });
 
-    // *** NOVO EVENTO: Botões de ordenação ***
+    // Botões de ordenação
     document.querySelectorAll('.sort-btn').forEach(btn => {
         btn.addEventListener('click', (e) => {
             const sortBy = e.currentTarget.dataset.sort;
             document.querySelectorAll('.sort-btn').forEach(b => b.classList.remove('active'));
             e.currentTarget.classList.add('active');
-            renderStudentProgress(sortBy); // Re-renderiza a lista com a nova ordenação
+            renderStudentProgress(sortBy);
         });
     });
 }
@@ -358,11 +360,7 @@ async function handleStudentLogin(e) {
             .eq('username', username)
             .single();
 
-        if (error && error.message !== 'JSON object requested, multiple (or no) rows returned') {
-            throw error;
-        }
-
-        if (!studentData) {
+        if (error || !studentData) {
             throw new Error('Usuário ou senha inválidos.');
         }
         
@@ -375,11 +373,11 @@ async function handleStudentLogin(e) {
         currentUser = { ...studentData, type: 'student' };
         sessionStorage.setItem('currentUser', JSON.stringify(currentUser));
 
-        await showStudentGame();
         showFeedback('Login realizado com sucesso!', 'success');
+        await restoreOrStartGame();
         
     } catch (error) {
-        showFeedback(formatErrorMessage(error), 'error');
+        showFeedback(formatErrorMessage(new Error('Usuário ou senha inválidos.')), 'error');
     } finally {
         button.disabled = false;
         button.innerHTML = originalText;
@@ -391,14 +389,15 @@ async function logout() {
     currentUser = null;
     currentClassId = null;
     sessionStorage.removeItem('currentUser');
-    showScreen('userTypeScreen');
+    // Recarrega a página para limpar qualquer estado do jogo
+    window.location.reload();
 }
 
 function handleExitGame() {
     if (confirm('Tem certeza que deseja sair do jogo? Seu progresso ficará salvo.')) {
         sessionStorage.removeItem('currentUser');
         currentUser = null;
-        showScreen('userTypeScreen');
+        window.location.reload();
     }
 }
 
@@ -489,7 +488,8 @@ async function manageClass(classId, className) {
     document.getElementById('manageClassTitle').textContent = `Gerenciar: ${className}`;
     showTab(document.querySelector('#manageClassModal .tab-btn[data-tab="studentsTab"]'));
     await loadClassStudents();
-    await loadStudentProgress(); // Carrega os dados de progresso
+    await loadStudentProgress();
+    await loadErrorReports(); // Carrega os relatórios de erros
     showModal('manageClassModal');
 }
 
@@ -530,7 +530,6 @@ async function loadStudentProgress() {
     const progressList = document.getElementById('studentProgressList');
     progressList.innerHTML = '<p><i class="fas fa-spinner fa-spin"></i> Carregando progresso...</p>';
 
-    // Unir dados dos alunos com os de progresso
     const { data, error } = await supabaseClient
         .from('students')
         .select(`
@@ -555,17 +554,15 @@ async function loadStudentProgress() {
         return;
     }
     
-    // Armazena os dados brutos para re-ordenar depois
-    studentProgressData = data; 
-
-    // Renderiza a lista com a ordenação padrão (último acesso)
+    studentProgressData = data;
     renderStudentProgress('last_played');
+    document.querySelector('.sort-btn[data-sort="last_played"]').classList.add('active');
+    document.querySelector('.sort-btn[data-sort="name"]').classList.remove('active');
 }
 
 function renderStudentProgress(sortBy = 'last_played') {
     const progressList = document.getElementById('studentProgressList');
 
-    // *** LÓGICA DE ORDENAÇÃO ***
     const sortedData = [...studentProgressData].sort((a, b) => {
         if (sortBy === 'name') {
             return a.name.localeCompare(b.name);
@@ -573,7 +570,7 @@ function renderStudentProgress(sortBy = 'last_played') {
         if (sortBy === 'last_played') {
             const dateA = a.progress[0]?.last_played ? new Date(a.progress[0].last_played) : new Date(0);
             const dateB = b.progress[0]?.last_played ? new Date(b.progress[0].last_played) : new Date(0);
-            return dateB - dateA; // Mais recente primeiro
+            return dateB - dateA;
         }
         return 0;
     });
@@ -581,12 +578,15 @@ function renderStudentProgress(sortBy = 'last_played') {
     let html = sortedData.map(student => {
         const progress = student.progress[0] || {};
         const assignedPhase = student.assigned_phase || 1;
-        const currentPhase = progress.current_phase || 'N/A';
+        
+        // Se o aluno nunca jogou, a fase atual é a designada, senão é a que está no progresso
+        const currentPhase = progress.current_phase || assignedPhase;
+        
         const score = progress.game_state?.score ?? 0;
         const total = progress.game_state?.questions?.length || 10;
         const accuracy = total > 0 ? Math.round((score / total) * 100) : 0;
+        const phaseCompleted = progress.game_state?.phaseCompleted || false;
 
-        // *** LÓGICA DE STATUS E ÚLTIMO ACESSO ***
         let lastPlayedStr = 'Nunca jogou';
         let statusClass = 'inactive';
         if (progress.last_played) {
@@ -609,13 +609,13 @@ function renderStudentProgress(sortBy = 'last_played') {
         return `
             <div class="student-item">
                 <div class="student-info" style="flex-grow: 1;">
-                    <h4>${student.name} <span class="status-indicator ${statusClass}">${statusIcon}</span></h4>
+                    <h4>${student.name} <span class="status-indicator ${statusClass}" title="${statusClass === 'active' ? 'Ativo nos últimos 7 dias' : 'Inativo'}">${statusIcon}</span></h4>
                     <p>Último Acesso: ${lastPlayedStr}</p>
-                    <p>Progresso na Fase ${currentPhase}: ${accuracy}% (${score}/${total})</p>
+                    <p>Progresso na Fase ${currentPhase}: <strong>${phaseCompleted ? '🏆 Concluída' : `${accuracy}% (${score}/${total})`}</strong></p>
                     <div class="student-progress-container">
-                         <div class="student-progress-bar">
-                             <div class="student-progress-fill" style="width: ${accuracy}%;"></div>
-                         </div>
+                        <div class="student-progress-bar">
+                            <div class="student-progress-fill" style="width: ${accuracy}%;"></div>
+                        </div>
                     </div>
                 </div>
                 <div class="student-actions">
@@ -633,10 +633,10 @@ function renderStudentProgress(sortBy = 'last_played') {
 
 async function assignPhase(studentId, selectElement) {
     const newPhase = parseInt(selectElement.value);
-    const studentName = selectElement.closest('.student-item').querySelector('h4').textContent;
+    const studentName = selectElement.closest('.student-item').querySelector('h4').textContent.split(' ')[0];
 
     if (!confirm(`Deseja designar a Fase ${newPhase} para o aluno ${studentName}?\n\nAtenção: O progresso na fase atual será reiniciado para que ele comece a nova atividade do zero.`)) {
-        await loadStudentProgress();
+        await loadStudentProgress(); // Recarrega para reverter a mudança no select
         return;
     }
 
@@ -647,16 +647,25 @@ async function assignPhase(studentId, selectElement) {
             .eq('id', studentId);
         if (assignError) throw assignError;
 
+        // Cria um novo estado de jogo limpo para a nova fase
         const newGameState = {
-            currentPhase: newPhase, score: 0, attempts: 2,
-            questions: generateQuestions(newPhase), currentQuestionIndex: 0, tutorialsShown: []
+            currentPhase: newPhase,
+            score: 0,
+            attempts: 2,
+            questions: generateQuestions(newPhase),
+            currentQuestionIndex: 0,
+            tutorialsShown: [],
+            phaseCompleted: false, // Garante que a nova fase não comece como completa
+            teacherId: currentUser.id
         };
 
         const { error: progressError } = await supabaseClient
             .from('progress')
             .upsert({ 
-                student_id: studentId, current_phase: newPhase,
-                game_state: newGameState, last_played: new Date().toISOString()
+                student_id: studentId,
+                current_phase: newPhase,
+                game_state: newGameState,
+                last_played: new Date().toISOString()
             }, { onConflict: 'student_id' });
         if (progressError) throw progressError;
 
@@ -746,7 +755,7 @@ function handleCopyCredentials() {
     navigator.clipboard.writeText(textToCopy).then(() => {
         showFeedback('Dados copiados para a área de transferência!', 'success');
     }).catch(() => {
-        showFeedback('Erro ao copiar. Por favor, anote manualmente.', 'error');
+        showFeedback('Erro ao copiar. Por favor, anote manually.', 'error');
     });
 }
 
@@ -765,8 +774,10 @@ async function handleAudioUpload() {
     let errorCount = 0;
 
     for (const file of files) {
-        const fileName = file.name.split('.').slice(0, -1).join('.').toUpperCase();
-        const filePath = `${currentUser.id}/${fileName}.${file.name.split('.').pop()}`;
+        // Usa o ID do super admin para centralizar os áudios
+        const teacherId = SUPER_ADMIN_TEACHER_ID;
+        const fileName = file.name.split('.').slice(0, -1).join('.'); // Mantém a chave como está (ex: 'A' ou 'instruction_1')
+        const filePath = `${teacherId}/${fileName}.${file.name.split('.').pop()}`;
         
         try {
             const { error } = await supabaseClient.storage
@@ -861,7 +872,8 @@ async function saveRecording() {
 
     const audioBlob = new Blob(audioChunks, { type: mimeType });
     const fileName = `${selectedItem}.${fileExtension}`;
-    const filePath = `${currentUser.id}/${fileName}`;
+    const teacherId = SUPER_ADMIN_TEACHER_ID;
+    const filePath = `${teacherId}/${fileName}`;
 
     try {
         const { error } = await supabaseClient.storage
@@ -876,7 +888,7 @@ async function saveRecording() {
         
         audioChunks = [];
         document.getElementById('audioPlayback').src = '';
-        document.getElementById('recordStatus').textContent = 'Pronto para gravar outra letra.';
+        document.getElementById('recordStatus').textContent = 'Pronto para gravar outro item.';
 
     } catch (error) {
         showFeedback(`Erro ao salvar gravação: ${error.message}`, 'error');
@@ -909,47 +921,53 @@ function stopTimer() {
 // =======================================================
 // PARTE 7: LÓGICA DO JOGO
 // =======================================================
-async function showStudentGame() {
-    await startGame();
-}
-
-async function startGame() {
-    await loadGameState();
-    showScreen('startScreen');
-}
-
 async function loadGameState() {
-    const { data: progressData } = await supabaseClient
+    const { data: progressData, error } = await supabaseClient
         .from('progress')
         .select('game_state, current_phase')
         .eq('student_id', currentUser.id)
         .single();
+    
+    if (error && error.code !== 'PGRST116') { // Ignora erro "no rows found"
+        console.error("Erro ao carregar progresso:", error);
+    }
 
     const assignedPhase = currentUser.assigned_phase || 1;
-    const savedPhase = progressData?.current_phase;
+    const savedPhaseState = progressData?.game_state;
 
-    if (progressData && savedPhase !== assignedPhase) {
-        gameState = {
-            currentPhase: assignedPhase, score: 0, attempts: 2,
-            questions: generateQuestions(assignedPhase), currentQuestionIndex: 0,
-            teacherId: currentUser.teacher_id, tutorialsShown: []
-        };
+    // Se a fase designada pelo professor for diferente da salva, reinicia para a nova fase
+    if (savedPhaseState && savedPhaseState.currentPhase !== assignedPhase) {
+        console.log(`Nova fase designada (${assignedPhase}). Reiniciando progresso.`);
+        gameState = createNewGameState(assignedPhase);
         await saveGameState();
         return;
     }
 
-    if (progressData && progressData.game_state && progressData.game_state.questions) {
-        gameState = progressData.game_state;
-        if (!gameState.tutorialsShown) gameState.tutorialsShown = [];
+    // Se existe um estado de jogo salvo, usa ele
+    if (savedPhaseState && savedPhaseState.questions) {
+        console.log("Restaurando estado do jogo salvo.");
+        gameState = savedPhaseState;
     } else {
-        gameState = {
-            currentPhase: assignedPhase, score: 0, attempts: 2,
-            questions: generateQuestions(assignedPhase), currentQuestionIndex: 0,
-            teacherId: currentUser.teacher_id, tutorialsShown: []
-        };
+        // Senão, cria um novo estado para a fase designada
+        console.log("Nenhum estado de jogo salvo. Criando um novo.");
+        gameState = createNewGameState(assignedPhase);
         await saveGameState();
     }
 }
+
+function createNewGameState(phase) {
+    return {
+        currentPhase: phase,
+        score: 0,
+        attempts: 2,
+        questions: generateQuestions(phase),
+        currentQuestionIndex: 0,
+        tutorialsShown: [],
+        phaseCompleted: false,
+        teacherId: currentUser.teacher_id
+    };
+}
+
 
 async function saveGameState() {
     if (!currentUser || currentUser.type !== 'student') return;
@@ -967,28 +985,28 @@ function generateQuestions(phase) {
     const questionCount = 10;
 
     switch (phase) {
-        case 1: // Fase 1: Som da Letra (sem alteração)
+        case 1:
             const letters = [...ALPHABET].sort(() => 0.5 - Math.random());
             for (let i = 0; i < questionCount; i++) {
                 const correctLetter = letters[i % letters.length];
                 questions.push({ type: 'letter_sound', correctAnswer: correctLetter, options: generateOptions(correctLetter, ALPHABET, 4) });
             }
             break;
-        case 2: // Fase 2: Vogal Inicial (sem alteração)
+        case 2:
             const words_p2 = [...PHASE_2_WORDS].sort(() => 0.5 - Math.random());
             for (let i = 0; i < questionCount; i++) {
                 const item = words_p2[i % words_p2.length];
                 questions.push({ type: 'initial_vowel', word: item.word, image: item.image, correctAnswer: item.vowel, options: generateOptions(item.vowel, VOWELS, 4) });
             }
             break;
-        case 3: // NOVA Fase 3: Encontro Vocálico
+        case 3:
             const words_p3 = [...PHASE_3_ENCONTROS].sort(() => 0.5 - Math.random());
             for (let i = 0; i < questionCount; i++) {
                 const item = words_p3[i % words_p3.length];
                 questions.push({ type: 'vowel_encounter', word: item.word, image: item.image, correctAnswer: item.encontro, options: generateOptions(item.encontro, VOWEL_ENCOUNTERS, 4) });
             }
             break;
-        case 4: // NOVA Fase 4: Palavra Completa
+        case 4:
             const words_p4 = [...PHASE_4_WORDS].sort(() => 0.5 - Math.random());
             for (let i = 0; i < questionCount; i++) {
                 const item = words_p4[i % words_p4.length];
@@ -996,16 +1014,15 @@ function generateQuestions(phase) {
                 questions.push({ type: 'full_word', image: item.image, correctAnswer: item.word, options: options });
             }
             break;
-        case 5: // NOVA Fase 5: Sílaba Final
+        case 5:
             const words_p5 = [...PHASE_5_WORDS].sort(() => 0.5 - Math.random());
             for (let i = 0; i < questionCount; i++) {
                 const item = words_p5[i % words_p5.length];
                 questions.push({ type: 'final_syllable', word: item.word, image: item.image, correctAnswer: item.syllable, options: generateOptions(item.syllable, ALL_END_SYLLABLES, 4) });
             }
             break;
-        default: 
-            // Se uma fase inválida for atribuída, volta para a última fase válida
-            questions = generateQuestions(5);
+        default:
+            questions = generateQuestions(1);
             break;
     }
     return questions;
@@ -1067,31 +1084,28 @@ function renderPhase2UI(question) {
     document.getElementById('repeatAudio').style.display = 'none';
 }
 
-function renderPhase3UI(question) { // NOVA Fase 3
+function renderPhase3UI(question) {
     document.getElementById('audioQuestionArea').style.display = 'none';
     document.getElementById('imageQuestionArea').style.display = 'block';
     document.getElementById('imageEmoji').textContent = question.image;
-    // Substitui o encontro vocálico por __
     document.getElementById('wordDisplay').textContent = question.word.replace(question.correctAnswer, '__');
     document.getElementById('questionText').textContent = 'Qual encontro de vogais completa a palavra?';
     document.getElementById('repeatAudio').style.display = 'none';
 }
 
-function renderPhase4UI(question) { // NOVA Fase 4
+function renderPhase4UI(question) {
     document.getElementById('audioQuestionArea').style.display = 'none';
     document.getElementById('imageQuestionArea').style.display = 'block';
     document.getElementById('imageEmoji').textContent = question.image;
-    // Não mostra a palavra, pois a resposta é a própria palavra
     document.getElementById('wordDisplay').textContent = `?`;
     document.getElementById('questionText').textContent = 'Qual é o nome desta figura?';
     document.getElementById('repeatAudio').style.display = 'none';
 }
 
-function renderPhase5UI(question) { // NOVA Fase 5
+function renderPhase5UI(question) {
     document.getElementById('audioQuestionArea').style.display = 'none';
     document.getElementById('imageQuestionArea').style.display = 'block';
     document.getElementById('imageEmoji').textContent = question.image;
-    // Mostra o início da palavra e oculta a sílaba final
     const visiblePart = question.word.slice(0, -question.correctAnswer.length);
     document.getElementById('wordDisplay').textContent = `${visiblePart}__`;
     document.getElementById('questionText').textContent = 'Qual sílaba termina esta palavra?';
@@ -1125,11 +1139,10 @@ async function selectAnswer(selectedAnswer) {
     } else {
         gameState.attempts--;
         
-        // *** NOVA IMPLEMENTAÇÃO: Registrar o erro do aluno ***
         logStudentError({
             question: currentQuestion,
             selectedAnswer: selectedAnswer
-        }).catch(console.error); // Chama a função de log sem bloquear a UI
+        }).catch(console.error);
 
         showFeedback(`Quase! A resposta correta era ${currentQuestion.correctAnswer}`, 'error');
         playTeacherAudio('feedback_incorrect', 'Tente de novo');
@@ -1139,7 +1152,7 @@ async function selectAnswer(selectedAnswer) {
     updateUI();
     
     if(gameState.attempts <= 0) {
-        setTimeout(endPhase, 1500);
+        setTimeout(endPhase, 2000);
     } else {
         setTimeout(() => document.getElementById('nextQuestion').style.display = 'block', 1500);
     }
@@ -1153,6 +1166,15 @@ function nextQuestion() {
 function endPhase() {
     const accuracy = gameState.questions.length > 0 ? Math.round((gameState.score / gameState.questions.length) * 100) : 0;
     const passed = accuracy >= 70;
+
+    // Se o aluno não passou e ficou sem tentativas, a fase não é marcada como completa
+    if (gameState.attempts <= 0 && !passed) {
+        gameState.phaseCompleted = false;
+    } else if (passed) {
+        gameState.phaseCompleted = true;
+    }
+    
+    saveGameState();
     showResultScreen(accuracy, passed);
 }
 
@@ -1173,8 +1195,8 @@ function showResultScreen(accuracy, passed) {
         retryButton.style.display = 'none';
         restartButton.innerHTML = '<i class="fas fa-sign-out-alt"></i> Sair';
         
-        gameState.phaseCompleted = true; 
-        saveGameState(); 
+        gameState.phaseCompleted = true;
+        saveGameState();
 
     } else {
         document.getElementById('resultTitle').textContent = 'Não desanime!';
@@ -1190,24 +1212,15 @@ function showResultScreen(accuracy, passed) {
 
 
 async function nextPhase() {
-    const nextPhaseNum = gameState.currentPhase + 1;
-    if (nextPhaseNum > currentUser.assigned_phase) return;
-
-    gameState.currentPhase = nextPhaseNum;
-    gameState.currentQuestionIndex = 0;
-    gameState.score = 0;
-    gameState.attempts = 2;
-    gameState.questions = generateQuestions(gameState.currentPhase);
-    await saveGameState();
-    showScreen('gameScreen');
-    startQuestion();
+    // Esta função não é mais usada para avançar automaticamente.
+    // O professor deve designar a próxima fase.
+    // Mantida por segurança, mas o botão está oculto.
+    showFeedback("Fale com seu professor para ir para a próxima fase!", "info");
 }
 
 async function retryPhase() {
-    gameState.currentQuestionIndex = 0;
-    gameState.score = 0;
-    gameState.attempts = 2;
-    gameState.phaseCompleted = false; 
+    // Reseta o estado do jogo para a mesma fase
+    gameState = createNewGameState(gameState.currentPhase);
     await saveGameState();
     showScreen('gameScreen');
     startQuestion();
@@ -1215,20 +1228,15 @@ async function retryPhase() {
 
 async function restartGame() {
     if (gameState.phaseCompleted) {
-        logout();
+        logout(); // Se completou, o botão vira "Sair"
     } else {
+        // Se não completou, volta para a tela inicial da fase
         showScreen('startScreen');
     }
 }
 
 async function playTeacherAudio(key, fallbackText, onEndCallback) {
-    const teacherId = SUPER_ADMIN_TEACHER_ID; 
-
-    if (!teacherId) {
-        console.warn("ID do Super Admin não foi definido, usando voz padrão.");
-        speak(fallbackText, onEndCallback);
-        return;
-    }
+    const teacherId = SUPER_ADMIN_TEACHER_ID;
 
     try {
         const { data } = await supabaseClient.storage.from('audio_uploads').list(teacherId, { search: `${key}.` });
@@ -1237,7 +1245,10 @@ async function playTeacherAudio(key, fallbackText, onEndCallback) {
             const { data: { publicUrl } } = supabaseClient.storage.from('audio_uploads').getPublicUrl(`${teacherId}/${data[0].name}`);
             const audio = new Audio(publicUrl);
             if (onEndCallback) audio.onended = onEndCallback;
-            audio.play();
+            audio.play().catch(e => {
+                console.warn("Reprodução automática de áudio bloqueada, usando fallback.", e);
+                speak(fallbackText, onEndCallback);
+            });
         } else {
             speak(fallbackText, onEndCallback);
         }
@@ -1350,9 +1361,13 @@ function showFeedback(message, type = 'info') {
     if (!el) return;
     const textEl = el.querySelector('.feedback-text');
     if (textEl) textEl.textContent = message;
-    el.className = `show ${type}`;
+    el.className = `feedback-content ${type}`; // Use a class for styling
+    
+    const container = document.getElementById('globalFeedback');
+    container.classList.add('show', type);
+    
     setTimeout(() => {
-        el.className = el.className.replace('show', '');
+        container.className = container.className.replace('show', '');
     }, 3000);
 }
 
@@ -1362,7 +1377,7 @@ function updateUI() {
     if(gameScreen.classList.contains('active') && gameState.questions && gameState.questions.length > 0) {
         document.getElementById('score').textContent = gameState.score;
         document.getElementById('totalQuestions').textContent = gameState.questions.length;
-        document.getElementById('attempts').textContent = `${gameState.attempts} tentativa(s)`;
+        document.getElementById('attempts').textContent = `${gameState.attempts}`;
         document.getElementById('currentPhase').textContent = gameState.currentPhase;
         const progress = ((gameState.currentQuestionIndex) / gameState.questions.length) * 100;
         document.getElementById('progressFill').style.width = `${progress}%`;
@@ -1394,7 +1409,7 @@ function hideTutorial() {
 }
 
 // =======================================================
-// PARTE 9: LOG DE ERROS (NOVA IMPLEMENTAÇÃO)
+// PARTE 9: LOG DE ERROS
 // =======================================================
 async function logStudentError({ question, selectedAnswer }) {
     if (!currentUser || currentUser.type !== 'student') {
@@ -1413,14 +1428,120 @@ async function logStudentError({ question, selectedAnswer }) {
         error_timestamp: new Date().toISOString()
     };
 
-    // ATENÇÃO: Usando o nome da tabela 'studant_errors' conforme solicitado.
     const { error } = await supabaseClient
-        .from('studant_errors')
+        .from('studant_errors') // Nome da tabela como "studant_errors"
         .insert([errorData]);
 
     if (error) {
         console.error('Falha ao registrar o erro do aluno:', error);
     } else {
         console.log('Erro do aluno registrado com sucesso:', errorData);
+    }
+}
+
+// =======================================================
+// PARTE 10: RELATÓRIOS DO PROFESSOR (NOVA SEÇÃO)
+// =======================================================
+async function loadErrorReports() {
+    if (!currentClassId) return;
+
+    const heatmapContainer = document.getElementById('classHeatmap');
+    const individualContainer = document.getElementById('individualReports');
+    heatmapContainer.innerHTML = '<p><i class="fas fa-spinner fa-spin"></i> Carregando mapa de calor...</p>';
+    individualContainer.innerHTML = '<p><i class="fas fa-spinner fa-spin"></i> Carregando relatórios individuais...</p>';
+    
+    // 1. Buscar todos os erros da turma
+    const { data: errors, error } = await supabaseClient
+        .from('studant_errors')
+        .select(`
+            *,
+            students ( name )
+        `)
+        .eq('class_id', currentClassId);
+
+    if (error) {
+        heatmapContainer.innerHTML = '<p class="error">Erro ao carregar dados do mapa de calor.</p>';
+        individualContainer.innerHTML = '<p class="error">Erro ao carregar relatórios individuais.</p>';
+        console.error("Erro ao buscar erros:", error);
+        return;
+    }
+
+    renderClassHeatmap(errors, heatmapContainer);
+    renderIndividualReports(errors, individualContainer);
+}
+
+function renderClassHeatmap(errors, container) {
+    if (errors.length === 0) {
+        container.innerHTML = '<p>Nenhum erro registrado para esta turma ainda.</p>';
+        return;
+    }
+    
+    const errorCounts = errors.reduce((acc, err) => {
+        // Agrupa erros pela resposta correta que o aluno errou
+        const key = err.correct_answer;
+        acc[key] = (acc[key] || 0) + 1;
+        return acc;
+    }, {});
+
+    const sortedErrors = Object.entries(errorCounts).sort(([,a], [,b]) => b - a);
+    const maxErrors = sortedErrors[0] ? sortedErrors[0][1] : 1;
+
+    const heatmapHtml = sortedErrors.map(([answer, count]) => {
+        const intensity = Math.max(0.2, count / maxErrors); // De 20% a 100% de opacidade
+        return `<div class="heatmap-item" style="background-color: rgba(255, 107, 107, ${intensity});" title="${count} erros">
+            ${answer}
+        </div>`;
+    }).join('');
+
+    container.innerHTML = heatmapHtml;
+}
+
+function renderIndividualReports(errors, container) {
+    const students = studentProgressData; // Usamos os dados já carregados
+    if (students.length === 0) {
+        container.innerHTML = '<p>Nenhum aluno nesta turma.</p>';
+        return;
+    }
+
+    const reportsHtml = students.map(student => {
+        const studentErrors = errors.filter(e => e.student_id === student.id);
+        const errorCounts = studentErrors.reduce((acc, err) => {
+            const key = `${err.correct_answer}|${err.selected_answer}`;
+            acc[key] = (acc[key] || 0) + 1;
+            return acc;
+        }, {});
+
+        const sortedErrors = Object.entries(errorCounts)
+            .sort(([,a], [,b]) => b - a)
+            .slice(0, 5); // Pega os 5 maiores erros
+
+        let errorsHtml = '<p>Nenhum erro registrado para este aluno.</p>';
+        if (sortedErrors.length > 0) {
+            errorsHtml = sortedErrors.map(([key, count]) => {
+                const [correct, incorrect] = key.split('|');
+                return `<div class="error-detail-item">
+                    (${count}x) O aluno trocou <strong class="correct">${correct}</strong> por <strong class="incorrect">${incorrect}</strong>
+                </div>`;
+            }).join('');
+        }
+        
+        return `
+            <div class="student-item student-report-item" onclick="toggleErrorDetails('${student.id}')">
+                <div class="student-info"><h4>${student.name}</h4></div>
+                <div class="student-actions"><i class="fas fa-chevron-down"></i></div>
+            </div>
+            <div id="errors-${student.id}" class="student-errors-details">
+                ${errorsHtml}
+            </div>
+        `;
+    }).join('');
+
+    container.innerHTML = reportsHtml;
+}
+
+function toggleErrorDetails(studentId) {
+    const detailsDiv = document.getElementById(`errors-${studentId}`);
+    if (detailsDiv) {
+        detailsDiv.style.display = detailsDiv.style.display === 'block' ? 'none' : 'block';
     }
 }
