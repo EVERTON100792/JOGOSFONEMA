@@ -176,7 +176,7 @@
 				</div>
 				<div class="attempts">
 					<i class="fas fa-heart"></i>
-					<span id="attempts">2</span>
+					<span id="attempts">2</span> tentativas
 				</div>
 			</div>
             <div class="game-actions">
@@ -191,8 +191,12 @@
 					<div class="mascot pulse">
 						<i class="fas fa-cat"></i>
 					</div>
+					<div class="speech-bubble" id="helperText">
+						Clique no alto-falante para ouvir o som!
+					</div>
 				</div>
-                <div id="audioQuestionArea">
+ 
+                <div class="audio-section" id="audioQuestionArea">
 					<button id="playAudioButton" class="audio-button" aria-label="Ouvir o som da letra">
 						<i class="fas fa-volume-up"></i>
 						<span>Ouvir Som</span>
@@ -259,6 +263,7 @@
 
     <div id="globalFeedback" aria-live="polite">
         <div class="feedback-content">
+            <span class="feedback-icon"></span>
             <span class="feedback-text"></span>
         </div>
     </div>
@@ -302,12 +307,10 @@
                                     <label for="createStudentUsername">Nome do Aluno (usuário):</label>
                                     <input type="text" id="createStudentUsername" required autocomplete="username">
                                 </div>
-                                <div class="form-group">
+                                <div class="form-group password-group">
                                     <label for="createStudentPassword">Senha:</label>
-                                    <div class="password-group">
-                                        <input type="password" id="createStudentPassword" required autocomplete="new-password">
-                                        <button type="button" id="generatePasswordBtn" class="generate-password-btn" title="Gerar senha automática">🪄</button>
-                                    </div>
+                                    <input type="password" id="createStudentPassword" required autocomplete="new-password">
+                                    <button type="button" id="generatePasswordBtn" class="generate-password-btn" title="Gerar senha automática">🪄</button>
                                 </div>
                             </div>
                             <div class="form-actions">
@@ -339,18 +342,13 @@
             <div id="reportsTab" class="tab-content">
                 <div class="report-section">
                     <h4><i class="fas fa-fire"></i> Mapa de Calor da Turma</h4>
-                    <p>As maiores dificuldades da turma, mostrando o que foi mais errado.</p>
-                    <div id="classHeatmap" class="heatmap-container">
-                        <p>Carregando dados...</p>
-                    </div>
+                    <p>As maiores dificuldades da turma inteira, mostrando o que foi mais errado.</p>
+                    <div id="classHeatmap" class="heatmap-container"></div>
                 </div>
-                <hr style="margin: 20px 0;">
                 <div class="report-section">
                     <h4><i class="fas fa-user-graduate"></i> Relatório Individual de Dificuldades</h4>
                     <p>Clique em um aluno para ver seus 5 maiores erros.</p>
-                    <div id="individualReports" class="students-list">
-                         <p>Carregando dados...</p>
-                    </div>
+                    <div id="individualReports" class="students-list"></div>
                 </div>
             </div>
             <div class="modal-actions">
@@ -368,9 +366,9 @@
             </div>
             <div id="uploadFileTab" class="tab-content active">
                 <div class="upload-section">
-                    <p>Envie os arquivos de áudio (.mp3, .wav, .m4a) para cada item.</p>
+                    <p>Envie os arquivos de áudio (.mp3, .wav, .m4a) para cada letra.</p>
                     <div class="upload-instructions">
-                        <p><i class="fas fa-info-circle"></i> <strong>Nomeie os arquivos exatamente como a chave de áudio.</strong> Ex: para a letra A, use <code>A.mp3</code>. Para a instrução da fase 1, use <code>instruction_1.mp3</code>.</p>
+                        <p><i class="fas fa-info-circle"></i> <strong>Nomeie os arquivos exatamente como a letra.</strong> Ex: <code>A.mp3</code></p>
                     </div>
                     <div class="upload-area">
                         <input type="file" id="audioUpload" accept="audio/*" multiple>
@@ -382,14 +380,14 @@
             </div>
             <div id="recordVoiceTab" class="tab-content">
                 <div class="record-section">
-                    <p>Grave sua voz para cada item do jogo.</p>
+                    <p>Grave sua voz falando o som de cada letra.</p>
                     <div class="form-group">
-                        <label for="letterSelect">1. Escolha o Item para Gravar:</label>
+                        <label for="letterSelect">1. Escolha a Letra para Gravar:</label>
                         <select id="letterSelect"></select>
                     </div>
                     <div class="record-controls">
-                        <button id="recordBtn" class="record-btn" aria-label="Iniciar gravação"><i class="fas fa-microphone"></i></button>
-                        <button id="stopBtn" class="stop-btn" disabled aria-label="Parar gravação"><i class="fas fa-stop"></i></button>
+                        <button id="recordBtn" class="record-btn" aria-label="Iniciar gravação"><i class="fas fa-microphone"></i> Gravar</button>
+                        <button id="stopBtn" class="stop-btn" disabled aria-label="Parar gravação"><i class="fas fa-stop"></i> Parar</button>
                         <span id="recordTimer">00:00</span>
                     </div>
                     <div class="audio-playback">
@@ -436,7 +434,20 @@
         </div>
     </div>
 
+    <div id="chartModal" class="modal">
+        <div class="modal-content large">
+            <h3 id="chartModalTitle">Visualização Gráfica</h3>
+            <div class="chart-container">
+                <canvas id="myChartCanvas"></canvas>
+            </div>
+            <div class="modal-actions">
+                <button type="button" class="modal-btn" data-close="chartModal">Fechar</button>
+            </div>
+        </div>
+    </div>
+
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="script.js"></script>
 </body>
 </html>
