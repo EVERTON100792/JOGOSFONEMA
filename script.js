@@ -483,22 +483,42 @@ async function handleDeleteClass(classId, className) {
     }
 }
 
+// =======================================================
+// ** FUNÇÃO CORRIGIDA E MAIS ROBUSTA **
+// =======================================================
 async function manageClass(classId, className) {
     currentClassId = classId;
     document.getElementById('manageClassTitle').textContent = `Gerenciar: ${className}`;
     showTab(document.querySelector('#manageClassModal .tab-btn[data-tab="studentsTab"]'));
-    await loadClassStudents();
-    await loadStudentProgress();
-    await loadErrorReports(); // Carrega os relatórios de erros
+    
+    // Mostra o modal imediatamente para o usuário ver que algo está acontecendo
     showModal('manageClassModal');
+
+    // Usa try...catch para garantir que o modal permaneça aberto mesmo se os dados falharem
+    try {
+        // Carrega todos os dados em paralelo para ser mais rápido
+        await Promise.all([
+            loadClassStudents(),
+            loadStudentProgress(),
+            loadErrorReports()
+        ]);
+    } catch (error) {
+        console.error("Falha ao carregar dados da turma:", error);
+        showFeedback("Não foi possível carregar todos os dados da turma.", "error");
+        // Opcional: pode-se adicionar mensagens de erro dentro das abas
+        document.getElementById('studentsList').innerHTML = '<p class="error">Falha ao carregar alunos.</p>';
+        document.getElementById('studentProgressList').innerHTML = '<p class="error">Falha ao carregar progresso.</p>';
+        document.getElementById('reportsTab').innerHTML = '<p class="error">Falha ao carregar relatórios.</p>';
+    }
 }
+
 
 async function loadClassStudents() {
     const { data, error } = await supabaseClient.from('students').select('*').eq('class_id', currentClassId).order('name', { ascending: true });
     if (error) {
         console.error('Erro ao carregar alunos:', error);
         document.getElementById('studentsList').innerHTML = '<p>Erro ao carregar alunos.</p>';
-        return;
+        throw error; // Lança o erro para ser pego pelo catch em manageClass
     }
     renderStudents(data);
 }
@@ -546,7 +566,7 @@ async function loadStudentProgress() {
 
     if (error) {
         progressList.innerHTML = `<p style="color:red;">Erro ao carregar progresso: ${error.message}</p>`;
-        return;
+        throw error; // Lança o erro
     }
 
     if (data.length === 0) {
@@ -579,7 +599,6 @@ function renderStudentProgress(sortBy = 'last_played') {
         const progress = student.progress[0] || {};
         const assignedPhase = student.assigned_phase || 1;
         
-        // Se o aluno nunca jogou, a fase atual é a designada, senão é a que está no progresso
         const currentPhase = progress.current_phase || assignedPhase;
         
         const score = progress.game_state?.score ?? 0;
@@ -647,17 +666,7 @@ async function assignPhase(studentId, selectElement) {
             .eq('id', studentId);
         if (assignError) throw assignError;
 
-        // Cria um novo estado de jogo limpo para a nova fase
-        const newGameState = {
-            currentPhase: newPhase,
-            score: 0,
-            attempts: 2,
-            questions: generateQuestions(newPhase),
-            currentQuestionIndex: 0,
-            tutorialsShown: [],
-            phaseCompleted: false, // Garante que a nova fase não comece como completa
-            teacherId: currentUser.id
-        };
+        const newGameState = createNewGameState(newPhase);
 
         const { error: progressError } = await supabaseClient
             .from('progress')
@@ -755,7 +764,7 @@ function handleCopyCredentials() {
     navigator.clipboard.writeText(textToCopy).then(() => {
         showFeedback('Dados copiados para a área de transferência!', 'success');
     }).catch(() => {
-        showFeedback('Erro ao copiar. Por favor, anote manually.', 'error');
+        showFeedback('Erro ao copiar. Por favor, anote manualmente.', 'error');
     });
 }
 
@@ -774,9 +783,8 @@ async function handleAudioUpload() {
     let errorCount = 0;
 
     for (const file of files) {
-        // Usa o ID do super admin para centralizar os áudios
         const teacherId = SUPER_ADMIN_TEACHER_ID;
-        const fileName = file.name.split('.').slice(0, -1).join('.'); // Mantém a chave como está (ex: 'A' ou 'instruction_1')
+        const fileName = file.name.split('.').slice(0, -1).join('.');
         const filePath = `${teacherId}/${fileName}.${file.name.split('.').pop()}`;
         
         try {
@@ -1167,7 +1175,6 @@ function endPhase() {
     const accuracy = gameState.questions.length > 0 ? Math.round((gameState.score / gameState.questions.length) * 100) : 0;
     const passed = accuracy >= 70;
 
-    // Se o aluno não passou e ficou sem tentativas, a fase não é marcada como completa
     if (gameState.attempts <= 0 && !passed) {
         gameState.phaseCompleted = false;
     } else if (passed) {
@@ -1212,14 +1219,10 @@ function showResultScreen(accuracy, passed) {
 
 
 async function nextPhase() {
-    // Esta função não é mais usada para avançar automaticamente.
-    // O professor deve designar a próxima fase.
-    // Mantida por segurança, mas o botão está oculto.
     showFeedback("Fale com seu professor para ir para a próxima fase!", "info");
 }
 
 async function retryPhase() {
-    // Reseta o estado do jogo para a mesma fase
     gameState = createNewGameState(gameState.currentPhase);
     await saveGameState();
     showScreen('gameScreen');
@@ -1228,9 +1231,8 @@ async function retryPhase() {
 
 async function restartGame() {
     if (gameState.phaseCompleted) {
-        logout(); // Se completou, o botão vira "Sair"
+        logout();
     } else {
-        // Se não completou, volta para a tela inicial da fase
         showScreen('startScreen');
     }
 }
@@ -1357,17 +1359,20 @@ function showTab(clickedButton) {
 }
 
 function showFeedback(message, type = 'info') {
-    const el = document.getElementById('globalFeedback');
-    if (!el) return;
-    const textEl = el.querySelector('.feedback-text');
-    if (textEl) textEl.textContent = message;
-    el.className = `feedback-content ${type}`; // Use a class for styling
-    
     const container = document.getElementById('globalFeedback');
+    const textEl = container.querySelector('.feedback-text');
+    if (!container || !textEl) return;
+    
+    textEl.textContent = message;
+    
+    // Remove old classes before adding new ones
+    container.className = 'global-feedback-container';
+    
+    // Add new classes
     container.classList.add('show', type);
     
     setTimeout(() => {
-        container.className = container.className.replace('show', '');
+        container.classList.remove('show');
     }, 3000);
 }
 
@@ -1427,9 +1432,10 @@ async function logStudentError({ question, selectedAnswer }) {
         selected_answer: String(selectedAnswer),
         error_timestamp: new Date().toISOString()
     };
-
+    
+    // ** CORREÇÃO CRÍTICA DE ERRO DE DIGITAÇÃO **
     const { error } = await supabaseClient
-        .from('studant_errors') // Nome da tabela como "studant_errors"
+        .from('student_errors') // Corrigido de "studant_errors" para "student_errors"
         .insert([errorData]);
 
     if (error) {
@@ -1440,7 +1446,7 @@ async function logStudentError({ question, selectedAnswer }) {
 }
 
 // =======================================================
-// PARTE 10: RELATÓRIOS DO PROFESSOR (NOVA SEÇÃO)
+// PARTE 10: RELATÓRIOS DO PROFESSOR
 // =======================================================
 async function loadErrorReports() {
     if (!currentClassId) return;
@@ -1450,9 +1456,9 @@ async function loadErrorReports() {
     heatmapContainer.innerHTML = '<p><i class="fas fa-spinner fa-spin"></i> Carregando mapa de calor...</p>';
     individualContainer.innerHTML = '<p><i class="fas fa-spinner fa-spin"></i> Carregando relatórios individuais...</p>';
     
-    // 1. Buscar todos os erros da turma
+    // ** CORREÇÃO CRÍTICA DE ERRO DE DIGITAÇÃO **
     const { data: errors, error } = await supabaseClient
-        .from('studant_errors')
+        .from('student_errors') // Corrigido de "studant_errors" para "student_errors"
         .select(`
             *,
             students ( name )
@@ -1460,10 +1466,10 @@ async function loadErrorReports() {
         .eq('class_id', currentClassId);
 
     if (error) {
-        heatmapContainer.innerHTML = '<p class="error">Erro ao carregar dados do mapa de calor.</p>';
-        individualContainer.innerHTML = '<p class="error">Erro ao carregar relatórios individuais.</p>';
+        heatmapContainer.innerHTML = '<p class="error">Erro ao carregar dados. Verifique se a tabela "student_errors" existe no Supabase.</p>';
+        individualContainer.innerHTML = '<p class="error">Erro ao carregar dados.</p>';
         console.error("Erro ao buscar erros:", error);
-        return;
+        throw error; // Lança o erro
     }
 
     renderClassHeatmap(errors, heatmapContainer);
@@ -1477,7 +1483,6 @@ function renderClassHeatmap(errors, container) {
     }
     
     const errorCounts = errors.reduce((acc, err) => {
-        // Agrupa erros pela resposta correta que o aluno errou
         const key = err.correct_answer;
         acc[key] = (acc[key] || 0) + 1;
         return acc;
@@ -1487,7 +1492,7 @@ function renderClassHeatmap(errors, container) {
     const maxErrors = sortedErrors[0] ? sortedErrors[0][1] : 1;
 
     const heatmapHtml = sortedErrors.map(([answer, count]) => {
-        const intensity = Math.max(0.2, count / maxErrors); // De 20% a 100% de opacidade
+        const intensity = Math.max(0.2, count / maxErrors);
         return `<div class="heatmap-item" style="background-color: rgba(255, 107, 107, ${intensity});" title="${count} erros">
             ${answer}
         </div>`;
@@ -1497,8 +1502,8 @@ function renderClassHeatmap(errors, container) {
 }
 
 function renderIndividualReports(errors, container) {
-    const students = studentProgressData; // Usamos os dados já carregados
-    if (students.length === 0) {
+    const students = studentProgressData;
+    if (!students || students.length === 0) {
         container.innerHTML = '<p>Nenhum aluno nesta turma.</p>';
         return;
     }
@@ -1513,7 +1518,7 @@ function renderIndividualReports(errors, container) {
 
         const sortedErrors = Object.entries(errorCounts)
             .sort(([,a], [,b]) => b - a)
-            .slice(0, 5); // Pega os 5 maiores erros
+            .slice(0, 5);
 
         let errorsHtml = '<p>Nenhum erro registrado para este aluno.</p>';
         if (sortedErrors.length > 0) {
