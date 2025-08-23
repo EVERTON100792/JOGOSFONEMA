@@ -289,7 +289,10 @@
             <h3 id="manageClassTitle">Gerenciar Turma</h3>
             <div class="modal-tabs">
                 <button class="tab-btn active" data-tab="studentsTab">Alunos</button>
-                <button class="tab-btn" data-tab="studentProgressTab">Progresso dos Alunos</button>
+                <button class="tab-btn" data-tab="studentProgressTab">Progresso</button>
+                <button class="tab-btn" data-tab="reportsTab">
+                    <i class="fas fa-chart-line"></i> Relatórios
+                </button>
             </div>
             <div id="studentsTab" class="tab-content active">
                 <div class="students-section">
@@ -334,6 +337,18 @@
                         </div>
                     </div>
                     <div id="studentProgressList" class="students-list"></div>
+                </div>
+            </div>
+            <div id="reportsTab" class="tab-content">
+                <div class="report-section">
+                    <h4><i class="fas fa-fire"></i> Mapa de Calor da Turma</h4>
+                    <p>As maiores dificuldades da turma inteira, mostrando o que foi mais errado.</p>
+                    <div id="classHeatmap" class="heatmap-container"></div>
+                </div>
+                <div class="report-section">
+                    <h4><i class="fas fa-user-graduate"></i> Relatório Individual de Dificuldades</h4>
+                    <p>Clique em um aluno para ver seus 5 maiores erros.</p>
+                    <div id="individualReports" class="students-list"></div>
                 </div>
             </div>
             <div class="modal-actions">
@@ -419,7 +434,20 @@
         </div>
     </div>
 
+    <div id="chartModal" class="modal">
+        <div class="modal-content large">
+            <h3 id="chartModalTitle">Visualização Gráfica</h3>
+            <div class="chart-container">
+                <canvas id="myChartCanvas"></canvas>
+            </div>
+            <div class="modal-actions">
+                <button type="button" class="modal-btn" data-close="chartModal">Fechar</button>
+            </div>
+        </div>
+    </div>
+
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="script.js"></script>
 </body>
 </html>
