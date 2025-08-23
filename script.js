@@ -553,11 +553,12 @@ async function loadStudentProgress() {
         .eq('class_id', currentClassId);
 
     if (error) {
+        console.error("Erro ao buscar progresso:", error);
         progressList.innerHTML = `<p style="color:red;">Erro ao carregar progresso: ${error.message}</p>`;
         return;
     }
 
-    if (data.length === 0) {
+    if (!data || data.length === 0) {
         progressList.innerHTML = '<p>Nenhum aluno nesta turma para exibir o progresso.</p>';
         return;
     }
@@ -574,15 +575,17 @@ function renderStudentProgress(sortBy = 'last_played') {
             return a.name.localeCompare(b.name);
         }
         if (sortBy === 'last_played') {
-            const dateA = a.progress[0]?.last_played ? new Date(a.progress[0].last_played) : new Date(0);
-            const dateB = b.progress[0]?.last_played ? new Date(b.progress[0].last_played) : new Date(0);
+            // CORREÇÃO: Lida com casos onde 'progress' pode não existir ou estar vazio.
+            const dateA = (a.progress && a.progress.length > 0) ? new Date(a.progress[0].last_played) : new Date(0);
+            const dateB = (b.progress && b.progress.length > 0) ? new Date(b.progress[0].last_played) : new Date(0);
             return dateB - dateA; // Mais recente primeiro
         }
         return 0;
     });
 
     let html = sortedData.map(student => {
-        const progress = student.progress[0] || {};
+        // CORREÇÃO: Lida com casos onde 'progress' pode não existir ou estar vazio, evitando erros.
+        const progress = (student.progress && student.progress.length > 0) ? student.progress[0] : {};
         const assignedPhase = student.assigned_phase || 1;
         const currentPhase = progress.current_phase || 'N/A';
         const score = progress.game_state?.score ?? 0;
@@ -633,43 +636,67 @@ function renderStudentProgress(sortBy = 'last_played') {
 }
 
 async function assignPhase(studentId, selectElement) {
-    const newPhase = parseInt(selectElement.value);
-    const studentName = selectElement.closest('.student-item').querySelector('h4').textContent.trim();
+    const newPhase = parseInt(selectElement.value);
+    const studentData = studentProgressData.find(s => s.id === studentId);
+    if (!studentData) return; 
 
-    if (!confirm(`Deseja designar a Fase ${newPhase} para o aluno ${studentName}?\n\nAtenção: O progresso na fase atual será reiniciado para que ele comece a nova atividade do zero.`)) {
-        await loadStudentProgress(); // Recarrega para reverter a seleção no dropdown
-        return;
-    }
+    const originalPhase = studentData.assigned_phase || 1;
+    const studentName = studentData.name;
 
-    try {
-        // 1. Atualiza a fase designada na tabela de alunos
-        const { error: assignError } = await supabaseClient
-            .from('students')
-            .update({ assigned_phase: newPhase })
-            .eq('id', studentId);
-        if (assignError) throw assignError;
+    const confirmation = confirm(
+        `Deseja designar a Fase ${newPhase} para o aluno ${studentName}?\n\n` +
+        `Atenção: O progresso atual dele será reiniciado para que ele comece a nova atividade do zero.`
+    );
 
-        // 2. Cria um novo estado de jogo zerado para a nova fase
-        const newGameState = {
-            currentPhase: newPhase, score: 0, attempts: 3, // <--- Tentativas ajustadas para 3
-            questions: generateQuestions(newPhase), currentQuestionIndex: 0, 
-            tutorialsShown: [], phaseCompleted: false 
-        };
+    if (!confirmation) {
+        // Se o professor cancelar, reverte a mudança visual no dropdown imediatamente
+        selectElement.value = originalPhase;
+        return;
+    }
 
-        // 3. Atualiza ou insere o progresso (resetando-o)
-        const { error: progressError } = await supabaseClient
-            .from('progress')
-            .upsert({ 
-                student_id: studentId, current_phase: newPhase,
-                game_state: newGameState, last_played: new Date().toISOString()
-            }, { onConflict: 'student_id' });
-        if (progressError) throw progressError;
+    showFeedback(`Atualizando fase para ${studentName}...`, 'info');
 
-        showFeedback(`Fase ${newPhase} designada para ${studentName} com sucesso!`, 'success');
-        await loadStudentProgress();
-    } catch (error) {
-        showFeedback(`Erro ao designar fase: ${error.message}`, 'error');
-    }
+    try {
+        // 1. Atualiza a fase designada na tabela de alunos
+        const { error: assignError } = await supabaseClient
+            .from('students')
+            .update({ assigned_phase: newPhase })
+            .eq('id', studentId);
+        if (assignError) throw assignError;
+
+        // 2. Cria um novo estado de jogo, zerado para a nova fase
+        const newGameState = {
+            currentPhase: newPhase,
+            score: 0,
+            attempts: 3,
+            questions: generateQuestions(newPhase),
+            currentQuestionIndex: 0,
+            tutorialsShown: [],
+            phaseCompleted: false
+        };
+
+        // 3. Atualiza ou insere o progresso (resetando-o) na tabela de progresso
+        const { error: progressError } = await supabaseClient
+            .from('progress')
+            .upsert({
+                student_id: studentId,
+                current_phase: newPhase,
+                game_state: newGameState,
+                last_played: new Date().toISOString()
+            }, { onConflict: 'student_id' }); // Isso requer que 'student_id' seja UNIQUE
+        if (progressError) throw progressError;
+
+        showFeedback(`Fase ${newPhase} designada para ${studentName} com sucesso!`, 'success');
+        
+        // Atualiza os dados locais e recarrega a lista de progresso na tela
+        await loadStudentProgress();
+
+    } catch (error) {
+        console.error("Erro ao designar fase:", error);
+        showFeedback(`Erro ao designar fase: ${error.message}`, 'error');
+        // Em caso de erro, reverte a mudança visual no dropdown
+        selectElement.value = originalPhase;
+    }
 }
 
 
@@ -1635,5 +1662,3 @@ function displayChartModal(title, labels, data) {
 
     showModal('chartModal');
 }
-
-// FIM DO SCRIPT
