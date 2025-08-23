@@ -494,7 +494,6 @@ async function manageClass(classId, className) {
     const modal = document.getElementById('manageClassModal');
     modal.querySelectorAll('.tab-btn').forEach(btn => {
         const tabId = btn.dataset.tab;
-        // Evita adicionar múltiplos listeners se o modal for reaberto
         if (!btn.getAttribute('data-listener')) {
             btn.setAttribute('data-listener', 'true');
             btn.addEventListener('click', () => {
@@ -543,6 +542,7 @@ function renderStudents(students) {
         </div>`).join('');
 }
 
+// Função para carregar o progresso dos alunos da turma.
 async function loadStudentProgress() {
     const progressList = document.getElementById('studentProgressList');
     progressList.innerHTML = '<p><i class="fas fa-spinner fa-spin"></i> Carregando progresso...</p>';
@@ -567,6 +567,7 @@ async function loadStudentProgress() {
     renderStudentProgress('last_played');
 }
 
+// Função para renderizar a lista de progresso dos alunos na tela.
 function renderStudentProgress(sortBy = 'last_played') {
     const progressList = document.getElementById('studentProgressList');
 
@@ -575,28 +576,34 @@ function renderStudentProgress(sortBy = 'last_played') {
             return a.name.localeCompare(b.name);
         }
         if (sortBy === 'last_played') {
-            // CORREÇÃO: Lida com casos onde 'progress' pode não existir ou estar vazio.
             const dateA = (a.progress && a.progress.length > 0) ? new Date(a.progress[0].last_played) : new Date(0);
             const dateB = (b.progress && b.progress.length > 0) ? new Date(b.progress[0].last_played) : new Date(0);
-            return dateB - dateA; // Mais recente primeiro
+            return dateB - dateA;
         }
         return 0;
     });
 
     let html = sortedData.map(student => {
-        // CORREÇÃO: Lida com casos onde 'progress' pode não existir ou estar vazio, evitando erros.
-        const progress = (student.progress && student.progress.length > 0) ? student.progress[0] : {};
+        const progressRecord = (student.progress && student.progress.length > 0) ? student.progress[0] : null;
         const assignedPhase = student.assigned_phase || 1;
-        const currentPhase = progress.current_phase || 'N/A';
-        const score = progress.game_state?.score ?? 0;
-        const total = progress.game_state?.questions?.length || 10;
-        const accuracy = total > 0 ? Math.round((score / total) * 100) : 0;
+        const currentPhase = progressRecord?.current_phase || 'N/J'; // N/J = Não Jogou
+        const gameState = progressRecord?.game_state;
+
+        let score = 0;
+        let total = 10;
+        let accuracy = 0;
+
+        if (gameState && gameState.questions && gameState.questions.length > 0) {
+            score = gameState.score ?? 0;
+            total = gameState.questions.length;
+            accuracy = Math.round((score / total) * 100);
+        }
 
         let lastPlayedStr = 'Nunca jogou';
         let statusClass = 'inactive';
-        if (progress.last_played) {
-            const lastPlayedDate = new Date(progress.last_played);
-            lastPlayedStr = lastPlayedDate.toLocaleDateString('pt-BR');
+        if (progressRecord?.last_played) {
+            const lastPlayedDate = new Date(progressRecord.last_played);
+            lastPlayedStr = lastPlayedDate.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' });
             const sevenDaysAgo = new Date();
             sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
             if (lastPlayedDate > sevenDaysAgo) {
@@ -635,6 +642,7 @@ function renderStudentProgress(sortBy = 'last_played') {
     progressList.innerHTML = html || '<p>Nenhum aluno para exibir.</p>';
 }
 
+// Função para designar uma nova fase para um aluno.
 async function assignPhase(studentId, selectElement) {
     const newPhase = parseInt(selectElement.value);
     const studentData = studentProgressData.find(s => s.id === studentId);
@@ -649,7 +657,6 @@ async function assignPhase(studentId, selectElement) {
     );
 
     if (!confirmation) {
-        // Se o professor cancelar, reverte a mudança visual no dropdown imediatamente
         selectElement.value = originalPhase;
         return;
     }
@@ -657,14 +664,12 @@ async function assignPhase(studentId, selectElement) {
     showFeedback(`Atualizando fase para ${studentName}...`, 'info');
 
     try {
-        // 1. Atualiza a fase designada na tabela de alunos
         const { error: assignError } = await supabaseClient
             .from('students')
             .update({ assigned_phase: newPhase })
             .eq('id', studentId);
         if (assignError) throw assignError;
 
-        // 2. Cria um novo estado de jogo, zerado para a nova fase
         const newGameState = {
             currentPhase: newPhase,
             score: 0,
@@ -675,7 +680,6 @@ async function assignPhase(studentId, selectElement) {
             phaseCompleted: false
         };
 
-        // 3. Atualiza ou insere o progresso (resetando-o) na tabela de progresso
         const { error: progressError } = await supabaseClient
             .from('progress')
             .upsert({
@@ -683,18 +687,15 @@ async function assignPhase(studentId, selectElement) {
                 current_phase: newPhase,
                 game_state: newGameState,
                 last_played: new Date().toISOString()
-            }, { onConflict: 'student_id' }); // Isso requer que 'student_id' seja UNIQUE
+            }, { onConflict: 'student_id' });
         if (progressError) throw progressError;
 
         showFeedback(`Fase ${newPhase} designada para ${studentName} com sucesso!`, 'success');
-        
-        // Atualiza os dados locais e recarrega a lista de progresso na tela
         await loadStudentProgress();
 
     } catch (error) {
         console.error("Erro ao designar fase:", error);
         showFeedback(`Erro ao designar fase: ${error.message}`, 'error');
-        // Em caso de erro, reverte a mudança visual no dropdown
         selectElement.value = originalPhase;
     }
 }
@@ -964,7 +965,6 @@ async function loadGameState() {
     const assignedPhase = currentUser.assigned_phase || 1;
     const savedPhase = progressData?.current_phase;
 
-    // Se o professor designou uma nova fase, reseta o progresso
     if (progressData && savedPhase !== assignedPhase) {
         gameState = {
             currentPhase: assignedPhase, score: 0, attempts: 3,
@@ -975,11 +975,10 @@ async function loadGameState() {
         return;
     }
 
-    // Se existe progresso salvo, carrega
     if (progressData && progressData.game_state && progressData.game_state.questions) {
         gameState = progressData.game_state;
         if (!gameState.tutorialsShown) gameState.tutorialsShown = [];
-    } else { // Se não, cria um novo estado de jogo
+    } else {
         gameState = {
             currentPhase: assignedPhase, score: 0, attempts: 3,
             questions: generateQuestions(assignedPhase), currentQuestionIndex: 0,
@@ -1159,7 +1158,6 @@ async function selectAnswer(selectedAnswer) {
     } else {
         gameState.attempts--;
         
-        // LOG DE ERRO PARA O PROFESSOR
         logStudentError({
             question: currentQuestion,
             selectedAnswer: selectedAnswer
@@ -1170,7 +1168,7 @@ async function selectAnswer(selectedAnswer) {
     }
     
     updateUI();
-    await saveGameState(); // Salva o estado após cada resposta
+    await saveGameState();
     
     if(gameState.attempts <= 0) {
         setTimeout(endPhase, 2000);
@@ -1241,7 +1239,7 @@ async function nextPhase() {
 async function retryPhase() {
     gameState.currentQuestionIndex = 0;
     gameState.score = 0;
-    gameState.attempts = 3; // Reseta as tentativas
+    gameState.attempts = 3;
     gameState.phaseCompleted = false; 
     await saveGameState();
     showScreen('gameScreen');
@@ -1250,7 +1248,7 @@ async function retryPhase() {
 
 async function restartGame() {
     if (gameState.phaseCompleted || gameState.attempts <= 0) {
-        logout(); // Se completou ou perdeu, o botão serve para sair
+        logout();
     } else {
         showScreen('startScreen');
     }
@@ -1260,7 +1258,6 @@ async function playTeacherAudio(key, fallbackText, onEndCallback) {
     const teacherId = SUPER_ADMIN_TEACHER_ID; 
 
     if (!teacherId) {
-        console.warn("ID do Super Admin não foi definido, usando voz padrão.");
         speak(fallbackText, onEndCallback);
         return;
     }
@@ -1444,18 +1441,18 @@ async function logStudentError({ question, selectedAnswer }) {
         phase: gameState.currentPhase,
         question_type: question.type,
         correct_answer: String(question.correctAnswer),
-        selected_answer: String(selectedAnswer),
-        error_timestamp: new Date().toISOString()
+        selected_answer: String(selectedAnswer)
     };
 
+    // Usa o nome da tabela corrigido: 'student_errors'
     const { error } = await supabaseClient
-        .from('studant_errors') // Usando o nome da tabela que você forneceu
+        .from('student_errors')
         .insert([errorData]);
 
     if (error) {
         console.error('Falha ao registrar o erro do aluno:', error);
     } else {
-        console.log('Erro do aluno registrado com sucesso:', errorData);
+        console.log('Erro do aluno registrado com sucesso.');
     }
 }
 
@@ -1468,8 +1465,9 @@ async function loadDifficultyReports() {
     heatmapContainer.innerHTML = '<p><i class="fas fa-spinner fa-spin"></i> Carregando dados da turma...</p>';
     individualReportsContainer.innerHTML = '<p><i class="fas fa-spinner fa-spin"></i> Carregando dados dos alunos...</p>';
 
+    // Usa o nome da tabela corrigido: 'student_errors'
     const { data: errors, error } = await supabaseClient
-        .from('studant_errors') // Usando o nome da tabela que você forneceu
+        .from('student_errors')
         .select('*')
         .eq('class_id', currentClassId);
 
@@ -1499,7 +1497,6 @@ function renderClassHeatmap(errors) {
     const heatmapContainer = document.getElementById('classHeatmap');
     const sectionHeader = heatmapContainer.closest('.report-section').querySelector('h4');
 
-    // Remove botão antigo para não duplicar
     sectionHeader.querySelector('.view-chart-btn')?.remove();
 
     if (errors.length === 0) {
