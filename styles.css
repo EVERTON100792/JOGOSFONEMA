@@ -539,6 +539,27 @@ body {
 .back-btn { background: #E0E0E0; color: #555; border: none; padding: 10px 20px; border-radius: 10px; cursor: pointer; margin-top: 20px; transition: all 0.3s ease; }
 .back-btn:hover { background: #D0D0D0; }
 
+/* === DASHBOARD === */
+.dashboard-header { display: flex; justify-content: space-between; align-items: center; margin: 0 auto 40px auto; padding: 20px; background: rgba(255,255,255,0.2); backdrop-filter: blur(10px); border-radius: 15px; color: white; max-width: 1200px; width: 100%; }
+.dashboard-header h1 { margin: 0; font-size: 2rem; }
+.teacher-info { display: flex; align-items: center; gap: 20px; }
+.teacher-info span { font-size: 1.2rem; font-weight: bold; }
+.logout-btn { background: rgba(255,255,255,0.2); color: white; border: 1px solid rgba(255,255,255,0.3); padding: 10px 15px; border-radius: 8px; cursor: pointer; transition: all 0.3s ease; }
+.logout-btn:hover { background: rgba(255,255,255,0.3); }
+.dashboard-content { padding: 20px; background: white; border-radius: 20px; box-shadow: 0 5px 20px rgba(0,0,0,0.1); max-width: 1200px; margin: 0 auto; text-align: left; }
+.dashboard-section { margin-bottom: 40px; }
+.dashboard-section h2 { color: #2C3E50; margin-bottom: 20px; font-size: 1.6rem; }
+.classes-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; }
+.class-card { background: #f8f9fa; padding: 25px; border-radius: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.05); transition: all 0.3s ease; border-left: 5px solid #4ECDC4; }
+.class-card:hover { transform: translateY(-5px); box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
+.class-card h3 { color: #2C3E50; margin: 0 0 15px 0; font-size: 1.4rem; }
+.student-count { color: #666; font-size: 0.9rem; }
+.class-card-actions { display: flex; gap: 10px; margin-top: 15px; justify-content: flex-end; }
+.btn { padding: 8px 15px; border: none; border-radius: 8px; cursor: pointer; font-size: 0.9rem; transition: all 0.3s ease; }
+.btn.primary { background: #4ECDC4; color: white; }
+.btn.danger { background: #ff6b6b; color: white; }
+.btn.small { padding: 6px 10px; }
+
 /* === MODAIS === */
 .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: center; opacity: 0; visibility: hidden; transition: opacity 0.4s ease, visibility 0.4s; }
 .modal.show { display: flex; opacity: 1; visibility: visible; }
@@ -756,15 +777,13 @@ html, body { height: 100%; overflow: hidden; }
     background-color: #764ba2;
     color: white;
 }
-/* NOVA REGRA PARA GRÁFICO RESPONSIVO */
 .chart-container {
     position: relative;
     width: 100%;
-    height: 450px; /* Altura fixa */
+    max-height: 450px;
     padding: 1rem;
     background-color: #fafafa;
     border-radius: 8px;
-    overflow-x: auto; /* Adiciona rolagem horizontal quando necessário */
 }
 /* =================================== */
 /* ESTILOS PARA O MAPA DE CALOR MELHORADO */
@@ -1060,6 +1079,103 @@ html, body { height: 100%; overflow: hidden; }
 #teacherDashboard .logout-btn {
     display: none;
 }
+/* ============================================== */
+/* === AJUSTES DE RESPONSIVIDADE PARA CELULAR === */
+/* ============================================== */
+
+/* Usamos 768px como o ponto de quebra. Qualquer tela com largura menor que isso, aplicará estes estilos. */
+@media (max-width: 768px) {
+    
+    /* 1. O layout principal do dashboard muda de lado-a-lado para um em cima do outro */
+    #teacherDashboard .dashboard-container {
+        flex-direction: column; /* Transforma o layout em coluna */
+        height: auto; /* Permite que a altura se ajuste ao conteúdo */
+        min-height: 100vh;
+    }
+
+    /* 2. A sidebar se transforma em uma barra de navegação no topo */
+    .sidebar {
+        width: 100%; /* Ocupa toda a largura */
+        height: auto;
+        flex-direction: row; /* Itens da barra ficam lado a lado */
+        align-items: center;
+        padding: 10px;
+        border-right: none; /* Remove a borda direita */
+        border-bottom: 1px solid #e0e0e0; /* Adiciona uma borda inferior */
+        justify-content: space-between; /* Espaça os itens */
+    }
+
+    /* Esconde o título "Painel" para economizar espaço */
+    .sidebar-header {
+        display: none;
+    }
+
+    /* 3. Ajusta os links de navegação para ficarem lado a lado */
+    .sidebar-nav {
+        margin-top: 0;
+        display: flex;
+        flex-grow: 1; /* Permite que a navegação ocupe o espaço disponível */
+        justify-content: center; /* Centraliza os ícones */
+    }
+
+    .sidebar-nav a {
+        padding: 10px 15px;
+        margin: 0 5px;
+    }
+
+    /* Para economizar mais espaço, escondemos o texto e mostramos só o ícone */
+    .sidebar-nav a span {
+        display: none;
+    }
+
+    .sidebar-nav a i {
+        margin-right: 0; /* Remove a margem do ícone */
+        font-size: 1.4rem; /* Aumenta um pouco o ícone */
+    }
+
+    /* 4. Reposiciona o botão de sair */
+    .sidebar-footer {
+        padding: 0;
+        border-top: none;
+    }
+
+    .logout-btn-sidebar {
+        font-size: 1rem;
+        padding: 8px 12px;
+    }
+
+    /* 5. Ajusta a área de conteúdo principal */
+    .main-content {
+        overflow-y: visible; /* O scroll passa a ser da página inteira */
+    }
+
+    /* Esconde o cabeçalho de dentro do conteúdo, pois a barra do topo já faz esse papel */
+    #teacherDashboard .dashboard-header {
+        display: none;
+    }
+    
+    /* Ajusta o padding do conteúdo para telas menores */
+    .dashboard-content-area {
+        padding: 20px;
+    }
+
+    .view-header {
+        flex-direction: column;
+        gap: 15px;
+        align-items: flex-start;
+    }
+
+    /* Ajusta o grid de turmas para uma única coluna */
+    .classes-grid {
+        grid-template-columns: 1fr;
+    }
+
+    /* Melhora a visualização dos modais em telas pequenas */
+    .modal-content.large {
+        width: 95%;
+        max-height: 85vh;
+    }
+}
 /* =================================================================== */
 /* === AJUSTES DE RESPONSIVIDADE (Layout de App com Barra Inferior) === */
 /* =================================================================== */
@@ -1205,56 +1321,4 @@ html, body { height: 100%; overflow: hidden; }
         width: 95%;
         max-height: 85vh;
     }
-}
-
-/* === ESTILOS PARA O ASSISTENTE DE IA === */
-.ai-button-container {
-    text-align: right;
-    margin-top: 20px;
-}
-
-.ai-btn {
-    background: linear-gradient(135deg, #667eea, #764ba2);
-    color: white;
-    font-weight: bold;
-}
-.ai-btn:hover {
-    transform: scale(1.05);
-}
-
-.ai-tips-container {
-    background-color: #f8f9fa;
-    border-radius: 8px;
-    padding: 20px;
-    margin-top: 15px;
-    text-align: left;
-    line-height: 1.6;
-}
-.ai-tips-container h3 {
-    color: #764ba2;
-    border-bottom: 2px solid #e0d8f0;
-    padding-bottom: 5px;
-    margin-top: 15px;
-    margin-bottom: 10px;
-}
-.ai-tips-container h4 {
-    color: #2c3e50;
-    margin-top: 15px;
-    margin-bottom: 5px;
-}
-.ai-tips-container ul {
-    list-style-position: inside;
-    padding-left: 0;
-}
-.ai-tips-container li {
-    margin-bottom: 10px;
-}
-.loading-ai {
-    text-align: center;
-    padding: 40px;
-    font-size: 1.2rem;
-    color: #555;
-}
-.loading-ai i {
-    margin-right: 10px;
 }
