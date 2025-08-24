@@ -837,3 +837,488 @@ html, body { height: 100%; overflow: hidden; }
 .item-details {
     flex-basis: 60%;
 }
+/* =================================== */
+/* ESTILOS PARA RELATÓRIOS MELHORADOS  */
+/* =================================== */
+
+.phase-group {
+    width: 100%;
+    margin-bottom: 25px;
+    padding: 20px;
+    background-color: #f7f5ff; /* Um lilás bem claro */
+    border-radius: 10px;
+    border-left: 5px solid #764ba2; /* Destaque roxo */
+}
+
+.phase-group h3 {
+    color: #764ba2;
+    margin-top: 0;
+    margin-bottom: 15px;
+    border-bottom: 2px solid #e0d8f0;
+    padding-bottom: 10px;
+    font-size: 1.4rem;
+}
+
+.phase-group .heatmap-item {
+    width: 100%;
+    justify-content: space-between;
+}
+
+/* Detalhes de Erros Individuais */
+.student-errors-details ul {
+    list-style-type: none;
+    padding-left: 0;
+    margin: 0;
+}
+
+.student-errors-details li {
+    padding: 12px 5px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #f0f0f0;
+    gap: 15px;
+}
+
+.student-errors-details li:last-child {
+    border-bottom: none;
+}
+
+.student-errors-details .error-item {
+    font-size: 1rem;
+    color: #333;
+    display: flex;
+    flex-direction: column;
+}
+
+.student-errors-details .error-item small {
+    font-size: 0.85rem;
+    color: #777;
+    margin-top: 4px;
+    font-style: italic;
+}
+
+.student-errors-details .error-count {
+    font-size: 1rem;
+    font-weight: bold;
+    color: #ff6b6b;
+    background-color: #ff6b6b1a;
+    padding: 5px 10px;
+    border-radius: 20px;
+    white-space: nowrap;
+}
+/* ============================================== */
+/* === ESTILOS PARA O NOVO DASHBOARD COM SIDEBAR === */
+/* ============================================== */
+
+#teacherDashboard .dashboard-container {
+    display: flex;
+    width: 100%;
+    height: 100vh;
+    max-width: 100%; /* Ocupar toda a largura */
+    padding: 0;
+    margin: 0;
+    background-color: #f4f7fc;
+}
+
+/* A Sidebar */
+.sidebar {
+    width: 260px;
+    background: #ffffff;
+    border-right: 1px solid #e0e0e0;
+    display: flex;
+    flex-direction: column;
+    padding: 20px 0;
+    transition: width 0.3s ease;
+    flex-shrink: 0; /* Impede que a sidebar encolha */
+}
+
+.sidebar-header {
+    padding: 0 25px 20px 25px;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.sidebar-header h3 {
+    color: #2c3e50;
+    font-size: 1.5rem;
+}
+
+.sidebar-nav {
+    flex-grow: 1;
+    margin-top: 20px;
+}
+
+.sidebar-nav a {
+    display: flex;
+    align-items: center;
+    padding: 15px 25px;
+    color: #555;
+    text-decoration: none;
+    font-size: 1.1rem;
+    font-weight: bold;
+    margin: 5px 10px;
+    border-radius: 8px;
+    transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.sidebar-nav a:hover {
+    background-color: #f0eaff;
+    color: #764ba2;
+}
+
+.sidebar-nav a.active {
+    background: linear-gradient(90deg, #667eea, #764ba2);
+    color: white;
+    box-shadow: 0 4px 15px rgba(118, 75, 162, 0.3);
+}
+
+.sidebar-nav a i {
+    width: 30px;
+    text-align: center;
+    margin-right: 15px;
+    font-size: 1.2rem;
+}
+
+.sidebar-footer {
+    padding: 20px 25px 0 25px;
+    border-top: 1px solid #f0f0f0;
+}
+
+.logout-btn-sidebar {
+    width: 100%;
+    background: #f8f9fa;
+    border: 1px solid #ddd;
+    color: #c0392b;
+    padding: 12px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 1.1rem;
+    font-weight: bold;
+    transition: all 0.2s ease;
+}
+
+.logout-btn-sidebar:hover {
+    background: #c0392b;
+    color: white;
+    border-color: #c0392b;
+}
+
+/* A Área de Conteúdo Principal */
+.main-content {
+    flex-grow: 1;
+    padding: 0;
+    overflow-y: auto; /* Permite scroll apenas no conteúdo */
+    display: flex;
+    flex-direction: column;
+}
+
+#teacherDashboard .dashboard-header {
+    background: #ffffff;
+    padding: 20px 40px;
+    border-bottom: 1px solid #e0e0e0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    backdrop-filter: none; /* Remover o efeito antigo */
+    color: #2c3e50; /* Mudar cor do texto do header */
+    border-radius: 0; /* Remover bordas arredondadas */
+    margin: 0;
+    width: auto;
+    flex-shrink: 0;
+}
+
+#teacherDashboard .dashboard-header h1 {
+    font-size: 1.8rem;
+    color: #333;
+}
+#teacherDashboard .teacher-info span {
+    color: #333;
+    font-size: 1.1rem;
+}
+
+.dashboard-content-area {
+    padding: 40px;
+    flex-grow: 1;
+}
+
+.dashboard-view {
+    display: none; /* Todas as visões começam escondidas */
+}
+.dashboard-view.active {
+    display: block; /* Apenas a ativa é mostrada */
+}
+
+.view-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 25px;
+    padding-bottom: 15px;
+    border-bottom: 1px solid #eee;
+}
+.view-header p {
+    font-size: 1.1rem;
+    color: #666;
+    margin: 0;
+}
+
+.placeholder-content {
+    text-align: center;
+    padding: 50px;
+    background-color: #fff;
+    border-radius: 15px;
+    border: 2px dashed #ddd;
+    color: #888;
+}
+.placeholder-content i {
+    font-size: 3rem;
+    margin-bottom: 20px;
+}
+
+/* Remover o botão de logout antigo */
+#teacherDashboard .logout-btn {
+    display: none;
+}
+/* ============================================== */
+/* === AJUSTES DE RESPONSIVIDADE PARA CELULAR === */
+/* ============================================== */
+
+/* Usamos 768px como o ponto de quebra. Qualquer tela com largura menor que isso, aplicará estes estilos. */
+@media (max-width: 768px) {
+    
+    /* 1. O layout principal do dashboard muda de lado-a-lado para um em cima do outro */
+    #teacherDashboard .dashboard-container {
+        flex-direction: column; /* Transforma o layout em coluna */
+        height: auto; /* Permite que a altura se ajuste ao conteúdo */
+        min-height: 100vh;
+    }
+
+    /* 2. A sidebar se transforma em uma barra de navegação no topo */
+    .sidebar {
+        width: 100%; /* Ocupa toda a largura */
+        height: auto;
+        flex-direction: row; /* Itens da barra ficam lado a lado */
+        align-items: center;
+        padding: 10px;
+        border-right: none; /* Remove a borda direita */
+        border-bottom: 1px solid #e0e0e0; /* Adiciona uma borda inferior */
+        justify-content: space-between; /* Espaça os itens */
+    }
+
+    /* Esconde o título "Painel" para economizar espaço */
+    .sidebar-header {
+        display: none;
+    }
+
+    /* 3. Ajusta os links de navegação para ficarem lado a lado */
+    .sidebar-nav {
+        margin-top: 0;
+        display: flex;
+        flex-grow: 1; /* Permite que a navegação ocupe o espaço disponível */
+        justify-content: center; /* Centraliza os ícones */
+    }
+
+    .sidebar-nav a {
+        padding: 10px 15px;
+        margin: 0 5px;
+    }
+
+    /* Para economizar mais espaço, escondemos o texto e mostramos só o ícone */
+    .sidebar-nav a span {
+        display: none;
+    }
+
+    .sidebar-nav a i {
+        margin-right: 0; /* Remove a margem do ícone */
+        font-size: 1.4rem; /* Aumenta um pouco o ícone */
+    }
+
+    /* 4. Reposiciona o botão de sair */
+    .sidebar-footer {
+        padding: 0;
+        border-top: none;
+    }
+
+    .logout-btn-sidebar {
+        font-size: 1rem;
+        padding: 8px 12px;
+    }
+
+    /* 5. Ajusta a área de conteúdo principal */
+    .main-content {
+        overflow-y: visible; /* O scroll passa a ser da página inteira */
+    }
+
+    /* Esconde o cabeçalho de dentro do conteúdo, pois a barra do topo já faz esse papel */
+    #teacherDashboard .dashboard-header {
+        display: none;
+    }
+    
+    /* Ajusta o padding do conteúdo para telas menores */
+    .dashboard-content-area {
+        padding: 20px;
+    }
+
+    .view-header {
+        flex-direction: column;
+        gap: 15px;
+        align-items: flex-start;
+    }
+
+    /* Ajusta o grid de turmas para uma única coluna */
+    .classes-grid {
+        grid-template-columns: 1fr;
+    }
+
+    /* Melhora a visualização dos modais em telas pequenas */
+    .modal-content.large {
+        width: 95%;
+        max-height: 85vh;
+    }
+}
+/* =================================================================== */
+/* === AJUSTES DE RESPONSIVIDADE (Layout de App com Barra Inferior) === */
+/* =================================================================== */
+
+@media (max-width: 768px) {
+    
+    /* 1. Prepara o corpo para a barra fixa */
+    #teacherDashboard .dashboard-container {
+        /* Adiciona um espaçamento na base para o conteúdo não ficar escondido atrás da barra */
+        padding-bottom: 80px; 
+    }
+
+    /* 2. Transforma a sidebar em uma barra de navegação fixa na base */
+    .sidebar {
+        position: fixed; /* Fixa na tela */
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        height: auto;
+        background: #ffffff;
+        
+        /* Itens ficam lado a lado */
+        flex-direction: row;
+        
+        /* Sombra sutil para dar elevação */
+        box-shadow: 0 -2px 10px rgba(0,0,0,0.1); 
+
+        padding: 5px 0;
+        border-right: none;
+        z-index: 1000;
+    }
+    
+    /* 3. Esconde o cabeçalho "Painel" que não é mais necessário */
+    .sidebar-header {
+        display: none;
+    }
+
+    /* 4. Organiza a navegação e o botão de sair na nova barra */
+    .sidebar-nav {
+        margin-top: 0;
+        display: flex;
+        flex-grow: 1; /* Ocupa o espaço disponível */
+        justify-content: space-around; /* Distribui os itens igualmente */
+        align-items: center;
+    }
+    
+    .sidebar-footer {
+        padding: 0;
+        border-top: none;
+        margin-right: 10px; /* Um pequeno espaço na direita */
+    }
+
+    /* 5. Estilo dos botões da barra inferior: Ícone em cima, texto embaixo */
+    .sidebar-nav a {
+        flex-direction: column; /* Ícone e texto em coluna */
+        justify-content: center;
+        padding: 8px 5px;
+        margin: 0;
+        height: 60px;
+        flex-grow: 1; /* Faz cada botão ocupar o mesmo espaço */
+        font-size: 0.75rem; /* Fonte pequena para o texto */
+        color: #888;
+        font-weight: normal;
+    }
+    
+    .sidebar-nav a.active {
+        /* Destaca o item ativo com a cor principal do tema */
+        color: #764ba2;
+        background: none; /* Remove o fundo anterior */
+        box-shadow: none;
+    }
+
+    .sidebar-nav a:hover {
+        background-color: #f5f5f5;
+        color: #764ba2;
+    }
+
+    .sidebar-nav a i {
+        margin-right: 0;
+        margin-bottom: 5px; /* Espaço entre o ícone e o texto */
+        font-size: 1.5rem;
+    }
+    
+    /* O texto do link de navegação agora é visível */
+    .sidebar-nav a span {
+        display: block;
+    }
+
+    /* 6. Ajusta o botão de sair para se integrar à barra */
+    .logout-btn-sidebar {
+        background: none;
+        border: none;
+        color: #888;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        font-size: 0.75rem;
+        height: 60px;
+        padding: 8px 5px;
+    }
+     .logout-btn-sidebar i {
+        font-size: 1.5rem;
+        margin-bottom: 5px;
+     }
+     .logout-btn-sidebar:hover {
+        color: #c0392b;
+     }
+
+    /* 7. Ajustes finais de layout do conteúdo principal */
+    #teacherDashboard .dashboard-container {
+        flex-direction: column;
+        height: auto;
+        min-height: 100vh;
+    }
+    
+    .main-content {
+        overflow-y: visible;
+    }
+
+    #teacherDashboard .dashboard-header {
+        padding: 15px 20px;
+    }
+
+     #teacherDashboard .dashboard-header h1 {
+        font-size: 1.4rem;
+    }
+
+    .dashboard-content-area {
+        padding: 20px;
+    }
+
+    .view-header {
+        flex-direction: column;
+        gap: 15px;
+        align-items: flex-start;
+    }
+
+    .classes-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .modal-content.large {
+        width: 95%;
+        max-height: 85vh;
+    }
+}
