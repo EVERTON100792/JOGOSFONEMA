@@ -1,6 +1,6 @@
 // =======================================================
 // JOGO DAS LETRAS - SCRIPT ATUAL (Vanilla JS)
-// Versão com Dashboard Refatorado e Assistente IA
+// Versão com Dashboard Refatorado e Assistente IA (Correções)
 // =======================================================
 
 // PARTE 1: CONFIGURAÇÃO INICIAL E SUPABASE
@@ -45,6 +45,7 @@ async function restoreOrStartGame() { await loadGameState(); if (gameState.phase
 function setupAllEventListeners() { document.querySelectorAll('.user-type-btn').forEach(btn => btn.addEventListener('click', (e) => { const type = e.currentTarget.getAttribute('data-type'); if (type === 'teacher') showScreen('teacherLoginScreen'); else if (type === 'student') showScreen('studentLoginScreen'); })); document.querySelectorAll('.back-btn').forEach(btn => btn.addEventListener('click', (e) => { const targetScreen = e.currentTarget.getAttribute('data-target'); showScreen(targetScreen); })); document.getElementById('showRegisterBtn').addEventListener('click', () => showScreen('teacherRegisterScreen')); document.getElementById('showLoginBtn').addEventListener('click', () => showScreen('teacherLoginScreen')); document.getElementById('teacherLoginForm')?.addEventListener('submit', handleTeacherLogin); document.getElementById('teacherRegisterForm')?.addEventListener('submit', handleTeacherRegister); document.getElementById('studentLoginForm')?.addEventListener('submit', handleStudentLogin); document.getElementById('showCreateClassModalBtn').addEventListener('click', () => showModal('createClassModal')); document.getElementById('showAudioSettingsModalBtn').addEventListener('click', showAudioSettingsModal); document.getElementById('createClassForm')?.addEventListener('submit', handleCreateClass); document.getElementById('showCreateStudentFormBtn').addEventListener('click', showCreateStudentForm); document.getElementById('hideCreateStudentFormBtn').addEventListener('click', hideCreateStudentForm); document.getElementById('createStudentSubmitBtn')?.addEventListener('click', handleCreateStudent); document.getElementById('generatePasswordBtn')?.addEventListener('click', () => { const passwordField = document.getElementById('createStudentPassword'); passwordField.type = 'text'; passwordField.value = generateRandomPassword(); setTimeout(() => { passwordField.type = 'password'; }, 2000); }); document.getElementById('startButton')?.addEventListener('click', () => { showScreen('gameScreen'); startQuestion(); }); document.getElementById('playAudioButton')?.addEventListener('click', playCurrentAudio); document.getElementById('repeatAudio')?.addEventListener('click', playCurrentAudio); document.getElementById('nextQuestion')?.addEventListener('click', nextQuestion); document.getElementById('continueButton')?.addEventListener('click', nextPhase); document.getElementById('retryButton')?.addEventListener('click', retryPhase); document.getElementById('restartButton')?.addEventListener('click', restartGame); document.getElementById('exitGameButton')?.addEventListener('click', handleExitGame); document.querySelectorAll('[data-close]').forEach(btn => { btn.addEventListener('click', () => closeModal(btn.getAttribute('data-close'))); }); document.querySelectorAll('#manageClassModal .tab-btn').forEach(btn => { btn.addEventListener('click', (e) => showTab(e.currentTarget)); }); document.getElementById('uploadAudioBtn')?.addEventListener('click', handleAudioUpload); document.getElementById('recordBtn')?.addEventListener('click', startRecording); document.getElementById('stopBtn')?.addEventListener('click', stopRecording); document.getElementById('saveRecordingBtn')?.addEventListener('click', saveRecording); document.getElementById('closeTutorialBtn')?.addEventListener('click', hideTutorial); document.getElementById('copyCredentialsBtn')?.addEventListener('click', handleCopyCredentials); document.querySelectorAll('.password-toggle').forEach(toggle => { toggle.addEventListener('click', () => { const passwordInput = toggle.previousElementSibling; const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password'; passwordInput.setAttribute('type', type); toggle.classList.toggle('fa-eye-slash'); }); }); document.querySelectorAll('.sort-btn').forEach(btn => { btn.addEventListener('click', (e) => { const sortBy = e.currentTarget.dataset.sort; document.querySelectorAll('.sort-btn').forEach(b => b.classList.remove('active')); e.currentTarget.classList.add('active'); renderStudentProgress(sortBy); }); }); document.getElementById('reportClassSelector').addEventListener('change', handleReportClassSelection); }
 
 // PARTE 5: AUTENTICAÇÃO E SESSÃO
+// ... (código existente sem alterações)
 async function checkSession() { const { data: { session } } = await supabaseClient.auth.getSession(); if (session && session.user) { currentUser = session.user; if (currentUser.user_metadata.role === 'teacher') { await showTeacherDashboard(); } else { await logout(); } } else { showScreen('userTypeScreen'); } }
 async function handleTeacherLogin(e) { e.preventDefault(); const button = e.target.querySelector('button[type="submit"]'); const originalText = button.innerHTML; button.disabled = true; button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Entrando...'; const email = document.getElementById('teacherEmail').value; const password = document.getElementById('teacherPassword').value; try { const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password }); if (error) throw error; currentUser = data.user; await showTeacherDashboard(); showFeedback('Login realizado com sucesso!', 'success'); } catch (error) { showFeedback(formatErrorMessage(error), 'error'); } finally { button.disabled = false; button.innerHTML = originalText; } }
 async function handleTeacherRegister(e) { e.preventDefault(); const button = e.target.querySelector('button[type="submit"]'); const originalText = button.innerHTML; button.disabled = true; button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Cadastrando...'; const name = document.getElementById('teacherRegName').value; const email = document.getElementById('teacherRegEmail').value; const password = document.getElementById('teacherRegPassword').value; try { const { data, error } = await supabaseClient.auth.signUp({ email, password, options: { data: { full_name: name, role: 'teacher' } } }); if (error) throw error; showFeedback('Cadastro realizado! Link de confirmação enviado para seu e-mail.', 'success'); showScreen('teacherLoginScreen'); } catch (error) { showFeedback(formatErrorMessage(error), 'error'); } finally { button.disabled = false; button.innerHTML = originalText; } }
@@ -52,7 +53,9 @@ async function handleStudentLogin(e) { e.preventDefault(); const button = e.targ
 async function logout() { await supabaseClient.auth.signOut(); currentUser = null; currentClassId = null; sessionStorage.removeItem('currentUser'); showScreen('userTypeScreen'); }
 function handleExitGame() { if (confirm('Tem certeza que deseja sair? Seu progresso ficará salvo.')) { sessionStorage.removeItem('currentUser'); currentUser = null; showScreen('userTypeScreen'); } }
 
+
 // PARTE 6: DASHBOARD DO PROFESSOR (REATORADO)
+// ... (código existente sem alterações)
 async function showTeacherDashboard() {
     showScreen('teacherDashboard');
     await loadTeacherData();
@@ -132,6 +135,7 @@ async function handleResetStudentPassword(studentId, studentName) { const newPas
 function handleCopyCredentials() { const username = document.getElementById('newStudentUsername').textContent; const password = document.getElementById('newStudentPassword').textContent; const textToCopy = `Usuário: ${username}\nSenha: ${password}`; navigator.clipboard.writeText(textToCopy).then(() => { showFeedback('Copiado!', 'success'); }).catch(() => { showFeedback('Erro ao copiar.', 'error'); }); }
 
 // PARTE 7: ÁUDIO
+// ... (código existente sem alterações)
 async function handleAudioUpload() { const files = document.getElementById('audioUpload').files; if (files.length === 0) return; const uploadStatus = document.getElementById('uploadStatus'); uploadStatus.innerHTML = `<p><i class="fas fa-spinner fa-spin"></i> Enviando...</p>`; let successCount = 0, errorCount = 0; for (const file of files) { const fileName = file.name.split('.').slice(0, -1).join('.').toUpperCase(); const filePath = `${currentUser.id}/${fileName}.${file.name.split('.').pop()}`; try { const { error } = await supabaseClient.storage.from('audio_uploads').upload(filePath, file, { upsert: true }); if (error) throw error; successCount++; } catch (error) { console.error(`Erro no upload:`, error); errorCount++; } } uploadStatus.innerHTML = `<p style="color: green;">${successCount} enviados!</p>`; if (errorCount > 0) { uploadStatus.innerHTML += `<p style="color: red;">Falha em ${errorCount}.</p>`; } }
 async function startRecording() { const recordBtn = document.getElementById('recordBtn'), stopBtn = document.getElementById('stopBtn'), statusEl = document.getElementById('recordStatus'); recordBtn.disabled = true; statusEl.textContent = 'Pedindo permissão...'; try { const stream = await navigator.mediaDevices.getUserMedia({ audio: true }); audioChunks = []; mediaRecorder = new MediaRecorder(stream, { mimeType: 'audio/webm' }); mediaRecorder.addEventListener('dataavailable', e => audioChunks.push(e.data)); mediaRecorder.addEventListener('stop', () => { const audioBlob = new Blob(audioChunks, { type: 'audio/webm' }); const audioUrl = URL.createObjectURL(audioBlob); document.getElementById('audioPlayback').src = audioUrl; document.getElementById('saveRecordingBtn').disabled = false; stream.getTracks().forEach(track => track.stop()); }); mediaRecorder.start(); statusEl.textContent = 'Gravando...'; stopBtn.disabled = false; startTimer(); } catch (err) { console.error("Erro ao gravar:", err); alert("Não foi possível gravar. Verifique as permissões."); statusEl.textContent = 'Falha.'; recordBtn.disabled = false; } }
 function stopRecording() { if (mediaRecorder?.state === 'recording') { mediaRecorder.stop(); stopTimer(); document.getElementById('recordBtn').disabled = false; document.getElementById('stopBtn').disabled = true; document.getElementById('recordStatus').textContent = 'Parado.'; } }
@@ -140,6 +144,7 @@ function startTimer() { stopTimer(); let seconds = 0; const timerEl = document.g
 function stopTimer() { clearInterval(timerInterval); }
 
 // PARTE 8: LÓGICA DO JOGO
+// ... (código existente sem alterações)
 async function showStudentGame() { await startGame(); }
 async function startGame() { await loadGameState(); if (gameState.phaseCompleted) { restoreOrStartGame(); } else { showScreen('startScreen'); } }
 async function loadGameState() { const { data: progressData, error } = await supabaseClient.from('progress').select('game_state, current_phase').eq('student_id', currentUser.id).single(); if (error && error.code !== 'PGRST116') { console.error("Erro ao carregar progresso:", error); } const assignedPhase = currentUser.assigned_phase || 1; const savedPhase = progressData?.current_phase; if (progressData && savedPhase !== assignedPhase) { gameState = { currentPhase: assignedPhase, score: 0, attempts: 3, questions: generateQuestions(assignedPhase), currentQuestionIndex: 0, teacherId: currentUser.teacher_id, tutorialsShown: [], phaseCompleted: false }; await saveGameState(); return; } if (progressData?.game_state?.questions) { gameState = progressData.game_state; if (!gameState.tutorialsShown) gameState.tutorialsShown = []; } else { gameState = { currentPhase: assignedPhase, score: 0, attempts: 3, questions: generateQuestions(assignedPhase), currentQuestionIndex: 0, teacherId: currentUser.teacher_id, tutorialsShown: [], phaseCompleted: false }; await saveGameState(); } }
@@ -164,6 +169,7 @@ async function playTeacherAudio(key, fallbackText, onEndCallback) { const teache
 async function playCurrentAudio() { const q = gameState.questions[gameState.currentQuestionIndex]; if (q.type !== 'letter_sound') return; const letter = q.correctAnswer; playTeacherAudio(letter, letter); }
 
 // PARTE 9: UI E VOZ
+// ... (código existente sem alterações)
 function initializeSpeech() { function loadVoices() { const voices = speechSynthesis.getVoices(); if (voices.length > 0) { selectedVoice = voices.find(v => v.lang === 'pt-BR') || voices[0]; speechReady = true; } } speechSynthesis.onvoiceschanged = loadVoices; loadVoices(); }
 function speak(text, onEndCallback) { if (!window.speechSynthesis || !speechReady) return; speechSynthesis.cancel(); const utterance = new SpeechSynthesisUtterance(text); utterance.lang = 'pt-BR'; utterance.voice = selectedVoice; if (onEndCallback) utterance.onend = onEndCallback; speechSynthesis.speak(utterance); }
 function showScreen(screenId) { document.querySelectorAll('.screen').forEach(s => s.classList.remove('active')); document.getElementById(screenId)?.classList.add('active'); }
@@ -252,9 +258,10 @@ async function loadAndDisplayClassReports(classId) {
 }
 
 function renderClassHeatmap(errors, containerId) {
+    // ... (código existente sem alterações)
     const heatmapContainer = document.getElementById(containerId);
     const sectionHeader = heatmapContainer.closest('.report-section').querySelector('h4');
-    sectionHeader.querySelector('.view-chart-btn')?.remove();
+    sectionHeader.querySelector('.view-chart-btn')?.remove(); // Remove botão antigo para evitar duplicatas
 
     if (!errors || errors.length === 0) {
         heatmapContainer.innerHTML = '<p>Nenhum erro registrado para esta turma. Ótimo trabalho! 🎉</p>';
@@ -317,6 +324,7 @@ function renderClassHeatmap(errors, containerId) {
 }
 
 function renderIndividualReports(students, allErrors, containerId) {
+    // ... (código existente sem alterações)
     const container = document.getElementById(containerId);
     if (!students || students.length === 0) {
         container.innerHTML = '<p>Nenhum aluno na turma.</p>';
@@ -340,6 +348,7 @@ function renderIndividualReports(students, allErrors, containerId) {
             const detailsContainer = document.getElementById(`errors-for-${studentId}`);
             const isVisible = detailsContainer.style.display === 'block';
 
+            // Fecha todos os outros
             container.querySelectorAll('.student-errors-details').forEach(d => {
                 if (d.id !== `errors-for-${studentId}`) d.style.display = 'none';
             });
@@ -398,6 +407,19 @@ async function handleGenerateAITips(studentId, studentName) {
     aiContainer.innerHTML = '<div class="loading-ai"><i class="fas fa-spinner fa-spin"></i> Analisando dados e gerando dicas pedagógicas...</div>';
     showModal('aiTipsModal');
 
+    // =================================================================================
+    //  IMPORTANTE: Insira sua chave de API do Google AI Studio na linha abaixo.
+    //  1. Acesse https://aistudio.google.com/
+    //  2. Clique em "Get API key" e copie sua chave.
+    //  3. Cole a chave entre as aspas.
+    // =================================================================================
+    const apiKey = "COLE_SUA_CHAVE_DA_API_AQUI"; 
+
+    if (apiKey === "COLE_SUA_CHAVE_DA_API_AQUI" || apiKey === "") {
+        aiContainer.innerHTML = `<p class="error"><strong>Atenção:</strong> A funcionalidade de IA precisa ser ativada. Por favor, insira uma chave de API válida no arquivo <strong>script.js</strong> na linha 557.</p>`;
+        return;
+    }
+
     const { data: studentErrors, error } = await supabaseClient
         .from('student_errors')
         .select('*')
@@ -428,8 +450,8 @@ async function handleGenerateAITips(studentId, studentName) {
     try {
         let chatHistory = [{ role: "user", parts: [{ text: prompt }] }];
         const payload = { contents: chatHistory };
-        const apiKey = ""; 
-        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
+        
+        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${apiKey}`;
         
         const response = await fetch(apiUrl, {
             method: 'POST',
@@ -438,7 +460,9 @@ async function handleGenerateAITips(studentId, studentName) {
         });
 
         if (!response.ok) {
-            throw new Error(`API error: ${response.statusText}`);
+            const errorBody = await response.json();
+            console.error("API Error Body:", errorBody);
+            throw new Error(`Erro na API: ${response.statusText}. Verifique se sua chave de API é válida e está corretamente configurada.`);
         }
 
         const result = await response.json();
@@ -451,21 +475,30 @@ async function handleGenerateAITips(studentId, studentName) {
 
             // Simple Markdown to HTML conversion
             text = text.replace(/## (.*)/g, '<h3>$1</h3>');
+            text = text.replace(/\*\* (.*)\*\*/g, '<h4>$1</h4>'); // For bold titles
             text = text.replace(/\* \*\*(.*)\*\*/g, '<h4>$1</h4>'); // For activity titles
-            text = text.replace(/\* (.*)/g, '<li>$1</li>');
+            text = text.replace(/^\* (.*)/gm, '<li>$1</li>');
             text = text.replace(/\n/g, '<br>');
             text = text.replace(/<\/li><br>/g, '</li>');
-            text = `<ul>${text.replace(/<li>/g, '</li><li>').substring(5)}</ul>`.replace('<ul><br>','<ul>');
+            
+            // Wrap list items in <ul>
+            if (text.includes('<li>')) {
+                 text = text.replace(/<li>/g, '</li><li>').substring(5); // dirty but effective
+                 text = `<ul>${text}</ul>`.replace(/<br><ul>/g, '<ul>');
+            }
+
 
             aiContainer.innerHTML = text;
         } else {
+            console.log("Resposta da IA em formato inesperado:", result);
             throw new Error("Resposta da IA em formato inesperado.");
         }
     } catch (err) {
         console.error("Erro ao chamar a IA:", err);
-        aiContainer.innerHTML = '<p class="error">Desculpe, não foi possível gerar as dicas neste momento. Verifique sua conexão ou tente novamente mais tarde.</p>';
+        aiContainer.innerHTML = `<p class="error">Desculpe, não foi possível gerar as dicas neste momento. Causa: ${err.message}</p>`;
     }
 }
+
 
 // PARTE 12: GRÁFICOS
 function displayChartModal(title, labels, data) { const modal = document.getElementById('chartModal'); const titleEl = document.getElementById('chartModalTitle'); const ctx = document.getElementById('myChartCanvas').getContext('2d'); titleEl.textContent = title; if (currentChart) { currentChart.destroy(); } currentChart = new Chart(ctx, { type: 'bar', data: { labels: labels, datasets: [{ label: 'Nº de Erros', data: data, backgroundColor: 'rgba(118, 75, 162, 0.6)', borderColor: 'rgba(118, 75, 162, 1)', borderWidth: 1 }] }, options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } }, plugins: { legend: { display: false }, title: { display: true, text: 'Itens com maior quantidade de erros na turma', font: { size: 16, family: "'Comic Neue', cursive" } } } } }); showModal('chartModal'); }
