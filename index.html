@@ -127,7 +127,7 @@
                     </a>
                     <a href="#" id="nav-relatorios" data-view="viewRelatorios">
                         <i class="fas fa-chart-pie"></i>
-                        <span>Relatórios Gerais</span>
+                        <span>Relatórios e Gráficos</span>
                     </a>
                     <a href="#" id="nav-config" data-view="viewConfig">
                         <i class="fas fa-sliders-h"></i>
@@ -162,13 +162,14 @@
     
                     <div id="viewRelatorios" class="dashboard-view">
                          <div class="view-header">
-                            <p>Aqui você terá uma visão geral do desempenho de todas as suas turmas.</p>
+                            <p>Analise o desempenho e as dificuldades de cada turma através de gráficos e relatórios detalhados.</p>
                         </div>
-                        <div class="placeholder-content">
-                            <i class="fas fa-chart-line"></i>
-                            <h3>Relatórios Gerais em Breve</h3>
-                            <p>Esta área mostrará gráficos e estatísticas consolidadas de todos os alunos.</p>
+                        <div class="report-selector-container" style="margin-bottom: 25px;">
+                            <h4><i class="fas fa-filter"></i> Selecione uma turma para ver os relatórios:</h4>
+                            <select id="reportClassSelector" class="phase-select" style="width: 100%; max-width: 400px; font-size: 1.1rem; padding: 12px; margin-top: 10px;"></select>
                         </div>
+                        <div id="reportContentContainer" style="display: none;">
+                            </div>
                     </div>
     
                     <div id="viewConfig" class="dashboard-view">
@@ -334,9 +335,6 @@
             <div class="modal-tabs">
                 <button class="tab-btn active" data-tab="studentsTab">Alunos</button>
                 <button class="tab-btn" data-tab="studentProgressTab">Progresso</button>
-                <button class="tab-btn" data-tab="reportsTab">
-                    <i class="fas fa-chart-line"></i> Relatórios
-                </button>
             </div>
             <div id="studentsTab" class="tab-content active">
                 <div class="students-section">
@@ -381,18 +379,6 @@
                         </div>
                     </div>
                     <div id="studentProgressList" class="students-list"></div>
-                </div>
-            </div>
-            <div id="reportsTab" class="tab-content">
-                <div class="report-section">
-                    <h4><i class="fas fa-fire"></i> Mapa de Calor da Turma</h4>
-                    <p>As maiores dificuldades da turma inteira, mostrando o que foi mais errado.</p>
-                    <div id="classHeatmap" class="heatmap-container"></div>
-                </div>
-                <div class="report-section">
-                    <h4><i class="fas fa-user-graduate"></i> Relatório Individual de Dificuldades</h4>
-                    <p>Clique em um aluno para ver seus 5 maiores erros.</p>
-                    <div id="individualReports" class="students-list"></div>
                 </div>
             </div>
             <div class="modal-actions">
