@@ -131,54 +131,53 @@ async function handleGenerateAITips(studentId, studentName) {
     aiContainer.innerHTML = '<div class="loading-ai"><i class="fas fa-spinner fa-spin"></i> Analisando dados e gerando dicas pedagógicas...</div>';
     showModal('aiTipsModal');
 
-    // ** CHAVE DE API ATUALIZADA AQUI **
-    const apiKey = "AIzaSyCA9vIdNExymmsVxQBwh1tIVyoldeTclKs";
+    // ** IMPORTANTE: COLOQUE A CHAVE QUE VOCÊ GEROU NO GOOGLE AI STUDIO AQUI DENTRO DAS ASPAS **
+    const apiKey = "AIzaSyCA9vIdNExymmsVxQBwh1tIVyoldeTclKs"; 
 
-    // Busca os erros do aluno no banco de dados
-    const { data: studentErrors, error } = await supabaseClient
-        .from('student_errors')
-        .select('*')
-        .eq('student_id', studentId)
-        .limit(50);
-
-    if (error || !studentErrors || studentErrors.length === 0) {
-        aiContainer.innerHTML = '<p>Este aluno não possui erros registrados para análise. Ótimo trabalho! 🌟</p>';
-        return;
+    // Se a chave não foi inserida, exibe um erro claro e para.
+    if (!apiKey || apiKey === "COLE_SUA_CHAVE_PESSOAL_AQUI") {
+        aiContainer.innerHTML = `<p class="error"><strong>Erro de Configuração:</strong> A chave de API do Gemini não foi inserida no arquivo script.js.</p>`;
+        return; 
     }
-    
-    // Monta um resumo dos erros para enviar à IA
-    const errorSummary = studentErrors.map(e => `Fase ${e.phase} (${PHASE_DESCRIPTIONS[e.phase]}): A resposta correta era '${e.correct_answer}', mas o aluno escolheu '${e.selected_answer}'.`).join('\n');
-
-    // Monta o prompt (a instrução) para a IA
-    const prompt = `
-        Você é um assistente pedagógico especialista em alfabetização no Brasil, projetado para auxiliar professores do ensino fundamental.
-        Um aluno chamado ${studentName} está apresentando as seguintes dificuldades em um jogo de alfabetização:
-        ${errorSummary}
-
-        Com base nesses erros, gere um relatório para o professor com as seguintes seções:
-        1.  **Principal Dificuldade Identificada:** Um parágrafo curto resumindo o padrão de erro mais comum do aluno (ex: "trocas de fonemas surdos/sonoros como P/B", "dificuldade com dígrafos", "confusão entre vogais").
-        2.  **Sugestões de Atividades Práticas:** Liste de 3 a 4 sugestões de atividades lúdicas e concretas que o professor pode realizar com o aluno para sanar essa dificuldade. Para cada atividade, forneça um título criativo e uma breve descrição de como executá-la. Use uma linguagem clara e encorajadora.
-
-        Formate sua resposta usando Markdown. Use títulos (##) para as seções e listas com marcadores (*) para as atividades.
-    `;
 
     try {
-        let chatHistory = [{ role: "user", parts: [{ text: prompt }] }];
-        const payload = { contents: chatHistory };
+        const { data: studentErrors, error } = await supabaseClient
+            .from('student_errors')
+            .select('*')
+            .eq('student_id', studentId)
+            .limit(50);
+
+        if (error || !studentErrors || studentErrors.length === 0) {
+            aiContainer.innerHTML = '<p>Este aluno não possui erros registrados para análise. Ótimo trabalho! 🌟</p>';
+            return;
+        }
         
+        const errorSummary = studentErrors.map(e => `Fase ${e.phase} (${PHASE_DESCRIPTIONS[e.phase] || 'N/A'}): A resposta correta era '${e.correct_answer}', mas o aluno escolheu '${e.selected_answer}'.`).join('\n');
+
+        const prompt = `
+            Você é um assistente pedagógico especialista em alfabetização no Brasil, projetado para auxiliar professores do ensino fundamental.
+            Um aluno chamado ${studentName} está apresentando as seguintes dificuldades em um jogo de alfabetização:
+            ${errorSummary}
+
+            Com base nesses erros, gere um relatório para o professor com as seguintes seções:
+            1.  **Principal Dificuldade Identificada:** Um parágrafo curto resumindo o padrão de erro mais comum do aluno.
+            2.  **Sugestões de Atividades Práticas:** Liste de 3 a 4 sugestões de atividades lúdicas e concretas que o professor pode realizar.
+
+            Formate sua resposta usando Markdown (títulos com ## e listas com *).
+        `;
+
         const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${apiKey}`;
         
         const response = await fetch(apiUrl, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
+            body: JSON.stringify({ contents: [{ role: "user", parts: [{ text: prompt }] }] })
         });
 
         if (!response.ok) {
             const errorBody = await response.json();
             console.error("API Error Body:", errorBody);
-            // Mostra o erro real da API para facilitar a depuração
-            throw new Error(`Erro na API: ${errorBody.error.message}`);
+            throw new Error(`Erro na API (${response.status}): ${errorBody.error.message}`);
         }
 
         const result = await response.json();
@@ -189,26 +188,21 @@ async function handleGenerateAITips(studentId, studentName) {
             // Formata a resposta da IA para HTML
             text = text.replace(/## (.*)/g, '<h3>$1</h3>');
             text = text.replace(/\*\* (.*)\*\*/g, '<h4>$1</h4>');
-            text = text.replace(/\* \*\*(.*)\*\*/g, '<h4>$1</h4>'); 
             text = text.replace(/^\* (.*)/gm, '<li>$1</li>');
             text = text.replace(/\n/g, '<br>');
             text = text.replace(/<\/li><br>/g, '</li>');
-            
             if (text.includes('<li>')) {
-                text = text.replace(/<li>/g, '</li><li>').substring(5);
-                text = `<ul>${text}</ul>`.replace(/<br><ul>/g, '<ul>');
+                text = `<ul>${text.replace(/<br>/g, '')}</ul>`;
             }
 
             aiContainer.innerHTML = text;
         } else {
-            console.log("Resposta da IA em formato inesperado:", result);
-            throw new Error("Resposta da IA em formato inesperado.");
+            throw new Error("A resposta da IA veio em um formato inesperado.");
         }
     } catch (err) {
-        console.error("Erro ao chamar a IA:", err);
-        aiContainer.innerHTML = `<p class="error">Desculpe, não foi possível gerar as dicas.<br><br><strong>Motivo:</strong> ${err.message}</p>`;
+        console.error("Falha ao gerar dicas com a IA:", err);
+        aiContainer.innerHTML = `<p class="error"><strong>Desculpe, ocorreu um erro ao gerar as dicas.</strong><br><br>Motivo: ${err.message}</p>`;
     }
 }
-
 // PARTE 12: GRÁFICOS
 function displayChartModal(title, labels, data) { const modal = document.getElementById('chartModal'); const titleEl = document.getElementById('chartModalTitle'); const ctx = document.getElementById('myChartCanvas').getContext('2d'); titleEl.textContent = title; if (currentChart) { currentChart.destroy(); } currentChart = new Chart(ctx, { type: 'bar', data: { labels: labels, datasets: [{ label: 'Nº de Erros', data: data, backgroundColor: 'rgba(118, 75, 162, 0.6)', borderColor: 'rgba(118, 75, 162, 1)', borderWidth: 1 }] }, options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } }, plugins: { legend: { display: false }, title: { display: true, text: 'Itens com maior quantidade de erros na turma', font: { size: 16, family: "'Comic Neue', cursive" } } } } }); showModal('chartModal'); }
