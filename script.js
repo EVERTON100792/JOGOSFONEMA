@@ -1,5 +1,5 @@
 // =======================================================
-// JOGO DAS LETRAS - SCRIPT FINAL E COMPLETO (v5 - Relatórios Aprimorados)
+// JOGO DAS LETRAS - SCRIPT FINAL E COMPLETO (v6 - Descrições de Fase nos Relatórios)
 // =======================================================
 
 // PARTE 1: CONFIGURAÇÃO INICIAL E SUPABASE
@@ -15,6 +15,16 @@ let gameState = {}, mediaRecorder, audioChunks = [], timerInterval, speechReady 
 
 // PARTE 2: CONTEÚDO DO JOGO
 const gameInstructions = {1: "Vamos começar! Eu vou fazer o som de uma letra. Ouça com atenção no alto-falante e depois clique na letra que você acha que é a certa. Você consegue!", 2: "Que legal, você avançou! Agora, olhe bem para a figura. Qual é a VOGAL que começa o nome dela? Clique na vogal correta para a gente completar a palavra juntos!", 3: "Uau, você está indo muito bem! Agora vamos juntar as vogais. Olhe a figura e escolha os dois sons que completam a palavra. Preste atenção!", 4: "Você é um campeão! Chegou a hora de ler a palavra inteira. Olhe a figura e encontre o nome dela escrito corretamente nas opções abaixo. Vamos lá!", 5: "Fase final! Agora o desafio é com o finalzinho da palavra. Olhe a figura e escolha a SÍLABA que termina o nome dela. Você está quase lá!"};
+
+// NOVO: Mapeamento de fases para descrições para usar nos relatórios
+const PHASE_DESCRIPTIONS = {
+    1: "Sons das Letras",
+    2: "Vogal Inicial",
+    3: "Encontros Vocálicos",
+    4: "Leitura de Palavras",
+    5: "Sílaba Final"
+};
+
 const PHASE_2_WORDS = [{ word: 'ABELHA', image: '🐝', vowel: 'A' }, { word: 'ELEFANTE', image: '🐘', vowel: 'E' }, { word: 'IGREJA', image: '⛪', vowel: 'I' }, { word: 'ÔNIBUS', image: '🚌', vowel: 'O' }, { word: 'UVA', image: '🍇', vowel: 'U' }, { word: 'AVIÃO', image: '✈️', vowel: 'A' }, { word: 'ESTRELA', image: '⭐', vowel: 'E' }, { word: 'ÍNDIO', image: '🏹', vowel: 'I' }, { word: 'OVO', image: '🥚', vowel: 'O' }, { word: 'URSO', image: '🐻', vowel: 'U' }];
 const PHASE_3_ENCONTROS = [{ word: 'PEIXE', image: '🐠', encontro: 'EI' }, { word: 'BOI', image: '🐂', encontro: 'OI' }, { word: 'CAIXA', image: '📦', encontro: 'AI' }, { word: 'PAI', image: '👨‍👧', encontro: 'AI' }, { word: 'CÉU', image: '🌌', encontro: 'EU' }, { word: 'LUA', image: '🌙', encontro: 'UA' }, { word: 'LEÃO', image: '🦁', encontro: 'ÃO' }, { word: 'MÃE', image: '👩‍👦', encontro: 'ÃE' }, { word: 'PÃO', image: '🍞', encontro: 'ÃO' }, { word: 'CHAPÉU', image: '🤠', encontro: 'ÉU' }];
 const VOWEL_ENCOUNTERS = ['AI', 'EI', 'OI', 'UI', 'AU', 'EU', 'ÃO', 'ÃE', 'UA', 'ÉU'];
@@ -169,7 +179,6 @@ function renderClassHeatmap(errors) {
         return;
     }
 
-    // 1. Agrupar erros por fase
     const errorsByPhase = errors.reduce((acc, error) => {
         const phase = error.phase || 'Desconhecida';
         if (!acc[phase]) {
@@ -182,11 +191,12 @@ function renderClassHeatmap(errors) {
     let html = '';
     const sortedPhases = Object.keys(errorsByPhase).sort((a, b) => a - b);
 
-    // 2. Criar uma seção para cada fase
     for (const phase of sortedPhases) {
+        // ALTERAÇÃO: Adicionada a descrição da fase no título
+        const phaseDescription = PHASE_DESCRIPTIONS[phase] || 'Fase Desconhecida';
         html += `
             <div class="phase-group">
-                <h3>Fase ${phase}</h3>
+                <h3>Fase ${phase} - ${phaseDescription}</h3>
         `;
 
         const phaseErrors = errorsByPhase[phase];
@@ -213,12 +223,11 @@ function renderClassHeatmap(errors) {
                 </div>
             `).join('');
         }
-        html += '</div>'; // Fim do phase-group
+        html += '</div>';
     }
 
     heatmapContainer.innerHTML = html;
 
-    // Adiciona o botão de gráfico (opcional, mas mantido)
     const chartButton = document.createElement('button');
     chartButton.className = 'btn small view-chart-btn';
     chartButton.innerHTML = '<i class="fas fa-chart-bar"></i> Ver Gráfico Geral';
@@ -263,7 +272,6 @@ function renderIndividualReports(students, allErrors) {
             const detailsContainer = document.getElementById(`errors-for-${studentId}`);
             const isVisible = detailsContainer.style.display === 'block';
             
-            // Fecha todos os outros detalhes para focar em um aluno por vez
             container.querySelectorAll('.student-errors-details').forEach(d => d.style.display = 'none');
             container.querySelectorAll('.student-report-item i').forEach(i => i.className = 'fas fa-chevron-down');
 
@@ -278,14 +286,12 @@ function renderIndividualReports(students, allErrors) {
                     return;
                 }
                 
-                // Agrupa erros para mostrar o que foi selecionado
                 const errorCounts = studentErrors.reduce((acc, error) => {
                     const key = `Fase ${error.phase} | Correto: ${error.correct_answer}`;
                     if (!acc[key]) {
                         acc[key] = { count: 0, selections: {}, details: error };
                     }
                     acc[key].count++;
-                    // Conta quantas vezes cada resposta errada foi selecionada para a mesma pergunta
                     acc[key].selections[error.selected_answer] = (acc[key].selections[error.selected_answer] || 0) + 1;
                     return acc;
                 }, {});
@@ -297,15 +303,17 @@ function renderIndividualReports(students, allErrors) {
                 detailsContainer.innerHTML = `
                     <ul>
                         ${top5Errors.map(([, errorData]) => {
-                            // Formata as respostas erradas que foram selecionadas
                             const selectionsText = Object.entries(errorData.selections)
                                 .map(([selection, count]) => `'${selection}' (${count}x)`)
                                 .join(', ');
 
+                            // ALTERAÇÃO: Adicionada a descrição da fase no relatório individual
+                            const phaseDescription = PHASE_DESCRIPTIONS[errorData.details.phase] || '';
+
                             return `
                                 <li>
                                     <div class="error-item">
-                                        <strong>Fase ${errorData.details.phase}:</strong> Resposta correta era <strong>"${errorData.details.correct_answer}"</strong>
+                                        <strong>Fase ${errorData.details.phase} (${phaseDescription}):</strong> Resposta correta era <strong>"${errorData.details.correct_answer}"</strong>
                                         <small>Aluno selecionou: ${selectionsText}</small>
                                     </div>
                                     <span class="error-count">${errorData.count} ${errorData.count > 1 ? 'vezes' : 'vez'}</span>
