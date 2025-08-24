@@ -1560,3 +1560,48 @@ html, body {
 .form-actions .btn.primary:hover {
     box-shadow: 0 5px 15px rgba(78, 205, 196, 0.4);
 }
+/* ========================================================= */
+/* === CORREÇÃO DO BOTÃO DE GERAR SENHA AUTOMÁTICA      === */
+/* ========================================================= */
+
+/* Garante que o container do input e do botão seja a referência de posicionamento */
+.password-group {
+    position: relative;
+}
+
+/* Adiciona um espaço à direita no campo de senha para o botão não sobrepor o texto */
+.password-group input {
+    /* O padding-right força o texto a terminar antes do botão */
+    padding-right: 45px !important; 
+}
+
+/* Estilo corrigido para o botão de gerar senha (varinha mágica) */
+.generate-password-btn {
+    position: absolute;
+    top: 50%;
+    right: 5px; /* Um pouco mais para dentro do campo */
+    
+    /* CORREÇÃO PRINCIPAL: Centraliza o botão verticalmente de forma precisa */
+    transform: translateY(-50%); 
+    
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    
+    /* Ajustes para deixar o ícone mais bonito */
+    font-size: 1.6rem;
+    color: #b0b0b0;
+    padding: 0 10px;
+    transition: color 0.2s ease, transform 0.2s ease;
+    
+    /* Garante que o ícone fique centralizado dentro da área do botão */
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%; 
+}
+
+.generate-password-btn:hover {
+    color: #764ba2; /* Roxo do tema */
+    transform: translateY(-50%) scale(1.2); /* Efeito de pulo ao passar o mouse */
+}
