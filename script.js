@@ -294,7 +294,6 @@ function renderStudentProgress(sortBy = 'last_played') {
     let html = sortedData.map(student => {
         const progressRecord = (student.progress && student.progress.length > 0) ? student.progress[0] : null;
         
-        // LÊ O NOVO ARRAY DE FASES. Se estiver nulo/vazio, assume a Fase 1.
         const assignedPhases = student.assigned_phases && student.assigned_phases.length > 0 ? student.assigned_phases : [1];
 
         const currentPhase = progressRecord?.current_phase || 'N/J';
@@ -324,7 +323,7 @@ function renderStudentProgress(sortBy = 'last_played') {
                     class="phase-checkbox"
                     value="${phaseNum}" 
                     ${assignedPhases.includes(phaseNum) ? 'checked' : ''}
-                    onchange="assignPhases('${student.id}')"
+                    onchange="assignPhases('${student.id}', this)"
                 >
                 Fase ${phaseNum}
             </label>
@@ -440,18 +439,22 @@ async function assignPhases(studentId) {
         showFeedback(`Erro: ${error.message}`, 'error');
         await loadStudentProgress();
     }
-}async function assignPhases(studentId) {
-    const studentItem = document.querySelector(`input[onchange="assignPhases('${studentId}')"]`).closest('.student-item');
-    const checkboxes = studentItem.querySelectorAll('.phase-checkbox');
+}
+// SUBSTITUA A FUNÇÃO ANTIGA PELA VERSÃO CORRIGIDA
+async function assignPhases(studentId, changedElement) {
+    // Encontra o container pai dos checkboxes a partir do elemento que foi clicado
+    const checkboxGroup = changedElement.closest('.phase-checkbox-group');
+    const checkboxes = checkboxGroup.querySelectorAll('.phase-checkbox');
 
+    // Cria um array com os valores das fases marcadas e ordena
     const newPhases = Array.from(checkboxes)
         .filter(cb => cb.checked)
         .map(cb => parseInt(cb.value))
-        .sort((a, b) => a - b); // Ordena as fases numericamente
+        .sort((a, b) => a - b); 
 
     if (newPhases.length === 0) {
         showFeedback("O aluno precisa ter pelo menos uma fase designada.", "error");
-        await loadStudentProgress(); 
+        changedElement.checked = true; // Impede que o usuário desmarque a última fase
         return;
     }
 
@@ -460,12 +463,14 @@ async function assignPhases(studentId) {
 
     showFeedback(`Atualizando fases para ${studentData.name}...`, 'info');
     try {
+        // Atualiza a coluna 'assigned_phases' com o novo array
         const { error: assignError } = await supabaseClient
             .from('students')
             .update({ assigned_phases: newPhases })
             .eq('id', studentId);
         if (assignError) throw assignError;
 
+        // Reinicia o progresso para a PRIMEIRA fase da nova lista
         const firstPhase = newPhases[0];
         const newGameState = {
             currentPhase: firstPhase, score: 0, attempts: 3, questions: generateQuestions(firstPhase), currentQuestionIndex: 0, tutorialsShown: [], phaseCompleted: false
@@ -482,7 +487,56 @@ async function assignPhases(studentId) {
     } catch (error) {
         console.error("Erro ao designar fases:", error);
         showFeedback(`Erro: ${error.message}`, 'error');
+        await loadStudentProgress(); 
+    }
+}// SUBSTITUA A FUNÇÃO ANTIGA PELA VERSÃO CORRIGIDA
+async function assignPhases(studentId, changedElement) {
+    // Encontra o container pai dos checkboxes a partir do elemento que foi clicado
+    const checkboxGroup = changedElement.closest('.phase-checkbox-group');
+    const checkboxes = checkboxGroup.querySelectorAll('.phase-checkbox');
+
+    // Cria um array com os valores das fases marcadas e ordena
+    const newPhases = Array.from(checkboxes)
+        .filter(cb => cb.checked)
+        .map(cb => parseInt(cb.value))
+        .sort((a, b) => a - b); 
+
+    if (newPhases.length === 0) {
+        showFeedback("O aluno precisa ter pelo menos uma fase designada.", "error");
+        changedElement.checked = true; // Impede que o usuário desmarque a última fase
+        return;
+    }
+
+    const studentData = studentProgressData.find(s => s.id === studentId);
+    if (!studentData) return;
+
+    showFeedback(`Atualizando fases para ${studentData.name}...`, 'info');
+    try {
+        // Atualiza a coluna 'assigned_phases' com o novo array
+        const { error: assignError } = await supabaseClient
+            .from('students')
+            .update({ assigned_phases: newPhases })
+            .eq('id', studentId);
+        if (assignError) throw assignError;
+
+        // Reinicia o progresso para a PRIMEIRA fase da nova lista
+        const firstPhase = newPhases[0];
+        const newGameState = {
+            currentPhase: firstPhase, score: 0, attempts: 3, questions: generateQuestions(firstPhase), currentQuestionIndex: 0, tutorialsShown: [], phaseCompleted: false
+        };
+        const { error: progressError } = await supabaseClient
+            .from('progress')
+            .upsert({
+                student_id: studentId, current_phase: firstPhase, game_state: newGameState, last_played: new Date().toISOString()
+            }, { onConflict: 'student_id' });
+        if (progressError) throw progressError;
+
+        showFeedback(`Fases de ${studentData.name} atualizadas!`, 'success');
         await loadStudentProgress();
+    } catch (error) {
+        console.error("Erro ao designar fases:", error);
+        showFeedback(`Erro: ${error.message}`, 'error');
+        await loadStudentProgress(); 
     }
 }
 async function handleCreateStudent(event) { event.preventDefault(); const username = document.getElementById('createStudentUsername').value.trim(); const password = document.getElementById('createStudentPassword').value; const submitButton = document.getElementById('createStudentSubmitBtn'); if (!username || !password) { return showFeedback("Preencha nome e senha.", "error"); } if (!currentClassId || !currentUser?.id) { return showFeedback("Erro de sessão.", "error"); } submitButton.disabled = true; submitButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Criando...'; try { const hashedPassword = await hashPassword(password); const { error } = await supabaseClient.from('students').insert([{ name: username, username: username, password: hashedPassword, class_id: currentClassId, teacher_id: currentUser.id }]); if (error) throw error; document.getElementById('newStudentUsername').textContent = username; document.getElementById('newStudentPassword').textContent = password; showModal('studentCreatedModal'); hideCreateStudentForm(); await loadClassStudents(); await loadStudentProgress(); } catch (error) { showFeedback(formatErrorMessage(error), 'error'); } finally { submitButton.disabled = false; submitButton.innerHTML = 'Criar Aluno'; } }
