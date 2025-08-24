@@ -11,164 +11,67 @@
 <body>
     <div id="userTypeScreen" class="screen active">
         <div class="container">
-            <div class="game-title">
-                <h1>🌟 Jogo das Letras 🌟</h1>
-                <p>Aprendendo o alfabeto com diversão!</p>
-            </div>
+            <div class="game-title"><h1>🌟 Jogo das Letras 🌟</h1><p>Aprendendo o alfabeto com diversão!</p></div>
             <div class="user-selection">
                 <h2>Como você quer acessar?</h2>
                 <div class="user-types">
-                    <button class="user-type-btn" data-type="student">
-                        <i class="fas fa-child"></i>
-                        <span>Sou Aluno</span>
-                        <small>Jogar e aprender</small>
-                    </button>
-                    <button class="user-type-btn" data-type="teacher">
-                        <i class="fas fa-chalkboard-teacher"></i>
-                        <span>Sou Professor</span>
-                        <small>Gerenciar turmas</small>
-                    </button>
+                    <button class="user-type-btn" data-type="student"><i class="fas fa-child"></i><span>Sou Aluno</span><small>Jogar e aprender</small></button>
+                    <button class="user-type-btn" data-type="teacher"><i class="fas fa-chalkboard-teacher"></i><span>Sou Professor</span><small>Gerenciar turmas</small></button>
                 </div>
             </div>
         </div>
     </div>
-
-    <div id="teacherLoginScreen" class="screen">
-        <div class="container">
-            <div class="login-container">
-                <h2><i class="fas fa-chalkboard-teacher"></i> Login do Professor</h2>
-                <form id="teacherLoginForm" class="login-form">
-                    <div class="form-group">
-                        <label for="teacherEmail">Email:</label>
-                        <input type="email" id="teacherEmail" required autocomplete="username">
-                    </div>
-                    <div class="form-group">
-                        <label for="teacherPassword">Senha:</label>
-                        <div class="password-wrapper">
-                            <input type="password" id="teacherPassword" required autocomplete="current-password">
-                            <i class="fas fa-eye password-toggle" aria-label="Mostrar/ocultar senha"></i>
-                        </div>
-                    </div>
-                    <button type="submit" class="login-btn">Entrar</button>
-                    <button type="button" class="register-btn" id="showRegisterBtn">Não tenho conta</button>
-                </form>
-                <button class="back-btn" data-target="userTypeScreen">
-                    <i class="fas fa-arrow-left"></i> Voltar
-                </button>
-            </div>
-        </div>
-    </div>
-
-    <div id="teacherRegisterScreen" class="screen">
-        <div class="container">
-            <div class="login-container">
-                <h2><i class="fas fa-user-plus"></i> Cadastro do Professor</h2>
-                <form id="teacherRegisterForm" class="login-form">
-                    <div class="form-group">
-                        <label for="teacherRegName">Nome:</label>
-                        <input type="text" id="teacherRegName" required autocomplete="name">
-                    </div>
-                    <div class="form-group">
-                        <label for="teacherRegEmail">Email:</label>
-                        <input type="email" id="teacherRegEmail" required autocomplete="email">
-                    </div>
-                    <div class="form-group">
-                        <label for="teacherRegPassword">Senha:</label>
-                         <div class="password-wrapper">
-                            <input type="password" id="teacherRegPassword" required autocomplete="new-password">
-                            <i class="fas fa-eye password-toggle" aria-label="Mostrar/ocultar senha"></i>
-                        </div>
-                    </div>
-                    <button type="submit" class="login-btn">Cadastrar</button>
-                    <button type="button" class="register-btn" id="showLoginBtn">Já tenho conta</button>
-                </form>
-                 <button class="back-btn" data-target="userTypeScreen">
-                    <i class="fas fa-arrow-left"></i> Voltar
-                </button>
-            </div>
-        </div>
-    </div>
-
-    <div id="studentLoginScreen" class="screen">
-        <div class="container">
-            <div class="login-container">
-                <h2><i class="fas fa-child"></i> Login do Aluno</h2>
-                <form id="studentLoginForm" class="login-form">
-                    <div class="form-group">
-                        <label for="studentUsername">Nome de usuário:</label>
-                        <input type="text" id="studentUsername" required autocomplete="username">
-                    </div>
-                    <div class="form-group">
-                        <label for="studentPassword">Senha:</label>
-                        <div class="password-wrapper">
-                            <input type="password" id="studentPassword" required autocomplete="current-password">
-                            <i class="fas fa-eye password-toggle" aria-label="Mostrar/ocultar senha"></i>
-                        </div>
-                    </div>
-                    <button type="submit" class="login-btn">Entrar</button>
-                </form>
-                <button class="back-btn" data-target="userTypeScreen">
-                    <i class="fas fa-arrow-left"></i> Voltar
-                </button>
-            </div>
-        </div>
-    </div>
+    <div id="teacherLoginScreen" class="screen"><div class="container"><div class="login-container"><h2><i class="fas fa-chalkboard-teacher"></i> Login do Professor</h2><form id="teacherLoginForm" class="login-form"><div class="form-group"><label for="teacherEmail">Email:</label><input type="email" id="teacherEmail" required autocomplete="username"></div><div class="form-group"><label for="teacherPassword">Senha:</label><div class="password-wrapper"><input type="password" id="teacherPassword" required autocomplete="current-password"><i class="fas fa-eye password-toggle" aria-label="Mostrar/ocultar senha"></i></div></div><button type="submit" class="login-btn">Entrar</button><button type="button" class="register-btn" id="showRegisterBtn">Não tenho conta</button></form><button class="back-btn" data-target="userTypeScreen"><i class="fas fa-arrow-left"></i> Voltar</button></div></div></div>
+    <div id="teacherRegisterScreen" class="screen"><div class="container"><div class="login-container"><h2><i class="fas fa-user-plus"></i> Cadastro do Professor</h2><form id="teacherRegisterForm" class="login-form"><div class="form-group"><label for="teacherRegName">Nome:</label><input type="text" id="teacherRegName" required autocomplete="name"></div><div class="form-group"><label for="teacherRegEmail">Email:</label><input type="email" id="teacherRegEmail" required autocomplete="email"></div><div class="form-group"><label for="teacherRegPassword">Senha:</label><div class="password-wrapper"><input type="password" id="teacherRegPassword" required autocomplete="new-password"><i class="fas fa-eye password-toggle" aria-label="Mostrar/ocultar senha"></i></div></div><button type="submit" class="login-btn">Cadastrar</button><button type="button" class="register-btn" id="showLoginBtn">Já tenho conta</button></form><button class="back-btn" data-target="userTypeScreen"><i class="fas fa-arrow-left"></i> Voltar</button></div></div></div>
+    <div id="studentLoginScreen" class="screen"><div class="container"><div class="login-container"><h2><i class="fas fa-child"></i> Login do Aluno</h2><form id="studentLoginForm" class="login-form"><div class="form-group"><label for="studentUsername">Nome de usuário:</label><input type="text" id="studentUsername" required autocomplete="username"></div><div class="form-group"><label for="studentPassword">Senha:</label><div class="password-wrapper"><input type="password" id="studentPassword" required autocomplete="current-password"><i class="fas fa-eye password-toggle" aria-label="Mostrar/ocultar senha"></i></div></div><button type="submit" class="login-btn">Entrar</button></form><button class="back-btn" data-target="userTypeScreen"><i class="fas fa-arrow-left"></i> Voltar</button></div></div></div>
 
     <div id="teacherDashboard" class="screen">
         <div class="dashboard-container">
             <aside id="dashboardSidebar" class="sidebar">
-                <div class="sidebar-header">
-                    <h3><i class="fas fa-user-cog"></i> Painel</h3>
-                </div>
+                <div class="sidebar-header"><h3><i class="fas fa-user-cog"></i> Painel</h3></div>
                 <nav class="sidebar-nav">
-                    <a href="#" id="nav-turmas" class="active" data-view="viewTurmas">
-                        <i class="fas fa-chalkboard"></i>
-                        <span>Minhas Turmas</span>
-                    </a>
-                    <a href="#" id="nav-relatorios" data-view="viewRelatorios">
-                        <i class="fas fa-chart-pie"></i>
-                        <span>Relatórios Gerais</span>
-                    </a>
-                    <a href="#" id="nav-config" data-view="viewConfig">
-                        <i class="fas fa-sliders-h"></i>
-                        <span>Configurações</span>
-                    </a>
+                    <a href="#" id="nav-turmas" class="active" data-view="viewTurmas"><i class="fas fa-chalkboard"></i><span>Minhas Turmas</span></a>
+                    <a href="#" id="nav-relatorios" data-view="viewRelatorios"><i class="fas fa-chart-pie"></i><span>Relatórios Gerais</span></a>
+                    <a href="#" id="nav-config" data-view="viewConfig"><i class="fas fa-sliders-h"></i><span>Configurações</span></a>
                 </nav>
                 <div class="sidebar-footer">
-                     <button id="logoutBtnSidebar" class="logout-btn-sidebar" aria-label="Sair da conta">
-                        <i class="fas fa-sign-out-alt"></i> Sair
-                    </button>
+                     <button id="logoutBtnSidebar" class="logout-btn-sidebar" aria-label="Sair da conta"><i class="fas fa-sign-out-alt"></i> Sair</button>
                 </div>
             </aside>
     
             <main id="dashboardMainContent" class="main-content">
                 <div class="dashboard-header">
                     <h1 id="dashboard-title">Minhas Turmas</h1>
-                    <div class="teacher-info">
-                        <span id="teacherName">Professor</span>
-                    </div>
+                    <div class="teacher-info"><span id="teacherName">Professor</span></div>
                 </div>
                 
                 <div class="dashboard-content-area">
-                    
                     <div id="viewTurmas" class="dashboard-view active">
                         <div class="view-header">
                             <p>Gerencie suas turmas, adicione alunos e acompanhe o progresso individual.</p>
                             <button id="showCreateClassModalBtn" class="create-btn"><i class="fas fa-plus"></i> Criar Nova Turma</button>
                         </div>
-                        <div id="classesList" class="classes-grid">
-                            </div>
+                        <div id="classesList" class="classes-grid"></div>
                     </div>
     
                     <div id="viewRelatorios" class="dashboard-view">
-                         <div class="view-header">
-                            <p>Aqui você terá uma visão geral do desempenho de todas as suas turmas.</p>
+                        <div class="report-filters">
+                            <div class="filter-group">
+                                <label for="reportClassFilter"><i class="fas fa-filter"></i> Filtrar Turma:</label>
+                                <select id="reportClassFilter"></select>
+                            </div>
+                            <div class="filter-group">
+                                <label for="reportPeriodFilter"><i class="fas fa-calendar-alt"></i> Período:</label>
+                                <select id="reportPeriodFilter">
+                                    <option value="7">Últimos 7 dias</option>
+                                    <option value="30" selected>Últimos 30 dias</option>
+                                    <option value="all">Todo o período</option>
+                                </select>
+                            </div>
                         </div>
-                        <div class="placeholder-content">
-                            <i class="fas fa-chart-line"></i>
-                            <h3>Relatórios Gerais em Breve</h3>
-                            <p>Esta área mostrará gráficos e estatísticas consolidadas de todos os alunos.</p>
-                        </div>
+
+                        <div id="generalReportContent">
+                            </div>
                     </div>
     
                     <div id="viewConfig" class="dashboard-view">
@@ -179,316 +82,23 @@
                             <i class="fas fa-microphone-alt"></i> Gerenciar Áudios das Letras
                         </button>
                     </div>
-    
                 </div>
             </main>
         </div>
     </div>
 
     <div id="startScreen" class="screen">
-		<div class="container">
-			<div class="game-title">
-				<h1>🌟 Jogo das Letras 🌟</h1>
-				<p>Vamos aprender o alfabeto juntos!</p>
-			</div>
-			<div class="character-mascot">
-				<div class="mascot bounce">
-					<i class="fas fa-cat"></i>
-				</div>
-				<div class="speech-bubble">
-					<p>Olá! Eu sou o Gatinho Alfabeto! Vamos brincar?</p>
-				</div>
-			</div>
-			<button id="startButton" class="start-button">
-				<i class="fas fa-play"></i> Começar Aventura
-			</button>
-		</div>
+		<div class="container"><div class="game-title"><h1>🌟 Jogo das Letras 🌟</h1><p>Vamos aprender o alfabeto juntos!</p></div><div class="character-mascot"><div class="mascot bounce"><i class="fas fa-cat"></i></div><div class="speech-bubble"><p>Olá! Eu sou o Gatinho Alfabeto! Vamos brincar?</p></div></div><button id="startButton" class="start-button"><i class="fas fa-play"></i> Começar Aventura</button></div>
 	</div>
-
-	<div id="gameScreen" class="screen">
-		<div class="game-header">
-			<div class="phase-info">
-				<h2>Fase <span id="currentPhase">1</span></h2>
-				<div class="progress-bar">
-					<div id="progressFill" class="progress-fill"></div>
-				</div>
-			</div>
-			<div class="score-info">
-				<div class="score">
-					<i class="fas fa-star"></i>
-					<span id="score">0</span>/<span id="totalQuestions">0</span>
-				</div>
-				<div class="attempts">
-					<i class="fas fa-heart"></i>
-					<span id="attempts">2</span> tentativas
-				</div>
-			</div>
-            <div class="game-actions">
-                <button id="exitGameButton" class="exit-button" title="Sair do Jogo">
-                    <i class="fas fa-sign-out-alt"></i> Sair
-                </button>
-            </div>
-		</div>
-		<div class="game-content">
-			<div class="question-area">
-				<div class="mascot-helper">
-					<div class="mascot pulse">
-						<i class="fas fa-cat"></i>
-					</div>
-					<div class="speech-bubble" id="helperText">
-						Clique no alto-falante para ouvir o som!
-					</div>
-				</div>
-
-                <div class="audio-section" id="audioQuestionArea">
-					<button id="playAudioButton" class="audio-button" aria-label="Ouvir o som da letra">
-						<i class="fas fa-volume-up"></i>
-						<span>Ouvir Som</span>
-					</button>
-				</div>
-
-                <div id="imageQuestionArea" style="display: none;">
-                    <div class="image-display">
-                        <span id="imageEmoji" class="image-emoji"></span>
-                    </div>
-                    <h3 id="wordDisplay" class="word-display"></h3>
-                </div>
-
-				<div class="question-text">
-					<h3 id="questionText">Qual letra faz este som?</h3>
-				</div>
-			</div>
-			<div class="letters-grid" id="lettersGrid"></div>
-			<div class="game-controls">
-				<button id="repeatAudio" class="control-button">
-					<i class="fas fa-redo"></i> Ouvir Novamente
-				</button>
-				<button id="nextQuestion" class="control-button" style="display: none;">
-					<i class="fas fa-arrow-right"></i> Próxima
-				</button>
-			</div>
-		</div>
-	</div>
-
-	<div id="resultScreen" class="screen">
-		<div class="container">
-			<div class="result-content">
-				<div class="result-icon" id="resultIcon">
-					<i class="fas fa-trophy"></i>
-				</div>
-				<h2 id="resultTitle">Parabéns!</h2>
-				<div class="result-stats">
-					<div class="stat">
-						<i class="fas fa-star"></i>
-						<span>Acertos: <span id="finalScore">0</span></span>
-					</div>
-					<div class="stat">
-						<i class="fas fa-percentage"></i>
-						<span>Precisão: <span id="accuracy">0</span>%</span>
-					</div>
-				</div>
-				<div class="result-message" id="resultMessage">
-					Você conseguiu! Continue assim!
-				</div>
-				<div class="result-actions">
-					<button id="continueButton" class="result-button success" style="display: none;">
-						<i class="fas fa-arrow-right"></i> Próxima Fase
-					</button>
-					<button id="retryButton" class="result-button retry" style="display: none;">
-						<i class="fas fa-redo"></i> Tentar Novamente
-					</button>
-					<button id="restartButton" class="result-button">
-						<i class="fas fa-home"></i> Voltar ao Início
-					</button>
-				</div>
-			</div>
-		</div>
-	</div>
-
-    <div id="globalFeedback" aria-live="polite">
-        <div class="feedback-content">
-            <span class="feedback-icon"></span>
-            <span class="feedback-text"></span>
-        </div>
-    </div>
-
-    <div id="createClassModal" class="modal">
-        <div class="modal-content">
-            <h3>Criar Nova Turma</h3>
-            <form id="createClassForm">
-                <div class="form-group">
-                    <label for="className">Nome da Turma:</label>
-                    <input type="text" id="className" required placeholder="Ex: 1º Ano A">
-                </div>
-                <div class="modal-actions">
-                    <button type="submit" class="modal-btn primary">Criar</button>
-                    <button type="button" class="modal-btn" data-close="createClassModal">Cancelar</button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <div id="manageClassModal" class="modal">
-        <div class="modal-content large">
-            <h3 id="manageClassTitle">Gerenciar Turma</h3>
-            <div class="modal-tabs">
-                <button class="tab-btn active" data-tab="studentsTab">Alunos</button>
-                <button class="tab-btn" data-tab="studentProgressTab">Progresso</button>
-                <button class="tab-btn" data-tab="reportsTab">
-                    <i class="fas fa-chart-line"></i> Relatórios
-                </button>
-            </div>
-            <div id="studentsTab" class="tab-content active">
-                <div class="students-section">
-                    <div class="section-header">
-                        <h4>Alunos da Turma</h4>
-                        <button id="showCreateStudentFormBtn" class="create-btn small"><i class="fas fa-plus"></i> Adicionar Aluno</button>
-                    </div>
-                    <div id="createStudentForm" class="create-form" style="display: none;">
-                        <form id="createStudentFormElement">
-                            <div class="form-row">
-                                <div class="form-group">
-                                    <label for="createStudentUsername">Nome do Aluno (usuário):</label>
-                                    <input type="text" id="createStudentUsername" required autocomplete="username">
-                                </div>
-                                <div class="form-group password-group">
-                                    <label for="createStudentPassword">Senha:</label>
-                                    <input type="password" id="createStudentPassword" required autocomplete="new-password">
-                                    <button type="button" id="generatePasswordBtn" class="generate-password-btn" title="Gerar senha automática">🪄</button>
-                                </div>
-                            </div>
-                            <div class="form-actions">
-                                <button type="button" id="createStudentSubmitBtn" class="btn primary">Criar Aluno</button>
-                                <button type="button" id="hideCreateStudentFormBtn" class="btn">Cancelar</button>
-                            </div>
-                        </form>
-                    </div>
-                    <div id="studentsList" class="students-list"></div>
-                </div>
-            </div>
-            <div id="studentProgressTab" class="tab-content">
-                <div class="progress-section">
-                    <div class="section-header">
-                        <h4>Relatório de Progresso da Turma</h4>
-                        <div class="sort-buttons">
-                            <span>Ordenar por:</span>
-                            <button class="btn small sort-btn" data-sort="name">
-                                <i class="fas fa-font"></i> Nome
-                            </button>
-                            <button class="btn small sort-btn active" data-sort="last_played">
-                                <i class="fas fa-clock"></i> Último Acesso
-                            </button>
-                        </div>
-                    </div>
-                    <div id="studentProgressList" class="students-list"></div>
-                </div>
-            </div>
-            <div id="reportsTab" class="tab-content">
-                <div class="report-section">
-                    <h4><i class="fas fa-fire"></i> Mapa de Calor da Turma</h4>
-                    <p>As maiores dificuldades da turma inteira, mostrando o que foi mais errado.</p>
-                    <div id="classHeatmap" class="heatmap-container"></div>
-                </div>
-                <div class="report-section">
-                    <h4><i class="fas fa-user-graduate"></i> Relatório Individual de Dificuldades</h4>
-                    <p>Clique em um aluno para ver seus 5 maiores erros.</p>
-                    <div id="individualReports" class="students-list"></div>
-                </div>
-            </div>
-            <div class="modal-actions">
-                <button type="button" class="modal-btn" data-close="manageClassModal">Fechar</button>
-            </div>
-        </div>
-    </div>
-
-    <div id="audioSettingsModal" class="modal">
-        <div class="modal-content large">
-            <h3>Gerenciar Áudios das Letras</h3>
-            <div class="modal-tabs">
-                <button class="tab-btn active" data-tab="uploadFileTab">Enviar Arquivos</button>
-                <button class="tab-btn" data-tab="recordVoiceTab">Gravar com Microfone</button>
-            </div>
-            <div id="uploadFileTab" class="tab-content active">
-                <div class="upload-section">
-                    <p>Envie os arquivos de áudio (.mp3, .wav, .m4a) para cada letra.</p>
-                    <div class="upload-instructions">
-                        <p><i class="fas fa-info-circle"></i> <strong>Nomeie os arquivos exatamente como a letra.</strong> Ex: <code>A.mp3</code></p>
-                    </div>
-                    <div class="upload-area">
-                        <input type="file" id="audioUpload" accept="audio/*" multiple>
-                        <label for="audioUpload" class="upload-label"><i class="fas fa-cloud-upload-alt"></i><span>Clique para selecionar</span></label>
-                    </div>
-                    <div id="uploadStatus"></div>
-                    <button id="uploadAudioBtn" class="modal-btn primary">Enviar Arquivos</button>
-                </div>
-            </div>
-            <div id="recordVoiceTab" class="tab-content">
-                <div class="record-section">
-                    <p>Grave sua voz falando o som de cada letra.</p>
-                    <div class="form-group">
-                        <label for="letterSelect">1. Escolha a Letra para Gravar:</label>
-                        <select id="letterSelect"></select>
-                    </div>
-                    <div class="record-controls">
-                        <button id="recordBtn" class="record-btn" aria-label="Iniciar gravação"><i class="fas fa-microphone"></i> Gravar</button>
-                        <button id="stopBtn" class="stop-btn" disabled aria-label="Parar gravação"><i class="fas fa-stop"></i> Parar</button>
-                        <span id="recordTimer">00:00</span>
-                    </div>
-                    <div class="audio-playback">
-                        <label>2. Ouça a Gravação:</label>
-                        <audio id="audioPlayback" controls></audio>
-                    </div>
-                    <div id="recordStatus"></div>
-                    <button id="saveRecordingBtn" class="modal-btn primary" disabled><i class="fas fa-save"></i> Salvar Gravação</button>
-                </div>
-            </div>
-            <div class="modal-actions">
-                <button type="button" class="modal-btn" data-close="audioSettingsModal">Fechar</button>
-            </div>
-        </div>
-    </div>
-    
-    <div id="tutorialOverlay" class="tutorial-overlay">
-        <div class="tutorial-content">
-            <div id="tutorialMascot" class="mascot">
-                <i class="fas fa-cat"></i>
-            </div>
-            <div class="speech-bubble" id="tutorialText">
-            </div>
-            <button id="closeTutorialBtn" class="start-button">
-                <i class="fas fa-play"></i> Vamos Jogar!
-            </button>
-        </div>
-    </div>
-
-    <div id="studentCreatedModal" class="modal">
-        <div class="modal-content">
-            <h3 style="color: #4ECDC4;"><i class="fas fa-check-circle"></i> Aluno Criado com Sucesso!</h3>
-            <p>Anote os dados de acesso abaixo para entregar ao aluno.</p>
-            
-            <div class="credentials-box">
-                <p><strong>Usuário:</strong> <span id="newStudentUsername"></span></p>
-                <p><strong>Senha:</strong> <span id="newStudentPassword" style="font-weight: bold; color: #764ba2;"></span></p>
-            </div>
-    
-            <div class="modal-actions">
-                <button type="button" id="copyCredentialsBtn" class="modal-btn"><i class="fas fa-copy"></i> Copiar Dados</button>
-                <button type="button" class="modal-btn primary" data-close="studentCreatedModal">Fechar</button>
-            </div>
-        </div>
-    </div>
-
-    <div id="chartModal" class="modal">
-        <div class="modal-content large">
-            <h3 id="chartModalTitle">Visualização Gráfica</h3>
-            <div class="chart-container">
-                <canvas id="myChartCanvas"></canvas>
-            </div>
-            <div class="modal-actions">
-                <button type="button" class="modal-btn" data-close="chartModal">Fechar</button>
-            </div>
-        </div>
-    </div>
+	<div id="gameScreen" class="screen"><div class="game-header"><div class="phase-info"><h2>Fase <span id="currentPhase">1</span></h2><div class="progress-bar"><div id="progressFill" class="progress-fill"></div></div></div><div class="score-info"><div class="score"><i class="fas fa-star"></i><span id="score">0</span>/<span id="totalQuestions">0</span></div><div class="attempts"><i class="fas fa-heart"></i><span id="attempts">2</span> tentativas</div></div><div class="game-actions"><button id="exitGameButton" class="exit-button" title="Sair do Jogo"><i class="fas fa-sign-out-alt"></i> Sair</button></div></div><div class="game-content"><div class="question-area"><div class="mascot-helper"><div class="mascot pulse"><i class="fas fa-cat"></i></div><div class="speech-bubble" id="helperText">Clique no alto-falante para ouvir o som!</div></div><div class="audio-section" id="audioQuestionArea"><button id="playAudioButton" class="audio-button" aria-label="Ouvir o som da letra"><i class="fas fa-volume-up"></i><span>Ouvir Som</span></button></div><div id="imageQuestionArea" style="display: none;"><div class="image-display"><span id="imageEmoji" class="image-emoji"></span></div><h3 id="wordDisplay" class="word-display"></h3></div><div class="question-text"><h3 id="questionText">Qual letra faz este som?</h3></div></div><div class="letters-grid" id="lettersGrid"></div><div class="game-controls"><button id="repeatAudio" class="control-button"><i class="fas fa-redo"></i> Ouvir Novamente</button><button id="nextQuestion" class="control-button" style="display: none;"><i class="fas fa-arrow-right"></i> Próxima</button></div></div></div>
+	<div id="resultScreen" class="screen"><div class="container"><div class="result-content"><div class="result-icon" id="resultIcon"><i class="fas fa-trophy"></i></div><h2 id="resultTitle">Parabéns!</h2><div class="result-stats"><div class="stat"><i class="fas fa-star"></i><span>Acertos: <span id="finalScore">0</span></span></div><div class="stat"><i class="fas fa-percentage"></i><span>Precisão: <span id="accuracy">0</span>%</span></div></div><div class="result-message" id="resultMessage">Você conseguiu! Continue assim!</div><div class="result-actions"><button id="continueButton" class="result-button success" style="display: none;"><i class="fas fa-arrow-right"></i> Próxima Fase</button><button id="retryButton" class="result-button retry" style="display: none;"><i class="fas fa-redo"></i> Tentar Novamente</button><button id="restartButton" class="result-button"><i class="fas fa-home"></i> Voltar ao Início</button></div></div></div></div>
+    <div id="globalFeedback" aria-live="polite"><div class="feedback-content"><span class="feedback-icon"></span><span class="feedback-text"></span></div></div>
+    <div id="createClassModal" class="modal"><div class="modal-content"><h3>Criar Nova Turma</h3><form id="createClassForm"><div class="form-group"><label for="className">Nome da Turma:</label><input type="text" id="className" required placeholder="Ex: 1º Ano A"></div><div class="modal-actions"><button type="submit" class="modal-btn primary">Criar</button><button type="button" class="modal-btn" data-close="createClassModal">Cancelar</button></div></form></div></div>
+    <div id="manageClassModal" class="modal"><div class="modal-content large"><h3 id="manageClassTitle">Gerenciar Turma</h3><div class="modal-tabs"><button class="tab-btn active" data-tab="studentsTab">Alunos</button><button class="tab-btn" data-tab="studentProgressTab">Progresso</button><button class="tab-btn" data-tab="reportsTab"><i class="fas fa-chart-line"></i> Relatórios</button></div><div id="studentsTab" class="tab-content active"><div class="students-section"><div class="section-header"><h4>Alunos da Turma</h4><button id="showCreateStudentFormBtn" class="create-btn small"><i class="fas fa-plus"></i> Adicionar Aluno</button></div><div id="createStudentForm" class="create-form" style="display: none;"><form id="createStudentFormElement"><div class="form-row"><div class="form-group"><label for="createStudentUsername">Nome do Aluno (usuário):</label><input type="text" id="createStudentUsername" required autocomplete="username"></div><div class="form-group password-group"><label for="createStudentPassword">Senha:</label><input type="password" id="createStudentPassword" required autocomplete="new-password"><button type="button" id="generatePasswordBtn" class="generate-password-btn" title="Gerar senha automática">🪄</button></div></div><div class="form-actions"><button type="button" id="createStudentSubmitBtn" class="btn primary">Criar Aluno</button><button type="button" id="hideCreateStudentFormBtn" class="btn">Cancelar</button></div></form></div><div id="studentsList" class="students-list"></div></div></div><div id="studentProgressTab" class="tab-content"><div class="progress-section"><div class="section-header"><h4>Relatório de Progresso da Turma</h4><div class="sort-buttons"><span>Ordenar por:</span><button class="btn small sort-btn" data-sort="name"><i class="fas fa-font"></i> Nome</button><button class="btn small sort-btn active" data-sort="last_played"><i class="fas fa-clock"></i> Último Acesso</button></div></div><div id="studentProgressList" class="students-list"></div></div></div><div id="reportsTab" class="tab-content"><div class="report-section"><h4><i class="fas fa-fire"></i> Mapa de Calor da Turma</h4><p>As maiores dificuldades da turma inteira, mostrando o que foi mais errado.</p><div id="classHeatmap" class="heatmap-container"></div></div><div class="report-section"><h4><i class="fas fa-user-graduate"></i> Relatório Individual de Dificuldades</h4><p>Clique em um aluno para ver seus 5 maiores erros.</p><div id="individualReports" class="students-list"></div></div></div><div class="modal-actions"><button type="button" class="modal-btn" data-close="manageClassModal">Fechar</button></div></div></div>
+    <div id="audioSettingsModal" class="modal"><div class="modal-content large"><h3>Gerenciar Áudios das Letras</h3><div class="modal-tabs"><button class="tab-btn active" data-tab="uploadFileTab">Enviar Arquivos</button><button class="tab-btn" data-tab="recordVoiceTab">Gravar com Microfone</button></div><div id="uploadFileTab" class="tab-content active"><div class="upload-section"><p>Envie os arquivos de áudio (.mp3, .wav, .m4a) para cada letra.</p><div class="upload-instructions"><p><i class="fas fa-info-circle"></i> <strong>Nomeie os arquivos exatamente como a letra.</strong> Ex: <code>A.mp3</code></p></div><div class="upload-area"><input type="file" id="audioUpload" accept="audio/*" multiple><label for="audioUpload" class="upload-label"><i class="fas fa-cloud-upload-alt"></i><span>Clique para selecionar</span></label></div><div id="uploadStatus"></div><button id="uploadAudioBtn" class="modal-btn primary">Enviar Arquivos</button></div></div><div id="recordVoiceTab" class="tab-content"><div class="record-section"><p>Grave sua voz falando o som de cada letra.</p><div class="form-group"><label for="letterSelect">1. Escolha a Letra para Gravar:</label><select id="letterSelect"></select></div><div class="record-controls"><button id="recordBtn" class="record-btn" aria-label="Iniciar gravação"><i class="fas fa-microphone"></i> Gravar</button><button id="stopBtn" class="stop-btn" disabled aria-label="Parar gravação"><i class="fas fa-stop"></i> Parar</button><span id="recordTimer">00:00</span></div><div class="audio-playback"><label>2. Ouça a Gravação:</label><audio id="audioPlayback" controls></audio></div><div id="recordStatus"></div><button id="saveRecordingBtn" class="modal-btn primary" disabled><i class="fas fa-save"></i> Salvar Gravação</button></div></div><div class="modal-actions"><button type="button" class="modal-btn" data-close="audioSettingsModal">Fechar</button></div></div></div>
+    <div id="tutorialOverlay" class="tutorial-overlay"><div class="tutorial-content"><div id="tutorialMascot" class="mascot"><i class="fas fa-cat"></i></div><div class="speech-bubble" id="tutorialText"></div><button id="closeTutorialBtn" class="start-button"><i class="fas fa-play"></i> Vamos Jogar!</button></div></div>
+    <div id="studentCreatedModal" class="modal"><div class="modal-content"><h3 style="color: #4ECDC4;"><i class="fas fa-check-circle"></i> Aluno Criado com Sucesso!</h3><p>Anote os dados de acesso abaixo para entregar ao aluno.</p><div class="credentials-box"><p><strong>Usuário:</strong> <span id="newStudentUsername"></span></p><p><strong>Senha:</strong> <span id="newStudentPassword" style="font-weight: bold; color: #764ba2;"></span></p></div><div class="modal-actions"><button type="button" id="copyCredentialsBtn" class="modal-btn"><i class="fas fa-copy"></i> Copiar Dados</button><button type="button" class="modal-btn primary" data-close="studentCreatedModal">Fechar</button></div></div></div>
+    <div id="chartModal" class="modal"><div class="modal-content large"><h3 id="chartModalTitle">Visualização Gráfica</h3><div class="chart-container"><canvas id="myChartCanvas"></canvas></div><div class="modal-actions"><button type="button" class="modal-btn" data-close="chartModal">Fechar</button></div></div></div>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
