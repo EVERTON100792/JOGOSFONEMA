@@ -115,29 +115,73 @@
     </div>
 
     <div id="teacherDashboard" class="screen">
-        <div class="container">
-            <div class="dashboard-header">
-                <h1>📚 Dashboard do Professor</h1>
-                <div class="teacher-info">
-                    <span id="teacherName">Professor</span>
-                    <button id="logoutBtn" class="logout-btn" aria-label="Sair da conta">
+        <div class="dashboard-container">
+            <aside id="dashboardSidebar" class="sidebar">
+                <div class="sidebar-header">
+                    <h3><i class="fas fa-user-cog"></i> Painel</h3>
+                </div>
+                <nav class="sidebar-nav">
+                    <a href="#" id="nav-turmas" class="active" data-view="viewTurmas">
+                        <i class="fas fa-chalkboard"></i>
+                        <span>Minhas Turmas</span>
+                    </a>
+                    <a href="#" id="nav-relatorios" data-view="viewRelatorios">
+                        <i class="fas fa-chart-pie"></i>
+                        <span>Relatórios Gerais</span>
+                    </a>
+                    <a href="#" id="nav-config" data-view="viewConfig">
+                        <i class="fas fa-sliders-h"></i>
+                        <span>Configurações</span>
+                    </a>
+                </nav>
+                <div class="sidebar-footer">
+                     <button id="logoutBtnSidebar" class="logout-btn-sidebar" aria-label="Sair da conta">
                         <i class="fas fa-sign-out-alt"></i> Sair
                     </button>
                 </div>
-            </div>
-            <div class="dashboard-content">
-                <div class="dashboard-section">
-                    <h2>Minhas Turmas</h2>
-                    <button id="showCreateClassModalBtn" class="create-btn"><i class="fas fa-plus"></i> Criar Nova Turma</button>
-                    <div id="classesList" class="classes-grid"></div>
+            </aside>
+    
+            <main id="dashboardMainContent" class="main-content">
+                <div class="dashboard-header">
+                    <h1 id="dashboard-title">Minhas Turmas</h1>
+                    <div class="teacher-info">
+                        <span id="teacherName">Professor</span>
+                    </div>
                 </div>
-                <div class="dashboard-section">
-                    <h2>Configurações</h2>
-                    <button id="showAudioSettingsModalBtn" class="create-btn" style="background-color: #5c6bc0;">
-                        <i class="fas fa-microphone-alt"></i> Gerenciar Áudios das Letras
-                    </button>
+                
+                <div class="dashboard-content-area">
+                    
+                    <div id="viewTurmas" class="dashboard-view active">
+                        <div class="view-header">
+                            <p>Gerencie suas turmas, adicione alunos e acompanhe o progresso individual.</p>
+                            <button id="showCreateClassModalBtn" class="create-btn"><i class="fas fa-plus"></i> Criar Nova Turma</button>
+                        </div>
+                        <div id="classesList" class="classes-grid">
+                            </div>
+                    </div>
+    
+                    <div id="viewRelatorios" class="dashboard-view">
+                         <div class="view-header">
+                            <p>Aqui você terá uma visão geral do desempenho de todas as suas turmas.</p>
+                        </div>
+                        <div class="placeholder-content">
+                            <i class="fas fa-chart-line"></i>
+                            <h3>Relatórios Gerais em Breve</h3>
+                            <p>Esta área mostrará gráficos e estatísticas consolidadas de todos os alunos.</p>
+                        </div>
+                    </div>
+    
+                    <div id="viewConfig" class="dashboard-view">
+                         <div class="view-header">
+                            <p>Opções e configurações gerais da sua conta de professor.</p>
+                        </div>
+                         <button id="showAudioSettingsModalBtn" class="create-btn" style="background-color: #5c6bc0;">
+                            <i class="fas fa-microphone-alt"></i> Gerenciar Áudios das Letras
+                        </button>
+                    </div>
+    
                 </div>
-            </div>
+            </main>
         </div>
     </div>
 
@@ -195,7 +239,7 @@
 						Clique no alto-falante para ouvir o som!
 					</div>
 				</div>
- 
+
                 <div class="audio-section" id="audioQuestionArea">
 					<button id="playAudioButton" class="audio-button" aria-label="Ouvir o som da letra">
 						<i class="fas fa-volume-up"></i>
