@@ -1446,3 +1446,74 @@ html, body {
         margin-bottom: 10px;
     }
 }
+/* ================================================================= */
+/* === CORREÇÃO DOS ÍCONES E BOTÕES DE ORDENAÇÃO NO MODAL      === */
+/* ================================================================= */
+
+/* --- Estilo para os Ícones de Ação do Aluno (Chave e Lixeira) --- */
+.student-actions .btn.small {
+    background-color: transparent;
+    border: none;
+    color: #888; /* Cor cinza para os ícones */
+    font-size: 1.2rem;
+    padding: 8px 12px;
+    border-radius: 50%; /* Deixa o fundo redondo */
+    cursor: pointer;
+    transition: all 0.2s ease;
+    width: 40px;
+    height: 40px;
+}
+
+.student-actions .btn.small:hover {
+    background-color: #f0f0f0; /* Fundo cinza claro ao passar o mouse */
+    color: #333;
+}
+
+/* Cor vermelha para o ícone de lixeira ao passar o mouse */
+.student-actions .btn.small.danger:hover {
+    background-color: #ffebee;
+    color: #c0392b;
+}
+
+
+/* --- Estilo para os Botões de Ordenação (Nome, Último Acesso) --- */
+.sort-buttons {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.sort-buttons span {
+    font-size: 0.9rem;
+    color: #555;
+    font-weight: bold;
+}
+
+.sort-btn {
+    background-color: #f0f0f0;
+    border: 1px solid #ddd;
+    color: #555;
+    padding: 8px 15px;
+    border-radius: 20px; /* Bordas bem arredondadas */
+    font-family: 'Comic Neue', cursive;
+    font-size: 0.9rem;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.sort-btn:hover:not(.active) {
+    background-color: #e0e0e0;
+    border-color: #ccc;
+}
+
+/* Estilo do botão de ordenação ATIVO */
+.sort-btn.active {
+    background-color: #764ba2; /* Cor roxa do tema */
+    color: white;
+    border-color: #764ba2;
+    box-shadow: 0 2px 8px rgba(118, 75, 162, 0.3);
+}
