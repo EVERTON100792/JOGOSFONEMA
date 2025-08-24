@@ -413,7 +413,7 @@ async function handleGenerateAITips(studentId, studentName) {
     //  2. Clique em "Get API key" e copie sua chave.
     //  3. Cole a chave entre as aspas.
     // =================================================================================
-    const apiKey = "COLE_SUA_CHAVE_DA_API_AQUI"; 
+    const apiKey = "AIzaSyA_IDKtdC-3JynuarsWwZe6G7Di22dau5I"; 
 
     if (apiKey === "COLE_SUA_CHAVE_DA_API_AQUI" || apiKey === "") {
         aiContainer.innerHTML = `<p class="error"><strong>Atenção:</strong> A funcionalidade de IA precisa ser ativada. Por favor, insira uma chave de API válida no arquivo <strong>script.js</strong> na linha 557.</p>`;
