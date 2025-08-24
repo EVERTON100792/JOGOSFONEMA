@@ -165,7 +165,63 @@ async function logStudentError({ question, selectedAnswer }) { if (!currentUser 
 
 // PARTE 11: RELATÓRIOS
 async function loadDifficultyReports() { const heatmapContainer = document.getElementById('classHeatmap'); const individualReportsContainer = document.getElementById('individualReports'); heatmapContainer.innerHTML = '<p><i class="fas fa-spinner fa-spin"></i> Carregando...</p>'; individualReportsContainer.innerHTML = '<p><i class="fas fa-spinner fa-spin"></i> Carregando...</p>'; const { data: errors, error } = await supabaseClient.from('student_errors').select('*').eq('class_id', currentClassId); if (error) { console.error('Erro ao buscar relatórios:', error); heatmapContainer.innerHTML = '<p class="error">Erro ao carregar.</p>'; individualReportsContainer.innerHTML = ''; return; } const { data: students, error: studentsError } = await supabaseClient.from('students').select('id, name').eq('class_id', currentClassId); if (studentsError) { console.error('Erro ao buscar alunos:', studentsError); individualReportsContainer.innerHTML = '<p class="error">Erro ao carregar.</p>'; return; } renderClassHeatmap(errors); renderIndividualReports(students, errors); }
+// Nova função para controlar as visões do dashboard
+function showDashboardView(viewId) {
+    // Esconde todas as visões
+    document.querySelectorAll('.dashboard-view').forEach(view => {
+        view.classList.remove('active');
+    });
 
+    // Mostra a visão selecionada
+    const activeView = document.getElementById(viewId);
+    if (activeView) {
+        activeView.classList.add('active');
+    }
+
+    // Atualiza o link ativo na sidebar
+    document.querySelectorAll('.sidebar-nav a').forEach(link => {
+        link.classList.remove('active');
+        if (link.dataset.view === viewId) {
+            link.classList.add('active');
+        }
+    });
+
+    // Atualiza o título do cabeçalho
+    const linkText = document.querySelector(`.sidebar-nav a[data-view="${viewId}"] span`).textContent;
+    document.getElementById('dashboard-title').textContent = linkText;
+}
+Modifique a função showTeacherDashboard para configurar os novos listeners da sidebar. Substitua a sua função showTeacherDashboard existente por esta:
+
+JavaScript
+
+// Função MODIFICADA para suportar a sidebar
+async function showTeacherDashboard() {
+    showScreen('teacherDashboard');
+    await loadTeacherData();
+
+    // Mostra a visão de turmas por padrão
+    showDashboardView('viewTurmas');
+
+    // Configura os listeners de evento para a navegação da sidebar
+    document.querySelectorAll('.sidebar-nav a').forEach(link => {
+        // Remove listener antigo para evitar duplicação, se houver
+        link.removeEventListener('click', handleSidebarClick); 
+        // Adiciona o novo listener
+        link.addEventListener('click', handleSidebarClick);
+    });
+
+    // Listener para o novo botão de logout
+    const logoutBtnSidebar = document.querySelector('.logout-btn-sidebar');
+    logoutBtnSidebar.removeEventListener('click', logout); // Limpa listener antigo
+    logoutBtnSidebar.addEventListener('click', logout); // Adiciona listener
+}
+
+// Função auxiliar para o evento de clique
+function handleSidebarClick(event) {
+    event.preventDefault(); // Previne o comportamento padrão do link
+    const viewId = event.currentTarget.dataset.view;
+    showDashboardView(viewId);
+}
 // =======================================================
 // FUNÇÃO renderClassHeatmap ATUALIZADA
 // =======================================================
