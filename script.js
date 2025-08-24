@@ -501,7 +501,28 @@ function stopTimer() { clearInterval(timerInterval); }
 
 // PARTE 8: LÓGICA DO JOGO
 // ... (código existente sem alterações)
-async function showStudentGame() { await startGame(); }
+// SUBSTITUA A FUNÇÃO ANTIGA POR ESTA
+async function showStudentGame() {
+    // Esta função agora é o ponto de entrada principal para o aluno
+    await loadGameState(); // Carrega o progresso salvo do banco de dados
+
+    // Verifica se o jogo pode ser continuado:
+    // 1. Não está na primeira questão (index > 0)
+    // 2. Ainda tem tentativas
+    // 3. A fase não foi marcada como concluída
+    const canResume = gameState.currentQuestionIndex > 0 && 
+                      gameState.attempts > 0 && 
+                      !gameState.phaseCompleted;
+
+    if (canResume) {
+        // Se puder continuar, vai direto para a tela do jogo
+        showScreen('gameScreen');
+        startQuestion(); // A função startQuestion vai carregar a questão correta
+    } else {
+        // Se for um novo jogo ou uma nova fase, mostra a tela de início
+        showScreen('startScreen');
+    }
+}
 async function startGame() { await loadGameState(); if (gameState.phaseCompleted) { restoreOrStartGame(); } else { showScreen('startScreen'); } }
 async function loadGameState() { const { data: progressData, error } = await supabaseClient.from('progress').select('game_state, current_phase').eq('student_id', currentUser.id).single(); if (error && error.code !== 'PGRST116') { console.error("Erro ao carregar progresso:", error); } const assignedPhase = currentUser.assigned_phase || 1; const savedPhase = progressData?.current_phase; if (progressData && savedPhase !== assignedPhase) { gameState = { currentPhase: assignedPhase, score: 0, attempts: 3, questions: generateQuestions(assignedPhase), currentQuestionIndex: 0, teacherId: currentUser.teacher_id, tutorialsShown: [], phaseCompleted: false }; await saveGameState(); return; } if (progressData?.game_state?.questions) { gameState = progressData.game_state; if (!gameState.tutorialsShown) gameState.tutorialsShown = []; } else { gameState = { currentPhase: assignedPhase, score: 0, attempts: 3, questions: generateQuestions(assignedPhase), currentQuestionIndex: 0, teacherId: currentUser.teacher_id, tutorialsShown: [], phaseCompleted: false }; await saveGameState(); } }
 async function saveGameState() { if (!currentUser || currentUser.type !== 'student') return; await supabaseClient.from('progress').upsert({ student_id: currentUser.id, current_phase: gameState.currentPhase, game_state: gameState, last_played: new Date().toISOString() }, { onConflict: 'student_id' });}
