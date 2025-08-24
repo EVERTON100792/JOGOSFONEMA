@@ -517,7 +517,265 @@ function renderOptions(options) { const lettersGrid = document.getElementById('l
 async function selectAnswer(selectedAnswer) { document.querySelectorAll('.letter-button').forEach(btn => btn.disabled = true); const q = gameState.questions[gameState.currentQuestionIndex]; const isCorrect = selectedAnswer === q.correctAnswer; document.querySelectorAll('.letter-button').forEach(btn => { if (btn.textContent === q.correctAnswer) btn.classList.add('correct'); if (btn.textContent === selectedAnswer && !isCorrect) btn.classList.add('incorrect'); }); if (isCorrect) { gameState.score++; showFeedback('Muito bem!', 'success'); playTeacherAudio('feedback_correct', 'Acertou'); if(q.type !== 'letter_sound') { document.getElementById('wordDisplay').textContent = q.word; } } else { gameState.attempts--; logStudentError({ question: q, selectedAnswer: selectedAnswer }).catch(console.error); showFeedback(`Quase! A resposta correta era ${q.correctAnswer}`, 'error'); playTeacherAudio('feedback_incorrect', 'Tente de novo'); } updateUI(); await saveGameState(); if(gameState.attempts <= 0) { setTimeout(endPhase, 2000); } else { setTimeout(() => document.getElementById('nextQuestion').style.display = 'block', 1500); } }
 function nextQuestion() { gameState.currentQuestionIndex++; startQuestion(); }
 function endPhase() { const accuracy = gameState.questions.length > 0 ? Math.round((gameState.score / gameState.questions.length) * 100) : 0; const passed = accuracy >= 70; showResultScreen(accuracy, passed); }
-function showResultScreen(accuracy, passed) { showScreen('resultScreen'); document.getElementById('finalScore').textContent = gameState.score; document.getElementById('accuracy').textContent = accuracy; if (passed) { document.getElementById('resultTitle').textContent = 'Parabéns!'; document.getElementById('resultMessage').innerHTML = 'Você completou a fase! 🏆<br>Fale com seu professor para a próxima!'; document.getElementById('continueButton').style.display = 'none'; document.getElementById('retryButton').style.display = 'none'; document.getElementById('restartButton').innerHTML = '<i class="fas fa-sign-out-alt"></i> Sair'; gameState.phaseCompleted = true; } else { document.getElementById('resultTitle').textContent = 'Não desanime!'; document.getElementById('resultMessage').textContent = 'Você precisa acertar mais. Tente novamente!'; document.getElementById('continueButton').style.display = 'none'; document.getElementById('retryButton').style.display = 'inline-block'; document.getElementById('restartButton').innerHTML = '<i class="fas fa-home"></i> Voltar ao Início'; gameState.phaseCompleted = false; } saveGameState(); }
+function showResultScreen(accuracy, passed) {
+    showScreen('resultScreen');
+    document.getElementById('finalScore').textContent = gameState.score;
+    document.getElementById('accuracy').textContent = accuracy;
+
+    const assignedPhases = currentUser.assigned_phases || [1];
+    const currentPhaseIndex = assignedPhases.indexOf(gameState.currentPhase);
+    const hasNextPhase = currentPhaseIndex !== -1 && currentPhaseIndex < assignedPhases.length - 1;
+
+    // Seleciona os botões uma vez para facilitar
+    const continueBtn = document.getElementById('continueButton');
+    const retryBtn = document.getElementById('retryButton');
+    const restartBtn = document.getElementById('restartButton');
+
+    if (passed) {
+        // --- LÓGICA QUANDO O ALUNO PASSA DE FASE ---
+        document.getElementById('resultTitle').textContent = 'Parabéns!';
+        retryBtn.style.display = 'none'; // Esconde o botão de tentar de novo
+        gameState.phaseCompleted = true;
+
+        if (hasNextPhase) {
+            // Se tem uma próxima fase na lista designada
+            document.getElementById('resultMessage').innerHTML = 'Você completou a fase! 🏆<br>Clique para ir para a próxima!';
+            continueBtn.style.display = 'inline-block'; // Mostra "Próxima Fase"
+            restartBtn.innerHTML = '<i class="fas fa-home"></i> Voltar ao Início'; // Botão secundário
+        } else {
+            // Se completou a ÚLTIMA fase designada
+            document.getElementById('resultMessage').innerHTML = 'Você completou TODAS as suas fases! 🥳<br>Fale com seu professor!';
+            continueBtn.style.display = 'none'; // Esconde "Próxima Fase"
+            restartBtn.innerHTML = '<i class="fas fa-sign-out-alt"></i> Sair'; // Ação principal é Sair
+        }
+
+    } else {
+        // --- LÓGICA QUANDO O ALUNO NÃO PASSA DE FASE ---
+        document.getElementById('resultTitle').textContent = 'Não desanime!';
+        document.getElementById('resultMessage').textContent = 'Você precisa acertar mais. Tente novamente!';
+        continueBtn.style.display = 'none'; // Esconde "Próxima Fase"
+        retryBtn.style.display = 'inline-block'; // Mostra "Tentar Novamente"
+        restartBtn.innerHTML = '<i class="fas fa-home"></i> Voltar ao Início';
+        gameState.phaseCompleted = false;
+    }
+
+    saveGameState();
+}function showResultScreen(accuracy, passed) {
+    showScreen('resultScreen');
+    document.getElementById('finalScore').textContent = gameState.score;
+    document.getElementById('accuracy').textContent = accuracy;
+
+    const assignedPhases = currentUser.assigned_phases || [1];
+    const currentPhaseIndex = assignedPhases.indexOf(gameState.currentPhase);
+    const hasNextPhase = currentPhaseIndex !== -1 && currentPhaseIndex < assignedPhases.length - 1;
+
+    // Seleciona os botões uma vez para facilitar
+    const continueBtn = document.getElementById('continueButton');
+    const retryBtn = document.getElementById('retryButton');
+    const restartBtn = document.getElementById('restartButton');
+
+    if (passed) {
+        // --- LÓGICA QUANDO O ALUNO PASSA DE FASE ---
+        document.getElementById('resultTitle').textContent = 'Parabéns!';
+        retryBtn.style.display = 'none'; // Esconde o botão de tentar de novo
+        gameState.phaseCompleted = true;
+
+        if (hasNextPhase) {
+            // Se tem uma próxima fase na lista designada
+            document.getElementById('resultMessage').innerHTML = 'Você completou a fase! 🏆<br>Clique para ir para a próxima!';
+            continueBtn.style.display = 'inline-block'; // Mostra "Próxima Fase"
+            restartBtn.innerHTML = '<i class="fas fa-home"></i> Voltar ao Início'; // Botão secundário
+        } else {
+            // Se completou a ÚLTIMA fase designada
+            document.getElementById('resultMessage').innerHTML = 'Você completou TODAS as suas fases! 🥳<br>Fale com seu professor!';
+            continueBtn.style.display = 'none'; // Esconde "Próxima Fase"
+            restartBtn.innerHTML = '<i class="fas fa-sign-out-alt"></i> Sair'; // Ação principal é Sair
+        }
+
+    } else {
+        // --- LÓGICA QUANDO O ALUNO NÃO PASSA DE FASE ---
+        document.getElementById('resultTitle').textContent = 'Não desanime!';
+        document.getElementById('resultMessage').textContent = 'Você precisa acertar mais. Tente novamente!';
+        continueBtn.style.display = 'none'; // Esconde "Próxima Fase"
+        retryBtn.style.display = 'inline-block'; // Mostra "Tentar Novamente"
+        restartBtn.innerHTML = '<i class="fas fa-home"></i> Voltar ao Início';
+        gameState.phaseCompleted = false;
+    }
+
+    saveGameState();
+}function showResultScreen(accuracy, passed) {
+    showScreen('resultScreen');
+    document.getElementById('finalScore').textContent = gameState.score;
+    document.getElementById('accuracy').textContent = accuracy;
+
+    const assignedPhases = currentUser.assigned_phases || [1];
+    const currentPhaseIndex = assignedPhases.indexOf(gameState.currentPhase);
+    const hasNextPhase = currentPhaseIndex !== -1 && currentPhaseIndex < assignedPhases.length - 1;
+
+    // Seleciona os botões uma vez para facilitar
+    const continueBtn = document.getElementById('continueButton');
+    const retryBtn = document.getElementById('retryButton');
+    const restartBtn = document.getElementById('restartButton');
+
+    if (passed) {
+        // --- LÓGICA QUANDO O ALUNO PASSA DE FASE ---
+        document.getElementById('resultTitle').textContent = 'Parabéns!';
+        retryBtn.style.display = 'none'; // Esconde o botão de tentar de novo
+        gameState.phaseCompleted = true;
+
+        if (hasNextPhase) {
+            // Se tem uma próxima fase na lista designada
+            document.getElementById('resultMessage').innerHTML = 'Você completou a fase! 🏆<br>Clique para ir para a próxima!';
+            continueBtn.style.display = 'inline-block'; // Mostra "Próxima Fase"
+            restartBtn.innerHTML = '<i class="fas fa-home"></i> Voltar ao Início'; // Botão secundário
+        } else {
+            // Se completou a ÚLTIMA fase designada
+            document.getElementById('resultMessage').innerHTML = 'Você completou TODAS as suas fases! 🥳<br>Fale com seu professor!';
+            continueBtn.style.display = 'none'; // Esconde "Próxima Fase"
+            restartBtn.innerHTML = '<i class="fas fa-sign-out-alt"></i> Sair'; // Ação principal é Sair
+        }
+
+    } else {
+        // --- LÓGICA QUANDO O ALUNO NÃO PASSA DE FASE ---
+        document.getElementById('resultTitle').textContent = 'Não desanime!';
+        document.getElementById('resultMessage').textContent = 'Você precisa acertar mais. Tente novamente!';
+        continueBtn.style.display = 'none'; // Esconde "Próxima Fase"
+        retryBtn.style.display = 'inline-block'; // Mostra "Tentar Novamente"
+        restartBtn.innerHTML = '<i class="fas fa-home"></i> Voltar ao Início';
+        gameState.phaseCompleted = false;
+    }
+
+    saveGameState();
+}function showResultScreen(accuracy, passed) {
+    showScreen('resultScreen');
+    document.getElementById('finalScore').textContent = gameState.score;
+    document.getElementById('accuracy').textContent = accuracy;
+
+    const assignedPhases = currentUser.assigned_phases || [1];
+    const currentPhaseIndex = assignedPhases.indexOf(gameState.currentPhase);
+    const hasNextPhase = currentPhaseIndex !== -1 && currentPhaseIndex < assignedPhases.length - 1;
+
+    // Seleciona os botões uma vez para facilitar
+    const continueBtn = document.getElementById('continueButton');
+    const retryBtn = document.getElementById('retryButton');
+    const restartBtn = document.getElementById('restartButton');
+
+    if (passed) {
+        // --- LÓGICA QUANDO O ALUNO PASSA DE FASE ---
+        document.getElementById('resultTitle').textContent = 'Parabéns!';
+        retryBtn.style.display = 'none'; // Esconde o botão de tentar de novo
+        gameState.phaseCompleted = true;
+
+        if (hasNextPhase) {
+            // Se tem uma próxima fase na lista designada
+            document.getElementById('resultMessage').innerHTML = 'Você completou a fase! 🏆<br>Clique para ir para a próxima!';
+            continueBtn.style.display = 'inline-block'; // Mostra "Próxima Fase"
+            restartBtn.innerHTML = '<i class="fas fa-home"></i> Voltar ao Início'; // Botão secundário
+        } else {
+            // Se completou a ÚLTIMA fase designada
+            document.getElementById('resultMessage').innerHTML = 'Você completou TODAS as suas fases! 🥳<br>Fale com seu professor!';
+            continueBtn.style.display = 'none'; // Esconde "Próxima Fase"
+            restartBtn.innerHTML = '<i class="fas fa-sign-out-alt"></i> Sair'; // Ação principal é Sair
+        }
+
+    } else {
+        // --- LÓGICA QUANDO O ALUNO NÃO PASSA DE FASE ---
+        document.getElementById('resultTitle').textContent = 'Não desanime!';
+        document.getElementById('resultMessage').textContent = 'Você precisa acertar mais. Tente novamente!';
+        continueBtn.style.display = 'none'; // Esconde "Próxima Fase"
+        retryBtn.style.display = 'inline-block'; // Mostra "Tentar Novamente"
+        restartBtn.innerHTML = '<i class="fas fa-home"></i> Voltar ao Início';
+        gameState.phaseCompleted = false;
+    }
+
+    saveGameState();
+}function showResultScreen(accuracy, passed) {
+    showScreen('resultScreen');
+    document.getElementById('finalScore').textContent = gameState.score;
+    document.getElementById('accuracy').textContent = accuracy;
+
+    const assignedPhases = currentUser.assigned_phases || [1];
+    const currentPhaseIndex = assignedPhases.indexOf(gameState.currentPhase);
+    const hasNextPhase = currentPhaseIndex !== -1 && currentPhaseIndex < assignedPhases.length - 1;
+
+    // Seleciona os botões uma vez para facilitar
+    const continueBtn = document.getElementById('continueButton');
+    const retryBtn = document.getElementById('retryButton');
+    const restartBtn = document.getElementById('restartButton');
+
+    if (passed) {
+        // --- LÓGICA QUANDO O ALUNO PASSA DE FASE ---
+        document.getElementById('resultTitle').textContent = 'Parabéns!';
+        retryBtn.style.display = 'none'; // Esconde o botão de tentar de novo
+        gameState.phaseCompleted = true;
+
+        if (hasNextPhase) {
+            // Se tem uma próxima fase na lista designada
+            document.getElementById('resultMessage').innerHTML = 'Você completou a fase! 🏆<br>Clique para ir para a próxima!';
+            continueBtn.style.display = 'inline-block'; // Mostra "Próxima Fase"
+            restartBtn.innerHTML = '<i class="fas fa-home"></i> Voltar ao Início'; // Botão secundário
+        } else {
+            // Se completou a ÚLTIMA fase designada
+            document.getElementById('resultMessage').innerHTML = 'Você completou TODAS as suas fases! 🥳<br>Fale com seu professor!';
+            continueBtn.style.display = 'none'; // Esconde "Próxima Fase"
+            restartBtn.innerHTML = '<i class="fas fa-sign-out-alt"></i> Sair'; // Ação principal é Sair
+        }
+
+    } else {
+        // --- LÓGICA QUANDO O ALUNO NÃO PASSA DE FASE ---
+        document.getElementById('resultTitle').textContent = 'Não desanime!';
+        document.getElementById('resultMessage').textContent = 'Você precisa acertar mais. Tente novamente!';
+        continueBtn.style.display = 'none'; // Esconde "Próxima Fase"
+        retryBtn.style.display = 'inline-block'; // Mostra "Tentar Novamente"
+        restartBtn.innerHTML = '<i class="fas fa-home"></i> Voltar ao Início';
+        gameState.phaseCompleted = false;
+    }
+
+    saveGameState();
+}function showResultScreen(accuracy, passed) {
+    showScreen('resultScreen');
+    document.getElementById('finalScore').textContent = gameState.score;
+    document.getElementById('accuracy').textContent = accuracy;
+
+    const assignedPhases = currentUser.assigned_phases || [1];
+    const currentPhaseIndex = assignedPhases.indexOf(gameState.currentPhase);
+    const hasNextPhase = currentPhaseIndex !== -1 && currentPhaseIndex < assignedPhases.length - 1;
+
+    // Seleciona os botões uma vez para facilitar
+    const continueBtn = document.getElementById('continueButton');
+    const retryBtn = document.getElementById('retryButton');
+    const restartBtn = document.getElementById('restartButton');
+
+    if (passed) {
+        // --- LÓGICA QUANDO O ALUNO PASSA DE FASE ---
+        document.getElementById('resultTitle').textContent = 'Parabéns!';
+        retryBtn.style.display = 'none'; // Esconde o botão de tentar de novo
+        gameState.phaseCompleted = true;
+
+        if (hasNextPhase) {
+            // Se tem uma próxima fase na lista designada
+            document.getElementById('resultMessage').innerHTML = 'Você completou a fase! 🏆<br>Clique para ir para a próxima!';
+            continueBtn.style.display = 'inline-block'; // Mostra "Próxima Fase"
+            restartBtn.innerHTML = '<i class="fas fa-home"></i> Voltar ao Início'; // Botão secundário
+        } else {
+            // Se completou a ÚLTIMA fase designada
+            document.getElementById('resultMessage').innerHTML = 'Você completou TODAS as suas fases! 🥳<br>Fale com seu professor!';
+            continueBtn.style.display = 'none'; // Esconde "Próxima Fase"
+            restartBtn.innerHTML = '<i class="fas fa-sign-out-alt"></i> Sair'; // Ação principal é Sair
+        }
+
+    } else {
+        // --- LÓGICA QUANDO O ALUNO NÃO PASSA DE FASE ---
+        document.getElementById('resultTitle').textContent = 'Não desanime!';
+        document.getElementById('resultMessage').textContent = 'Você precisa acertar mais. Tente novamente!';
+        continueBtn.style.display = 'none'; // Esconde "Próxima Fase"
+        retryBtn.style.display = 'inline-block'; // Mostra "Tentar Novamente"
+        restartBtn.innerHTML = '<i class="fas fa-home"></i> Voltar ao Início';
+        gameState.phaseCompleted = false;
+    }
+
+    saveGameState();
+}
 async function nextPhase() { const nextPhaseNum = gameState.currentPhase + 1; if (nextPhaseNum > currentUser.assigned_phase) return; gameState.currentPhase = nextPhaseNum; gameState.currentQuestionIndex = 0; gameState.score = 0; gameState.attempts = 3; gameState.questions = generateQuestions(gameState.currentPhase); gameState.phaseCompleted = false; await saveGameState(); showScreen('gameScreen'); startQuestion(); }
 async function retryPhase() { gameState.currentQuestionIndex = 0; gameState.score = 0; gameState.attempts = 3; gameState.phaseCompleted = false; await saveGameState(); showScreen('gameScreen'); startQuestion(); }
 async function restartGame() { if (gameState.phaseCompleted || gameState.attempts <= 0) { logout(); } else { showScreen('startScreen'); } }
