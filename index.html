@@ -169,7 +169,8 @@
                             <select id="reportClassSelector" class="phase-select" style="width: 100%; max-width: 400px; font-size: 1.1rem; padding: 12px; margin-top: 10px;"></select>
                         </div>
                         <div id="reportContentContainer" style="display: none;">
-                            </div>
+                            <!-- O conteúdo dos relatórios (mapa de calor, etc.) será injetado aqui -->
+                        </div>
                     </div>
     
                     <div id="viewConfig" class="dashboard-view">
@@ -472,6 +473,18 @@
             </div>
             <div class="modal-actions">
                 <button type="button" class="modal-btn" data-close="chartModal">Fechar</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="aiTipsModal" class="modal">
+        <div class="modal-content large">
+            <h3 id="aiTipsTitle"><i class="fas fa-lightbulb" style="color: #f1c40f;"></i> Dicas Pedagógicas com IA</h3>
+            <div id="aiTipsContent" class="ai-tips-container">
+                <!-- O conteúdo gerado pela IA será inserido aqui -->
+            </div>
+            <div class="modal-actions">
+                <button type="button" class="modal-btn" data-close="aiTipsModal">Fechar</button>
             </div>
         </div>
     </div>
