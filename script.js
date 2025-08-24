@@ -122,27 +122,23 @@ async function loadAndDisplayClassReports(classId) { const reportContainer = doc
 function renderClassHeatmap(errors, containerId) { const heatmapContainer = document.getElementById(containerId); const sectionHeader = heatmapContainer.closest('.report-section').querySelector('h4'); sectionHeader.querySelector('.view-chart-btn')?.remove(); if (!errors || errors.length === 0) { heatmapContainer.innerHTML = '<p>Nenhum erro registrado para esta turma. Ótimo trabalho! 🎉</p>'; return; } const errorsByPhase = errors.reduce((acc, error) => { const phase = error.phase || 'Desconhecida'; if (!acc[phase]) { acc[phase] = []; } acc[phase].push(error); return acc; }, {}); let html = ''; const sortedPhases = Object.keys(errorsByPhase).sort((a, b) => a - b); for (const phase of sortedPhases) { const phaseDescription = PHASE_DESCRIPTIONS[phase] || 'Fase Desconhecida'; html += `<div class="phase-group"><h3>Fase ${phase} - ${phaseDescription}</h3>`; const phaseErrors = errorsByPhase[phase]; const errorCounts = phaseErrors.reduce((acc, error) => { const key = error.correct_answer; acc[key] = (acc[key] || 0) + 1; return acc; }, {}); const sortedErrors = Object.entries(errorCounts).sort(([, a], [, b]) => b - a); if (sortedErrors.length === 0) { html += '<p>Nenhum erro nesta fase.</p>'; } else { html += sortedErrors.map(([item, count]) => ` <div class="heatmap-item"> <div class="item-label">${item}</div> <div class="item-details"> <span class="item-count">${count} erro(s)</span> <div class="item-bar-container"> <div class="item-bar" style="width: ${(count / sortedErrors[0][1]) * 100}%;"></div> </div> </div> </div> `).join(''); } html += '</div>'; } heatmapContainer.innerHTML = html; const chartButton = document.createElement('button'); chartButton.className = 'btn small view-chart-btn'; chartButton.innerHTML = '<i class="fas fa-chart-bar"></i> Ver Gráfico Geral'; chartButton.onclick = () => { const totalErrorCounts = errors.reduce((acc, error) => { const key = error.correct_answer; acc[key] = (acc[key] || 0) + 1; return acc; }, {}); const sortedTotalErrors = Object.entries(totalErrorCounts).sort(([, a], [, b]) => b - a); const chartLabels = sortedTotalErrors.map(([item]) => item); const chartData = sortedTotalErrors.map(([, count]) => count); displayChartModal('Gráfico de Dificuldades da Turma (Geral)', chartLabels, chartData); }; sectionHeader.appendChild(chartButton); }
 function renderIndividualReports(students, allErrors, containerId) { const container = document.getElementById(containerId); if (!students || students.length === 0) { container.innerHTML = '<p>Nenhum aluno na turma.</p>'; return; } container.innerHTML = students.map(student => ` <div class="student-item student-report-item" data-student-id="${student.id}" data-student-name="${student.name}"> <div class="student-info"> <h4>${student.name}</h4> </div> <i class="fas fa-chevron-down"></i> </div> <div class="student-errors-details" id="errors-for-${student.id}" style="display: none;"></div> `).join(''); container.querySelectorAll('.student-report-item').forEach(item => { item.addEventListener('click', () => { const studentId = item.dataset.studentId; const studentName = item.dataset.studentName; const detailsContainer = document.getElementById(`errors-for-${studentId}`); const isVisible = detailsContainer.style.display === 'block'; container.querySelectorAll('.student-errors-details').forEach(d => { if (d.id !== `errors-for-${studentId}`) d.style.display = 'none'; }); container.querySelectorAll('.student-report-item i').forEach(i => i.className = 'fas fa-chevron-down'); if (!isVisible) { detailsContainer.style.display = 'block'; item.querySelector('i').className = 'fas fa-chevron-up'; const studentErrors = allErrors.filter(e => e.student_id === studentId); if (studentErrors.length === 0) { detailsContainer.innerHTML = '<p style="padding: 10px;">Este aluno não cometeu erros. Ótimo trabalho! 🌟</p>'; return; } const errorCounts = studentErrors.reduce((acc, error) => { const key = `Fase ${error.phase} | Correto: ${error.correct_answer}`; if (!acc[key]) { acc[key] = { count: 0, selections: {}, details: error }; } acc[key].count++; acc[key].selections[error.selected_answer] = (acc[key].selections[error.selected_answer] || 0) + 1; return acc; }, {}); const top5Errors = Object.entries(errorCounts).sort(([, a], [, b]) => b.count - a.count).slice(0, 5); let reportHTML = `<ul>${top5Errors.map(([, errorData]) => { const selectionsText = Object.entries(errorData.selections).map(([selection, count]) => `'${selection}' (${count}x)`).join(', '); const phaseDescription = PHASE_DESCRIPTIONS[errorData.details.phase] || ''; return `<li> <div class="error-item"> <strong>Fase ${errorData.details.phase} (${phaseDescription}):</strong> Resposta correta era <strong>"${errorData.details.correct_answer}"</strong> <small>Aluno selecionou: ${selectionsText}</small> </div> <span class="error-count">${errorData.count} ${errorData.count > 1 ? 'vezes' : 'vez'}</span> </li>`; }).join('')}</ul>`; reportHTML += `<div class="ai-button-container"> <button class="btn ai-btn" onclick="handleGenerateAITips('${studentId}', '${studentName}')"> <i class="fas fa-lightbulb"></i> Gerar Dicas com IA </button> </div>`; detailsContainer.innerHTML = reportHTML; } else { detailsContainer.style.display = 'none'; item.querySelector('i').className = 'fas fa-chevron-down'; } }); }); }
 // SUBSTITUA A FUNÇÃO ANTIGA POR ESTA VERSÃO CORRIGIDA
+// SUBSTITUA A FUNÇÃO INTEIRA POR ESTA VERSÃO SIMPLIFICADA E CORRIGIDA
 async function handleGenerateAITips(studentId, studentName) {
     const aiContainer = document.getElementById('aiTipsContent');
     document.getElementById('aiTipsTitle').innerHTML = `<i class="fas fa-lightbulb" style="color: #f1c40f;"></i> Dicas para <span style="color: #764ba2;">${studentName}</span>`;
     aiContainer.innerHTML = '<div class="loading-ai"><i class="fas fa-spinner fa-spin"></i> Analisando dados e gerando dicas pedagógicas...</div>';
     showModal('aiTipsModal');
 
-    // Insira sua chave de API do Google AI Studio na linha abaixo.
+    // ** IMPORTANTE: Verifique se a sua chave de API está correta aqui abaixo **
     const apiKey = "AIzaSyA_IDKtdC-3JynuarsWwZe6G7Di22dau5I";
 
-    // ****** CORREÇÃO LÓGICA ABAIXO ******
-    // Agora a verificação procura por um valor de exemplo genérico.
-    if (apiKey === "YOUR_API_KEY" || apiKey === "" || apiKey === "COLE_A_SUA_CHAVE_AQUI") {
-        aiContainer.innerHTML = `<p class="error"><strong>Atenção:</strong> A funcionalidade de IA precisa ser ativada. Por favor, insira uma chave de API válida no arquivo <strong>script.js</strong>.</p>`;
-        return;
-    }
+    // O bloco "if" que causava o erro foi REMOVIDO daqui.
 
     const { data: studentErrors, error } = await supabaseClient
         .from('student_errors')
         .select('*')
         .eq('student_id', studentId)
-        .limit(50); // Pega os últimos 50 erros para análise
+        .limit(50);
 
     if (error || !studentErrors || studentErrors.length === 0) {
         aiContainer.innerHTML = '<p>Este aluno não possui erros registrados para análise. Ótimo trabalho! 🌟</p>';
@@ -178,18 +174,15 @@ async function handleGenerateAITips(studentId, studentName) {
         if (!response.ok) {
             const errorBody = await response.json();
             console.error("API Error Body:", errorBody);
-            throw new Error(`Erro na API: ${response.statusText}. Verifique se sua chave de API é válida e está corretamente configurada.`);
+            // Agora, se der erro, mostraremos o erro real da API
+            throw new Error(`Erro na API: ${errorBody.error.message}`);
         }
 
         const result = await response.json();
         
-        if (result.candidates && result.candidates.length > 0 &&
-            result.candidates[0].content && result.candidates[0].content.parts &&
-            result.candidates[0].content.parts.length > 0) {
-            
+        if (result.candidates && result.candidates[0].content?.parts[0]) {
             let text = result.candidates[0].content.parts[0].text;
 
-            // Simple Markdown to HTML conversion
             text = text.replace(/## (.*)/g, '<h3>$1</h3>');
             text = text.replace(/\*\* (.*)\*\*/g, '<h4>$1</h4>');
             text = text.replace(/\* \*\*(.*)\*\*/g, '<h4>$1</h4>'); 
@@ -209,7 +202,171 @@ async function handleGenerateAITips(studentId, studentName) {
         }
     } catch (err) {
         console.error("Erro ao chamar a IA:", err);
-        aiContainer.innerHTML = `<p class="error">Desculpe, não foi possível gerar as dicas neste momento. Causa: ${err.message}</p>`;
+        aiContainer.innerHTML = `<p class="error">Desculpe, não foi possível gerar as dicas.<br><br><strong>Motivo:</strong> ${err.message}</p>`;
+    }
+}// SUBSTITUA A FUNÇÃO INTEIRA POR ESTA VERSÃO SIMPLIFICADA E CORRIGIDA
+async function handleGenerateAITips(studentId, studentName) {
+    const aiContainer = document.getElementById('aiTipsContent');
+    document.getElementById('aiTipsTitle').innerHTML = `<i class="fas fa-lightbulb" style="color: #f1c40f;"></i> Dicas para <span style="color: #764ba2;">${studentName}</span>`;
+    aiContainer.innerHTML = '<div class="loading-ai"><i class="fas fa-spinner fa-spin"></i> Analisando dados e gerando dicas pedagógicas...</div>';
+    showModal('aiTipsModal');
+
+    // ** IMPORTANTE: Verifique se a sua chave de API está correta aqui abaixo **
+    const apiKey = "AIzaSyA_IDKtdC-3JynuarsWwZe6G7Di22dau5I";
+
+    // O bloco "if" que causava o erro foi REMOVIDO daqui.
+
+    const { data: studentErrors, error } = await supabaseClient
+        .from('student_errors')
+        .select('*')
+        .eq('student_id', studentId)
+        .limit(50);
+
+    if (error || !studentErrors || studentErrors.length === 0) {
+        aiContainer.innerHTML = '<p>Este aluno não possui erros registrados para análise. Ótimo trabalho! 🌟</p>';
+        return;
+    }
+    
+    const errorSummary = studentErrors.map(e => `Fase ${e.phase} (${PHASE_DESCRIPTIONS[e.phase]}): A resposta correta era '${e.correct_answer}', mas o aluno escolheu '${e.selected_answer}'.`).join('\n');
+
+    const prompt = `
+        Você é um assistente pedagógico especialista em alfabetização no Brasil, projetado para auxiliar professores do ensino fundamental.
+        Um aluno chamado ${studentName} está apresentando as seguintes dificuldades em um jogo de alfabetização:
+        ${errorSummary}
+
+        Com base nesses erros, gere um relatório para o professor com as seguintes seções:
+        1.  **Principal Dificuldade Identificada:** Um parágrafo curto resumindo o padrão de erro mais comum do aluno (ex: "trocas de fonemas surdos/sonoros como P/B", "dificuldade com dígrafos", "confusão entre vogais").
+        2.  **Sugestões de Atividades Práticas:** Liste de 3 a 4 sugestões de atividades lúdicas e concretas que o professor pode realizar com o aluno para sanar essa dificuldade. Para cada atividade, forneça um título criativo e uma breve descrição de como executá-la. Use uma linguagem clara e encorajadora.
+
+        Formate sua resposta usando Markdown. Use títulos (##) para as seções e listas com marcadores (*) para as atividades.
+    `;
+
+    try {
+        let chatHistory = [{ role: "user", parts: [{ text: prompt }] }];
+        const payload = { contents: chatHistory };
+        
+        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${apiKey}`;
+        
+        const response = await fetch(apiUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+
+        if (!response.ok) {
+            const errorBody = await response.json();
+            console.error("API Error Body:", errorBody);
+            // Agora, se der erro, mostraremos o erro real da API
+            throw new Error(`Erro na API: ${errorBody.error.message}`);
+        }
+
+        const result = await response.json();
+        
+        if (result.candidates && result.candidates[0].content?.parts[0]) {
+            let text = result.candidates[0].content.parts[0].text;
+
+            text = text.replace(/## (.*)/g, '<h3>$1</h3>');
+            text = text.replace(/\*\* (.*)\*\*/g, '<h4>$1</h4>');
+            text = text.replace(/\* \*\*(.*)\*\*/g, '<h4>$1</h4>'); 
+            text = text.replace(/^\* (.*)/gm, '<li>$1</li>');
+            text = text.replace(/\n/g, '<br>');
+            text = text.replace(/<\/li><br>/g, '</li>');
+            
+            if (text.includes('<li>')) {
+                text = text.replace(/<li>/g, '</li><li>').substring(5);
+                text = `<ul>${text}</ul>`.replace(/<br><ul>/g, '<ul>');
+            }
+
+            aiContainer.innerHTML = text;
+        } else {
+            console.log("Resposta da IA em formato inesperado:", result);
+            throw new Error("Resposta da IA em formato inesperado.");
+        }
+    } catch (err) {
+        console.error("Erro ao chamar a IA:", err);
+        aiContainer.innerHTML = `<p class="error">Desculpe, não foi possível gerar as dicas.<br><br><strong>Motivo:</strong> ${err.message}</p>`;
+    }
+}// SUBSTITUA A FUNÇÃO INTEIRA POR ESTA VERSÃO SIMPLIFICADA E CORRIGIDA
+async function handleGenerateAITips(studentId, studentName) {
+    const aiContainer = document.getElementById('aiTipsContent');
+    document.getElementById('aiTipsTitle').innerHTML = `<i class="fas fa-lightbulb" style="color: #f1c40f;"></i> Dicas para <span style="color: #764ba2;">${studentName}</span>`;
+    aiContainer.innerHTML = '<div class="loading-ai"><i class="fas fa-spinner fa-spin"></i> Analisando dados e gerando dicas pedagógicas...</div>';
+    showModal('aiTipsModal');
+
+    // ** IMPORTANTE: Verifique se a sua chave de API está correta aqui abaixo **
+    const apiKey = "AIzaSyA_IDKtdC-3JynuarsWwZe6G7Di22dau5I";
+
+    // O bloco "if" que causava o erro foi REMOVIDO daqui.
+
+    const { data: studentErrors, error } = await supabaseClient
+        .from('student_errors')
+        .select('*')
+        .eq('student_id', studentId)
+        .limit(50);
+
+    if (error || !studentErrors || studentErrors.length === 0) {
+        aiContainer.innerHTML = '<p>Este aluno não possui erros registrados para análise. Ótimo trabalho! 🌟</p>';
+        return;
+    }
+    
+    const errorSummary = studentErrors.map(e => `Fase ${e.phase} (${PHASE_DESCRIPTIONS[e.phase]}): A resposta correta era '${e.correct_answer}', mas o aluno escolheu '${e.selected_answer}'.`).join('\n');
+
+    const prompt = `
+        Você é um assistente pedagógico especialista em alfabetização no Brasil, projetado para auxiliar professores do ensino fundamental.
+        Um aluno chamado ${studentName} está apresentando as seguintes dificuldades em um jogo de alfabetização:
+        ${errorSummary}
+
+        Com base nesses erros, gere um relatório para o professor com as seguintes seções:
+        1.  **Principal Dificuldade Identificada:** Um parágrafo curto resumindo o padrão de erro mais comum do aluno (ex: "trocas de fonemas surdos/sonoros como P/B", "dificuldade com dígrafos", "confusão entre vogais").
+        2.  **Sugestões de Atividades Práticas:** Liste de 3 a 4 sugestões de atividades lúdicas e concretas que o professor pode realizar com o aluno para sanar essa dificuldade. Para cada atividade, forneça um título criativo e uma breve descrição de como executá-la. Use uma linguagem clara e encorajadora.
+
+        Formate sua resposta usando Markdown. Use títulos (##) para as seções e listas com marcadores (*) para as atividades.
+    `;
+
+    try {
+        let chatHistory = [{ role: "user", parts: [{ text: prompt }] }];
+        const payload = { contents: chatHistory };
+        
+        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${apiKey}`;
+        
+        const response = await fetch(apiUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+
+        if (!response.ok) {
+            const errorBody = await response.json();
+            console.error("API Error Body:", errorBody);
+            // Agora, se der erro, mostraremos o erro real da API
+            throw new Error(`Erro na API: ${errorBody.error.message}`);
+        }
+
+        const result = await response.json();
+        
+        if (result.candidates && result.candidates[0].content?.parts[0]) {
+            let text = result.candidates[0].content.parts[0].text;
+
+            text = text.replace(/## (.*)/g, '<h3>$1</h3>');
+            text = text.replace(/\*\* (.*)\*\*/g, '<h4>$1</h4>');
+            text = text.replace(/\* \*\*(.*)\*\*/g, '<h4>$1</h4>'); 
+            text = text.replace(/^\* (.*)/gm, '<li>$1</li>');
+            text = text.replace(/\n/g, '<br>');
+            text = text.replace(/<\/li><br>/g, '</li>');
+            
+            if (text.includes('<li>')) {
+                text = text.replace(/<li>/g, '</li><li>').substring(5);
+                text = `<ul>${text}</ul>`.replace(/<br><ul>/g, '<ul>');
+            }
+
+            aiContainer.innerHTML = text;
+        } else {
+            console.log("Resposta da IA em formato inesperado:", result);
+            throw new Error("Resposta da IA em formato inesperado.");
+        }
+    } catch (err) {
+        console.error("Erro ao chamar a IA:", err);
+        aiContainer.innerHTML = `<p class="error">Desculpe, não foi possível gerar as dicas.<br><br><strong>Motivo:</strong> ${err.message}</p>`;
     }
 }
 
