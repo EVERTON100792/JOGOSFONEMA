@@ -1079,3 +1079,100 @@ html, body { height: 100%; overflow: hidden; }
 #teacherDashboard .logout-btn {
     display: none;
 }
+/* ============================================== */
+/* === AJUSTES DE RESPONSIVIDADE PARA CELULAR === */
+/* ============================================== */
+
+/* Usamos 768px como o ponto de quebra. Qualquer tela com largura menor que isso, aplicará estes estilos. */
+@media (max-width: 768px) {
+    
+    /* 1. O layout principal do dashboard muda de lado-a-lado para um em cima do outro */
+    #teacherDashboard .dashboard-container {
+        flex-direction: column; /* Transforma o layout em coluna */
+        height: auto; /* Permite que a altura se ajuste ao conteúdo */
+        min-height: 100vh;
+    }
+
+    /* 2. A sidebar se transforma em uma barra de navegação no topo */
+    .sidebar {
+        width: 100%; /* Ocupa toda a largura */
+        height: auto;
+        flex-direction: row; /* Itens da barra ficam lado a lado */
+        align-items: center;
+        padding: 10px;
+        border-right: none; /* Remove a borda direita */
+        border-bottom: 1px solid #e0e0e0; /* Adiciona uma borda inferior */
+        justify-content: space-between; /* Espaça os itens */
+    }
+
+    /* Esconde o título "Painel" para economizar espaço */
+    .sidebar-header {
+        display: none;
+    }
+
+    /* 3. Ajusta os links de navegação para ficarem lado a lado */
+    .sidebar-nav {
+        margin-top: 0;
+        display: flex;
+        flex-grow: 1; /* Permite que a navegação ocupe o espaço disponível */
+        justify-content: center; /* Centraliza os ícones */
+    }
+
+    .sidebar-nav a {
+        padding: 10px 15px;
+        margin: 0 5px;
+    }
+
+    /* Para economizar mais espaço, escondemos o texto e mostramos só o ícone */
+    .sidebar-nav a span {
+        display: none;
+    }
+
+    .sidebar-nav a i {
+        margin-right: 0; /* Remove a margem do ícone */
+        font-size: 1.4rem; /* Aumenta um pouco o ícone */
+    }
+
+    /* 4. Reposiciona o botão de sair */
+    .sidebar-footer {
+        padding: 0;
+        border-top: none;
+    }
+
+    .logout-btn-sidebar {
+        font-size: 1rem;
+        padding: 8px 12px;
+    }
+
+    /* 5. Ajusta a área de conteúdo principal */
+    .main-content {
+        overflow-y: visible; /* O scroll passa a ser da página inteira */
+    }
+
+    /* Esconde o cabeçalho de dentro do conteúdo, pois a barra do topo já faz esse papel */
+    #teacherDashboard .dashboard-header {
+        display: none;
+    }
+    
+    /* Ajusta o padding do conteúdo para telas menores */
+    .dashboard-content-area {
+        padding: 20px;
+    }
+
+    .view-header {
+        flex-direction: column;
+        gap: 15px;
+        align-items: flex-start;
+    }
+
+    /* Ajusta o grid de turmas para uma única coluna */
+    .classes-grid {
+        grid-template-columns: 1fr;
+    }
+
+    /* Melhora a visualização dos modais em telas pequenas */
+    .modal-content.large {
+        width: 95%;
+        max-height: 85vh;
+    }
+}
