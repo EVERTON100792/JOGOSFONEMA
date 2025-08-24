@@ -49,7 +49,159 @@ function setupAllEventListeners() { document.querySelectorAll('.user-type-btn').
 async function checkSession() { const { data: { session } } = await supabaseClient.auth.getSession(); if (session && session.user) { currentUser = session.user; if (currentUser.user_metadata.role === 'teacher') { await showTeacherDashboard(); } else { await logout(); } } else { showScreen('userTypeScreen'); } }
 async function handleTeacherLogin(e) { e.preventDefault(); const button = e.target.querySelector('button[type="submit"]'); const originalText = button.innerHTML; button.disabled = true; button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Entrando...'; const email = document.getElementById('teacherEmail').value; const password = document.getElementById('teacherPassword').value; try { const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password }); if (error) throw error; currentUser = data.user; await showTeacherDashboard(); showFeedback('Login realizado com sucesso!', 'success'); } catch (error) { showFeedback(formatErrorMessage(error), 'error'); } finally { button.disabled = false; button.innerHTML = originalText; } }
 async function handleTeacherRegister(e) { e.preventDefault(); const button = e.target.querySelector('button[type="submit"]'); const originalText = button.innerHTML; button.disabled = true; button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Cadastrando...'; const name = document.getElementById('teacherRegName').value; const email = document.getElementById('teacherRegEmail').value; const password = document.getElementById('teacherRegPassword').value; try { const { data, error } = await supabaseClient.auth.signUp({ email, password, options: { data: { full_name: name, role: 'teacher' } } }); if (error) throw error; showFeedback('Cadastro realizado! Link de confirmação enviado para seu e-mail.', 'success'); showScreen('teacherLoginScreen'); } catch (error) { showFeedback(formatErrorMessage(error), 'error'); } finally { button.disabled = false; button.innerHTML = originalText; } }
-async function handleStudentLogin(e) { e.preventDefault(); const button = e.target.querySelector('button[type="submit"]'); const originalText = button.innerHTML; button.disabled = true; button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Entrando...'; const username = document.getElementById('studentUsername').value.trim(); const password = document.getElementById('studentPassword').value.trim(); try { const { data: studentData, error } = await supabaseClient.from('students').select('*, assigned_phase').eq('username', username).single(); if (error && error.message.includes('multiple (or no) rows')) { throw new Error('Usuário ou senha inválidos.'); } if (error) throw error; if (!studentData) { throw new Error('Usuário ou senha inválidos.'); } const match = await verifyPassword(password, studentData.password); if (!match) { throw new Error('Usuário ou senha inválidos.'); } currentUser = { ...studentData, type: 'student' }; sessionStorage.setItem('currentUser', JSON.stringify(currentUser)); await showStudentGame(); showFeedback('Login realizado com sucesso!', 'success'); } catch (error) { showFeedback(formatErrorMessage(error), 'error'); } finally { button.disabled = false; button.innerHTML = originalText; } }
+async function handleStudentLogin(e) {
+    e.preventDefault();
+    const button = e.target.querySelector('button[type="submit"]');
+    const originalText = button.innerHTML;
+    button.disabled = true;
+    button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Entrando...';
+    const username = document.getElementById('studentUsername').value.trim();
+    const password = document.getElementById('studentPassword').value.trim();
+
+    try {
+        const { data: studentData, error } = await supabaseClient
+            .from('students')
+            .select('*, assigned_phases') // <-- CORREÇÃO AQUI: buscando a nova coluna no plural
+            .eq('username', username)
+            .single();
+
+        if (error && error.message.includes('multiple (or no) rows')) {
+            throw new Error('Usuário ou senha inválidos.');
+        }
+        if (error) throw error;
+        if (!studentData) {
+            throw new Error('Usuário ou senha inválidos.');
+        }
+        const match = await verifyPassword(password, studentData.password);
+        if (!match) {
+            throw new Error('Usuário ou senha inválidos.');
+        }
+
+        currentUser = { ...studentData, type: 'student' };
+        sessionStorage.setItem('currentUser', JSON.stringify(currentUser));
+        await showStudentGame();
+        showFeedback('Login realizado com sucesso!', 'success');
+    } catch (error) {
+        showFeedback(formatErrorMessage(error), 'error');
+    } finally {
+        button.disabled = false;
+        button.innerHTML = originalText;
+    }
+}async function handleStudentLogin(e) {
+    e.preventDefault();
+    const button = e.target.querySelector('button[type="submit"]');
+    const originalText = button.innerHTML;
+    button.disabled = true;
+    button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Entrando...';
+    const username = document.getElementById('studentUsername').value.trim();
+    const password = document.getElementById('studentPassword').value.trim();
+
+    try {
+        const { data: studentData, error } = await supabaseClient
+            .from('students')
+            .select('*, assigned_phases') // <-- CORREÇÃO AQUI: buscando a nova coluna no plural
+            .eq('username', username)
+            .single();
+
+        if (error && error.message.includes('multiple (or no) rows')) {
+            throw new Error('Usuário ou senha inválidos.');
+        }
+        if (error) throw error;
+        if (!studentData) {
+            throw new Error('Usuário ou senha inválidos.');
+        }
+        const match = await verifyPassword(password, studentData.password);
+        if (!match) {
+            throw new Error('Usuário ou senha inválidos.');
+        }
+
+        currentUser = { ...studentData, type: 'student' };
+        sessionStorage.setItem('currentUser', JSON.stringify(currentUser));
+        await showStudentGame();
+        showFeedback('Login realizado com sucesso!', 'success');
+    } catch (error) {
+        showFeedback(formatErrorMessage(error), 'error');
+    } finally {
+        button.disabled = false;
+        button.innerHTML = originalText;
+    }
+}async function handleStudentLogin(e) {
+    e.preventDefault();
+    const button = e.target.querySelector('button[type="submit"]');
+    const originalText = button.innerHTML;
+    button.disabled = true;
+    button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Entrando...';
+    const username = document.getElementById('studentUsername').value.trim();
+    const password = document.getElementById('studentPassword').value.trim();
+
+    try {
+        const { data: studentData, error } = await supabaseClient
+            .from('students')
+            .select('*, assigned_phases') // <-- CORREÇÃO AQUI: buscando a nova coluna no plural
+            .eq('username', username)
+            .single();
+
+        if (error && error.message.includes('multiple (or no) rows')) {
+            throw new Error('Usuário ou senha inválidos.');
+        }
+        if (error) throw error;
+        if (!studentData) {
+            throw new Error('Usuário ou senha inválidos.');
+        }
+        const match = await verifyPassword(password, studentData.password);
+        if (!match) {
+            throw new Error('Usuário ou senha inválidos.');
+        }
+
+        currentUser = { ...studentData, type: 'student' };
+        sessionStorage.setItem('currentUser', JSON.stringify(currentUser));
+        await showStudentGame();
+        showFeedback('Login realizado com sucesso!', 'success');
+    } catch (error) {
+        showFeedback(formatErrorMessage(error), 'error');
+    } finally {
+        button.disabled = false;
+        button.innerHTML = originalText;
+    }
+}async function handleStudentLogin(e) {
+    e.preventDefault();
+    const button = e.target.querySelector('button[type="submit"]');
+    const originalText = button.innerHTML;
+    button.disabled = true;
+    button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Entrando...';
+    const username = document.getElementById('studentUsername').value.trim();
+    const password = document.getElementById('studentPassword').value.trim();
+
+    try {
+        const { data: studentData, error } = await supabaseClient
+            .from('students')
+            .select('*, assigned_phases') // <-- CORREÇÃO AQUI: buscando a nova coluna no plural
+            .eq('username', username)
+            .single();
+
+        if (error && error.message.includes('multiple (or no) rows')) {
+            throw new Error('Usuário ou senha inválidos.');
+        }
+        if (error) throw error;
+        if (!studentData) {
+            throw new Error('Usuário ou senha inválidos.');
+        }
+        const match = await verifyPassword(password, studentData.password);
+        if (!match) {
+            throw new Error('Usuário ou senha inválidos.');
+        }
+
+        currentUser = { ...studentData, type: 'student' };
+        sessionStorage.setItem('currentUser', JSON.stringify(currentUser));
+        await showStudentGame();
+        showFeedback('Login realizado com sucesso!', 'success');
+    } catch (error) {
+        showFeedback(formatErrorMessage(error), 'error');
+    } finally {
+        button.disabled = false;
+        button.innerHTML = originalText;
+    }
+}
 async function logout() { await supabaseClient.auth.signOut(); currentUser = null; currentClassId = null; sessionStorage.removeItem('currentUser'); showScreen('userTypeScreen'); }
 function handleExitGame() { if (confirm('Tem certeza que deseja sair? Seu progresso ficará salvo.')) { sessionStorage.removeItem('currentUser'); currentUser = null; showScreen('userTypeScreen'); } }
 
