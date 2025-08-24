@@ -1,5 +1,5 @@
 // =======================================================
-// JOGO DAS LETRAS - SCRIPT FINAL E COMPLETO (v4 - Correção Final do Progresso)
+// JOGO DAS LETRAS - SCRIPT FINAL E COMPLETO (v5 - Relatórios Aprimorados)
 // =======================================================
 
 // PARTE 1: CONFIGURAÇÃO INICIAL E SUPABASE
@@ -52,15 +52,10 @@ async function handleDeleteClass(classId, className) { if (!confirm(`ATENÇÃO! 
 async function manageClass(classId, className) { currentClassId = classId; document.getElementById('manageClassTitle').textContent = `Gerenciar: ${className}`; const modal = document.getElementById('manageClassModal'); modal.querySelectorAll('.tab-btn').forEach(btn => { const tabId = btn.dataset.tab; if (!btn.getAttribute('data-listener')) { btn.setAttribute('data-listener', 'true'); btn.addEventListener('click', () => { if (tabId === 'studentsTab') loadClassStudents(); else if (tabId === 'studentProgressTab') loadStudentProgress(); else if (tabId === 'reportsTab') loadDifficultyReports(); }); } }); showTab(document.querySelector('#manageClassModal .tab-btn[data-tab="studentsTab"]')); await loadClassStudents(); showModal('manageClassModal'); }
 async function loadClassStudents() { const { data, error } = await supabaseClient.from('students').select('*').eq('class_id', currentClassId).order('name', { ascending: true }); if (error) { console.error('Erro ao carregar alunos:', error); document.getElementById('studentsList').innerHTML = '<p>Erro ao carregar.</p>'; return; } renderStudents(data); }
 function renderStudents(students) { const container = document.getElementById('studentsList'); if (!students || students.length === 0) { container.innerHTML = '<p>Nenhum aluno cadastrado.</p>'; return; } container.innerHTML = students.map(student => ` <div class="student-item"> <div class="student-info"> <h4>${student.name}</h4> <p>Usuário: ${student.username}</p> </div> <div class="student-actions"> <button onclick="handleResetStudentPassword('${student.id}', '${student.name}')" class="btn small" title="Resetar Senha"> <i class="fas fa-key"></i> </button> <button onclick="handleDeleteStudent('${student.id}', '${student.name}')" class="btn small danger" title="Excluir Aluno"> <i class="fas fa-trash"></i> </button> </div> </div>`).join(''); }
-
-// =================================================================================
-// FUNÇÃO CORRIGIDA PARA BUSCAR O PROGRESSO DOS ALUNOS DE FORMA DIRETA E ROBUSTA
-// =================================================================================
 async function loadStudentProgress() {
     const progressList = document.getElementById('studentProgressList');
     progressList.innerHTML = '<p><i class="fas fa-spinner fa-spin"></i> Carregando progresso...</p>';
 
-    // Passo 1: Buscar os alunos da turma.
     const { data: studentsData, error: studentsError } = await supabaseClient
         .from('students')
         .select(`*`)
@@ -77,7 +72,6 @@ async function loadStudentProgress() {
         return;
     }
 
-    // Passo 2: A partir dos IDs dos alunos, buscar todos os seus progressos de uma vez.
     const studentIds = studentsData.map(s => s.id);
     const { data: progressData, error: progressError } = await supabaseClient
         .from('progress')
@@ -90,12 +84,10 @@ async function loadStudentProgress() {
         return;
     }
 
-    // Passo 3: Combinar os dados manualmente no JavaScript para garantir a exibição correta.
     const combinedData = studentsData.map(student => {
         const studentProgress = progressData.find(p => p.student_id === student.id);
         return {
             ...student,
-            // A função de renderização espera que 'progress' seja um array.
             progress: studentProgress ? [studentProgress] : [] 
         };
     });
@@ -163,8 +155,173 @@ async function logStudentError({ question, selectedAnswer }) { if (!currentUser 
 
 // PARTE 11: RELATÓRIOS
 async function loadDifficultyReports() { const heatmapContainer = document.getElementById('classHeatmap'); const individualReportsContainer = document.getElementById('individualReports'); heatmapContainer.innerHTML = '<p><i class="fas fa-spinner fa-spin"></i> Carregando...</p>'; individualReportsContainer.innerHTML = '<p><i class="fas fa-spinner fa-spin"></i> Carregando...</p>'; const { data: errors, error } = await supabaseClient.from('student_errors').select('*').eq('class_id', currentClassId); if (error) { console.error('Erro ao buscar relatórios:', error); heatmapContainer.innerHTML = '<p class="error">Erro ao carregar.</p>'; individualReportsContainer.innerHTML = ''; return; } const { data: students, error: studentsError } = await supabaseClient.from('students').select('id, name').eq('class_id', currentClassId); if (studentsError) { console.error('Erro ao buscar alunos:', studentsError); individualReportsContainer.innerHTML = '<p class="error">Erro ao carregar.</p>'; return; } renderClassHeatmap(errors); renderIndividualReports(students, errors); }
-function renderClassHeatmap(errors) { const heatmapContainer = document.getElementById('classHeatmap'); const sectionHeader = heatmapContainer.closest('.report-section').querySelector('h4'); sectionHeader.querySelector('.view-chart-btn')?.remove(); if (errors.length === 0) { heatmapContainer.innerHTML = '<p>Nenhum erro registrado.</p>'; return; } const errorCounts = errors.reduce((acc, error) => { const key = error.correct_answer; acc[key] = (acc[key] || 0) + 1; return acc; }, {}); const sortedErrors = Object.entries(errorCounts).sort(([, a], [, b]) => b - a); const maxErrors = sortedErrors.length > 0 ? sortedErrors[0][1] : 0; heatmapContainer.innerHTML = sortedErrors.map(([item, count]) => { const barWidth = maxErrors > 0 ? (count / maxErrors) * 100 : 0; return ` <div class="heatmap-item"> <div class="item-label">${item}</div> <div class="item-details"> <span class="item-count">${count} erro(s)</span> <div class="item-bar-container"> <div class="item-bar" style="width: ${barWidth}%;"></div> </div> </div> </div> `; }).join(''); const chartButton = document.createElement('button'); chartButton.className = 'btn small view-chart-btn'; chartButton.innerHTML = '<i class="fas fa-chart-bar"></i> Ver Gráfico'; chartButton.onclick = () => { const chartLabels = sortedErrors.map(([item]) => item); const chartData = sortedErrors.map(([, count]) => count); displayChartModal('Gráfico de Dificuldades da Turma', chartLabels, chartData); }; sectionHeader.appendChild(chartButton); }
-function renderIndividualReports(students, allErrors) { const container = document.getElementById('individualReports'); if (students.length === 0) { container.innerHTML = '<p>Nenhum aluno na turma.</p>'; return; } container.innerHTML = students.map(student => ` <div class="student-item student-report-item" data-student-id="${student.id}"> <div class="student-info"> <h4>${student.name}</h4> </div> <i class="fas fa-chevron-down"></i> </div> <div class="student-errors-details" id="errors-for-${student.id}" style="display: none;"></div> `).join(''); container.querySelectorAll('.student-report-item').forEach(item => { item.addEventListener('click', () => { const studentId = item.dataset.studentId; const detailsContainer = document.getElementById(`errors-for-${studentId}`); const isVisible = detailsContainer.style.display === 'block'; detailsContainer.style.display = isVisible ? 'none' : 'block'; item.querySelector('i').classList.toggle('fa-chevron-up', !isVisible); item.querySelector('i').classList.toggle('fa-chevron-down', isVisible); if (!isVisible) { const studentErrors = allErrors.filter(e => e.student_id === studentId); if (studentErrors.length === 0) { detailsContainer.innerHTML = '<p>Este aluno não cometeu erros. Ótimo trabalho!</p>'; return; } const errorCounts = studentErrors.reduce((acc, error) => { const key = error.correct_answer; acc[key] = (acc[key] || 0) + 1; return acc; }, {}); const top5Errors = Object.entries(errorCounts).sort(([, a], [, b]) => b - a).slice(0, 5); detailsContainer.innerHTML = ` <ul> ${top5Errors.map(([item, count]) => ` <li> <span class="error-item">"${item}"</span> <span class="error-count">${count} vezes</span> </li> `).join('')} </ul> `; } }); }); }
+
+// =======================================================
+// FUNÇÃO renderClassHeatmap ATUALIZADA
+// =======================================================
+function renderClassHeatmap(errors) {
+    const heatmapContainer = document.getElementById('classHeatmap');
+    const sectionHeader = heatmapContainer.closest('.report-section').querySelector('h4');
+    sectionHeader.querySelector('.view-chart-btn')?.remove();
+
+    if (errors.length === 0) {
+        heatmapContainer.innerHTML = '<p>Nenhum erro registrado para esta turma. Ótimo trabalho! 🎉</p>';
+        return;
+    }
+
+    // 1. Agrupar erros por fase
+    const errorsByPhase = errors.reduce((acc, error) => {
+        const phase = error.phase || 'Desconhecida';
+        if (!acc[phase]) {
+            acc[phase] = [];
+        }
+        acc[phase].push(error);
+        return acc;
+    }, {});
+
+    let html = '';
+    const sortedPhases = Object.keys(errorsByPhase).sort((a, b) => a - b);
+
+    // 2. Criar uma seção para cada fase
+    for (const phase of sortedPhases) {
+        html += `
+            <div class="phase-group">
+                <h3>Fase ${phase}</h3>
+        `;
+
+        const phaseErrors = errorsByPhase[phase];
+        const errorCounts = phaseErrors.reduce((acc, error) => {
+            const key = error.correct_answer;
+            acc[key] = (acc[key] || 0) + 1;
+            return acc;
+        }, {});
+
+        const sortedErrors = Object.entries(errorCounts).sort(([, a], [, b]) => b - a);
+        
+        if (sortedErrors.length === 0) {
+            html += '<p>Nenhum erro nesta fase.</p>';
+        } else {
+             html += sortedErrors.map(([item, count]) => `
+                <div class="heatmap-item">
+                    <div class="item-label">${item}</div>
+                    <div class="item-details">
+                        <span class="item-count">${count} erro(s)</span>
+                        <div class="item-bar-container">
+                             <div class="item-bar" style="width: ${(count / sortedErrors[0][1]) * 100}%;"></div>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+        html += '</div>'; // Fim do phase-group
+    }
+
+    heatmapContainer.innerHTML = html;
+
+    // Adiciona o botão de gráfico (opcional, mas mantido)
+    const chartButton = document.createElement('button');
+    chartButton.className = 'btn small view-chart-btn';
+    chartButton.innerHTML = '<i class="fas fa-chart-bar"></i> Ver Gráfico Geral';
+    chartButton.onclick = () => {
+        const totalErrorCounts = errors.reduce((acc, error) => {
+            const key = error.correct_answer;
+            acc[key] = (acc[key] || 0) + 1;
+            return acc;
+        }, {});
+        const sortedTotalErrors = Object.entries(totalErrorCounts).sort(([, a], [, b]) => b - a);
+        const chartLabels = sortedTotalErrors.map(([item]) => item);
+        const chartData = sortedTotalErrors.map(([, count]) => count);
+        displayChartModal('Gráfico de Dificuldades da Turma (Geral)', chartLabels, chartData);
+    };
+    sectionHeader.appendChild(chartButton);
+}
+
+
+// =======================================================
+// FUNÇÃO renderIndividualReports ATUALIZADA
+// =======================================================
+function renderIndividualReports(students, allErrors) {
+    const container = document.getElementById('individualReports');
+    if (students.length === 0) {
+        container.innerHTML = '<p>Nenhum aluno na turma.</p>';
+        return;
+    }
+    
+    container.innerHTML = students.map(student => `
+        <div class="student-item student-report-item" data-student-id="${student.id}">
+            <div class="student-info">
+                <h4>${student.name}</h4>
+            </div>
+            <i class="fas fa-chevron-down"></i>
+        </div>
+        <div class="student-errors-details" id="errors-for-${student.id}" style="display: none;"></div>
+    `).join('');
+
+    container.querySelectorAll('.student-report-item').forEach(item => {
+        item.addEventListener('click', () => {
+            const studentId = item.dataset.studentId;
+            const detailsContainer = document.getElementById(`errors-for-${studentId}`);
+            const isVisible = detailsContainer.style.display === 'block';
+            
+            // Fecha todos os outros detalhes para focar em um aluno por vez
+            container.querySelectorAll('.student-errors-details').forEach(d => d.style.display = 'none');
+            container.querySelectorAll('.student-report-item i').forEach(i => i.className = 'fas fa-chevron-down');
+
+            if (!isVisible) {
+                detailsContainer.style.display = 'block';
+                item.querySelector('i').className = 'fas fa-chevron-up';
+
+                const studentErrors = allErrors.filter(e => e.student_id === studentId);
+
+                if (studentErrors.length === 0) {
+                    detailsContainer.innerHTML = '<p>Este aluno não cometeu erros. Ótimo trabalho! 🌟</p>';
+                    return;
+                }
+                
+                // Agrupa erros para mostrar o que foi selecionado
+                const errorCounts = studentErrors.reduce((acc, error) => {
+                    const key = `Fase ${error.phase} | Correto: ${error.correct_answer}`;
+                    if (!acc[key]) {
+                        acc[key] = { count: 0, selections: {}, details: error };
+                    }
+                    acc[key].count++;
+                    // Conta quantas vezes cada resposta errada foi selecionada para a mesma pergunta
+                    acc[key].selections[error.selected_answer] = (acc[key].selections[error.selected_answer] || 0) + 1;
+                    return acc;
+                }, {});
+
+                const top5Errors = Object.entries(errorCounts)
+                    .sort(([, a], [, b]) => b.count - a.count)
+                    .slice(0, 5);
+
+                detailsContainer.innerHTML = `
+                    <ul>
+                        ${top5Errors.map(([, errorData]) => {
+                            // Formata as respostas erradas que foram selecionadas
+                            const selectionsText = Object.entries(errorData.selections)
+                                .map(([selection, count]) => `'${selection}' (${count}x)`)
+                                .join(', ');
+
+                            return `
+                                <li>
+                                    <div class="error-item">
+                                        <strong>Fase ${errorData.details.phase}:</strong> Resposta correta era <strong>"${errorData.details.correct_answer}"</strong>
+                                        <small>Aluno selecionou: ${selectionsText}</small>
+                                    </div>
+                                    <span class="error-count">${errorData.count} ${errorData.count > 1 ? 'vezes' : 'vez'}</span>
+                                </li>
+                            `;
+                        }).join('')}
+                    </ul>
+                `;
+            } else {
+                detailsContainer.style.display = 'none';
+                item.querySelector('i').className = 'fas fa-chevron-down';
+            }
+        });
+    });
+}
+
 
 // PARTE 12: GRÁFICOS
 function displayChartModal(title, labels, data) { const modal = document.getElementById('chartModal'); const titleEl = document.getElementById('chartModalTitle'); const ctx = document.getElementById('myChartCanvas').getContext('2d'); titleEl.textContent = title; if (currentChart) { currentChart.destroy(); } currentChart = new Chart(ctx, { type: 'bar', data: { labels: labels, datasets: [{ label: 'Nº de Erros', data: data, backgroundColor: 'rgba(118, 75, 162, 0.6)', borderColor: 'rgba(118, 75, 162, 1)', borderWidth: 1 }] }, options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } }, plugins: { legend: { display: false }, title: { display: true, text: 'Itens com maior quantidade de erros na turma', font: { size: 16, family: "'Comic Neue', cursive" } } } } }); showModal('chartModal'); }
