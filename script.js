@@ -132,7 +132,7 @@ async function handleGenerateAITips(studentId, studentName) {
     showModal('aiTipsModal');
 
     // ** CHAVE DE API ATUALIZADA AQUI **
-    const apiKey = "AIzaSyDj6Z7lyKMeJyqJKhRnEPlXq8hSTTSK_xE";
+    const apiKey = "AIzaSyCA9vIdNExymmsVxQBwh1tIVyoldeTclKs";
 
     // Busca os erros do aluno no banco de dados
     const { data: studentErrors, error } = await supabaseClient
