@@ -1,6 +1,6 @@
 // =======================================================
 // JOGO DAS LETRAS - SCRIPT ATUAL (Vanilla JS)
-// Versão com Dashboard Refatorado (Relatórios Unificados)
+// Versão com Dashboard Refatorado e Assistente IA
 // =======================================================
 
 // PARTE 1: CONFIGURAÇÃO INICIAL E SUPABASE
@@ -181,7 +181,7 @@ function hideTutorial() { document.getElementById('tutorialOverlay').classList.r
 // PARTE 10: LOG DE ERROS
 async function logStudentError({ question, selectedAnswer }) { if (!currentUser || currentUser.type !== 'student') { return; } const errorData = { student_id: currentUser.id, teacher_id: currentUser.teacher_id, class_id: currentUser.class_id, phase: gameState.currentPhase, question_type: question.type, correct_answer: String(question.correctAnswer), selected_answer: String(selectedAnswer) }; const { error } = await supabaseClient.from('student_errors').insert([errorData]); if (error) { console.error('Falha ao registrar erro:', error); } }
 
-// PARTE 11: RELATÓRIOS (REATORADO)
+// PARTE 11: RELATÓRIOS E IA (REATORADO)
 async function populateReportClassSelector() {
     const selector = document.getElementById('reportClassSelector');
     selector.innerHTML = '<option value="">Carregando turmas...</option>';
@@ -234,7 +234,6 @@ async function loadAndDisplayClassReports(classId) {
         return;
     }
 
-    // Estrutura HTML que será preenchida
     reportContainer.innerHTML = `
         <div class="report-section">
             <h4><i class="fas fa-fire"></i> Mapa de Calor da Turma</h4>
@@ -243,7 +242,7 @@ async function loadAndDisplayClassReports(classId) {
         </div>
         <div class="report-section">
             <h4><i class="fas fa-user-graduate"></i> Relatório Individual de Dificuldades</h4>
-            <p>Clique em um aluno para ver seus 5 maiores erros.</p>
+            <p>Clique em um aluno para ver seus erros e gerar dicas pedagógicas com a IA.</p>
             <div id="individualReportsContainer"></div>
         </div>
     `;
@@ -255,7 +254,7 @@ async function loadAndDisplayClassReports(classId) {
 function renderClassHeatmap(errors, containerId) {
     const heatmapContainer = document.getElementById(containerId);
     const sectionHeader = heatmapContainer.closest('.report-section').querySelector('h4');
-    sectionHeader.querySelector('.view-chart-btn')?.remove(); // Remove botão antigo para evitar duplicatas
+    sectionHeader.querySelector('.view-chart-btn')?.remove();
 
     if (!errors || errors.length === 0) {
         heatmapContainer.innerHTML = '<p>Nenhum erro registrado para esta turma. Ótimo trabalho! 🎉</p>';
@@ -325,7 +324,7 @@ function renderIndividualReports(students, allErrors, containerId) {
     }
 
     container.innerHTML = students.map(student => `
-        <div class="student-item student-report-item" data-student-id="${student.id}">
+        <div class="student-item student-report-item" data-student-id="${student.id}" data-student-name="${student.name}">
             <div class="student-info">
                 <h4>${student.name}</h4>
             </div>
@@ -337,10 +336,10 @@ function renderIndividualReports(students, allErrors, containerId) {
     container.querySelectorAll('.student-report-item').forEach(item => {
         item.addEventListener('click', () => {
             const studentId = item.dataset.studentId;
+            const studentName = item.dataset.studentName;
             const detailsContainer = document.getElementById(`errors-for-${studentId}`);
             const isVisible = detailsContainer.style.display === 'block';
 
-            // Fecha todos os outros
             container.querySelectorAll('.student-errors-details').forEach(d => {
                 if (d.id !== `errors-for-${studentId}`) d.style.display = 'none';
             });
@@ -366,7 +365,7 @@ function renderIndividualReports(students, allErrors, containerId) {
 
                 const top5Errors = Object.entries(errorCounts).sort(([, a], [, b]) => b.count - a.count).slice(0, 5);
                 
-                detailsContainer.innerHTML = `<ul>${top5Errors.map(([, errorData]) => {
+                let reportHTML = `<ul>${top5Errors.map(([, errorData]) => {
                     const selectionsText = Object.entries(errorData.selections).map(([selection, count]) => `'${selection}' (${count}x)`).join(', ');
                     const phaseDescription = PHASE_DESCRIPTIONS[errorData.details.phase] || '';
                     return `<li>
@@ -377,6 +376,14 @@ function renderIndividualReports(students, allErrors, containerId) {
                                 <span class="error-count">${errorData.count} ${errorData.count > 1 ? 'vezes' : 'vez'}</span>
                             </li>`;
                 }).join('')}</ul>`;
+
+                reportHTML += `<div class="ai-button-container">
+                                 <button class="btn ai-btn" onclick="handleGenerateAITips('${studentId}', '${studentName}')">
+                                     <i class="fas fa-lightbulb"></i> Gerar Dicas com IA
+                                 </button>
+                               </div>`;
+                detailsContainer.innerHTML = reportHTML;
+
             } else {
                 detailsContainer.style.display = 'none';
                 item.querySelector('i').className = 'fas fa-chevron-down';
@@ -385,6 +392,80 @@ function renderIndividualReports(students, allErrors, containerId) {
     });
 }
 
+async function handleGenerateAITips(studentId, studentName) {
+    const aiContainer = document.getElementById('aiTipsContent');
+    document.getElementById('aiTipsTitle').innerHTML = `<i class="fas fa-lightbulb" style="color: #f1c40f;"></i> Dicas para <span style="color: #764ba2;">${studentName}</span>`;
+    aiContainer.innerHTML = '<div class="loading-ai"><i class="fas fa-spinner fa-spin"></i> Analisando dados e gerando dicas pedagógicas...</div>';
+    showModal('aiTipsModal');
+
+    const { data: studentErrors, error } = await supabaseClient
+        .from('student_errors')
+        .select('*')
+        .eq('student_id', studentId)
+        .limit(50); // Pega os últimos 50 erros para análise
+
+    if (error || !studentErrors || studentErrors.length === 0) {
+        aiContainer.innerHTML = '<p>Não foi possível obter os dados de erros do aluno ou o aluno não possui erros registrados.</p>';
+        return;
+    }
+    
+    const errorSummary = studentErrors.map(e => 
+        `Fase ${e.phase} (${PHASE_DESCRIPTIONS[e.phase]}): A resposta correta era '${e.correct_answer}', mas o aluno escolheu '${e.selected_answer}'.`
+    ).join('\n');
+
+    const prompt = `
+        Você é um assistente pedagógico especialista em alfabetização no Brasil, projetado para auxiliar professores do ensino fundamental.
+        Um aluno chamado ${studentName} está apresentando as seguintes dificuldades em um jogo de alfabetização:
+        ${errorSummary}
+
+        Com base nesses erros, gere um relatório para o professor com as seguintes seções:
+        1.  **Principal Dificuldade Identificada:** Um parágrafo curto resumindo o padrão de erro mais comum do aluno (ex: "trocas de fonemas surdos/sonoros como P/B", "dificuldade com dígrafos", "confusão entre vogais").
+        2.  **Sugestões de Atividades Práticas:** Liste de 3 a 4 sugestões de atividades lúdicas e concretas que o professor pode realizar com o aluno para sanar essa dificuldade. Para cada atividade, forneça um título criativo e uma breve descrição de como executá-la. Use uma linguagem clara e encorajadora.
+
+        Formate sua resposta usando Markdown. Use títulos (##) para as seções e listas com marcadores (*) para as atividades.
+    `;
+
+    try {
+        let chatHistory = [{ role: "user", parts: [{ text: prompt }] }];
+        const payload = { contents: chatHistory };
+        const apiKey = ""; 
+        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
+        
+        const response = await fetch(apiUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+
+        if (!response.ok) {
+            throw new Error(`API error: ${response.statusText}`);
+        }
+
+        const result = await response.json();
+        
+        if (result.candidates && result.candidates.length > 0 &&
+            result.candidates[0].content && result.candidates[0].content.parts &&
+            result.candidates[0].content.parts.length > 0) {
+            
+            let text = result.candidates[0].content.parts[0].text;
+
+            // Simple Markdown to HTML conversion
+            text = text.replace(/## (.*)/g, '<h3>$1</h3>');
+            text = text.replace(/\* \*\*(.*)\*\*/g, '<h4>$1</h4>'); // For activity titles
+            text = text.replace(/\* (.*)/g, '<li>$1</li>');
+            text = text.replace(/\n/g, '<br>');
+            text = text.replace(/<\/li><br>/g, '</li>');
+            text = `<ul>${text.replace(/<li>/g, '</li><li>').substring(5)}</ul>`.replace('<ul><br>','<ul>');
+
+            aiContainer.innerHTML = text;
+        } else {
+            throw new Error("Resposta da IA em formato inesperado.");
+        }
+    } catch (err) {
+        console.error("Erro ao chamar a IA:", err);
+        aiContainer.innerHTML = '<p class="error">Desculpe, não foi possível gerar as dicas neste momento. Verifique sua conexão ou tente novamente mais tarde.</p>';
+    }
+}
 
 // PARTE 12: GRÁFICOS
 function displayChartModal(title, labels, data) { const modal = document.getElementById('chartModal'); const titleEl = document.getElementById('chartModalTitle'); const ctx = document.getElementById('myChartCanvas').getContext('2d'); titleEl.textContent = title; if (currentChart) { currentChart.destroy(); } currentChart = new Chart(ctx, { type: 'bar', data: { labels: labels, datasets: [{ label: 'Nº de Erros', data: data, backgroundColor: 'rgba(118, 75, 162, 0.6)', borderColor: 'rgba(118, 75, 162, 1)', borderWidth: 1 }] }, options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } }, plugins: { legend: { display: false }, title: { display: true, text: 'Itens com maior quantidade de erros na turma', font: { size: 16, family: "'Comic Neue', cursive" } } } } }); showModal('chartModal'); }
