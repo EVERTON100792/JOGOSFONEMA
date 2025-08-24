@@ -1176,3 +1176,149 @@ html, body { height: 100%; overflow: hidden; }
         max-height: 85vh;
     }
 }
+/* =================================================================== */
+/* === AJUSTES DE RESPONSIVIDADE (Layout de App com Barra Inferior) === */
+/* =================================================================== */
+
+@media (max-width: 768px) {
+    
+    /* 1. Prepara o corpo para a barra fixa */
+    #teacherDashboard .dashboard-container {
+        /* Adiciona um espaçamento na base para o conteúdo não ficar escondido atrás da barra */
+        padding-bottom: 80px; 
+    }
+
+    /* 2. Transforma a sidebar em uma barra de navegação fixa na base */
+    .sidebar {
+        position: fixed; /* Fixa na tela */
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        height: auto;
+        background: #ffffff;
+        
+        /* Itens ficam lado a lado */
+        flex-direction: row;
+        
+        /* Sombra sutil para dar elevação */
+        box-shadow: 0 -2px 10px rgba(0,0,0,0.1); 
+
+        padding: 5px 0;
+        border-right: none;
+        z-index: 1000;
+    }
+    
+    /* 3. Esconde o cabeçalho "Painel" que não é mais necessário */
+    .sidebar-header {
+        display: none;
+    }
+
+    /* 4. Organiza a navegação e o botão de sair na nova barra */
+    .sidebar-nav {
+        margin-top: 0;
+        display: flex;
+        flex-grow: 1; /* Ocupa o espaço disponível */
+        justify-content: space-around; /* Distribui os itens igualmente */
+        align-items: center;
+    }
+    
+    .sidebar-footer {
+        padding: 0;
+        border-top: none;
+        margin-right: 10px; /* Um pequeno espaço na direita */
+    }
+
+    /* 5. Estilo dos botões da barra inferior: Ícone em cima, texto embaixo */
+    .sidebar-nav a {
+        flex-direction: column; /* Ícone e texto em coluna */
+        justify-content: center;
+        padding: 8px 5px;
+        margin: 0;
+        height: 60px;
+        flex-grow: 1; /* Faz cada botão ocupar o mesmo espaço */
+        font-size: 0.75rem; /* Fonte pequena para o texto */
+        color: #888;
+        font-weight: normal;
+    }
+    
+    .sidebar-nav a.active {
+        /* Destaca o item ativo com a cor principal do tema */
+        color: #764ba2;
+        background: none; /* Remove o fundo anterior */
+        box-shadow: none;
+    }
+
+    .sidebar-nav a:hover {
+        background-color: #f5f5f5;
+        color: #764ba2;
+    }
+
+    .sidebar-nav a i {
+        margin-right: 0;
+        margin-bottom: 5px; /* Espaço entre o ícone e o texto */
+        font-size: 1.5rem;
+    }
+    
+    /* O texto do link de navegação agora é visível */
+    .sidebar-nav a span {
+        display: block;
+    }
+
+    /* 6. Ajusta o botão de sair para se integrar à barra */
+    .logout-btn-sidebar {
+        background: none;
+        border: none;
+        color: #888;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        font-size: 0.75rem;
+        height: 60px;
+        padding: 8px 5px;
+    }
+     .logout-btn-sidebar i {
+        font-size: 1.5rem;
+        margin-bottom: 5px;
+     }
+     .logout-btn-sidebar:hover {
+        color: #c0392b;
+     }
+
+    /* 7. Ajustes finais de layout do conteúdo principal */
+    #teacherDashboard .dashboard-container {
+        flex-direction: column;
+        height: auto;
+        min-height: 100vh;
+    }
+    
+    .main-content {
+        overflow-y: visible;
+    }
+
+    #teacherDashboard .dashboard-header {
+        padding: 15px 20px;
+    }
+
+     #teacherDashboard .dashboard-header h1 {
+        font-size: 1.4rem;
+    }
+
+    .dashboard-content-area {
+        padding: 20px;
+    }
+
+    .view-header {
+        flex-direction: column;
+        gap: 15px;
+        align-items: flex-start;
+    }
+
+    .classes-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .modal-content.large {
+        width: 95%;
+        max-height: 85vh;
+    }
+}
