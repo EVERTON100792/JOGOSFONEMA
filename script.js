@@ -84,7 +84,68 @@ async function manageClass(classId, className) { currentClassId = classId; docum
 async function loadClassStudents() { const { data, error } = await supabaseClient.from('students').select('*').eq('class_id', currentClassId).order('name', { ascending: true }); if (error) { console.error('Erro ao carregar alunos:', error); document.getElementById('studentsList').innerHTML = '<p>Erro ao carregar.</p>'; return; } renderStudents(data); }
 function renderStudents(students) { const container = document.getElementById('studentsList'); if (!students || students.length === 0) { container.innerHTML = '<p>Nenhum aluno cadastrado.</p>'; return; } container.innerHTML = students.map(student => ` <div class="student-item"> <div class="student-info"> <h4>${student.name}</h4> <p>Usuário: ${student.username}</p> </div> <div class="student-actions"> <button onclick="handleShowOrResetPassword('${student.id}', '${student.name}')" class="btn small" title="Ver/Redefinir Senha"> <i class="fas fa-eye"></i> </button> <button onclick="handleDeleteStudent('${student.id}', '${student.name}')" class="btn small danger" title="Excluir Aluno"> <i class="fas fa-trash"></i> </button> </div> </div>`).join(''); }
 async function loadStudentProgress() { const progressList = document.getElementById('studentProgressList'); progressList.innerHTML = '<p><i class="fas fa-spinner fa-spin"></i> Carregando progresso...</p>'; const { data: studentsData, error: studentsError } = await supabaseClient.from('students').select(`*`).eq('class_id', currentClassId); if (studentsError) { console.error("Erro ao buscar alunos:", studentsError); progressList.innerHTML = `<p style="color:red;">Erro ao carregar alunos: ${studentsError.message}</p>`; return; } if (!studentsData || studentsData.length === 0) { progressList.innerHTML = '<p>Nenhum aluno nesta turma para exibir o progresso.</p>'; return; } const studentIds = studentsData.map(s => s.id); const { data: progressData, error: progressError } = await supabaseClient.from('progress').select('*').in('student_id', studentIds); if (progressError) { console.error("Erro ao buscar progresso:", progressError); progressList.innerHTML = `<p style="color:red;">Erro ao carregar o progresso: ${progressError.message}</p>`; return; } const combinedData = studentsData.map(student => { const studentProgress = progressData.find(p => p.student_id === student.id); return { ...student, progress: studentProgress ? [studentProgress] : [] }; }); studentProgressData = combinedData; renderStudentProgress('last_played'); }
-function renderStudentProgress(sortBy = 'last_played') { const progressList = document.getElementById('studentProgressList'); const sortedData = [...studentProgressData].sort((a, b) => { if (sortBy === 'name') { return a.name.localeCompare(b.name); } if (sortBy === 'last_played') { const dateA = (a.progress && a.progress.length > 0) ? new Date(a.progress[0].last_played) : new Date(0); const dateB = (b.progress && b.progress.length > 0) ? new Date(b.progress[0].last_played) : new Date(0); return dateB - dateA; } return 0; }); let html = sortedData.map(student => { const progressRecord = (student.progress && student.progress.length > 0) ? student.progress[0] : null; const assignedPhases = student.assigned_phases && student.assigned_phases.length > 0 ? student.assigned_phases : [1]; const currentPhase = progressRecord?.current_phase || 'N/J'; const gameState = progressRecord?.game_state; let score = 0, total = 10, accuracy = 0; if (gameState && gameState.questions && gameState.questions.length > 0) { score = gameState.score ?? 0; total = gameState.questions.length; accuracy = Math.round((score / total) * 100); } let lastPlayedStr = 'Nunca jogou'; let statusClass = 'inactive'; if (progressRecord?.last_played) { const lastPlayedDate = new Date(progressRecord.last_played); lastPlayedStr = lastPlayedDate.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' }); const sevenDaysAgo = new Date(); sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7); if (lastPlayedDate > sevenDaysAgo) { statusClass = 'active'; } } const statusIcon = statusClass === 'active' ? '🟢' : '🔴'; const phaseCheckboxes = [1, 2, 3, 4, 5, 6].map(phaseNum => ` <label class="phase-checkbox-label"> <input type="checkbox" class="phase-checkbox" value="${phaseNum}" ${assignedPhases.includes(phaseNum) ? 'checked' : ''} onchange="assignPhases('${student.id}', this)" > Fase ${phaseNum} </label> `).join(''); return ` <div class="student-item"> <div class="student-info" style="flex-grow: 1;"> <h4>${student.name} <span class="status-indicator ${statusClass}">${statusIcon}</span></h4> <p>Último Acesso: ${lastPlayedStr}</p> <p>Progresso na Fase ${currentPhase}: ${accuracy}% (${score}/${total})</p> <div class="student-progress-container"> <div class="student-progress-bar"> <div class="student-progress-fill" style="width: ${accuracy}%;"></div> </div> </div> </div> <div class="student-actions"> <label class="select-label">Designar Fases:</label> <div class="phase-checkbox-group"> ${phaseCheckboxes} </div> </div> </div>`; }).join(''); progressList.innerHTML = html || '<p>Nenhum aluno para exibir.</p>'; }
+function renderStudentProgress(sortBy = 'last_played') {
+    const progressList = document.getElementById('studentProgressList');
+    const sortedData = [...studentProgressData].sort((a, b) => {
+        if (sortBy === 'name') {
+            return a.name.localeCompare(b.name);
+        }
+        if (sortBy === 'last_played') {
+            const dateA = (a.progress && a.progress.length > 0) ? new Date(a.progress[0].last_played) : new Date(0);
+            const dateB = (b.progress && b.progress.length > 0) ? new Date(b.progress[0].last_played) : new Date(0);
+            return dateB - dateA;
+        }
+        return 0;
+    });
+    let html = sortedData.map(student => {
+        const progressRecord = (student.progress && student.progress.length > 0) ? student.progress[0] : null;
+        const assignedPhases = student.assigned_phases && student.assigned_phases.length > 0 ? student.assigned_phases : [1];
+        const currentPhase = progressRecord?.current_phase || 'N/J';
+        const gameState = progressRecord?.game_state;
+        let score = 0, total = 10, accuracy = 0;
+        if (gameState && gameState.questions && gameState.questions.length > 0) {
+            score = gameState.score ?? 0;
+            total = gameState.questions.length;
+            accuracy = Math.round((score / total) * 100);
+        }
+        let lastPlayedStr = 'Nunca jogou';
+        let statusClass = 'inactive';
+        if (progressRecord?.last_played) {
+            const lastPlayedDate = new Date(progressRecord.last_played);
+            lastPlayedStr = lastPlayedDate.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+            const sevenDaysAgo = new Date();
+            sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+            if (lastPlayedDate > sevenDaysAgo) {
+                statusClass = 'active';
+            }
+        }
+        const statusIcon = statusClass === 'active' ? '🟢' : '🔴';
+        
+        // A CORREÇÃO ESTÁ APLICADA NA LINHA ABAIXO
+        const phaseCheckboxes = [1, 2, 3, 4, 5, 6].map(phaseNum => ` <label class="phase-checkbox-label"> <input type="checkbox" class="phase-checkbox" value="${phaseNum}" ${assignedPhases.includes(phaseNum) ? 'checked' : ''} onchange="assignPhases('${student.id}', this)" > Fase ${phaseNum} </label> `).join('');
+        
+        return `
+            <div class="student-item">
+                <div class="student-info" style="flex-grow: 1;">
+                    <h4>${student.name} <span class="status-indicator ${statusClass}">${statusIcon}</span></h4>
+                    <p>Último Acesso: ${lastPlayedStr}</p>
+                    <p>Progresso na Fase ${currentPhase}: ${accuracy}% (${score}/${total})</p>
+                    <div class="student-progress-container">
+                        <div class="student-progress-bar">
+                            <div class="student-progress-fill" style="width: ${accuracy}%;"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="student-actions">
+                    <label class="select-label">Designar Fases:</label>
+                    <div class="phase-checkbox-group">
+                        ${phaseCheckboxes}
+                    </div>
+                </div>
+            </div>`;
+    }).join('');
+    progressList.innerHTML = html || '<p>Nenhum aluno para exibir.</p>';
+}
 async function assignPhases(studentId, changedElement) { const checkboxGroup = changedElement.closest('.phase-checkbox-group'); const checkboxes = checkboxGroup.querySelectorAll('.phase-checkbox'); const newPhases = Array.from(checkboxes).filter(cb => cb.checked).map(cb => parseInt(cb.value)).sort((a, b) => a - b); if (newPhases.length === 0) { showFeedback("O aluno precisa ter pelo menos uma fase designada.", "error"); changedElement.checked = true; return; } const studentData = studentProgressData.find(s => s.id === studentId); if (!studentData) return; showFeedback(`Atualizando fases para ${studentData.name}...`, 'info'); try { const { error: assignError } = await supabaseClient.from('students').update({ assigned_phases: newPhases }).eq('id', studentId); if (assignError) throw assignError; const firstPhase = newPhases[0]; const newGameState = { currentPhase: firstPhase, score: 0, attempts: 3, questions: generateQuestions(firstPhase), currentQuestionIndex: 0, tutorialsShown: [], phaseCompleted: false }; const { error: progressError } = await supabaseClient.from('progress').upsert({ student_id: studentId, current_phase: firstPhase, game_state: newGameState, last_played: new Date().toISOString() }, { onConflict: 'student_id' }); if (progressError) throw progressError; showFeedback(`Fases de ${studentData.name} atualizadas!`, 'success'); await loadStudentProgress(); } catch (error) { console.error("Erro ao designar fases:", error); showFeedback(`Erro: ${error.message}`, 'error'); await loadStudentProgress(); } }
 async function handleCreateStudent(event) { event.preventDefault(); const username = document.getElementById('createStudentUsername').value.trim(); const password = document.getElementById('createStudentPassword').value; const submitButton = document.getElementById('createStudentSubmitBtn'); if (!username || !password) { return showFeedback("Preencha nome e senha.", "error"); } if (!currentClassId || !currentUser?.id) { return showFeedback("Erro de sessão.", "error"); } submitButton.disabled = true; submitButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Criando...'; try { const hashedPassword = await hashPassword(password); const { error } = await supabaseClient.from('students').insert([{ name: username, username: username, password: hashedPassword, class_id: currentClassId, teacher_id: currentUser.id }]); if (error) throw error; document.getElementById('newStudentUsername').textContent = username; document.getElementById('newStudentPassword').textContent = password; showModal('studentCreatedModal'); hideCreateStudentForm(); await loadClassStudents(); await loadStudentProgress(); } catch (error) { showFeedback(formatErrorMessage(error), 'error'); } finally { submitButton.disabled = false; submitButton.innerHTML = 'Criar Aluno'; } }
 async function handleDeleteStudent(studentId, studentName) { if (!confirm(`Tem certeza que deseja excluir "${studentName}"?`)) return; const { error } = await supabaseClient.from('students').delete().eq('id', studentId); if (error) { showFeedback(`Erro: ${error.message}`, 'error'); } else { showFeedback(`Aluno "${studentName}" excluído.`, 'success'); await loadClassStudents(); await loadStudentProgress(); } }
