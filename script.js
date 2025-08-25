@@ -245,7 +245,7 @@ function generateQuestions(phase) {
         case 8:
             const sounds8 = [...PHASE_8_SOUND_DETECTIVE].sort(() => 0.5 - Math.random());
             for (const item of sounds8) {
-                let options = [item.correct, item.incorrect, item.correct].sort(() => 0.5 - Math.random());
+                let options = [item.correct, item.incorrect].sort(() => 0.5 - Math.random());
                 questions.push({ type: 'sound_detective', image: item.image, correctAnswer: item.correct, options: options });
             }
             break;
@@ -265,6 +265,7 @@ function generateQuestions(phase) {
     return questions;
 }
 function generateOptions(correctItem, sourceArray, count) { const options = new Set([correctItem]); const availableItems = sourceArray.filter(l => l !== correctItem); while (options.size < count && availableItems.length > 0) { options.add(availableItems.splice(Math.floor(Math.random() * availableItems.length), 1)[0]); } return Array.from(options).sort(() => 0.5 - Math.random()); }
+
 async function startQuestion() {
     if (gameState.phaseCompleted) {
         const accuracy = gameState.questions.length > 0 ? Math.round((gameState.score / gameState.questions.length) * 100) : 100;
@@ -279,31 +280,38 @@ async function startQuestion() {
     document.getElementById('nextQuestion').style.display = 'none';
     updateUI();
 
-    // --- Início da Correção ---
-    // Oculta todos os containers principais
     document.getElementById('audioQuestionArea').style.display = 'none';
     document.getElementById('imageQuestionArea').style.display = 'none';
     document.getElementById('lettersGrid').style.display = 'none';
     document.getElementById('memoryGameGrid').style.display = 'none';
 
-    // Limpa apenas os containers que guardam as opções dinâmicas
     document.getElementById('lettersGrid').innerHTML = '';
     document.getElementById('memoryGameGrid').innerHTML = '';
     
-    // Reseta a área de construção de frases de forma segura
     const sentenceArea = document.getElementById('sentenceBuildArea');
     sentenceArea.innerHTML = '';
     sentenceArea.style.borderColor = '';
     sentenceArea.style.backgroundColor = '';
 
-    // Limpa os textos da pergunta
     document.getElementById('questionText').textContent = '';
     document.getElementById('wordDisplay').textContent = '';
     document.getElementById('repeatAudio').style.display = 'none';
-    // --- Fim da Correção ---
 
     switch (q.type) {
-        //... resto da função
+        case 'letter_sound': renderPhase1UI(q); break;
+        case 'initial_vowel': renderPhase2UI(q); break;
+        case 'vowel_encounter': renderPhase3UI(q); break;
+        case 'initial_syllable': case 'middle_syllable': case 'full_word': renderPhase4UI(q); break;
+        case 'build_sentence': renderPhase5UI(q); break;
+        case 'count_syllables': renderPhase6UI(q); break;
+        case 'memory_game': renderPhase7UI_MemoryGame(q); break;
+        case 'sound_detective': renderPhase8UI_SoundDetective(q); break;
+        case 'word_transform': renderPhase9UI_WordTransform(q); break;
+        case 'alphabet_order': renderPhase10UI_AlphabetOrder(q); break;
+    }
+    if (q.type === 'letter_sound') { setTimeout(playCurrentAudio, 500); }
+}
+
 function renderPhase1UI(q) { document.getElementById('audioQuestionArea').style.display = 'block'; document.getElementById('lettersGrid').style.display = 'grid'; document.getElementById('questionText').textContent = 'Qual letra faz este som?'; document.getElementById('repeatAudio').style.display = 'inline-block'; renderOptions(q.options); }
 function renderPhase2UI(q) { document.getElementById('imageQuestionArea').style.display = 'block'; document.getElementById('lettersGrid').style.display = 'grid'; document.getElementById('imageEmoji').textContent = q.image; document.getElementById('wordDisplay').textContent = `__${q.word.substring(1)}`; document.getElementById('questionText').textContent = 'Qual vogal completa a palavra?'; renderOptions(q.options); }
 function renderPhase3UI(q) { document.getElementById('imageQuestionArea').style.display = 'block'; document.getElementById('lettersGrid').style.display = 'grid'; document.getElementById('imageEmoji').textContent = q.image; document.getElementById('wordDisplay').textContent = q.word.replace(q.correctAnswer, '__'); document.getElementById('questionText').textContent = 'Qual encontro de vogais completa a palavra?'; renderOptions(q.options); }
@@ -372,7 +380,7 @@ function renderPhase8UI_SoundDetective(q) {
     const lettersGrid = document.getElementById('lettersGrid');
     lettersGrid.innerHTML = q.options.map((option, index) => `
         <button class="sound-detective-button" data-sound="${option}">
-            <i class="fas fa-volume-up"></i> Opção ${index + 1}
+            <i class="fas fa-volume-up"></i> ${option}
         </button>
     `).join('');
     lettersGrid.querySelectorAll('.sound-detective-button').forEach(btn => {
@@ -438,9 +446,11 @@ function handleCardClick(cardElement) {
             gameState.memoryGame.flippedCards = [];
             gameState.memoryGame.canFlip = true;
             if (gameState.memoryGame.matchedPairs === gameState.memoryGame.totalPairs) {
-                gameState.score++;
-                showFeedback('Você encontrou todos os pares!', 'success');
-                setTimeout(() => document.getElementById('nextQuestion').style.display = 'block', 1000);
+                setTimeout(() => {
+                    gameState.score++;
+                    showFeedback('Você encontrou todos os pares!', 'success');
+                    document.getElementById('nextQuestion').style.display = 'block';
+                }, 500);
             }
         } else {
             setTimeout(() => {
@@ -491,36 +501,57 @@ async function selectAnswer(selectedAnswer) {
 
     const isCorrect = selectedAnswer === q.correctAnswer;
 
-    // --- Início da Correção ---
-    // Aplica o feedback visual de acordo com o tipo da questão
     if (q.type === 'build_sentence') {
         const sentenceArea = document.getElementById('sentenceBuildArea');
         if (isCorrect) {
-            sentenceArea.style.borderColor = '#4ECDC4'; // Cor de sucesso
+            sentenceArea.style.borderColor = '#4ECDC4';
             sentenceArea.style.backgroundColor = 'rgba(78, 205, 196, 0.1)';
         } else {
-            sentenceArea.style.borderColor = '#ff6b6b'; // Cor de erro
+            sentenceArea.style.borderColor = '#ff6b6b';
             sentenceArea.style.backgroundColor = 'rgba(255, 107, 107, 0.1)';
         }
     } else {
-        // Feedback geral para questões baseadas em botões
         document.querySelectorAll('.letter-button, .word-option-button, .sound-detective-button').forEach(btn => {
             const btnIdentifier = btn.dataset.sound || btn.textContent;
-            // Destaca a resposta correta em verde
             if (btnIdentifier === q.correctAnswer) {
                 btn.classList.add('correct');
             }
-            // Se o usuário errou, destaca a escolha dele em vermelho
             if (!isCorrect && btnIdentifier === selectedAnswer) {
                 btn.classList.add('incorrect');
             }
         });
     }
-    // --- Fim da Correção ---
 
     if (isCorrect) {
-        // ... resto da função
-function nextQuestion() { gameState.currentQuestionIndex++; startQuestion(); }
+        gameState.score++;
+        showFeedback('Muito bem!', 'success');
+        playTeacherAudio('feedback_correct', 'Acertou');
+        if (q.type !== 'letter_sound' && q.type !== 'build_sentence') {
+            document.getElementById('wordDisplay').textContent = q.word || q.initialWord;
+        }
+    } else {
+        gameState.attempts--;
+        logStudentError({ question: q, selectedAnswer: selectedAnswer }).catch(console.error);
+        showFeedback(`Quase! A resposta correta era "${q.correctAnswer}"`, 'error');
+        playTeacherAudio('feedback_incorrect', 'Tente de novo');
+    }
+
+    updateUI();
+    await saveGameState();
+
+    if (gameState.attempts <= 0) {
+        setTimeout(endPhase, 2000);
+    } else {
+        document.getElementById('nextQuestion').style.display = 'block';
+    }
+}
+function nextQuestion() { 
+    if (gameState.questions[gameState.currentQuestionIndex].type === 'memory_game') {
+        // Para o jogo da memória, a pontuação já foi adicionada, então só avançamos.
+    }
+    gameState.currentQuestionIndex++; 
+    startQuestion(); 
+}
 function endPhase() { const accuracy = gameState.questions.length > 0 ? Math.round((gameState.score / gameState.questions.length) * 100) : 0; const passed = accuracy >= 70; showResultScreen(accuracy, passed); }
 function showResultScreen(accuracy, passed) { showScreen('resultScreen'); document.getElementById('finalScore').textContent = gameState.score; document.getElementById('accuracy').textContent = accuracy; const assignedPhases = currentUser.assigned_phases || [1]; const currentPhaseIndex = assignedPhases.indexOf(gameState.currentPhase); const hasNextPhase = currentPhaseIndex !== -1 && currentPhaseIndex < assignedPhases.length - 1; const continueBtn = document.getElementById('continueButton'); const retryBtn = document.getElementById('retryButton'); const restartBtn = document.getElementById('restartButton'); if (passed) { document.getElementById('resultTitle').textContent = 'Parabéns!'; retryBtn.style.display = 'none'; gameState.phaseCompleted = true; if (hasNextPhase) { document.getElementById('resultMessage').innerHTML = 'Você completou a fase! 🏆<br>Clique para ir para a próxima!'; continueBtn.style.display = 'inline-block'; restartBtn.innerHTML = '<i class="fas fa-home"></i> Voltar ao Início'; } else { document.getElementById('resultMessage').innerHTML = 'Você completou TODAS as suas fases! 🥳<br>Fale com seu professor!'; continueBtn.style.display = 'none'; restartBtn.innerHTML = '<i class="fas fa-sign-out-alt"></i> Sair'; } } else { document.getElementById('resultTitle').textContent = 'Não desanime!'; document.getElementById('resultMessage').textContent = 'Você precisa acertar mais. Tente novamente!'; continueBtn.style.display = 'none'; retryBtn.style.display = 'inline-block'; restartBtn.innerHTML = '<i class="fas fa-home"></i> Voltar ao Início'; gameState.phaseCompleted = false; } saveGameState(); }
 async function nextPhase() { const assignedPhases = currentUser.assigned_phases || [1]; const currentPhaseIndex = assignedPhases.indexOf(gameState.currentPhase); const hasNextPhase = currentPhaseIndex !== -1 && currentPhaseIndex < assignedPhases.length - 1; if (hasNextPhase) { const nextPhaseNum = assignedPhases[currentPhaseIndex + 1]; gameState.currentPhase = nextPhaseNum; gameState.currentQuestionIndex = 0; gameState.score = 0; gameState.attempts = 3; gameState.questions = generateQuestions(gameState.currentPhase); gameState.phaseCompleted = false; await saveGameState(); showScreen('gameScreen'); startQuestion(); } else { showResultScreen(100, true); } }
@@ -554,9 +585,10 @@ async function handleGenerateLessonPlan(studentId, studentName) {
     aiContainer.innerHTML = '<div class="loading-ai"><i class="fas fa-spinner fa-spin"></i> Analisando e gerando plano de aula...</div>';
     showModal('aiTipsModal');
     
-    const apiKey = "AIzaSyCA9vIdNExymmsVxQBwh1tIVyoldeTclKs"; 
+    // ATENÇÃO: Substitua pela sua chave de API do Google. Não exponha esta chave publicamente.
+    const apiKey = "COLE_SUA_CHAVE_AQUI"; 
     
-    if (!apiKey || apiKey === "COLE_SUA_CHAVE_PESSOAL_AQUI") {
+    if (!apiKey || apiKey === "COLE_SUA_CHAVE_AQUI") {
         aiContainer.innerHTML = `<p class="error"><strong>Erro de Configuração:</strong> A chave de API do Gemini não foi inserida no arquivo script.js.</p>`;
         return; 
     }
@@ -613,7 +645,7 @@ async function handleGenerateLessonPlan(studentId, studentName) {
             text = text.replace(/### (.*)/g, '<h3>$1</h3>');
             text = text.replace(/\n(\d)\. (.*)/g, '<p class="lesson-step"><strong>Passo $1:</strong> $2</p>');
             text = text.replace(/\n/g, '<br>');
-            text = text.replace(/<br>/g, ''); // Remove line breaks that are not part of lists
+            text = text.replace(/<br>/g, ''); 
 
             aiContainer.innerHTML = text;
         } else {
