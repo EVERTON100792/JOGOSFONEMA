@@ -74,7 +74,7 @@
                     </div>
                     <div class="form-group">
                         <label for="teacherRegPassword">Senha:</label>
-                         <div class="password-wrapper">
+                        <div class="password-wrapper">
                             <input type="password" id="teacherRegPassword" required autocomplete="new-password">
                             <i class="fas fa-eye password-toggle" aria-label="Mostrar/ocultar senha"></i>
                         </div>
@@ -82,7 +82,7 @@
                     <button type="submit" class="login-btn">Cadastrar</button>
                     <button type="button" class="register-btn" id="showLoginBtn">Já tenho conta</button>
                 </form>
-               <button class="back-btn" data-target="userTypeScreen">
+                <button class="back-btn" data-target="userTypeScreen">
                     <i class="fas fa-arrow-left"></i> Voltar
                 </button>
             </div>
@@ -127,7 +127,7 @@
                     </a>
                     <a href="#" id="nav-relatorios" data-view="viewRelatorios">
                         <i class="fas fa-chart-pie"></i>
-                        <span>Relatórios e Gráficos</span>
+                        <span>Relatórios</span>
                     </a>
                     <a href="#" id="nav-config" data-view="viewConfig">
                         <i class="fas fa-sliders-h"></i>
@@ -135,12 +135,12 @@
                     </a>
                 </nav>
                 <div class="sidebar-footer">
-                     <button id="logoutBtnSidebar" class="logout-btn-sidebar" aria-label="Sair da conta">
-                        <i class="fas fa-sign-out-alt"></i> Sair
+                    <button id="logoutBtnSidebar" class="logout-btn-sidebar" aria-label="Sair da conta">
+                        <i class="fas fa-sign-out-alt"></i>
+                        <span>Sair</span>
                     </button>
                 </div>
             </aside>
-    
             <main id="dashboardMainContent" class="main-content">
                 <div class="dashboard-header">
                     <h1 id="dashboard-title">Minhas Turmas</h1>
@@ -148,39 +148,32 @@
                         <span id="teacherName"></span>
                     </div>
                 </div>
-                
                 <div class="dashboard-content-area">
-                    
                     <div id="viewTurmas" class="dashboard-view active">
                         <div class="view-header">
                             <p>Gerencie suas turmas, adicione alunos e acompanhe o progresso individual.</p>
                             <button id="showCreateClassModalBtn" class="create-btn"><i class="fas fa-plus"></i> Criar Nova Turma</button>
                         </div>
-                        <div id="classesList" class="classes-grid">
-                            </div>
+                        <div id="classesList" class="classes-grid"></div>
                     </div>
-    
                     <div id="viewRelatorios" class="dashboard-view">
-                         <div class="view-header">
-                            <p>Analise o desempenho e as dificuldades de cada turma através de gráficos e relatórios detalhados.</p>
+                        <div class="view-header">
+                            <p>Analise o desempenho de cada turma através de gráficos e relatórios detalhados.</p>
                         </div>
-                        <div class="report-selector-container" style="margin-bottom: 25px;">
+                        <div class="report-selector-container">
                             <h4><i class="fas fa-filter"></i> Selecione uma turma para ver os relatórios:</h4>
-                            <select id="reportClassSelector" class="phase-select" style="width: 100%; max-width: 400px; font-size: 1.1rem; padding: 12px; margin-top: 10px;"></select>
+                            <select id="reportClassSelector" class="form-select"></select>
                         </div>
-                        <div id="reportContentContainer" style="display: none;">
-                            </div>
+                        <div id="reportContentContainer" style="display: none;"></div>
                     </div>
-    
                     <div id="viewConfig" class="dashboard-view">
-                         <div class="view-header">
+                        <div class="view-header">
                             <p>Opções e configurações gerais da sua conta de professor.</p>
                         </div>
-                         <button id="showAudioSettingsModalBtn" class="create-btn" style="background-color: #5c6bc0;">
+                        <button id="showAudioSettingsModalBtn" class="btn">
                             <i class="fas fa-microphone-alt"></i> Gerenciar Áudios das Letras
                         </button>
                     </div>
-    
                 </div>
             </main>
         </div>
@@ -206,7 +199,7 @@
 		</div>
 	</div>
 
-	<div id="gameScreen" class="screen">
+    <div id="gameScreen" class="screen">
 		<div class="game-header">
 			<div class="phase-info">
 				<h2>Fase <span id="currentPhase">1</span></h2>
@@ -221,12 +214,12 @@
 				</div>
 				<div class="attempts">
 					<i class="fas fa-heart"></i>
-					<span id="attempts">3</span> tentativas
+					<span id="attempts">3</span>
 				</div>
 			</div>
             <div class="game-actions">
                 <button id="exitGameButton" class="exit-button" title="Sair do Jogo">
-                    <i class="fas fa-sign-out-alt"></i> Sair
+                    <i class="fas fa-sign-out-alt"></i>
                 </button>
             </div>
 		</div>
@@ -240,14 +233,12 @@
 						Clique no alto-falante para ouvir o som!
 					</div>
 				</div>
-
                 <div class="audio-section" id="audioQuestionArea">
 					<button id="playAudioButton" class="audio-button" aria-label="Ouvir o som da letra">
 						<i class="fas fa-volume-up"></i>
 						<span>Ouvir Som</span>
 					</button>
 				</div>
-
                 <div id="imageQuestionArea" style="display: none;">
                     <div class="image-display">
                         <span id="imageEmoji" class="image-emoji"></span>
@@ -255,15 +246,12 @@
                     <div id="sentenceBuildArea" class="sentence-build-area"></div>
                     <h3 id="wordDisplay" class="word-display"></h3>
                 </div>
-
 				<div class="question-text">
 					<h3 id="questionText"></h3>
 				</div>
 			</div>
-            
             <div id="memoryGameGrid" class="memory-grid"></div>
 			<div class="letters-grid" id="lettersGrid"></div>
-            
 			<div class="game-controls">
 				<button id="repeatAudio" class="control-button">
 					<i class="fas fa-redo"></i> Ouvir Novamente
@@ -275,7 +263,7 @@
 		</div>
 	</div>
 
-	<div id="resultScreen" class="screen">
+    <div id="resultScreen" class="screen">
 		<div class="container">
 			<div class="result-content">
 				<div class="result-icon" id="resultIcon">
@@ -419,7 +407,7 @@
                     <p>Grave sua voz falando o som de cada letra.</p>
                     <div class="form-group">
                         <label for="letterSelect">1. Escolha a Letra para Gravar:</label>
-                        <select id="letterSelect"></select>
+                        <select id="letterSelect" class="form-select"></select>
                     </div>
                     <div class="record-controls">
                         <button id="recordBtn" class="record-btn" aria-label="Iniciar gravação"><i class="fas fa-microphone"></i> Gravar</button>
@@ -445,8 +433,7 @@
             <div id="tutorialMascot" class="mascot">
                 <i class="fas fa-cat"></i>
             </div>
-            <div class="speech-bubble" id="tutorialText">
-            </div>
+            <div class="speech-bubble" id="tutorialText"></div>
             <button id="closeTutorialBtn" class="start-button">
                 <i class="fas fa-play"></i> Vamos Jogar!
             </button>
@@ -455,11 +442,11 @@
 
     <div id="studentCreatedModal" class="modal">
         <div class="modal-content">
-            <h3 style="color: #4ECDC4;"><i class="fas fa-check-circle"></i> Aluno Criado com Sucesso!</h3>
+            <h3 style="color: var(--cor-sucesso);"><i class="fas fa-check-circle"></i> Aluno Criado com Sucesso!</h3>
             <p>Anote os dados de acesso abaixo para entregar ao aluno.</p>
             <div class="credentials-box">
                 <p><strong>Usuário:</strong> <span id="newStudentUsername"></span></p>
-                <p><strong>Senha:</strong> <span id="newStudentPassword" style="font-weight: bold; color: #764ba2;"></span></p>
+                <p><strong>Senha:</strong> <span id="newStudentPassword" style="font-weight: bold; color: var(--cor-primaria);"></span></p>
             </div>
             <div class="modal-actions">
                 <button type="button" id="copyCredentialsBtn" class="modal-btn"><i class="fas fa-copy"></i> Copiar Dados</button>
@@ -482,9 +469,8 @@
 
     <div id="aiTipsModal" class="modal">
         <div class="modal-content large">
-            <h3 id="aiTipsTitle"><i class="fas fa-rocket" style="color: #764ba2;"></i> Assistente Pedagógico IA</h3>
-            <div id="aiTipsContent" class="ai-tips-container">
-                </div>
+            <h3 id="aiTipsTitle"><i class="fas fa-rocket" style="color: var(--cor-primaria);"></i> Assistente Pedagógico IA</h3>
+            <div id="aiTipsContent" class="ai-tips-container"></div>
             <div class="modal-actions">
                 <button type="button" class="modal-btn" data-close="aiTipsModal">Fechar</button>
             </div>
@@ -493,10 +479,10 @@
 
 	<div id="resetPasswordModal" class="modal">
         <div class="modal-content">
-            <h3 style="color: #764ba2;"><i class="fas fa-key"></i> Senha Redefinida!</h3>
-            <p>A senha do aluno(a) <strong id="resetStudentName" style="color: #2c3e50;"></strong> foi alterada. Anote os novos dados de acesso abaixo.</p>
+            <h3 style="color: var(--cor-primaria);"><i class="fas fa-key"></i> Senha Redefinida!</h3>
+            <p>A senha do aluno(a) <strong id="resetStudentName"></strong> foi alterada. Anote os novos dados de acesso abaixo.</p>
             <div class="credentials-box">
-                <p><strong>Nova Senha:</strong> <span id="resetStudentPassword" style="font-weight: bold; font-size: 1.2rem; color: #764ba2;"></span></p>
+                <p><strong>Nova Senha:</strong> <span id="resetStudentPassword" style="font-weight: bold; font-size: 1.2rem; color: var(--cor-primaria);"></span></p>
             </div>
             <div class="modal-actions">
                 <button type="button" id="copyResetPasswordBtn" class="modal-btn primary"><i class="fas fa-copy"></i> Copiar Senha</button>
