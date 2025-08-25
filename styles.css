@@ -1,3 +1,7 @@
+/* ======================================================= */
+/* JOGO DAS LETRAS - ARQUIVO DE ESTILOS COMPLETO E FINAL   */
+/* ======================================================= */
+
 /* Reset e Configurações Básicas */
 * {
     margin: 0;
@@ -568,93 +572,48 @@ html, body {
 .create-form { background: #F8F9FA; padding: 20px; border-radius: 10px; margin: 20px 0; }
 .form-row { display: grid; grid-template-columns: 1fr; gap: 15px; align-items: end; }
 .form-actions { display: flex; gap: 10px; margin-top: 15px; }
-
-/* ... (O restante do CSS para Dashboard, Modais, Relatórios, etc. segue aqui, exatamente como no seu prompt original) ... */
-/* Por favor, copie e cole o restante do seu arquivo CSS original aqui para garantir que nada seja perdido. */
-
+.dashboard-container { display: flex; width: 100%; height: 100vh; max-width: 100%; padding: 0; margin: 0; background-color: #f4f7fc; }
+.main-content { flex-grow: 1; padding: 0; overflow-y: auto; display: flex; flex-direction: column; }
+.dashboard-content-area { padding: 40px; flex-grow: 1; }
+.sidebar { width: 260px; background: #ffffff; border-right: 1px solid #e0e0e0; display: flex; flex-direction: column; padding: 20px 0; transition: width 0.3s ease; flex-shrink: 0; }
+.sidebar-header { padding: 0 25px 20px 25px; border-bottom: 1px solid #f0f0f0; }
+.sidebar-header h3 { color: #2c3e50; font-size: 1.5rem; }
+.sidebar-nav { flex-grow: 1; margin-top: 20px; }
+.sidebar-nav a { display: flex; align-items: center; padding: 15px 25px; color: #555; text-decoration: none; font-size: 1.1rem; font-weight: bold; margin: 5px 10px; border-radius: 8px; transition: background-color 0.2s ease, color 0.2s ease; }
+.sidebar-nav a:hover { background-color: #f0eaff; color: #764ba2; }
+.sidebar-nav a.active { background: linear-gradient(90deg, #667eea, #764ba2); color: white; box-shadow: 0 4px 15px rgba(118, 75, 162, 0.3); }
+.sidebar-nav a i { width: 30px; text-align: center; margin-right: 15px; font-size: 1.2rem; }
+.sidebar-footer { padding: 20px 25px 0 25px; border-top: 1px solid #f0f0f0; }
+.logout-btn-sidebar { width: 100%; background: #f8f9fa; border: 1px solid #ddd; color: #c0392b; padding: 12px; border-radius: 8px; cursor: pointer; font-size: 1.1rem; font-weight: bold; transition: all 0.2s ease; }
+.logout-btn-sidebar:hover { background: #c0392b; color: white; border-color: #c0392b; }
 
 /* === ESTILOS ADICIONAIS PARA AS NOVAS FASES === */
-
-/* Para Fases 2, 3, 6, 13, 14 */
-.image-option-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-    gap: 1rem;
-    margin-top: 1.5rem;
-}
-.image-option-button {
-    background: white;
-    border: 2px solid #ddd;
-    border-radius: 15px;
-    padding: 1rem;
-    font-size: 4rem;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.05);
-}
-.image-option-button:hover:not(:disabled) {
-    transform: translateY(-5px);
-    border-color: #764ba2;
-    box-shadow: 0 8px 20px rgba(0,0,0,0.1);
-}
+.sound-detective-button { background: linear-gradient(45deg, #4ecdc4, #44a08d); color: white; border: none; padding: 1.5rem; font-size: 1.2rem; font-weight: bold; border-radius: 20px; cursor: pointer; box-shadow: 0 4px 15px rgba(0,0,0,0.2); transition: all 0.3s ease; display: flex; align-items: center; justify-content: center; gap: 10px; }
+.sound-detective-button:hover:not(:disabled) { transform: translateY(-5px) scale(1.05); }
+.memory-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; max-width: 500px; margin: 20px auto; perspective: 1000px; }
+.memory-card { background-color: transparent; width: 100px; height: 100px; cursor: pointer; aspect-ratio: 1 / 1; }
+.card-inner { position: relative; width: 100%; height: 100%; transition: transform 0.6s; transform-style: preserve-3d; }
+.memory-card.flipped .card-inner { transform: rotateY(180deg); }
+.card-face { position: absolute; width: 100%; height: 100%; -webkit-backface-visibility: hidden; backface-visibility: hidden; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 2.5rem; font-weight: bold; }
+.card-front { background: linear-gradient(135deg, #667eea, #764ba2); color: white; }
+.card-front::before { content: '?'; }
+.card-back { background-color: #4ECDC4; color: white; transform: rotateY(180deg); }
+.memory-card.matched .card-inner { transform: scale(0.95); opacity: 0.7; }
+.memory-card.matched .card-back { background-color: #27ae60; }
+.image-option-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 1rem; margin-top: 1.5rem; }
+.image-option-button { background: white; border: 2px solid #ddd; border-radius: 15px; padding: 1rem; font-size: 4rem; cursor: pointer; transition: all 0.2s ease; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
+.image-option-button:hover:not(:disabled) { transform: translateY(-5px); border-color: #764ba2; box-shadow: 0 8px 20px rgba(0,0,0,0.1); }
 .image-option-button.correct { border-color: #4ECDC4; background-color: #d1f7f4; animation: correctPulse 0.6s ease;}
 .image-option-button.incorrect { border-color: #ff6b6b; background-color: #ffdede; animation: shake 0.6s ease;}
-
-/* Para Fases 12, 15 */
-.sentence-build-area { 
-    background-color: #e9ecef; border: 2px dashed #adb5bd; border-radius: 10px; 
-    padding: 15px; min-height: 60px; margin: 1.5rem auto; display: flex; 
-    flex-wrap: wrap; gap: 10px; align-items: center; justify-content: center; transition: all 0.3s ease; 
-}
-.sentence-word { 
-    background-color: #fff; color: #495057; padding: 8px 15px; border-radius: 8px; 
-    font-size: 1.4rem; font-weight: bold; box-shadow: 0 2px 4px rgba(0,0,0,0.1); 
-}
+.sentence-build-area { background-color: #e9ecef; border: 2px dashed #adb5bd; border-radius: 10px; padding: 15px; min-height: 60px; margin: 1.5rem auto; display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: center; transition: all 0.3s ease; }
+.sentence-word { background-color: #fff; color: #495057; padding: 8px 15px; border-radius: 8px; font-size: 1.4rem; font-weight: bold; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
 .word-option-button { font-size: 1.2rem; aspect-ratio: auto; padding: 1rem; }
 .syllable-option-button { font-size: 1.8rem; aspect-ratio: auto; padding: 1.2rem; }
-
-/* Para Fases 19, 20 */
-.sentence-container {
-    background-color: #f8f9fa;
-    border: 1px solid #dee2e6;
-    border-radius: 15px;
-    padding: 20px;
-    margin: 1rem auto;
-    max-width: 90%;
-}
-.sentence-text {
-    font-size: 2rem;
-    font-weight: bold;
-    color: #2c3e50;
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: 10px;
-    line-height: 1.5;
-}
-.sentence-word-clickable {
-    cursor: pointer;
-    padding: 5px 10px;
-    border-radius: 8px;
-    transition: background-color 0.2s ease, color 0.2s ease;
-}
-.sentence-word-clickable:hover {
-    background-color: #ffc107;
-    color: white;
-}
-.sentence-word-clickable.incorrect {
-    background-color: #ff6b6b;
-    color: white;
-    text-decoration: line-through;
-}
-.sentence-word-clickable.correct {
-    background-color: #4ecdc4;
-    color: white;
-}
-.sentence-char-clickable {
-    cursor: pointer;
-    transition: background-color 0.2s ease;
-}
-.sentence-char-clickable:hover {
-    background-color: #e0e0e0;
-}
+.sentence-container { background-color: #f8f9fa; border: 1px solid #dee2e6; border-radius: 15px; padding: 20px; margin: 1rem auto; max-width: 90%; }
+.sentence-text { font-size: 2rem; font-weight: bold; color: #2c3e50; display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; line-height: 1.5; }
+.sentence-word-clickable { cursor: pointer; padding: 5px 10px; border-radius: 8px; transition: background-color 0.2s ease, color 0.2s ease; }
+.sentence-word-clickable:hover { background-color: #ffc107; color: white; }
+.sentence-word-clickable.incorrect { background-color: #ff6b6b; color: white; text-decoration: line-through; }
+.sentence-word-clickable.correct { background-color: #4ecdc4; color: white; }
+.sentence-char-clickable { cursor: pointer; transition: background-color 0.2s ease; padding: 0 2px; }
+.sentence-char-clickable:hover { background-color: #e0e0e0; }
