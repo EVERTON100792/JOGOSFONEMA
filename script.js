@@ -278,36 +278,32 @@ async function startQuestion() {
     const q = gameState.questions[gameState.currentQuestionIndex];
     document.getElementById('nextQuestion').style.display = 'none';
     updateUI();
-    const UIElements = ['audioQuestionArea', 'imageQuestionArea', 'lettersGrid', 'memoryGameGrid'];
-    UIElements.forEach(id => {
-        const el = document.getElementById(id);
-        if (el) { el.innerHTML = ''; el.style.display = 'none'; }
-    });
-    // Limpa a área de construção da frase e reseta o estilo
+
+    // --- Início da Correção ---
+    // Oculta todos os containers principais
+    document.getElementById('audioQuestionArea').style.display = 'none';
+    document.getElementById('imageQuestionArea').style.display = 'none';
+    document.getElementById('lettersGrid').style.display = 'none';
+    document.getElementById('memoryGameGrid').style.display = 'none';
+
+    // Limpa apenas os containers que guardam as opções dinâmicas
+    document.getElementById('lettersGrid').innerHTML = '';
+    document.getElementById('memoryGameGrid').innerHTML = '';
+    
+    // Reseta a área de construção de frases de forma segura
     const sentenceArea = document.getElementById('sentenceBuildArea');
     sentenceArea.innerHTML = '';
-    sentenceArea.style.display = 'none';
     sentenceArea.style.borderColor = '';
     sentenceArea.style.backgroundColor = '';
 
+    // Limpa os textos da pergunta
     document.getElementById('questionText').textContent = '';
     document.getElementById('wordDisplay').textContent = '';
     document.getElementById('repeatAudio').style.display = 'none';
-    
+    // --- Fim da Correção ---
+
     switch (q.type) {
-        case 'letter_sound': renderPhase1UI(q); break;
-        case 'initial_vowel': renderPhase2UI(q); break;
-        case 'vowel_encounter': renderPhase3UI(q); break;
-        case 'initial_syllable': case 'middle_syllable': case 'full_word': renderPhase4UI(q); break;
-        case 'build_sentence': renderPhase5UI(q); break;
-        case 'count_syllables': renderPhase6UI(q); break;
-        case 'memory_game': renderPhase7UI_MemoryGame(q); break;
-        case 'sound_detective': renderPhase8UI_SoundDetective(q); break;
-        case 'word_transform': renderPhase9UI_WordTransform(q); break;
-        case 'alphabet_order': renderPhase10UI_AlphabetOrder(q); break;
-    }
-    if (q.type === 'letter_sound') { setTimeout(playCurrentAudio, 500); }
-}
+        //... resto da função
 function renderPhase1UI(q) { document.getElementById('audioQuestionArea').style.display = 'block'; document.getElementById('lettersGrid').style.display = 'grid'; document.getElementById('questionText').textContent = 'Qual letra faz este som?'; document.getElementById('repeatAudio').style.display = 'inline-block'; renderOptions(q.options); }
 function renderPhase2UI(q) { document.getElementById('imageQuestionArea').style.display = 'block'; document.getElementById('lettersGrid').style.display = 'grid'; document.getElementById('imageEmoji').textContent = q.image; document.getElementById('wordDisplay').textContent = `__${q.word.substring(1)}`; document.getElementById('questionText').textContent = 'Qual vogal completa a palavra?'; renderOptions(q.options); }
 function renderPhase3UI(q) { document.getElementById('imageQuestionArea').style.display = 'block'; document.getElementById('lettersGrid').style.display = 'grid'; document.getElementById('imageEmoji').textContent = q.image; document.getElementById('wordDisplay').textContent = q.word.replace(q.correctAnswer, '__'); document.getElementById('questionText').textContent = 'Qual encontro de vogais completa a palavra?'; renderOptions(q.options); }
@@ -495,51 +491,35 @@ async function selectAnswer(selectedAnswer) {
 
     const isCorrect = selectedAnswer === q.correctAnswer;
 
+    // --- Início da Correção ---
+    // Aplica o feedback visual de acordo com o tipo da questão
     if (q.type === 'build_sentence') {
         const sentenceArea = document.getElementById('sentenceBuildArea');
         if (isCorrect) {
-            sentenceArea.style.borderColor = '#4ECDC4';
+            sentenceArea.style.borderColor = '#4ECDC4'; // Cor de sucesso
             sentenceArea.style.backgroundColor = 'rgba(78, 205, 196, 0.1)';
         } else {
-            sentenceArea.style.borderColor = '#ff6b6b';
+            sentenceArea.style.borderColor = '#ff6b6b'; // Cor de erro
             sentenceArea.style.backgroundColor = 'rgba(255, 107, 107, 0.1)';
-            document.querySelectorAll('.word-option-button').forEach(b => b.classList.add('incorrect'));
         }
     } else {
+        // Feedback geral para questões baseadas em botões
         document.querySelectorAll('.letter-button, .word-option-button, .sound-detective-button').forEach(btn => {
             const btnIdentifier = btn.dataset.sound || btn.textContent;
+            // Destaca a resposta correta em verde
             if (btnIdentifier === q.correctAnswer) {
                 btn.classList.add('correct');
             }
+            // Se o usuário errou, destaca a escolha dele em vermelho
             if (!isCorrect && btnIdentifier === selectedAnswer) {
                 btn.classList.add('incorrect');
             }
         });
     }
+    // --- Fim da Correção ---
 
     if (isCorrect) {
-        gameState.score++;
-        showFeedback('Muito bem!', 'success');
-        playTeacherAudio('feedback_correct', 'Acertou');
-        if (q.type !== 'letter_sound' && q.type !== 'build_sentence') {
-            document.getElementById('wordDisplay').textContent = q.word || q.initialWord;
-        }
-    } else {
-        gameState.attempts--;
-        logStudentError({ question: q, selectedAnswer: selectedAnswer }).catch(console.error);
-        showFeedback(`Quase! A resposta correta era "${q.correctAnswer}"`, 'error');
-        playTeacherAudio('feedback_incorrect', 'Tente de novo');
-    }
-
-    updateUI();
-    await saveGameState();
-
-    if (gameState.attempts <= 0) {
-        setTimeout(endPhase, 2000);
-    } else {
-        setTimeout(() => document.getElementById('nextQuestion').style.display = 'block', 1500);
-    }
-}
+        // ... resto da função
 function nextQuestion() { gameState.currentQuestionIndex++; startQuestion(); }
 function endPhase() { const accuracy = gameState.questions.length > 0 ? Math.round((gameState.score / gameState.questions.length) * 100) : 0; const passed = accuracy >= 70; showResultScreen(accuracy, passed); }
 function showResultScreen(accuracy, passed) { showScreen('resultScreen'); document.getElementById('finalScore').textContent = gameState.score; document.getElementById('accuracy').textContent = accuracy; const assignedPhases = currentUser.assigned_phases || [1]; const currentPhaseIndex = assignedPhases.indexOf(gameState.currentPhase); const hasNextPhase = currentPhaseIndex !== -1 && currentPhaseIndex < assignedPhases.length - 1; const continueBtn = document.getElementById('continueButton'); const retryBtn = document.getElementById('retryButton'); const restartBtn = document.getElementById('restartButton'); if (passed) { document.getElementById('resultTitle').textContent = 'Parabéns!'; retryBtn.style.display = 'none'; gameState.phaseCompleted = true; if (hasNextPhase) { document.getElementById('resultMessage').innerHTML = 'Você completou a fase! 🏆<br>Clique para ir para a próxima!'; continueBtn.style.display = 'inline-block'; restartBtn.innerHTML = '<i class="fas fa-home"></i> Voltar ao Início'; } else { document.getElementById('resultMessage').innerHTML = 'Você completou TODAS as suas fases! 🥳<br>Fale com seu professor!'; continueBtn.style.display = 'none'; restartBtn.innerHTML = '<i class="fas fa-sign-out-alt"></i> Sair'; } } else { document.getElementById('resultTitle').textContent = 'Não desanime!'; document.getElementById('resultMessage').textContent = 'Você precisa acertar mais. Tente novamente!'; continueBtn.style.display = 'none'; retryBtn.style.display = 'inline-block'; restartBtn.innerHTML = '<i class="fas fa-home"></i> Voltar ao Início'; gameState.phaseCompleted = false; } saveGameState(); }
