@@ -42,7 +42,6 @@ const PHASE_DESCRIPTIONS = {
     10: "Ordem Alfabética"
 };
 
-// BANCO DE DADOS DAS FASES (EXPANDIDO PARA 10 RODADAS)
 const PHASE_2_WORDS = [
     { word: 'ABELHA', image: '🐝', vowel: 'A' }, { word: 'ELEFANTE', image: '🐘', vowel: 'E' },
     { word: 'IGREJA', image: '⛪', vowel: 'I' }, { word: 'ÔNIBUS', image: '🚌', vowel: 'O' },
@@ -166,11 +165,11 @@ async function handleDeleteClass(classId, className) { if (!confirm(`ATENÇÃO! 
 async function manageClass(classId, className) { currentClassId = classId; document.getElementById('manageClassTitle').textContent = `Gerenciar: ${className}`; const modal = document.getElementById('manageClassModal'); modal.querySelectorAll('.tab-btn').forEach(btn => { const tabId = btn.dataset.tab; if (!btn.getAttribute('data-listener')) { btn.setAttribute('data-listener', 'true'); btn.addEventListener('click', () => { if (tabId === 'studentsTab') loadClassStudents(); else if (tabId === 'studentProgressTab') loadStudentProgress(); }); } }); showTab(document.querySelector('#manageClassModal .tab-btn[data-tab="studentsTab"]')); await loadClassStudents(); showModal('manageClassModal'); }
 async function loadClassStudents() { const { data, error } = await supabaseClient.from('students').select('*').eq('class_id', currentClassId).order('name', { ascending: true }); if (error) { console.error('Erro ao carregar alunos:', error); document.getElementById('studentsList').innerHTML = '<p>Erro ao carregar.</p>'; return; } renderStudents(data); }
 function renderStudents(students) { const container = document.getElementById('studentsList'); if (!students || students.length === 0) { container.innerHTML = '<p>Nenhum aluno cadastrado.</p>'; return; } container.innerHTML = students.map(student => ` <div class="student-item"> <div class="student-info"> <h4>${student.name}</h4> <p>Usuário: ${student.username}</p> </div> <div class="student-actions"> <button onclick="handleShowOrResetPassword('${student.id}', '${student.name}')" class="btn small" title="Ver/Redefinir Senha"> <i class="fas fa-eye"></i> </button> <button onclick="handleDeleteStudent('${student.id}', '${student.name}')" class="btn small danger" title="Excluir Aluno"> <i class="fas fa-trash"></i> </button> </div> </div>`).join(''); }
+
 async function loadStudentProgress() {
     const progressList = document.getElementById('studentProgressList');
     progressList.innerHTML = '<p><i class="fas fa-spinner fa-spin"></i> Carregando progresso...</p>';
     
-    // ATUALIZA OS BOTÕES VISUALMENTE PARA O PADRÃO "NOME"
     const sortButtonsContainer = progressList.closest('.tab-content').querySelector('.sort-buttons');
     if(sortButtonsContainer) {
         sortButtonsContainer.querySelector('[data-sort="name"]').classList.add('active');
@@ -199,10 +198,10 @@ async function loadStudentProgress() {
         return { ...student, progress: studentProgress ? [studentProgress] : [] };
     });
     studentProgressData = combinedData;
-    // LINHA MODIFICADA AQUI: O padrão agora é 'name'
     renderStudentProgress('name'); 
 }
-function renderStudentProgress(sortBy = 'last_played') {
+
+function renderStudentProgress(sortBy = 'name') {
     const progressList = document.getElementById('studentProgressList');
     const sortedData = [...studentProgressData].sort((a, b) => {
         if (sortBy === 'name') { return a.name.localeCompare(b.name); }
@@ -270,7 +269,93 @@ async function handleShowOrResetPassword(studentId, studentName) { showFeedback(
 function handleCopyCredentials() { const username = document.getElementById('newStudentUsername').textContent; const password = document.getElementById('newStudentPassword').textContent; const textToCopy = `Usuário: ${username}\nSenha: ${password}`; navigator.clipboard.writeText(textToCopy).then(() => { showFeedback('Copiado!', 'success'); }).catch(() => { showFeedback('Erro ao copiar.', 'error'); }); }
 function handleCopyResetPassword() { const password = document.getElementById('resetStudentPassword').textContent; navigator.clipboard.writeText(password).then(() => { showFeedback('Nova senha copiada!', 'success'); }).catch(() => { showFeedback('Erro ao copiar a senha.', 'error'); }); }
 
-// PARTE 7: ÁUDIO
+// PARTE 7: ÁUDIO E SÍNTESE DE VOZ (COM CORREÇÃO DE BUG)
+
+function initializeSpeech() {
+    const checkVoices = (resolve, reject) => {
+        const voices = speechSynthesis.getVoices();
+        if (voices.length > 0) {
+            selectedVoice = voices.find(v => v.lang === 'pt-BR');
+            if (selectedVoice) {
+                console.log("Voz em Português encontrada e pronta:", selectedVoice.name);
+                speechReady = true;
+                resolve();
+            }
+        }
+    };
+    return new Promise((resolve, reject) => {
+        speechSynthesis.onvoiceschanged = () => checkVoices(resolve, reject);
+        checkVoices(resolve, reject);
+        setTimeout(() => {
+            if (!speechReady) {
+                console.warn("Timeout: Vozes não carregaram a tempo. Usando a voz padrão.");
+                const voices = speechSynthesis.getVoices();
+                selectedVoice = voices.find(v => v.lang === 'pt-BR') || voices[0];
+                speechReady = true;
+                resolve();
+            }
+        }, 2000);
+    }).catch(error => {
+        console.warn(error.message, "Usando a voz padrão do navegador como fallback.");
+        const voices = speechSynthesis.getVoices();
+        selectedVoice = voices[0];
+        speechReady = true;
+    });
+}
+
+function speak(text, onEndCallback) {
+    if (!window.speechSynthesis) {
+        console.error("API de Síntese de Voz não suportada.");
+        return;
+    }
+    if (!speechReady) {
+        console.warn("Ainda não pronto para falar, esperando inicialização...");
+        initializeSpeech().then(() => speak(text, onEndCallback));
+        return;
+    }
+    speechSynthesis.cancel();
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = 'pt-BR';
+    utterance.voice = selectedVoice;
+    if (onEndCallback) {
+        utterance.onend = onEndCallback;
+    }
+    console.log(`[Voz] Falando: "${text}"`);
+    speechSynthesis.speak(utterance);
+}
+
+async function playTeacherAudio(key, fallbackText, onEndCallback) {
+    const teacherId = SUPER_ADMIN_TEACHER_ID;
+    if (!teacherId) {
+        speak(fallbackText, onEndCallback);
+        return;
+    }
+    try {
+        console.log(`[Áudio] Procurando áudio gravado para a chave: "${key}"...`);
+        const { data } = await supabaseClient.storage.from('audio_uploads').list(teacherId, { search: `${key}.` });
+        if (data && data.length > 0) {
+            const audioFileName = data[0].name;
+            const { data: { publicUrl } } = supabaseClient.storage.from('audio_uploads').getPublicUrl(`${teacherId}/${audioFileName}`);
+            console.log(`[Áudio] Sucesso! Tocando URL: ${publicUrl}`);
+            const audio = new Audio(publicUrl);
+            audio.onerror = function() {
+                console.error(`[Áudio] ERRO ao carregar o arquivo de áudio: ${publicUrl}. Usando a voz de narração.`);
+                speak(fallbackText, onEndCallback);
+            };
+            if (onEndCallback) {
+                audio.onended = onEndCallback;
+            }
+            audio.play();
+        } else {
+            console.log(`[Áudio] Áudio gravado não encontrado para "${key}". Usando a voz de narração.`);
+            speak(fallbackText, onEndCallback);
+        }
+    } catch (error) {
+        console.error(`[Áudio] Erro crítico ao buscar áudio no Supabase:`, error);
+        speak(fallbackText, onEndCallback);
+    }
+}
+
 async function handleAudioUpload() { const files = document.getElementById('audioUpload').files; if (files.length === 0) return; const uploadStatus = document.getElementById('uploadStatus'); uploadStatus.innerHTML = `<p><i class="fas fa-spinner fa-spin"></i> Enviando...</p>`; let successCount = 0, errorCount = 0; for (const file of files) { const fileName = file.name.split('.').slice(0, -1).join('.').toUpperCase(); const filePath = `${currentUser.id}/${fileName}.${file.name.split('.').pop()}`; try { const { error } = await supabaseClient.storage.from('audio_uploads').upload(filePath, file, { upsert: true }); if (error) throw error; successCount++; } catch (error) { console.error(`Erro no upload:`, error); errorCount++; } } uploadStatus.innerHTML = `<p style="color: green;">${successCount} enviados!</p>`; if (errorCount > 0) { uploadStatus.innerHTML += `<p style="color: red;">Falha em ${errorCount}.</p>`; } }
 async function startRecording() { const recordBtn = document.getElementById('recordBtn'), stopBtn = document.getElementById('stopBtn'), statusEl = document.getElementById('recordStatus'); recordBtn.disabled = true; statusEl.textContent = 'Pedindo permissão...'; try { const stream = await navigator.mediaDevices.getUserMedia({ audio: true }); audioChunks = []; mediaRecorder = new MediaRecorder(stream, { mimeType: 'audio/webm' }); mediaRecorder.addEventListener('dataavailable', e => audioChunks.push(e.data)); mediaRecorder.addEventListener('stop', () => { const audioBlob = new Blob(audioChunks, { type: 'audio/webm' }); const audioUrl = URL.createObjectURL(audioBlob); document.getElementById('audioPlayback').src = audioUrl; document.getElementById('saveRecordingBtn').disabled = false; stream.getTracks().forEach(track => track.stop()); }); mediaRecorder.start(); statusEl.textContent = 'Gravando...'; stopBtn.disabled = false; startTimer(); } catch (err) { console.error("Erro ao gravar:", err); alert("Não foi possível gravar. Verifique as permissões."); statusEl.textContent = 'Falha.'; recordBtn.disabled = false; } }
 function stopRecording() { if (mediaRecorder?.state === 'recording') { mediaRecorder.stop(); stopTimer(); document.getElementById('recordBtn').disabled = false; document.getElementById('stopBtn').disabled = true; document.getElementById('recordStatus').textContent = 'Parado.'; } }
@@ -291,102 +376,41 @@ function generateQuestions(phase) {
     const shuffleAndTake = (arr, num) => [...arr].sort(() => 0.5 - Math.random()).slice(0, num);
 
     switch (phase) {
-        case 1: // Identificação de Vogais
+        case 1:
             questions = Array.from({ length: questionCount }, (_, i) => {
                 const vowel = VOWELS[i % VOWELS.length];
-                return { 
-                    type: 'letter_sound', 
-                    correctAnswer: vowel, 
-                    options: generateOptions(vowel, VOWELS, 4)
-                };
+                return { type: 'letter_sound', correctAnswer: vowel, options: generateOptions(vowel, VOWELS, 4) };
             }).sort(() => 0.5 - Math.random());
             break;
-
-        case 2: // Vogal Inicial
-            questions = shuffleAndTake(PHASE_2_WORDS, questionCount).map(item => ({
-                type: 'initial_vowel',
-                word: item.word,
-                image: item.image,
-                correctAnswer: item.vowel,
-                options: generateOptions(item.vowel, VOWELS, 4)
-            }));
+        case 2:
+            questions = shuffleAndTake(PHASE_2_WORDS, questionCount).map(item => ({...item, type: 'initial_vowel', options: generateOptions(item.vowel, VOWELS, 4) }));
             break;
-
-        case 3: // Encontros Vocálicos
-            questions = shuffleAndTake(PHASE_3_ENCONTROS, questionCount).map(item => ({
-                type: 'vowel_encounter',
-                word: item.word,
-                image: item.image,
-                correctAnswer: item.encontro,
-                options: generateOptions(item.encontro, VOWEL_ENCOUNTERS, 4)
-            }));
+        case 3:
+            questions = shuffleAndTake(PHASE_3_ENCONTROS, questionCount).map(item => ({...item, type: 'vowel_encounter', correctAnswer: item.encontro, options: generateOptions(item.encontro, VOWEL_ENCOUNTERS, 4) }));
             break;
-
-        case 4: // Explorando a Letra F
-            questions = shuffleAndTake(PHASE_4_WORDS_F, questionCount).map(item => ({
-                ...item,
-                options: item.options.sort(() => 0.5 - Math.random())
-            }));
+        case 4:
+            questions = shuffleAndTake(PHASE_4_WORDS_F, questionCount).map(item => ({...item, options: item.options.sort(() => 0.5 - Math.random()) }));
             break;
-
-        case 5: // Pares Surdos/Sonoros
-            questions = shuffleAndTake(PHASE_5_SOUND_PAIRS, questionCount).map(item => ({
-                type: 'sound_detective',
-                image: item.image,
-                correctAnswer: item.correct,
-                options: [item.correct, item.incorrect].sort(() => 0.5 - Math.random())
-            }));
+        case 5:
+            questions = shuffleAndTake(PHASE_5_SOUND_PAIRS, questionCount).map(item => ({ type: 'sound_detective', image: item.image, correctAnswer: item.correct, options: [item.correct, item.incorrect].sort(() => 0.5 - Math.random()) }));
             break;
-            
-        case 6: // Contagem de Sílabas
-            questions = shuffleAndTake(PHASE_6_SYLLABLE_COUNT, questionCount).map(item => ({
-                type: 'count_syllables',
-                word: item.word,
-                image: item.image,
-                correctAnswer: item.syllables.toString(),
-                options: generateOptions(item.syllables.toString(), ['1', '2', '3', '4', '5'], 4)
-            }));
+        case 6:
+            questions = shuffleAndTake(PHASE_6_SYLLABLE_COUNT, questionCount).map(item => ({ type: 'count_syllables', ...item, correctAnswer: item.syllables.toString(), options: generateOptions(item.syllables.toString(), ['1', '2', '3', '4', '5'], 4) }));
             break;
-            
-        case 7: // Contagem de Palavras na Frase
-            questions = shuffleAndTake(PHASE_7_SENTENCES_COUNT, questionCount).map(item => ({
-                type: 'count_words',
-                sentence: item.sentence,
-                image: item.image,
-                correctAnswer: item.words.toString(),
-                options: generateOptions(item.words.toString(), ['2', '3', '4', '5'], 4)
-            }));
+        case 7:
+            questions = shuffleAndTake(PHASE_7_SENTENCES_COUNT, questionCount).map(item => ({ type: 'count_words', ...item, correctAnswer: item.words.toString(), options: generateOptions(item.words.toString(), ['2', '3', '4', '5'], 4) }));
             break;
-
-        case 8: // Montagem de Frases
-            questions = shuffleAndTake(PHASE_8_SENTENCES_BUILD, questionCount).map(item => ({
-                type: 'build_sentence',
-                image: item.image,
-                correctAnswer: item.answer,
-                options: item.sentence.sort(() => 0.5 - Math.random())
-            }));
+        case 8:
+            questions = shuffleAndTake(PHASE_8_SENTENCES_BUILD, questionCount).map(item => ({ type: 'build_sentence', ...item, options: item.sentence.sort(() => 0.5 - Math.random()) }));
             break;
-            
-        case 9: // Formando Novas Palavras
-            questions = shuffleAndTake(PHASE_9_WORD_TRANSFORM, questionCount).map(item => ({
-                type: 'word_transform',
-                image: item.image,
-                initialWord: item.initialWord,
-                toRemove: item.toRemove,
-                correctAnswer: item.correctAnswer,
-                options: item.options.sort(() => 0.5 - Math.random())
-            }));
+        case 9:
+            questions = shuffleAndTake(PHASE_9_WORD_TRANSFORM, questionCount).map(item => ({ type: 'word_transform', ...item, options: item.options.sort(() => 0.5 - Math.random()) }));
             break;
-            
-        case 10: // Ordem Alfabética
+        case 10:
             questions = Array.from({ length: questionCount }, () => {
                 const startIndex = Math.floor(Math.random() * (ALPHABET.length - 4));
                 const sequence = ALPHABET.slice(startIndex, startIndex + 4);
-                return {
-                    type: 'alphabet_order',
-                    correctAnswer: sequence,
-                    options: [...sequence].sort(() => 0.5 - Math.random())
-                };
+                return { type: 'alphabet_order', correctAnswer: sequence, options: [...sequence].sort(() => 0.5 - Math.random()) };
             });
             break;
     }
@@ -646,104 +670,8 @@ function showResultScreen(accuracy, passed) { showScreen('resultScreen'); docume
 async function nextPhase() { const assignedPhases = currentUser.assigned_phases || [1]; const currentPhaseIndex = assignedPhases.indexOf(gameState.currentPhase); const hasNextPhase = currentPhaseIndex !== -1 && currentPhaseIndex < assignedPhases.length - 1; if (hasNextPhase) { const nextPhaseNum = assignedPhases[currentPhaseIndex + 1]; gameState.currentPhase = nextPhaseNum; gameState.currentQuestionIndex = 0; gameState.score = 0; gameState.attempts = 3; gameState.questions = generateQuestions(gameState.currentPhase); gameState.phaseCompleted = false; await saveGameState(); showScreen('gameScreen'); startQuestion(); } else { showResultScreen(100, true); } }
 async function retryPhase() { gameState.currentQuestionIndex = 0; gameState.score = 0; gameState.attempts = 3; gameState.phaseCompleted = false; await saveGameState(); showScreen('gameScreen'); startQuestion(); }
 async function restartGame() { if (gameState.phaseCompleted || gameState.attempts <= 0) { logout(); } else { showScreen('startScreen'); } }
-async function playTeacherAudio(key, fallbackText, onEndCallback) { const teacherId = SUPER_ADMIN_TEACHER_ID; if (!teacherId) { speak(fallbackText, onEndCallback); return; } try { const { data } = await supabaseClient.storage.from('audio_uploads').list(teacherId, { search: `${key}.` }); if (data && data.length > 0) { const { data: { publicUrl } } = supabaseClient.storage.from('audio_uploads').getPublicUrl(`${teacherId}/${data[0].name}`); const audio = new Audio(publicUrl); if (onEndCallback) audio.onended = onEndCallback; audio.play(); } else { speak(fallbackText, onEndCallback); } } catch (error) { console.error("Erro ao buscar áudio:", error); speak(fallbackText, onEndCallback); } }
+
 async function playCurrentAudio() { const q = gameState.questions[gameState.currentQuestionIndex]; if (q.type !== 'letter_sound') return; const letter = q.correctAnswer; playTeacherAudio(letter, letter); }
-// =========================================================================
-// BLOCO DE CÓDIGO PARA CORREÇÃO DO SOM - Início
-// =========================================================================
-
-function initializeSpeech() {
-    // Esta função agora retorna uma promessa que só é resolvida
-    // quando uma voz em pt-BR é encontrada e carregada.
-    const checkVoices = (resolve, reject) => {
-        const voices = speechSynthesis.getVoices();
-        if (voices.length > 0) {
-            selectedVoice = voices.find(v => v.lang === 'pt-BR');
-            if (selectedVoice) {
-                console.log("Voz em Português encontrada e pronta:", selectedVoice.name);
-                speechReady = true;
-                resolve(); // Sucesso, podemos continuar
-            }
-        }
-    };
-
-    return new Promise((resolve, reject) => {
-        speechSynthesis.onvoiceschanged = () => checkVoices(resolve, reject);
-        checkVoices(resolve, reject); // Tenta verificar imediatamente
-        setTimeout(() => reject(new Error("Timeout: Vozes não carregaram a tempo.")), 2000); // Adiciona um timeout
-    }).catch(error => {
-        console.warn(error.message, "Usando a voz padrão do navegador como fallback.");
-        // Mesmo se falhar, tentamos pegar a primeira voz disponível para não ficar mudo.
-        const voices = speechSynthesis.getVoices();
-        selectedVoice = voices[0];
-        speechReady = true;
-    });
-}
-
-function speak(text, onEndCallback) {
-    if (!window.speechSynthesis) {
-        console.error("API de Síntese de Voz não suportada.");
-        return;
-    }
-    // Verifica se a inicialização já aconteceu. Se não, espera por ela.
-    if (!speechReady) {
-        console.warn("Ainda não pronto para falar, esperando inicialização...");
-        initializeSpeech().then(() => speak(text, onEndCallback));
-        return;
-    }
-    
-    speechSynthesis.cancel(); // Limpa a fila de falas anteriores
-    const utterance = new SpeechSynthesisUtterance(text);
-    utterance.lang = 'pt-BR';
-    utterance.voice = selectedVoice; // Usa a voz pt-BR que encontramos
-    
-    if (onEndCallback) {
-        utterance.onend = onEndCallback;
-    }
-    
-    console.log(`[Voz] Falando: "${text}"`);
-    speechSynthesis.speak(utterance);
-}
-
-async function playTeacherAudio(key, fallbackText, onEndCallback) {
-    const teacherId = SUPER_ADMIN_TEACHER_ID;
-    if (!teacherId) {
-        speak(fallbackText, onEndCallback);
-        return;
-    }
-    try {
-        console.log(`[Áudio] Procurando áudio gravado para a chave: "${key}"...`);
-        const { data } = await supabaseClient.storage.from('audio_uploads').list(teacherId, { search: `${key}.` });
-        
-        if (data && data.length > 0) {
-            const audioFileName = data[0].name;
-            const { data: { publicUrl } } = supabaseClient.storage.from('audio_uploads').getPublicUrl(`${teacherId}/${audioFileName}`);
-            console.log(`[Áudio] Sucesso! Tocando URL: ${publicUrl}`);
-            const audio = new Audio(publicUrl);
-            
-            audio.onerror = function() {
-                console.error(`[Áudio] ERRO ao carregar o arquivo de áudio: ${publicUrl}. Usando a voz de narração.`);
-                speak(fallbackText, onEndCallback);
-            };
-            
-            if (onEndCallback) {
-                audio.onended = onEndCallback;
-            }
-            audio.play();
-        } else {
-            console.log(`[Áudio] Áudio gravado não encontrado para "${key}". Usando a voz de narração.`);
-            speak(fallbackText, onEndCallback);
-        }
-    } catch (error) {
-        console.error(`[Áudio] Erro crítico ao buscar áudio no Supabase:`, error);
-        speak(fallbackText, onEndCallback);
-    }
-}
-
-// =========================================================================
-// BLOCO DE CÓDIGO PARA CORREÇÃO DO SOM - Fim
-// =========================================================================
-function speak(text, onEndCallback) { if (!window.speechSynthesis || !speechReady) return; speechSynthesis.cancel(); const utterance = new SpeechSynthesisUtterance(text); utterance.lang = 'pt-BR'; utterance.voice = selectedVoice; if (onEndCallback) utterance.onend = onEndCallback; speechSynthesis.speak(utterance); }
 function showScreen(screenId) { document.querySelectorAll('.screen').forEach(s => s.classList.remove('active')); document.getElementById(screenId)?.classList.add('active'); }
 function showModal(modalId) { document.getElementById(modalId)?.classList.add('show'); }
 function closeModal(modalId) { document.getElementById(modalId)?.classList.remove('show'); }
@@ -758,6 +686,7 @@ function hideTutorial() { document.getElementById('tutorialOverlay').classList.r
 async function logStudentError({ question, selectedAnswer }) { if (!currentUser || currentUser.type !== 'student') { return; } const errorData = { student_id: currentUser.id, teacher_id: currentUser.teacher_id, class_id: currentUser.class_id, phase: gameState.currentPhase, question_type: question.type, correct_answer: String(question.correctAnswer), selected_answer: String(selectedAnswer) }; const { error } = await supabaseClient.from('student_errors').insert([errorData]); if (error) { console.error('Falha ao registrar erro:', error); } }
 async function populateReportClassSelector() { const selector = document.getElementById('reportClassSelector'); selector.innerHTML = '<option value="">Carregando turmas...</option>'; document.getElementById('reportContentContainer').style.display = 'none'; const { data, error } = await supabaseClient.from('classes').select('id, name').eq('teacher_id', currentUser.id).order('name', { ascending: true }); if (error || !data) { selector.innerHTML = '<option value="">Erro ao carregar</option>'; return; } if (data.length === 0) { selector.innerHTML = '<option value="">Nenhuma turma encontrada</option>'; return; } selector.innerHTML = '<option value="">-- Selecione uma turma --</option>'; data.forEach(cls => { selector.innerHTML += `<option value="${cls.id}">${cls.name}</option>`; }); }
 function handleReportClassSelection(event) { const classId = event.target.value; const reportContainer = document.getElementById('reportContentContainer'); if (classId) { reportContainer.style.display = 'block'; loadAndDisplayClassReports(classId); } else { reportContainer.style.display = 'none'; reportContainer.innerHTML = ''; } }
+
 async function loadAndDisplayClassReports(classId) {
     const reportContainer = document.getElementById('reportContentContainer');
     reportContainer.innerHTML = '<p><i class="fas fa-spinner fa-spin"></i> Carregando relatórios...</p>';
@@ -766,7 +695,6 @@ async function loadAndDisplayClassReports(classId) {
         reportContainer.innerHTML = '<p class="error">Erro ao carregar dados de erros.</p>';
         return;
     }
-    // LINHA MODIFICADA AQUI: Adicionado .order('name') para ordenar por nome
     const { data: students, error: studentsError } = await supabaseClient.from('students').select('id, name').eq('class_id', classId).order('name', { ascending: true });
     if (studentsError) {
         reportContainer.innerHTML = '<p class="error">Erro ao carregar lista de alunos.</p>';
@@ -776,6 +704,7 @@ async function loadAndDisplayClassReports(classId) {
     renderClassHeatmap(errors, 'classHeatmapContainer');
     renderIndividualReports(students, errors, 'individualReportsContainer');
 }
+
 function renderClassHeatmap(errors, containerId) { const heatmapContainer = document.getElementById(containerId); const sectionHeader = heatmapContainer.closest('.report-section').querySelector('h4'); sectionHeader.querySelector('.view-chart-btn')?.remove(); if (!errors || errors.length === 0) { heatmapContainer.innerHTML = '<p>Nenhum erro registrado para esta turma. Ótimo trabalho! 🎉</p>'; return; } const errorsByPhase = errors.reduce((acc, error) => { const phase = error.phase || 'Desconhecida'; if (!acc[phase]) { acc[phase] = []; } acc[phase].push(error); return acc; }, {}); let html = ''; const sortedPhases = Object.keys(errorsByPhase).sort((a, b) => a - b); for (const phase of sortedPhases) { const phaseDescription = PHASE_DESCRIPTIONS[phase] || 'Fase Desconhecida'; html += `<div class="phase-group"><h3>Fase ${phase} - ${phaseDescription}</h3>`; const phaseErrors = errorsByPhase[phase]; const errorCounts = phaseErrors.reduce((acc, error) => { const key = error.correct_answer; acc[key] = (acc[key] || 0) + 1; return acc; }, {}); const sortedErrors = Object.entries(errorCounts).sort(([, a], [, b]) => b - a); if (sortedErrors.length === 0) { html += '<p>Nenhum erro nesta fase.</p>'; } else { html += sortedErrors.map(([item, count]) => ` <div class="heatmap-item"> <div class="item-label">${item}</div> <div class="item-details"> <span class="item-count">${count} erro(s)</span> <div class="item-bar-container"> <div class="item-bar" style="width: ${(count / sortedErrors[0][1]) * 100}%;"></div> </div> </div> </div> `).join(''); } html += '</div>'; } heatmapContainer.innerHTML = html; const chartButton = document.createElement('button'); chartButton.className = 'btn small view-chart-btn'; chartButton.innerHTML = '<i class="fas fa-chart-bar"></i> Ver Gráfico Geral'; chartButton.onclick = () => { const totalErrorCounts = errors.reduce((acc, error) => { const key = error.correct_answer; acc[key] = (acc[key] || 0) + 1; return acc; }, {}); const sortedTotalErrors = Object.entries(totalErrorCounts).sort(([, a], [, b]) => b - a); const chartLabels = sortedTotalErrors.map(([item]) => item); const chartData = sortedTotalErrors.map(([, count]) => count); displayChartModal('Gráfico de Dificuldades da Turma (Geral)', chartLabels, chartData); }; sectionHeader.appendChild(chartButton); }
 function renderIndividualReports(students, allErrors, containerId) { const container = document.getElementById(containerId); if (!students || students.length === 0) { container.innerHTML = '<p>Nenhum aluno na turma.</p>'; return; } container.innerHTML = students.map(student => ` <div class="student-item student-report-item" data-student-id="${student.id}" data-student-name="${student.name}"> <div class="student-info"> <h4>${student.name}</h4> </div> <i class="fas fa-chevron-down"></i> </div> <div class="student-errors-details" id="errors-for-${student.id}" style="display: none;"></div> `).join(''); container.querySelectorAll('.student-report-item').forEach(item => { item.addEventListener('click', () => { const studentId = item.dataset.studentId; const studentName = item.dataset.studentName; const detailsContainer = document.getElementById(`errors-for-${studentId}`); const isVisible = detailsContainer.style.display === 'block'; container.querySelectorAll('.student-errors-details').forEach(d => { if (d.id !== `errors-for-${studentId}`) d.style.display = 'none'; }); container.querySelectorAll('.student-report-item i').forEach(i => i.className = 'fas fa-chevron-down'); if (!isVisible) { detailsContainer.style.display = 'block'; item.querySelector('i').className = 'fas fa-chevron-up'; const studentErrors = allErrors.filter(e => e.student_id === studentId); if (studentErrors.length === 0) { detailsContainer.innerHTML = '<p style="padding: 10px;">Este aluno não cometeu erros. Ótimo trabalho! 🌟</p>'; return; } const errorCounts = studentErrors.reduce((acc, error) => { const key = `Fase ${error.phase} | Correto: ${error.correct_answer}`; if (!acc[key]) { acc[key] = { count: 0, selections: {}, details: error }; } acc[key].count++; acc[key].selections[error.selected_answer] = (acc[key].selections[error.selected_answer] || 0) + 1; return acc; }, {}); const top5Errors = Object.entries(errorCounts).sort(([, a], [, b]) => b.count - a.count).slice(0, 5); let reportHTML = `<ul>${top5Errors.map(([, errorData]) => { const selectionsText = Object.entries(errorData.selections).map(([selection, count]) => `'${selection}' (${count}x)`).join(', '); const phaseDescription = PHASE_DESCRIPTIONS[errorData.details.phase] || ''; return `<li> <div class="error-item"> <strong>Fase ${errorData.details.phase} (${phaseDescription}):</strong> Resposta correta era <strong>"${errorData.details.correct_answer}"</strong> <small>Aluno selecionou: ${selectionsText}</small> </div> <span class="error-count">${errorData.count} ${errorData.count > 1 ? 'vezes' : 'vez'}</span> </li>`; }).join('')}</ul>`; reportHTML += `<div class="ai-button-container"> <button class="btn ai-btn" onclick="handleGenerateLessonPlan('${studentId}', '${studentName}')"> <i class="fas fa-rocket"></i> Analisar com IA </button> </div>`; detailsContainer.innerHTML = reportHTML; } else { detailsContainer.style.display = 'none'; item.querySelector('i').className = 'fas fa-chevron-down'; } }); }); }
 
@@ -840,7 +769,6 @@ async function handleGenerateLessonPlan(studentId, studentName) {
         
         if (result.candidates && result.candidates[0].content?.parts[0]) {
             let text = result.candidates[0].content.parts[0].text;
-            // Formatação para HTML
             text = text.replace(/## (.*)/g, '<h2>$1</h2>');
             text = text.replace(/### (.*)/g, '<h3>$1</h3>');
             text = text.replace(/\n(\d)\. (.*)/g, '<p class="lesson-step"><strong>Passo $1:</strong> $2</p>');
@@ -856,4 +784,4 @@ async function handleGenerateLessonPlan(studentId, studentName) {
         aiContainer.innerHTML = `<p class="error"><strong>Desculpe, ocorreu um erro ao gerar a atividade.</strong><br><br>Motivo: ${err.message}</p>`;
     }
 }
-function displayChartModal(title, labels, data) { const modal = document.getElementById('chartModal'); const titleEl = document.getElementById('chartModalTitle'); const ctx = document.getElementById('myChartCanvas').getContext('2d'); titleEl.textContent = title; if (currentChart) { currentChart.destroy(); } currentChart = new Chart(ctx, { type: 'bar', data: { labels: labels, datasets: [{ label: 'Nº de Erros', data: data, backgroundColor: 'rgba(118, 75, 162, 0.6)', borderColor: 'rgba(118, 75, 162, 1)', borderWidth: 1 }] }, options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } }, plugins: { legend: { display: false }, title: { display: true, text: 'Itens com maior quantidade de erros na turma', font: { size: 16, family: "'Comic Neue', cursive" } } } } }); showModal('chartModal'); }
+function displayChartModal(title, labels, data) { const modal = document.getElementById('chartModal'); const titleEl = document.getElementById('chartModalTitle'); const ctx = document.getElementById('myChartCanvas').getContext('2d'); titleEl.textContent = title; if (currentChart) { currentChart.destroy(); } currentChart = new Chart(ctx, { type: 'bar', data: { labels: labels, datasets: [{ label: 'Nº de Erros', data: data, backgroundColor: 'rgba(118, 75, 162, 0.6)', borderColor: 'rgba(118, 75, 162, 1)', borderWidth: 1 }] }, options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } }, plugins: { legend: { display: false }, title: { display: true, text: 'Itens com maior quantidade de erros na turma', font: { size: 16, family: "'Fredoka', cursive" } } } } }); showModal('chartModal'); }
