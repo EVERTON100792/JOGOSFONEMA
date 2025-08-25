@@ -106,6 +106,7 @@ html, body {
     font-size: 6rem;
     color: var(--primary-glow);
     filter: drop-shadow(0 0 15px var(--primary-glow));
+    display: inline-block;
 }
 
 .bounce { animation: bounce 2s infinite; }
@@ -123,6 +124,9 @@ html, body {
     color: var(--text-dark);
     font-weight: 500;
     font-size: 1.2rem;
+    display: inline-block;
+    position: relative;
+    margin-top: 1rem;
 }
 
 /* --- BOTÕES PRINCIPAIS --- */
@@ -159,9 +163,11 @@ html, body {
     border-radius: 20px;
     margin-bottom: 1.5rem;
     border: 1px solid rgba(255,255,255,0.2);
+    width: 100%;
+    max-width: 1000px;
 }
 .phase-info h2, .score, .attempts { color: #fff; text-shadow: 1px 1px 3px rgba(0,0,0,0.3); }
-.progress-bar { background: rgba(0,0,0,0.2); border-radius: 50px; }
+.progress-bar { background: rgba(0,0,0,0.2); border-radius: 50px; overflow: hidden; }
 .progress-fill { background: var(--primary-gradient); }
 
 .game-content {
@@ -183,8 +189,18 @@ html, body {
     width: 130px; height: 130px;
     border-radius: 50%;
     box-shadow: 0 8px 25px rgba(79, 172, 254, 0.4);
+    transition: all 0.3s ease;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto;
 }
 .audio-button:hover { transform: scale(1.1); box-shadow: 0 12px 35px rgba(79, 172, 254, 0.5); }
+.audio-button i { font-size: 2.5rem; margin-bottom: 0.5rem; }
+.audio-button span { font-size: 1rem; }
 
 .image-emoji {
     font-size: 6rem;
@@ -204,6 +220,8 @@ html, body {
     border-radius: 20px;
     box-shadow: var(--shadow-light);
     border: 2px solid transparent;
+    transition: all 0.3s ease;
+    cursor: pointer;
 }
 .letter-button:hover:not(:disabled) {
     transform: translateY(-5px) scale(1.05);
@@ -252,16 +270,36 @@ html, body {
     font-weight: 500;
     padding: 15px;
     border-radius: 12px;
+    border: none;
+    color: white;
+    cursor: pointer;
+    transition: all 0.3s ease;
 }
 .login-btn:hover, .create-btn:hover, .modal-btn.primary:hover {
     box-shadow: 0 6px 20px rgba(79, 172, 254, 0.4);
     transform: translateY(-3px);
 }
 
+.register-btn {
+    background: transparent;
+    border: 2px solid #4facfe;
+    color: #4facfe;
+    transition: all 0.3s ease;
+    padding: 12px;
+    border-radius: 10px;
+    font-size: 1rem;
+    cursor: pointer;
+}
+.register-btn:hover { background-color: #4facfe; color: white; }
+
+.back-btn { margin-top: 20px; }
+
+.user-selection h2 { color: var(--text-light); }
 .user-type-btn {
     background: var(--card-bg);
     border: 1px solid rgba(255, 255, 255, 0.3);
     backdrop-filter: blur(10px);
+    transition: all 0.3s ease;
 }
 .user-type-btn:hover {
     background: rgba(255, 255, 255, 0.25);
@@ -270,6 +308,7 @@ html, body {
 }
 
 /* --- DASHBOARD DO PROFESSOR --- */
+#teacherDashboard { max-width: 100vw; padding: 0; }
 #teacherDashboard .dashboard-container { background-color: #f4f7fc; }
 .sidebar { background: #ffffff; border-right: 1px solid #e8eaf6; }
 .sidebar-header h3 { color: var(--text-dark); }
@@ -299,15 +338,20 @@ html, body {
     box-shadow: 0 4px 15px rgba(118, 75, 162, 0.3);
 }
 
-/* --- FASES ESPECÍFICAS --- */
+/* --- FASES ESPECÍFICAS E CORREÇÕES DE LAYOUT --- */
 .sentence-build-area { background-color: #eef2f9; border: 2px dashed #c3dafe; }
 .sentence-word { background-color: #fff; box-shadow: var(--shadow-light); }
 .word-option-button, .sound-detective-button {
     background: linear-gradient(135deg, #a18cd1 0%, #fbc2eb 100%);
     box-shadow: 0 4px 15px rgba(161, 140, 209, 0.3);
+    color: white;
+    border: none;
+    cursor: pointer;
+    transition: all 0.3s ease;
 }
 .card-front { background: linear-gradient(135deg, #a18cd1, #fbc2eb); }
 .card-back { background: var(--primary-glow); }
+.control-button { background: #a18cd1; }
 
 /* --- FEEDBACK --- */
 #globalFeedback.success { background: var(--success-gradient); }
@@ -317,6 +361,13 @@ html, body {
 /* Ajustes Finais de Responsividade */
 @media (max-width: 768px) {
     .game-title h1 { font-size: 3rem; }
-    .sidebar-nav a { flex-grow: 1; }
     #teacherDashboard .dashboard-container { padding-bottom: 70px; }
+    .sidebar { z-index: 100; }
+    .sidebar-nav a { flex-grow: 1; }
+    .game-header { flex-direction: column; gap: 1rem; }
+}
+
+@media (max-width: 480px) {
+    .game-title h1 { font-size: 2.5rem; }
+    .user-types { flex-direction: column; align-items: center; }
 }
