@@ -1,5 +1,5 @@
 // =======================================================
-// JOGO DAS LETRAS - SCRIPT COMPLETO E FUNCIONAL
+// JOGO DAS LETRAS - SCRIPT COMPLETO E FUNCIONAL (CORRIGIDO)
 // Versão Final com 10 Fases Variadas e IA Melhorada
 // =======================================================
 
@@ -149,7 +149,7 @@ function renderStudentProgress(sortBy = 'last_played') {
             return ` <label class="phase-checkbox-label" title="${phaseName}"> 
                         <input type="checkbox" class="phase-checkbox" value="${phaseNum}" ${assignedPhases.includes(phaseNum) ? 'checked' : ''} onchange="assignPhases('${student.id}', this)" > 
                         Fase ${phaseNum} - ${phaseName}
-                     </label> `;
+                       </label> `;
         }).join('');
         
         return `
@@ -191,7 +191,6 @@ function startTimer() { stopTimer(); let seconds = 0; const timerEl = document.g
 function stopTimer() { clearInterval(timerInterval); }
 
 // PARTE 8: LÓGICA DO JOGO
-// ... (código completo e funcional) ...
 async function showStudentGame() { await loadGameState(); const canResume = gameState.currentQuestionIndex > 0 && gameState.attempts > 0 && !gameState.phaseCompleted; if (canResume) { showScreen('gameScreen'); startQuestion(); } else { showScreen('startScreen'); } }
 async function startGame() { showScreen('gameScreen'); startQuestion(); }
 async function loadGameState() { const { data: progressData, error } = await supabaseClient.from('progress').select('game_state, current_phase').eq('student_id', currentUser.id).single(); if (error && error.code !== 'PGRST116') { console.error("Erro ao carregar progresso:", error); } const assignedPhases = currentUser.assigned_phases && currentUser.assigned_phases.length > 0 ? currentUser.assigned_phases : [1]; const firstAssignedPhase = assignedPhases[0]; if (progressData?.game_state?.questions) { gameState = progressData.game_state; if (!assignedPhases.includes(gameState.currentPhase)) { gameState = { currentPhase: firstAssignedPhase, score: 0, attempts: 3, questions: generateQuestions(firstAssignedPhase), currentQuestionIndex: 0, teacherId: currentUser.teacher_id, tutorialsShown: [], phaseCompleted: false }; await saveGameState(); } if (!gameState.tutorialsShown) gameState.tutorialsShown = []; } else { gameState = { currentPhase: firstAssignedPhase, score: 0, attempts: 3, questions: generateQuestions(firstAssignedPhase), currentQuestionIndex: 0, teacherId: currentUser.teacher_id, tutorialsShown: [], phaseCompleted: false }; await saveGameState(); } }
@@ -279,14 +278,22 @@ async function startQuestion() {
     const q = gameState.questions[gameState.currentQuestionIndex];
     document.getElementById('nextQuestion').style.display = 'none';
     updateUI();
-    const UIElements = ['sentenceBuildArea', 'audioQuestionArea', 'imageQuestionArea', 'lettersGrid', 'memoryGameGrid'];
+    const UIElements = ['audioQuestionArea', 'imageQuestionArea', 'lettersGrid', 'memoryGameGrid'];
     UIElements.forEach(id => {
         const el = document.getElementById(id);
         if (el) { el.innerHTML = ''; el.style.display = 'none'; }
     });
+    // Limpa a área de construção da frase e reseta o estilo
+    const sentenceArea = document.getElementById('sentenceBuildArea');
+    sentenceArea.innerHTML = '';
+    sentenceArea.style.display = 'none';
+    sentenceArea.style.borderColor = '';
+    sentenceArea.style.backgroundColor = '';
+
     document.getElementById('questionText').textContent = '';
     document.getElementById('wordDisplay').textContent = '';
     document.getElementById('repeatAudio').style.display = 'none';
+    
     switch (q.type) {
         case 'letter_sound': renderPhase1UI(q); break;
         case 'initial_vowel': renderPhase2UI(q); break;
@@ -480,42 +487,58 @@ function handleSequenceClick(buttonElement) {
         document.getElementById('nextQuestion').style.display = 'block';
     }
 }
-async function selectAnswer(selectedAnswer) { 
+async function selectAnswer(selectedAnswer) {
     const q = gameState.questions[gameState.currentQuestionIndex];
     if (['memory_game', 'alphabet_order'].includes(q.type)) return;
-    document.querySelectorAll('.letter-button, .word-option-button, .sound-detective-button').forEach(btn => btn.disabled = true); 
-    const isCorrect = selectedAnswer === q.correctAnswer; 
-    document.querySelectorAll('.letter-button, .word-option-button, .sound-detective-button').forEach(btn => { 
-        const btnIdentifier = btn.dataset.sound || btn.textContent;
-        if (btnIdentifier === q.correctAnswer || (q.type === 'build_sentence' && isCorrect)) { btn.classList.add('correct'); } 
-        if (!isCorrect) { 
-            if (q.type === 'build_sentence') { 
-                document.querySelectorAll('.word-option-button').forEach(b => b.classList.add('incorrect')); 
-            } else if (btnIdentifier === selectedAnswer) { 
-                btn.classList.add('incorrect'); 
-            } 
-        } 
-    }); 
-    if (isCorrect) { 
-        gameState.score++; 
-        showFeedback('Muito bem!', 'success'); 
-        playTeacherAudio('feedback_correct', 'Acertou'); 
-        if (q.type !== 'letter_sound' && q.type !== 'build_sentence') { 
-            document.getElementById('wordDisplay').textContent = q.word || q.initialWord; 
-        } 
-    } else { 
-        gameState.attempts--; 
-        logStudentError({ question: q, selectedAnswer: selectedAnswer }).catch(console.error); 
-        showFeedback(`Quase! A resposta correta era ${q.correctAnswer}`, 'error'); 
-        playTeacherAudio('feedback_incorrect', 'Tente de novo'); 
-    } 
-    updateUI(); 
-    await saveGameState(); 
-    if (gameState.attempts <= 0) { 
-        setTimeout(endPhase, 2000); 
-    } else { 
-        setTimeout(() => document.getElementById('nextQuestion').style.display = 'block', 1500); 
-    } 
+
+    document.querySelectorAll('.letter-button, .word-option-button, .sound-detective-button').forEach(btn => btn.disabled = true);
+
+    const isCorrect = selectedAnswer === q.correctAnswer;
+
+    if (q.type === 'build_sentence') {
+        const sentenceArea = document.getElementById('sentenceBuildArea');
+        if (isCorrect) {
+            sentenceArea.style.borderColor = '#4ECDC4';
+            sentenceArea.style.backgroundColor = 'rgba(78, 205, 196, 0.1)';
+        } else {
+            sentenceArea.style.borderColor = '#ff6b6b';
+            sentenceArea.style.backgroundColor = 'rgba(255, 107, 107, 0.1)';
+            document.querySelectorAll('.word-option-button').forEach(b => b.classList.add('incorrect'));
+        }
+    } else {
+        document.querySelectorAll('.letter-button, .word-option-button, .sound-detective-button').forEach(btn => {
+            const btnIdentifier = btn.dataset.sound || btn.textContent;
+            if (btnIdentifier === q.correctAnswer) {
+                btn.classList.add('correct');
+            }
+            if (!isCorrect && btnIdentifier === selectedAnswer) {
+                btn.classList.add('incorrect');
+            }
+        });
+    }
+
+    if (isCorrect) {
+        gameState.score++;
+        showFeedback('Muito bem!', 'success');
+        playTeacherAudio('feedback_correct', 'Acertou');
+        if (q.type !== 'letter_sound' && q.type !== 'build_sentence') {
+            document.getElementById('wordDisplay').textContent = q.word || q.initialWord;
+        }
+    } else {
+        gameState.attempts--;
+        logStudentError({ question: q, selectedAnswer: selectedAnswer }).catch(console.error);
+        showFeedback(`Quase! A resposta correta era "${q.correctAnswer}"`, 'error');
+        playTeacherAudio('feedback_incorrect', 'Tente de novo');
+    }
+
+    updateUI();
+    await saveGameState();
+
+    if (gameState.attempts <= 0) {
+        setTimeout(endPhase, 2000);
+    } else {
+        setTimeout(() => document.getElementById('nextQuestion').style.display = 'block', 1500);
+    }
 }
 function nextQuestion() { gameState.currentQuestionIndex++; startQuestion(); }
 function endPhase() { const accuracy = gameState.questions.length > 0 ? Math.round((gameState.score / gameState.questions.length) * 100) : 0; const passed = accuracy >= 70; showResultScreen(accuracy, passed); }
@@ -551,7 +574,7 @@ async function handleGenerateLessonPlan(studentId, studentName) {
     aiContainer.innerHTML = '<div class="loading-ai"><i class="fas fa-spinner fa-spin"></i> Analisando e gerando plano de aula...</div>';
     showModal('aiTipsModal');
     
-    const apiKey = "COLE_SUA_CHAVE_PESSOAL_AQUI"; 
+    const apiKey = "AIzaSyCA9vIdNExymmsVxQBwh1tIVyoldeTclKs"; 
     
     if (!apiKey || apiKey === "COLE_SUA_CHAVE_PESSOAL_AQUI") {
         aiContainer.innerHTML = `<p class="error"><strong>Erro de Configuração:</strong> A chave de API do Gemini não foi inserida no arquivo script.js.</p>`;
