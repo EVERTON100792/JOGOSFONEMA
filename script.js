@@ -586,7 +586,7 @@ async function handleGenerateLessonPlan(studentId, studentName) {
     showModal('aiTipsModal');
     
     // ATENÇÃO: Substitua pela sua chave de API do Google. Não exponha esta chave publicamente.
-    const apiKey = "COLE_SUA_CHAVE_AQUI"; 
+    const apiKey = "AIzaSyCA9vIdNExymmsVxQBwh1tIVyoldeTclKs"; 
     
     if (!apiKey || apiKey === "COLE_SUA_CHAVE_AQUI") {
         aiContainer.innerHTML = `<p class="error"><strong>Erro de Configuração:</strong> A chave de API do Gemini não foi inserida no arquivo script.js.</p>`;
