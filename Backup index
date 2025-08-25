@@ -253,7 +253,6 @@
                         <span id="imageEmoji" class="image-emoji"></span>
                     </div>
                     <div id="sentenceBuildArea" class="sentence-build-area"></div>
-                    
                     <h3 id="wordDisplay" class="word-display"></h3>
                 </div>
 
@@ -261,7 +260,10 @@
 					<h3 id="questionText">Qual letra faz este som?</h3>
 				</div>
 			</div>
+            
+            <div id="memoryGameGrid" class="memory-grid"></div>
 			<div class="letters-grid" id="lettersGrid"></div>
+            
 			<div class="game-controls">
 				<button id="repeatAudio" class="control-button">
 					<i class="fas fa-redo"></i> Ouvir Novamente
@@ -455,12 +457,10 @@
         <div class="modal-content">
             <h3 style="color: #4ECDC4;"><i class="fas fa-check-circle"></i> Aluno Criado com Sucesso!</h3>
             <p>Anote os dados de acesso abaixo para entregar ao aluno.</p>
-            
             <div class="credentials-box">
                 <p><strong>Usuário:</strong> <span id="newStudentUsername"></span></p>
                 <p><strong>Senha:</strong> <span id="newStudentPassword" style="font-weight: bold; color: #764ba2;"></span></p>
             </div>
-    
             <div class="modal-actions">
                 <button type="button" id="copyCredentialsBtn" class="modal-btn"><i class="fas fa-copy"></i> Copiar Dados</button>
                 <button type="button" class="modal-btn primary" data-close="studentCreatedModal">Fechar</button>
@@ -495,11 +495,9 @@
         <div class="modal-content">
             <h3 style="color: #764ba2;"><i class="fas fa-key"></i> Senha Redefinida!</h3>
             <p>A senha do aluno(a) <strong id="resetStudentName" style="color: #2c3e50;"></strong> foi alterada. Anote os novos dados de acesso abaixo.</p>
-            
             <div class="credentials-box">
                 <p><strong>Nova Senha:</strong> <span id="resetStudentPassword" style="font-weight: bold; font-size: 1.2rem; color: #764ba2;"></span></p>
             </div>
-
             <div class="modal-actions">
                 <button type="button" id="copyResetPasswordBtn" class="modal-btn primary"><i class="fas fa-copy"></i> Copiar Senha</button>
                 <button type="button" class="modal-btn" data-close="resetPasswordModal">Fechar</button>
