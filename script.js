@@ -23,18 +23,18 @@ const VOWEL_ENCOUNTERS = ['AI', 'EI', 'OI', 'UI', 'AU', 'EU', 'ÃO', 'ÃE', 'UA'
 
 const PHASE_4_WORDS_F = [
     { word: 'FACA', image: '🔪', question: 'FA', type: 'initial_syllable', options: ['FA', 'FO', 'VA'] },
-    { word: 'FOCA', image: '🦭', question: 'FO', type: 'initial_syllable', options: ['FE', 'VO', 'FO'] },
+    { word: 'FOGO', image: '🔥', question: 'FO', type: 'initial_syllable', options: ['FE', 'VO', 'FO'] },
     { word: 'FITA', image: '🎀', question: 'FI', type: 'initial_syllable', options: ['VI', 'FI', 'FA'] },
     { word: 'GARRAFA', image: '🍾', question: 'FA', type: 'middle_syllable', options: ['VA', 'FA', 'FO'] },
     { word: 'ALFINETE', image: '🧷', question: 'FI', type: 'middle_syllable', options: ['FI', 'VI', 'FE'] },
     { word: 'GOLFINHO', image: '🐬', question: 'FI', type: 'middle_syllable', options: ['FO', 'FI', 'VI'] },
     { word: 'FOTO', image: '📷', question: 'FOTO', type: 'full_word', options: ['FOTO', 'VOTO', 'FOGO'] },
-    { word: 'FIVELA', image: '✨', question: 'FIVELA', type: 'full_word', options: ['FACA', 'VIVELA', 'FIVELA'] },
-    { word: 'FUTEBOL', image: '⚽', question: 'FUTEBOL', type: 'full_word', options: ['FUTEBOL', 'VOTEBOL', 'FEIJÃO'] },
-    { word: 'FEIJÃO', image: '🫘', question: 'FEIJÃO', type: 'full_word', options: ['FEIJÃO', 'VEIJÃO', 'FAROL'] },
+    { word: 'FIO', image: '🧵', question: 'FIO', type: 'full_word', options: ['FIO', 'VIO', 'FILA'] },
+    { word: 'FUTEBOL', image: '⚽', question: 'FUTEBOL', type: 'full_word', options: ['FUTEBOL', 'VOTEBOL', 'FAROFA'] },
+    { word: 'FERIDA', image: '🩹', question: 'FERIDA', type: 'full_word', options: ['FERIDA', 'VERDURA', 'FIGO'] },
 ];
 const PHASE_5_SENTENCES = [
-    { sentence: ['A', 'FOCA', 'É', 'FOFA'], image: '🦭', answer: 'A FOCA É FOFA' },
+    { sentence: ['O', 'FOGO', 'QUEIMA'], image: '🔥', answer: 'O FOGO QUEIMA' },
     { sentence: ['O', 'CAFÉ', 'É', 'FORTE'], image: '☕', answer: 'O CAFÉ É FORTE' },
     { sentence: ['A', 'FADA', 'VOOU'], image: '🧚‍♀️', answer: 'A FADA VOOU' },
     { sentence: ['EU', 'VI', 'A', 'FOTO'], image: '📷', answer: 'EU VI A FOTO' },
@@ -43,12 +43,11 @@ const PHASE_5_SENTENCES = [
 const PHASE_6_SYLLABLE_COUNT = [
     { word: 'FÉ', image: '🙏', syllables: 1 },
     { word: 'BIFE', image: '🥩', syllables: 2 },
-    { word: 'FIVELA', image: '✨', syllables: 3 },
+    { word: 'FIGURA', image: '👤', syllables: 3 },
     { word: 'FÁBRICA', image: '🏭', syllables: 3 },
     { word: 'TELEFONE', image: '📞', syllables: 4 },
     { word: 'FOTOGRAFIA', image: '📸', syllables: 5 },
 ];
-
 
 // PARTE 3: FUNÇÕES UTILITÁRIAS
 async function hashPassword(password) { const encoder = new TextEncoder(); const data = encoder.encode(password); const hashBuffer = await window.crypto.subtle.digest('SHA-256', data); const hashArray = Array.from(new Uint8Array(hashBuffer)); return hashArray.map(b => b.toString(16).padStart(2, '0')).join(''); }
@@ -121,7 +120,6 @@ function renderStudentProgress(sortBy = 'last_played') {
         }
         const statusIcon = statusClass === 'active' ? '🟢' : '🔴';
         
-        // CORREÇÃO APLICADA AQUI PARA MOSTRAR TODAS AS 6 FASES
         const phaseCheckboxes = [1, 2, 3, 4, 5, 6].map(phaseNum => ` <label class="phase-checkbox-label"> <input type="checkbox" class="phase-checkbox" value="${phaseNum}" ${assignedPhases.includes(phaseNum) ? 'checked' : ''} onchange="assignPhases('${student.id}', this)" > Fase ${phaseNum} </label> `).join('');
         
         return `
@@ -167,7 +165,6 @@ async function showStudentGame() { await loadGameState(); const canResume = game
 async function startGame() { showScreen('gameScreen'); startQuestion(); }
 async function loadGameState() { const { data: progressData, error } = await supabaseClient.from('progress').select('game_state, current_phase').eq('student_id', currentUser.id).single(); if (error && error.code !== 'PGRST116') { console.error("Erro ao carregar progresso:", error); } const assignedPhases = currentUser.assigned_phases && currentUser.assigned_phases.length > 0 ? currentUser.assigned_phases : [1]; const firstAssignedPhase = assignedPhases[0]; if (progressData?.game_state?.questions) { gameState = progressData.game_state; if (!assignedPhases.includes(gameState.currentPhase)) { gameState = { currentPhase: firstAssignedPhase, score: 0, attempts: 3, questions: generateQuestions(firstAssignedPhase), currentQuestionIndex: 0, teacherId: currentUser.teacher_id, tutorialsShown: [], phaseCompleted: false }; await saveGameState(); } if (!gameState.tutorialsShown) gameState.tutorialsShown = []; } else { gameState = { currentPhase: firstAssignedPhase, score: 0, attempts: 3, questions: generateQuestions(firstAssignedPhase), currentQuestionIndex: 0, teacherId: currentUser.teacher_id, tutorialsShown: [], phaseCompleted: false }; await saveGameState(); } }
 async function saveGameState() { if (!currentUser || currentUser.type !== 'student') return; await supabaseClient.from('progress').upsert({ student_id: currentUser.id, current_phase: gameState.currentPhase, game_state: gameState, last_played: new Date().toISOString() }, { onConflict: 'student_id' }); }
-
 function generateQuestions(phase) {
     let questions = [];
     const questionCount = 10; 
@@ -235,9 +232,7 @@ function generateQuestions(phase) {
     }
     return questions;
 }
-
 function generateOptions(correctItem, sourceArray, count) { const options = new Set([correctItem]); const availableItems = sourceArray.filter(l => l !== correctItem); while (options.size < count && availableItems.length > 0) { options.add(availableItems.splice(Math.floor(Math.random() * availableItems.length), 1)[0]); } return Array.from(options).sort(() => 0.5 - Math.random()); }
-
 async function startQuestion() {
     if (gameState.phaseCompleted) {
         const accuracy = gameState.questions.length > 0 ? Math.round((gameState.score / gameState.questions.length) * 100) : 100;
@@ -251,13 +246,11 @@ async function startQuestion() {
     const q = gameState.questions[gameState.currentQuestionIndex];
     document.getElementById('nextQuestion').style.display = 'none';
     updateUI();
-
     const sentenceBuildArea = document.getElementById('sentenceBuildArea');
     if (sentenceBuildArea) {
         sentenceBuildArea.innerHTML = '';
         sentenceBuildArea.style.display = 'none';
     }
-
     switch (q.type) {
         case 'letter_sound':
             renderPhase1UI(q);
@@ -280,18 +273,15 @@ async function startQuestion() {
             renderPhase6UI(q);
             break;
     }
-
     if (q.type === 'build_sentence') {
         renderWordOptions(q.options);
     } else if (q.type) {
         renderOptions(q.options);
     }
-
     if (q.type === 'letter_sound') {
         setTimeout(playCurrentAudio, 500);
     }
 }
-
 function renderPhase1UI(q) { document.getElementById('audioQuestionArea').style.display = 'block'; document.getElementById('imageQuestionArea').style.display = 'none'; document.getElementById('questionText').textContent = 'Qual letra faz este som?'; document.getElementById('repeatAudio').style.display = 'inline-block'; }
 function renderPhase2UI(q) { document.getElementById('audioQuestionArea').style.display = 'none'; document.getElementById('imageQuestionArea').style.display = 'block'; document.getElementById('imageEmoji').textContent = q.image; document.getElementById('wordDisplay').textContent = `__${q.word.substring(1)}`; document.getElementById('questionText').textContent = 'Qual vogal completa a palavra?'; document.getElementById('repeatAudio').style.display = 'none'; }
 function renderPhase3UI(q) { document.getElementById('audioQuestionArea').style.display = 'none'; document.getElementById('imageQuestionArea').style.display = 'block'; document.getElementById('imageEmoji').textContent = q.image; document.getElementById('wordDisplay').textContent = q.word.replace(q.correctAnswer, '__'); document.getElementById('questionText').textContent = 'Qual encontro de vogais completa a palavra?'; document.getElementById('repeatAudio').style.display = 'none'; }
@@ -301,7 +291,6 @@ function renderPhase4UI(q) {
     document.getElementById('sentenceBuildArea').style.display = 'none';
     document.getElementById('imageEmoji').textContent = q.image;
     document.getElementById('repeatAudio').style.display = 'none';
-
     if (q.type === 'initial_syllable') {
         document.getElementById('wordDisplay').textContent = `__${q.word.substring(q.correctAnswer.length)}`;
         document.getElementById('questionText').textContent = 'Qual sílaba começa esta palavra?';
@@ -342,16 +331,13 @@ function renderWordOptions(options) {
 function selectWordForSentence(buttonElement) {
     buttonElement.disabled = true;
     buttonElement.classList.add('disabled');
-    
     const sentenceBuildArea = document.getElementById('sentenceBuildArea');
     const wordSpan = document.createElement('span');
     wordSpan.className = 'sentence-word';
     wordSpan.textContent = buttonElement.textContent;
     sentenceBuildArea.appendChild(wordSpan);
-
     const allButtons = document.querySelectorAll('.word-option-button');
     const allDisabled = Array.from(allButtons).every(btn => btn.disabled);
-
     if (allDisabled) {
         const constructedSentence = Array.from(sentenceBuildArea.children).map(span => span.textContent).join(' ');
         selectAnswer(constructedSentence);
@@ -397,28 +383,18 @@ async function handleGenerateAITips(studentId, studentName) {
     document.getElementById('aiTipsTitle').innerHTML = `<i class="fas fa-lightbulb" style="color: #f1c40f;"></i> Dicas para <span style="color: #764ba2;">${studentName}</span>`;
     aiContainer.innerHTML = '<div class="loading-ai"><i class="fas fa-spinner fa-spin"></i> Analisando dados e gerando dicas pedagógicas...</div>';
     showModal('aiTipsModal');
-
     const apiKey = "COLE_SUA_CHAVE_PESSOAL_AQUI"; 
-
     if (!apiKey || apiKey === "COLE_SUA_CHAVE_PESSOAL_AQUI") {
         aiContainer.innerHTML = `<p class="error"><strong>Erro de Configuração:</strong> A chave de API do Gemini não foi inserida no arquivo script.js.</p>`;
         return; 
     }
-
     try {
-        const { data: studentErrors, error } = await supabaseClient
-            .from('student_errors')
-            .select('*')
-            .eq('student_id', studentId)
-            .limit(50);
-
+        const { data: studentErrors, error } = await supabaseClient.from('student_errors').select('*').eq('student_id', studentId).limit(50);
         if (error || !studentErrors || studentErrors.length === 0) {
             aiContainer.innerHTML = '<p>Este aluno não possui erros registrados para análise. Ótimo trabalho! 🌟</p>';
             return;
         }
-        
         const errorSummary = studentErrors.map(e => `Fase ${e.phase} (${PHASE_DESCRIPTIONS[e.phase] || 'N/A'}): A resposta correta era '${e.correct_answer}', mas o aluno escolheu '${e.selected_answer}'.`).join('\n');
-
         const prompt = `
             Você é um assistente pedagógico especialista em alfabetização no Brasil, projetado para auxiliar professores do ensino fundamental.
             Um aluno chamado ${studentName} está apresentando as seguintes dificuldades em um jogo de alfabetização:
@@ -428,23 +404,18 @@ async function handleGenerateAITips(studentId, studentName) {
             2.  **Sugestões de Atividades Práticas:** Liste de 3 a 4 sugestões de atividades lúdicas e concretas que o professor pode realizar.
             Formate sua resposta usando Markdown (títulos com ## e listas com *).
         `;
-
         const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${apiKey}`;
-        
         const response = await fetch(apiUrl, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ contents: [{ role: "user", parts: [{ text: prompt }] }] })
         });
-
         if (!response.ok) {
             const errorBody = await response.json();
             console.error("API Error Body:", errorBody);
             throw new Error(`Erro na API (${response.status}): ${errorBody.error.message}`);
         }
-
         const result = await response.json();
-        
         if (result.candidates && result.candidates[0].content?.parts[0]) {
             let text = result.candidates[0].content.parts[0].text;
             text = text.replace(/## (.*)/g, '<h3>$1</h3>');
@@ -464,6 +435,7 @@ async function handleGenerateAITips(studentId, studentName) {
         aiContainer.innerHTML = `<p class="error"><strong>Desculpe, ocorreu um erro ao gerar as dicas.</strong><br><br>Motivo: ${err.message}</p>`;
     }
 }
+
 
 // PARTE 12: GRÁFICOS
 function displayChartModal(title, labels, data) { const modal = document.getElementById('chartModal'); const titleEl = document.getElementById('chartModalTitle'); const ctx = document.getElementById('myChartCanvas').getContext('2d'); titleEl.textContent = title; if (currentChart) { currentChart.destroy(); } currentChart = new Chart(ctx, { type: 'bar', data: { labels: labels, datasets: [{ label: 'Nº de Erros', data: data, backgroundColor: 'rgba(118, 75, 162, 0.6)', borderColor: 'rgba(118, 75, 162, 1)', borderWidth: 1 }] }, options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } }, plugins: { legend: { display: false }, title: { display: true, text: 'Itens com maior quantidade de erros na turma', font: { size: 16, family: "'Comic Neue', cursive" } } } } }); showModal('chartModal'); }
