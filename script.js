@@ -614,7 +614,101 @@ async function retryPhase() { gameState.currentQuestionIndex = 0; gameState.scor
 async function restartGame() { if (gameState.phaseCompleted || gameState.attempts <= 0) { logout(); } else { showScreen('startScreen'); } }
 async function playTeacherAudio(key, fallbackText, onEndCallback) { const teacherId = SUPER_ADMIN_TEACHER_ID; if (!teacherId) { speak(fallbackText, onEndCallback); return; } try { const { data } = await supabaseClient.storage.from('audio_uploads').list(teacherId, { search: `${key}.` }); if (data && data.length > 0) { const { data: { publicUrl } } = supabaseClient.storage.from('audio_uploads').getPublicUrl(`${teacherId}/${data[0].name}`); const audio = new Audio(publicUrl); if (onEndCallback) audio.onended = onEndCallback; audio.play(); } else { speak(fallbackText, onEndCallback); } } catch (error) { console.error("Erro ao buscar áudio:", error); speak(fallbackText, onEndCallback); } }
 async function playCurrentAudio() { const q = gameState.questions[gameState.currentQuestionIndex]; if (q.type !== 'letter_sound') return; const letter = q.correctAnswer; playTeacherAudio(letter, letter); }
-function initializeSpeech() { function loadVoices() { const voices = speechSynthesis.getVoices(); if (voices.length > 0) { selectedVoice = voices.find(v => v.lang === 'pt-BR') || voices[0]; speechReady = true; } } speechSynthesis.onvoiceschanged = loadVoices; loadVoices(); }
+// =========================================================================
+// BLOCO DE CÓDIGO PARA CORREÇÃO DO SOM - Início
+// =========================================================================
+
+function initializeSpeech() {
+    // Esta função agora retorna uma promessa que só é resolvida
+    // quando uma voz em pt-BR é encontrada e carregada.
+    const checkVoices = (resolve, reject) => {
+        const voices = speechSynthesis.getVoices();
+        if (voices.length > 0) {
+            selectedVoice = voices.find(v => v.lang === 'pt-BR');
+            if (selectedVoice) {
+                console.log("Voz em Português encontrada e pronta:", selectedVoice.name);
+                speechReady = true;
+                resolve(); // Sucesso, podemos continuar
+            }
+        }
+    };
+
+    return new Promise((resolve, reject) => {
+        speechSynthesis.onvoiceschanged = () => checkVoices(resolve, reject);
+        checkVoices(resolve, reject); // Tenta verificar imediatamente
+        setTimeout(() => reject(new Error("Timeout: Vozes não carregaram a tempo.")), 2000); // Adiciona um timeout
+    }).catch(error => {
+        console.warn(error.message, "Usando a voz padrão do navegador como fallback.");
+        // Mesmo se falhar, tentamos pegar a primeira voz disponível para não ficar mudo.
+        const voices = speechSynthesis.getVoices();
+        selectedVoice = voices[0];
+        speechReady = true;
+    });
+}
+
+function speak(text, onEndCallback) {
+    if (!window.speechSynthesis) {
+        console.error("API de Síntese de Voz não suportada.");
+        return;
+    }
+    // Verifica se a inicialização já aconteceu. Se não, espera por ela.
+    if (!speechReady) {
+        console.warn("Ainda não pronto para falar, esperando inicialização...");
+        initializeSpeech().then(() => speak(text, onEndCallback));
+        return;
+    }
+    
+    speechSynthesis.cancel(); // Limpa a fila de falas anteriores
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = 'pt-BR';
+    utterance.voice = selectedVoice; // Usa a voz pt-BR que encontramos
+    
+    if (onEndCallback) {
+        utterance.onend = onEndCallback;
+    }
+    
+    console.log(`[Voz] Falando: "${text}"`);
+    speechSynthesis.speak(utterance);
+}
+
+async function playTeacherAudio(key, fallbackText, onEndCallback) {
+    const teacherId = SUPER_ADMIN_TEACHER_ID;
+    if (!teacherId) {
+        speak(fallbackText, onEndCallback);
+        return;
+    }
+    try {
+        console.log(`[Áudio] Procurando áudio gravado para a chave: "${key}"...`);
+        const { data } = await supabaseClient.storage.from('audio_uploads').list(teacherId, { search: `${key}.` });
+        
+        if (data && data.length > 0) {
+            const audioFileName = data[0].name;
+            const { data: { publicUrl } } = supabaseClient.storage.from('audio_uploads').getPublicUrl(`${teacherId}/${audioFileName}`);
+            console.log(`[Áudio] Sucesso! Tocando URL: ${publicUrl}`);
+            const audio = new Audio(publicUrl);
+            
+            audio.onerror = function() {
+                console.error(`[Áudio] ERRO ao carregar o arquivo de áudio: ${publicUrl}. Usando a voz de narração.`);
+                speak(fallbackText, onEndCallback);
+            };
+            
+            if (onEndCallback) {
+                audio.onended = onEndCallback;
+            }
+            audio.play();
+        } else {
+            console.log(`[Áudio] Áudio gravado não encontrado para "${key}". Usando a voz de narração.`);
+            speak(fallbackText, onEndCallback);
+        }
+    } catch (error) {
+        console.error(`[Áudio] Erro crítico ao buscar áudio no Supabase:`, error);
+        speak(fallbackText, onEndCallback);
+    }
+}
+
+// =========================================================================
+// BLOCO DE CÓDIGO PARA CORREÇÃO DO SOM - Fim
+// =========================================================================
 function speak(text, onEndCallback) { if (!window.speechSynthesis || !speechReady) return; speechSynthesis.cancel(); const utterance = new SpeechSynthesisUtterance(text); utterance.lang = 'pt-BR'; utterance.voice = selectedVoice; if (onEndCallback) utterance.onend = onEndCallback; speechSynthesis.speak(utterance); }
 function showScreen(screenId) { document.querySelectorAll('.screen').forEach(s => s.classList.remove('active')); document.getElementById(screenId)?.classList.add('active'); }
 function showModal(modalId) { document.getElementById(modalId)?.classList.add('show'); }
