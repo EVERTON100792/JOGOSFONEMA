@@ -339,3 +339,13 @@ body {
     .letters-grid { grid-template-columns: repeat(2, 1fr); }
     .letter-button { font-size: 2rem; }
 }
+/* ======================================================= */
+/* CORREÇÃO DO BUG DE LAYOUT DO DASHBOARD                  */
+/* ======================================================= */
+
+#teacherDashboard.active {
+    display: block;           /* Sobrescreve o 'display: flex' da regra .screen.active */
+    padding: 0;               /* Remove o padding para que o dashboard ocupe a tela inteira */
+    justify-content: initial; /* Reseta a centralização vertical */
+    align-items: initial;     /* Reseta a centralização horizontal */
+}
