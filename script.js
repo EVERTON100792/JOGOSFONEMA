@@ -16,13 +16,40 @@ let gameState = {}, mediaRecorder, audioChunks = [], timerInterval, speechReady 
 
 // PARTE 2: CONTEÚDO DO JOGO
 const gameInstructions = {1: "Vamos começar! Eu vou fazer o som de uma letra. Ouça com atenção no alto-falante e depois clique na letra que você acha que é a certa. Você consegue!", 2: "Que legal, você avançou! Agora, olhe bem para a figura. Qual é a VOGAL que começa o nome dela? Clique na vogal correta para a gente completar a palavra juntos!", 3: "Uau, você está indo muito bem! Agora vamos juntar as vogais. Olhe a figura e escolha os dois sons que completam a palavra. Preste atenção!", 4: "Você é um campeão! Chegou a hora de ler a palavra inteira. Olhe a figura e encontre o nome dela escrito corretamente nas opções abaixo. Vamos lá!", 5: "Fase final! Agora o desafio é com o finalzinho da palavra. Olhe a figura e escolha a SÍLABA que termina o nome dela. Você está quase lá!"};
-const PHASE_DESCRIPTIONS = { 1: "Sons das Letras", 2: "Vogal Inicial", 3: "Encontros Vocálicos", 4: "Leitura de Palavras", 5: "Sílaba Final" };
+const PHASE_DESCRIPTIONS = { 1: "Sons das Letras", 2: "Vogal Inicial", 3: "Encontros Vocálicos", 4: "Explorando a Letra F", 5: "Consciência de Palavras", 6: "Contando Sílabas" };
 const PHASE_2_WORDS = [{ word: 'ABELHA', image: '🐝', vowel: 'A' }, { word: 'ELEFANTE', image: '🐘', vowel: 'E' }, { word: 'IGREJA', image: '⛪', vowel: 'I' }, { word: 'ÔNIBUS', image: '🚌', vowel: 'O' }, { word: 'UVA', image: '🍇', vowel: 'U' }, { word: 'AVIÃO', image: '✈️', vowel: 'A' }, { word: 'ESTRELA', image: '⭐', vowel: 'E' }, { word: 'ÍNDIO', image: '🏹', vowel: 'I' }, { word: 'OVO', image: '🥚', vowel: 'O' }, { word: 'URSO', image: '🐻', vowel: 'U' }];
 const PHASE_3_ENCONTROS = [{ word: 'PEIXE', image: '🐠', encontro: 'EI' }, { word: 'BOI', image: '🐂', encontro: 'OI' }, { word: 'CAIXA', image: '📦', encontro: 'AI' }, { word: 'PAI', image: '👨‍👧', encontro: 'AI' }, { word: 'CÉU', image: '🌌', encontro: 'EU' }, { word: 'LUA', image: '🌙', encontro: 'UA' }, { word: 'LEÃO', image: '🦁', encontro: 'ÃO' }, { word: 'MÃE', image: '👩‍👦', encontro: 'ÃE' }, { word: 'PÃO', image: '🍞', encontro: 'ÃO' }, { word: 'CHAPÉU', image: '🤠', encontro: 'ÉU' }];
 const VOWEL_ENCOUNTERS = ['AI', 'EI', 'OI', 'UI', 'AU', 'EU', 'ÃO', 'ÃE', 'UA', 'ÉU'];
-const PHASE_4_WORDS = [{ word: 'BOLA', image: '⚽', options: ['BOLO', 'BALA', 'BULA'] }, { word: 'CASA', image: '🏠', options: ['COPO', 'COLA', 'CAJU'] }, { word: 'DADO', image: '🎲', options: ['DEDO', 'DIA', 'DOCE'] }, { word: 'GATO', image: '🐈', options: ['GALO', 'GELO', 'GOTA'] }, { word: 'MACACO', image: '🐒', options: ['MALA', 'MAPA', 'MEIA'] }, { word: 'SAPO', image: '🐸', options: ['SAPATO', 'SOFÁ', 'SUCO'] }, { word: 'UVA', image: '🍇', options: ['UNHA', 'URUBU', 'UM'] }, { word: 'SOL', image: '☀️', options: ['SAL', 'SETE', 'SAPO'] }, { word: 'LUA', image: '🌙', options: ['LAMA', 'LATA', 'LEÃO'] }, { word: 'PATO', image: '🦆', options: ['PÉ', 'POTE', 'PIPA'] }];
-const PHASE_5_WORDS = [{ word: 'BOLO', image: '🎂', syllable: 'LO' }, { word: 'CASA', image: '🏠', syllable: 'SA' }, { word: 'DADO', image: '🎲', syllable: 'DO' }, { word: 'FACA', image: '🔪', syllable: 'CA' }, { word: 'GATO', image: '🐈', syllable: 'TO' }, { word: 'MACACO', image: '🐒', syllable: 'CO' }, { word: 'PATO', image: '🦆', syllable: 'TO' }, { word: 'SAPO', image: '🐸', syllable: 'PO' }, { word: 'VACA', image: '🐄', syllable: 'CA' }, { word: 'JANELA', image: '🖼️', syllable: 'LA' }];
-const ALL_END_SYLLABLES = ['LO', 'SA', 'DO', 'CA', 'TO', 'CO', 'PO', 'LA', 'NE', 'JA'];
+
+// DADOS DAS NOVAS FASES IMPLEMENTADOS
+const PHASE_4_WORDS_F = [
+    { word: 'FACA', image: '🔪', question: 'FA', type: 'initial_syllable', options: ['FA', 'FO', 'VA'] },
+    { word: 'FOCA', image: '🦭', question: 'FO', type: 'initial_syllable', options: ['FE', 'VO', 'FO'] },
+    { word: 'FITA', image: '🎀', question: 'FI', type: 'initial_syllable', options: ['VI', 'FI', 'FA'] },
+    { word: 'GARRAFA', image: '🍾', question: 'FA', type: 'middle_syllable', options: ['VA', 'FA', 'FO'] },
+    { word: 'ALFINETE', image: '🧷', question: 'FI', type: 'middle_syllable', options: ['FI', 'VI', 'FE'] },
+    { word: 'GOLFINHO', image: '🐬', question: 'FI', type: 'middle_syllable', options: ['FO', 'FI', 'VI'] },
+    { word: 'FOTO', image: '📷', question: 'FOTO', type: 'full_word', options: ['FOTO', 'VOTO', 'FOGO'] },
+    { word: 'FIVELA', image: '✨', question: 'FIVELA', type: 'full_word', options: ['FACA', 'VIVELA', 'FIVELA'] },
+    { word: 'FUTEBOL', image: '⚽', question: 'FUTEBOL', type: 'full_word', options: ['FUTEBOL', 'VOTEBOL', 'FEIJÃO'] },
+    { word: 'FEIJÃO', image: '🫘', question: 'FEIJÃO', type: 'full_word', options: ['FEIJÃO', 'VEIJÃO', 'FAROL'] },
+];
+const PHASE_5_SENTENCES = [
+    { sentence: ['A', 'FOCA', 'É', 'FOFA'], image: '🦭', answer: 'A FOCA É FOFA' },
+    { sentence: ['O', 'CAFÉ', 'É', 'FORTE'], image: '☕', answer: 'O CAFÉ É FORTE' },
+    { sentence: ['A', 'FADA', 'VOOU'], image: '🧚‍♀️', answer: 'A FADA VOOU' },
+    { sentence: ['EU', 'VI', 'A', 'FOTO'], image: '📷', answer: 'EU VI A FOTO' },
+    { sentence: ['A', 'FACA', 'É', 'AFIADA'], image: '🔪', answer: 'A FACA É AFIADA' },
+];
+const PHASE_6_SYLLABLE_COUNT = [
+    { word: 'FÉ', image: '🙏', syllables: 1 },
+    { word: 'BIFE', image: '🥩', syllables: 2 },
+    { word: 'FIVELA', image: '✨', syllables: 3 },
+    { word: 'FÁBRICA', image: '🏭', syllables: 3 },
+    { word: 'TELEFONE', image: '📞', syllables: 4 },
+    { word: 'FOTOGRAFIA', image: '📸', syllables: 5 },
+];
+
 
 // PARTE 3: FUNÇÕES UTILITÁRIAS
 async function hashPassword(password) { const encoder = new TextEncoder(); const data = encoder.encode(password); const hashBuffer = await window.crypto.subtle.digest('SHA-256', data); const hashArray = Array.from(new Uint8Array(hashBuffer)); return hashArray.map(b => b.toString(16).padStart(2, '0')).join(''); }
@@ -57,7 +84,7 @@ async function manageClass(classId, className) { currentClassId = classId; docum
 async function loadClassStudents() { const { data, error } = await supabaseClient.from('students').select('*').eq('class_id', currentClassId).order('name', { ascending: true }); if (error) { console.error('Erro ao carregar alunos:', error); document.getElementById('studentsList').innerHTML = '<p>Erro ao carregar.</p>'; return; } renderStudents(data); }
 function renderStudents(students) { const container = document.getElementById('studentsList'); if (!students || students.length === 0) { container.innerHTML = '<p>Nenhum aluno cadastrado.</p>'; return; } container.innerHTML = students.map(student => ` <div class="student-item"> <div class="student-info"> <h4>${student.name}</h4> <p>Usuário: ${student.username}</p> </div> <div class="student-actions"> <button onclick="handleShowOrResetPassword('${student.id}', '${student.name}')" class="btn small" title="Ver/Redefinir Senha"> <i class="fas fa-eye"></i> </button> <button onclick="handleDeleteStudent('${student.id}', '${student.name}')" class="btn small danger" title="Excluir Aluno"> <i class="fas fa-trash"></i> </button> </div> </div>`).join(''); }
 async function loadStudentProgress() { const progressList = document.getElementById('studentProgressList'); progressList.innerHTML = '<p><i class="fas fa-spinner fa-spin"></i> Carregando progresso...</p>'; const { data: studentsData, error: studentsError } = await supabaseClient.from('students').select(`*`).eq('class_id', currentClassId); if (studentsError) { console.error("Erro ao buscar alunos:", studentsError); progressList.innerHTML = `<p style="color:red;">Erro ao carregar alunos: ${studentsError.message}</p>`; return; } if (!studentsData || studentsData.length === 0) { progressList.innerHTML = '<p>Nenhum aluno nesta turma para exibir o progresso.</p>'; return; } const studentIds = studentsData.map(s => s.id); const { data: progressData, error: progressError } = await supabaseClient.from('progress').select('*').in('student_id', studentIds); if (progressError) { console.error("Erro ao buscar progresso:", progressError); progressList.innerHTML = `<p style="color:red;">Erro ao carregar o progresso: ${progressError.message}</p>`; return; } const combinedData = studentsData.map(student => { const studentProgress = progressData.find(p => p.student_id === student.id); return { ...student, progress: studentProgress ? [studentProgress] : [] }; }); studentProgressData = combinedData; renderStudentProgress('last_played'); }
-function renderStudentProgress(sortBy = 'last_played') { const progressList = document.getElementById('studentProgressList'); const sortedData = [...studentProgressData].sort((a, b) => { if (sortBy === 'name') { return a.name.localeCompare(b.name); } if (sortBy === 'last_played') { const dateA = (a.progress && a.progress.length > 0) ? new Date(a.progress[0].last_played) : new Date(0); const dateB = (b.progress && b.progress.length > 0) ? new Date(b.progress[0].last_played) : new Date(0); return dateB - dateA; } return 0; }); let html = sortedData.map(student => { const progressRecord = (student.progress && student.progress.length > 0) ? student.progress[0] : null; const assignedPhases = student.assigned_phases && student.assigned_phases.length > 0 ? student.assigned_phases : [1]; const currentPhase = progressRecord?.current_phase || 'N/J'; const gameState = progressRecord?.game_state; let score = 0, total = 10, accuracy = 0; if (gameState && gameState.questions && gameState.questions.length > 0) { score = gameState.score ?? 0; total = gameState.questions.length; accuracy = Math.round((score / total) * 100); } let lastPlayedStr = 'Nunca jogou'; let statusClass = 'inactive'; if (progressRecord?.last_played) { const lastPlayedDate = new Date(progressRecord.last_played); lastPlayedStr = lastPlayedDate.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' }); const sevenDaysAgo = new Date(); sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7); if (lastPlayedDate > sevenDaysAgo) { statusClass = 'active'; } } const statusIcon = statusClass === 'active' ? '🟢' : '🔴'; const phaseCheckboxes = [1, 2, 3, 4, 5].map(phaseNum => ` <label class="phase-checkbox-label"> <input type="checkbox" class="phase-checkbox" value="${phaseNum}" ${assignedPhases.includes(phaseNum) ? 'checked' : ''} onchange="assignPhases('${student.id}', this)" > Fase ${phaseNum} </label> `).join(''); return ` <div class="student-item"> <div class="student-info" style="flex-grow: 1;"> <h4>${student.name} <span class="status-indicator ${statusClass}">${statusIcon}</span></h4> <p>Último Acesso: ${lastPlayedStr}</p> <p>Progresso na Fase ${currentPhase}: ${accuracy}% (${score}/${total})</p> <div class="student-progress-container"> <div class="student-progress-bar"> <div class="student-progress-fill" style="width: ${accuracy}%;"></div> </div> </div> </div> <div class="student-actions"> <label class="select-label">Designar Fases:</label> <div class="phase-checkbox-group"> ${phaseCheckboxes} </div> </div> </div>`; }).join(''); progressList.innerHTML = html || '<p>Nenhum aluno para exibir.</p>'; }
+function renderStudentProgress(sortBy = 'last_played') { const progressList = document.getElementById('studentProgressList'); const sortedData = [...studentProgressData].sort((a, b) => { if (sortBy === 'name') { return a.name.localeCompare(b.name); } if (sortBy === 'last_played') { const dateA = (a.progress && a.progress.length > 0) ? new Date(a.progress[0].last_played) : new Date(0); const dateB = (b.progress && b.progress.length > 0) ? new Date(b.progress[0].last_played) : new Date(0); return dateB - dateA; } return 0; }); let html = sortedData.map(student => { const progressRecord = (student.progress && student.progress.length > 0) ? student.progress[0] : null; const assignedPhases = student.assigned_phases && student.assigned_phases.length > 0 ? student.assigned_phases : [1]; const currentPhase = progressRecord?.current_phase || 'N/J'; const gameState = progressRecord?.game_state; let score = 0, total = 10, accuracy = 0; if (gameState && gameState.questions && gameState.questions.length > 0) { score = gameState.score ?? 0; total = gameState.questions.length; accuracy = Math.round((score / total) * 100); } let lastPlayedStr = 'Nunca jogou'; let statusClass = 'inactive'; if (progressRecord?.last_played) { const lastPlayedDate = new Date(progressRecord.last_played); lastPlayedStr = lastPlayedDate.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' }); const sevenDaysAgo = new Date(); sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7); if (lastPlayedDate > sevenDaysAgo) { statusClass = 'active'; } } const statusIcon = statusClass === 'active' ? '🟢' : '🔴'; const phaseCheckboxes = [1, 2, 3, 4, 5, 6].map(phaseNum => ` <label class="phase-checkbox-label"> <input type="checkbox" class="phase-checkbox" value="${phaseNum}" ${assignedPhases.includes(phaseNum) ? 'checked' : ''} onchange="assignPhases('${student.id}', this)" > Fase ${phaseNum} </label> `).join(''); return ` <div class="student-item"> <div class="student-info" style="flex-grow: 1;"> <h4>${student.name} <span class="status-indicator ${statusClass}">${statusIcon}</span></h4> <p>Último Acesso: ${lastPlayedStr}</p> <p>Progresso na Fase ${currentPhase}: ${accuracy}% (${score}/${total})</p> <div class="student-progress-container"> <div class="student-progress-bar"> <div class="student-progress-fill" style="width: ${accuracy}%;"></div> </div> </div> </div> <div class="student-actions"> <label class="select-label">Designar Fases:</label> <div class="phase-checkbox-group"> ${phaseCheckboxes} </div> </div> </div>`; }).join(''); progressList.innerHTML = html || '<p>Nenhum aluno para exibir.</p>'; }
 async function assignPhases(studentId, changedElement) { const checkboxGroup = changedElement.closest('.phase-checkbox-group'); const checkboxes = checkboxGroup.querySelectorAll('.phase-checkbox'); const newPhases = Array.from(checkboxes).filter(cb => cb.checked).map(cb => parseInt(cb.value)).sort((a, b) => a - b); if (newPhases.length === 0) { showFeedback("O aluno precisa ter pelo menos uma fase designada.", "error"); changedElement.checked = true; return; } const studentData = studentProgressData.find(s => s.id === studentId); if (!studentData) return; showFeedback(`Atualizando fases para ${studentData.name}...`, 'info'); try { const { error: assignError } = await supabaseClient.from('students').update({ assigned_phases: newPhases }).eq('id', studentId); if (assignError) throw assignError; const firstPhase = newPhases[0]; const newGameState = { currentPhase: firstPhase, score: 0, attempts: 3, questions: generateQuestions(firstPhase), currentQuestionIndex: 0, tutorialsShown: [], phaseCompleted: false }; const { error: progressError } = await supabaseClient.from('progress').upsert({ student_id: studentId, current_phase: firstPhase, game_state: newGameState, last_played: new Date().toISOString() }, { onConflict: 'student_id' }); if (progressError) throw progressError; showFeedback(`Fases de ${studentData.name} atualizadas!`, 'success'); await loadStudentProgress(); } catch (error) { console.error("Erro ao designar fases:", error); showFeedback(`Erro: ${error.message}`, 'error'); await loadStudentProgress(); } }
 async function handleCreateStudent(event) { event.preventDefault(); const username = document.getElementById('createStudentUsername').value.trim(); const password = document.getElementById('createStudentPassword').value; const submitButton = document.getElementById('createStudentSubmitBtn'); if (!username || !password) { return showFeedback("Preencha nome e senha.", "error"); } if (!currentClassId || !currentUser?.id) { return showFeedback("Erro de sessão.", "error"); } submitButton.disabled = true; submitButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Criando...'; try { const hashedPassword = await hashPassword(password); const { error } = await supabaseClient.from('students').insert([{ name: username, username: username, password: hashedPassword, class_id: currentClassId, teacher_id: currentUser.id }]); if (error) throw error; document.getElementById('newStudentUsername').textContent = username; document.getElementById('newStudentPassword').textContent = password; showModal('studentCreatedModal'); hideCreateStudentForm(); await loadClassStudents(); await loadStudentProgress(); } catch (error) { showFeedback(formatErrorMessage(error), 'error'); } finally { submitButton.disabled = false; submitButton.innerHTML = 'Criar Aluno'; } }
 async function handleDeleteStudent(studentId, studentName) { if (!confirm(`Tem certeza que deseja excluir "${studentName}"?`)) return; const { error } = await supabaseClient.from('students').delete().eq('id', studentId); if (error) { showFeedback(`Erro: ${error.message}`, 'error'); } else { showFeedback(`Aluno "${studentName}" excluído.`, 'success'); await loadClassStudents(); await loadStudentProgress(); } }
@@ -78,16 +105,202 @@ async function showStudentGame() { await loadGameState(); const canResume = game
 async function startGame() { showScreen('gameScreen'); startQuestion(); }
 async function loadGameState() { const { data: progressData, error } = await supabaseClient.from('progress').select('game_state, current_phase').eq('student_id', currentUser.id).single(); if (error && error.code !== 'PGRST116') { console.error("Erro ao carregar progresso:", error); } const assignedPhases = currentUser.assigned_phases && currentUser.assigned_phases.length > 0 ? currentUser.assigned_phases : [1]; const firstAssignedPhase = assignedPhases[0]; if (progressData?.game_state?.questions) { gameState = progressData.game_state; if (!assignedPhases.includes(gameState.currentPhase)) { gameState = { currentPhase: firstAssignedPhase, score: 0, attempts: 3, questions: generateQuestions(firstAssignedPhase), currentQuestionIndex: 0, teacherId: currentUser.teacher_id, tutorialsShown: [], phaseCompleted: false }; await saveGameState(); } if (!gameState.tutorialsShown) gameState.tutorialsShown = []; } else { gameState = { currentPhase: firstAssignedPhase, score: 0, attempts: 3, questions: generateQuestions(firstAssignedPhase), currentQuestionIndex: 0, teacherId: currentUser.teacher_id, tutorialsShown: [], phaseCompleted: false }; await saveGameState(); } }
 async function saveGameState() { if (!currentUser || currentUser.type !== 'student') return; await supabaseClient.from('progress').upsert({ student_id: currentUser.id, current_phase: gameState.currentPhase, game_state: gameState, last_played: new Date().toISOString() }, { onConflict: 'student_id' }); }
-function generateQuestions(phase) { let questions = []; const questionCount = 10; switch (phase) { case 1: const letters = [...ALPHABET].sort(() => 0.5 - Math.random()); for (let i = 0; i < questionCount; i++) { const l = letters[i % letters.length]; questions.push({ type: 'letter_sound', correctAnswer: l, options: generateOptions(l, ALPHABET, 4) }); } break; case 2: const words2 = [...PHASE_2_WORDS].sort(() => 0.5 - Math.random()); for (let i = 0; i < questionCount; i++) { const item = words2[i % words2.length]; questions.push({ type: 'initial_vowel', word: item.word, image: item.image, correctAnswer: item.vowel, options: generateOptions(item.vowel, VOWELS, 4) }); } break; case 3: const words3 = [...PHASE_3_ENCONTROS].sort(() => 0.5 - Math.random()); for (let i = 0; i < questionCount; i++) { const item = words3[i % words3.length]; questions.push({ type: 'vowel_encounter', word: item.word, image: item.image, correctAnswer: item.encontro, options: generateOptions(item.encontro, VOWEL_ENCOUNTERS, 4) }); } break; case 4: const words4 = [...PHASE_4_WORDS].sort(() => 0.5 - Math.random()); for (let i = 0; i < questionCount; i++) { const item = words4[i % words4.length]; const o = [...item.options, item.word].sort(() => 0.5 - Math.random()); questions.push({ type: 'full_word', image: item.image, correctAnswer: item.word, options: o }); } break; case 5: const words5 = [...PHASE_5_WORDS].sort(() => 0.5 - Math.random()); for (let i = 0; i < questionCount; i++) { const item = words5[i % words5.length]; questions.push({ type: 'final_syllable', word: item.word, image: item.image, correctAnswer: item.syllable, options: generateOptions(item.syllable, ALL_END_SYLLABLES, 4) }); } break; } return questions; }
+
+function generateQuestions(phase) {
+    let questions = [];
+    const questionCount = 10; 
+
+    switch (phase) {
+        case 1:
+            const letters = [...ALPHABET].sort(() => 0.5 - Math.random());
+            for (let i = 0; i < questionCount; i++) {
+                const l = letters[i % letters.length];
+                questions.push({ type: 'letter_sound', correctAnswer: l, options: generateOptions(l, ALPHABET, 4) });
+            }
+            break;
+        case 2:
+            const words2 = [...PHASE_2_WORDS].sort(() => 0.5 - Math.random());
+            for (let i = 0; i < questionCount; i++) {
+                const item = words2[i % words2.length];
+                questions.push({ type: 'initial_vowel', word: item.word, image: item.image, correctAnswer: item.vowel, options: generateOptions(item.vowel, VOWELS, 4) });
+            }
+            break;
+        case 3:
+            const words3 = [...PHASE_3_ENCONTROS].sort(() => 0.5 - Math.random());
+            for (let i = 0; i < questionCount; i++) {
+                const item = words3[i % words3.length];
+                questions.push({ type: 'vowel_encounter', word: item.word, image: item.image, correctAnswer: item.encontro, options: generateOptions(item.encontro, VOWEL_ENCOUNTERS, 4) });
+            }
+            break;
+        case 4:
+            const words4 = [...PHASE_4_WORDS_F].sort(() => 0.5 - Math.random());
+            for (let i = 0; i < questionCount; i++) {
+                const item = words4[i % words4.length];
+                questions.push({
+                    type: item.type,
+                    word: item.word,
+                    image: item.image,
+                    correctAnswer: item.question,
+                    options: item.options.sort(() => 0.5 - Math.random())
+                });
+            }
+            break;
+        case 5:
+            const sentences5 = [...PHASE_5_SENTENCES].sort(() => 0.5 - Math.random());
+            for (let i = 0; i < sentences5.length; i++) {
+                const item = sentences5[i];
+                questions.push({
+                    type: 'build_sentence',
+                    image: item.image,
+                    correctAnswer: item.answer,
+                    options: item.sentence.sort(() => 0.5 - Math.random())
+                });
+            }
+            break;
+        case 6:
+            const words6 = [...PHASE_6_SYLLABLE_COUNT].sort(() => 0.5 - Math.random());
+            for (let i = 0; i < words6.length; i++) {
+                const item = words6[i];
+                questions.push({
+                    type: 'count_syllables',
+                    word: item.word,
+                    image: item.image,
+                    correctAnswer: item.syllables.toString(),
+                    options: generateOptions(item.syllables.toString(), ['1', '2', '3', '4', '5'], 4)
+                });
+            }
+            break;
+    }
+    return questions;
+}
+
 function generateOptions(correctItem, sourceArray, count) { const options = new Set([correctItem]); const availableItems = sourceArray.filter(l => l !== correctItem); while (options.size < count && availableItems.length > 0) { options.add(availableItems.splice(Math.floor(Math.random() * availableItems.length), 1)[0]); } return Array.from(options).sort(() => 0.5 - Math.random()); }
-async function startQuestion() { if (gameState.phaseCompleted) { const accuracy = gameState.questions.length > 0 ? Math.round((gameState.score / gameState.questions.length) * 100) : 100; showResultScreen(accuracy, true); return; } await showTutorial(gameState.currentPhase); if (!gameState.questions || gameState.currentQuestionIndex >= gameState.questions.length) { return endPhase(); } const q = gameState.questions[gameState.currentQuestionIndex]; document.getElementById('nextQuestion').style.display = 'none'; updateUI(); switch (q.type) { case 'letter_sound': renderPhase1UI(q); break; case 'initial_vowel': renderPhase2UI(q); break; case 'vowel_encounter': renderPhase3UI(q); break; case 'full_word': renderPhase4UI(q); break; case 'final_syllable': renderPhase5UI(q); break; } renderOptions(q.options); if (q.type === 'letter_sound') { setTimeout(playCurrentAudio, 500); } }
+
+async function startQuestion() {
+    if (gameState.phaseCompleted) {
+        const accuracy = gameState.questions.length > 0 ? Math.round((gameState.score / gameState.questions.length) * 100) : 100;
+        showResultScreen(accuracy, true);
+        return;
+    }
+    await showTutorial(gameState.currentPhase);
+    if (!gameState.questions || gameState.currentQuestionIndex >= gameState.questions.length) {
+        return endPhase();
+    }
+    const q = gameState.questions[gameState.currentQuestionIndex];
+    document.getElementById('nextQuestion').style.display = 'none';
+    updateUI();
+
+    const sentenceBuildArea = document.getElementById('sentenceBuildArea');
+    if (sentenceBuildArea) {
+        sentenceBuildArea.innerHTML = '';
+        sentenceBuildArea.style.display = 'none';
+    }
+
+    switch (q.type) {
+        case 'letter_sound':
+            renderPhase1UI(q);
+            break;
+        case 'initial_vowel':
+            renderPhase2UI(q);
+            break;
+        case 'vowel_encounter':
+            renderPhase3UI(q);
+            break;
+        case 'initial_syllable':
+        case 'middle_syllable':
+        case 'full_word':
+            renderPhase4UI(q);
+            break;
+        case 'build_sentence':
+            renderPhase5UI(q);
+            break;
+        case 'count_syllables':
+            renderPhase6UI(q);
+            break;
+    }
+
+    if (q.type === 'build_sentence') {
+        renderWordOptions(q.options);
+    } else if (q.type) {
+        renderOptions(q.options);
+    }
+
+    if (q.type === 'letter_sound') {
+        setTimeout(playCurrentAudio, 500);
+    }
+}
+
 function renderPhase1UI(q) { document.getElementById('audioQuestionArea').style.display = 'block'; document.getElementById('imageQuestionArea').style.display = 'none'; document.getElementById('questionText').textContent = 'Qual letra faz este som?'; document.getElementById('repeatAudio').style.display = 'inline-block'; }
 function renderPhase2UI(q) { document.getElementById('audioQuestionArea').style.display = 'none'; document.getElementById('imageQuestionArea').style.display = 'block'; document.getElementById('imageEmoji').textContent = q.image; document.getElementById('wordDisplay').textContent = `__${q.word.substring(1)}`; document.getElementById('questionText').textContent = 'Qual vogal completa a palavra?'; document.getElementById('repeatAudio').style.display = 'none'; }
 function renderPhase3UI(q) { document.getElementById('audioQuestionArea').style.display = 'none'; document.getElementById('imageQuestionArea').style.display = 'block'; document.getElementById('imageEmoji').textContent = q.image; document.getElementById('wordDisplay').textContent = q.word.replace(q.correctAnswer, '__'); document.getElementById('questionText').textContent = 'Qual encontro de vogais completa a palavra?'; document.getElementById('repeatAudio').style.display = 'none'; }
-function renderPhase4UI(q) { document.getElementById('audioQuestionArea').style.display = 'none'; document.getElementById('imageQuestionArea').style.display = 'block'; document.getElementById('imageEmoji').textContent = q.image; document.getElementById('wordDisplay').textContent = `?`; document.getElementById('questionText').textContent = 'Qual é o nome desta figura?'; document.getElementById('repeatAudio').style.display = 'none'; }
-function renderPhase5UI(q) { document.getElementById('audioQuestionArea').style.display = 'none'; document.getElementById('imageQuestionArea').style.display = 'block'; document.getElementById('imageEmoji').textContent = q.image; const visiblePart = q.word.slice(0, -q.correctAnswer.length); document.getElementById('wordDisplay').textContent = `${visiblePart}__`; document.getElementById('questionText').textContent = 'Qual sílaba termina esta palavra?'; document.getElementById('repeatAudio').style.display = 'none'; }
+
+function renderPhase4UI(q) {
+    document.getElementById('audioQuestionArea').style.display = 'none';
+    document.getElementById('imageQuestionArea').style.display = 'block';
+    document.getElementById('sentenceBuildArea').style.display = 'none';
+    document.getElementById('imageEmoji').textContent = q.image;
+    document.getElementById('repeatAudio').style.display = 'none';
+
+    if (q.type === 'initial_syllable') {
+        document.getElementById('wordDisplay').textContent = `__${q.word.substring(q.correctAnswer.length)}`;
+        document.getElementById('questionText').textContent = 'Qual sílaba começa esta palavra?';
+    } else if (q.type === 'middle_syllable') {
+        document.getElementById('wordDisplay').textContent = q.word.replace(q.correctAnswer, '__');
+        document.getElementById('questionText').textContent = 'Qual sílaba completa esta palavra?';
+    } else { // full_word
+        document.getElementById('wordDisplay').textContent = `?`;
+        document.getElementById('questionText').textContent = 'Qual é o nome desta figura?';
+    }
+}
+function renderPhase5UI(q) {
+    document.getElementById('audioQuestionArea').style.display = 'none';
+    document.getElementById('imageQuestionArea').style.display = 'block';
+    document.getElementById('sentenceBuildArea').style.display = 'block';
+    document.getElementById('imageEmoji').textContent = q.image;
+    document.getElementById('wordDisplay').textContent = '';
+    document.getElementById('questionText').textContent = 'Clique nas palavras para formar la frase correta.';
+    document.getElementById('repeatAudio').style.display = 'none';
+}
+function renderPhase6UI(q) {
+    document.getElementById('audioQuestionArea').style.display = 'none';
+    document.getElementById('imageQuestionArea').style.display = 'block';
+    document.getElementById('sentenceBuildArea').style.display = 'none';
+    document.getElementById('imageEmoji').textContent = q.image;
+    document.getElementById('wordDisplay').textContent = q.word;
+    document.getElementById('questionText').textContent = 'Quantas sílabas (pedaços) tem esta palavra?';
+    document.getElementById('repeatAudio').style.display = 'none';
+}
+
 function renderOptions(options) { const lettersGrid = document.getElementById('lettersGrid'); lettersGrid.innerHTML = options.map(option => `<button class="letter-button">${option}</button>`).join(''); lettersGrid.querySelectorAll('.letter-button').forEach(btn => btn.addEventListener('click', (e) => selectAnswer(e.target.textContent))); }
-async function selectAnswer(selectedAnswer) { document.querySelectorAll('.letter-button').forEach(btn => btn.disabled = true); const q = gameState.questions[gameState.currentQuestionIndex]; const isCorrect = selectedAnswer === q.correctAnswer; document.querySelectorAll('.letter-button').forEach(btn => { if (btn.textContent === q.correctAnswer) btn.classList.add('correct'); if (btn.textContent === selectedAnswer && !isCorrect) btn.classList.add('incorrect'); }); if (isCorrect) { gameState.score++; showFeedback('Muito bem!', 'success'); playTeacherAudio('feedback_correct', 'Acertou'); if (q.type !== 'letter_sound') { document.getElementById('wordDisplay').textContent = q.word; } } else { gameState.attempts--; logStudentError({ question: q, selectedAnswer: selectedAnswer }).catch(console.error); showFeedback(`Quase! A resposta correta era ${q.correctAnswer}`, 'error'); playTeacherAudio('feedback_incorrect', 'Tente de novo'); } updateUI(); await saveGameState(); if (gameState.attempts <= 0) { setTimeout(endPhase, 2000); } else { setTimeout(() => document.getElementById('nextQuestion').style.display = 'block', 1500); } }
+
+function renderWordOptions(options) {
+    const lettersGrid = document.getElementById('lettersGrid');
+    lettersGrid.innerHTML = options.map(option => `<button class="word-option-button">${option}</button>`).join('');
+    lettersGrid.querySelectorAll('.word-option-button').forEach(btn => {
+        btn.addEventListener('click', () => selectWordForSentence(btn));
+    });
+}
+function selectWordForSentence(buttonElement) {
+    buttonElement.disabled = true;
+    buttonElement.classList.add('disabled');
+    
+    const sentenceBuildArea = document.getElementById('sentenceBuildArea');
+    const wordSpan = document.createElement('span');
+    wordSpan.className = 'sentence-word';
+    wordSpan.textContent = buttonElement.textContent;
+    sentenceBuildArea.appendChild(wordSpan);
+
+    const allButtons = document.querySelectorAll('.word-option-button');
+    const allDisabled = Array.from(allButtons).every(btn => btn.disabled);
+
+    if (allDisabled) {
+        const constructedSentence = Array.from(sentenceBuildArea.children).map(span => span.textContent).join(' ');
+        selectAnswer(constructedSentence);
+    }
+}
+
+
+async function selectAnswer(selectedAnswer) { document.querySelectorAll('.letter-button, .word-option-button').forEach(btn => btn.disabled = true); const q = gameState.questions[gameState.currentQuestionIndex]; const isCorrect = selectedAnswer === q.correctAnswer; document.querySelectorAll('.letter-button, .word-option-button').forEach(btn => { if (btn.textContent === q.correctAnswer || isCorrect) { btn.classList.add('correct'); } if (btn.textContent === selectedAnswer && !isCorrect) { btn.classList.add('incorrect'); } }); if (isCorrect) { gameState.score++; showFeedback('Muito bem!', 'success'); playTeacherAudio('feedback_correct', 'Acertou'); if (q.type !== 'letter_sound' && q.type !== 'build_sentence') { document.getElementById('wordDisplay').textContent = q.word; } } else { gameState.attempts--; logStudentError({ question: q, selectedAnswer: selectedAnswer }).catch(console.error); showFeedback(`Quase! A resposta correta era ${q.correctAnswer}`, 'error'); playTeacherAudio('feedback_incorrect', 'Tente de novo'); } updateUI(); await saveGameState(); if (gameState.attempts <= 0) { setTimeout(endPhase, 2000); } else { setTimeout(() => document.getElementById('nextQuestion').style.display = 'block', 1500); } }
 function nextQuestion() { gameState.currentQuestionIndex++; startQuestion(); }
 function endPhase() { const accuracy = gameState.questions.length > 0 ? Math.round((gameState.score / gameState.questions.length) * 100) : 0; const passed = accuracy >= 70; showResultScreen(accuracy, passed); }
 function showResultScreen(accuracy, passed) { showScreen('resultScreen'); document.getElementById('finalScore').textContent = gameState.score; document.getElementById('accuracy').textContent = accuracy; const assignedPhases = currentUser.assigned_phases || [1]; const currentPhaseIndex = assignedPhases.indexOf(gameState.currentPhase); const hasNextPhase = currentPhaseIndex !== -1 && currentPhaseIndex < assignedPhases.length - 1; const continueBtn = document.getElementById('continueButton'); const retryBtn = document.getElementById('retryButton'); const restartBtn = document.getElementById('restartButton'); if (passed) { document.getElementById('resultTitle').textContent = 'Parabéns!'; retryBtn.style.display = 'none'; gameState.phaseCompleted = true; if (hasNextPhase) { document.getElementById('resultMessage').innerHTML = 'Você completou a fase! 🏆<br>Clique para ir para a próxima!'; continueBtn.style.display = 'inline-block'; restartBtn.innerHTML = '<i class="fas fa-home"></i> Voltar ao Início'; } else { document.getElementById('resultMessage').innerHTML = 'Você completou TODAS as suas fases! 🥳<br>Fale com seu professor!'; continueBtn.style.display = 'none'; restartBtn.innerHTML = '<i class="fas fa-sign-out-alt"></i> Sair'; } } else { document.getElementById('resultTitle').textContent = 'Não desanime!'; document.getElementById('resultMessage').textContent = 'Você precisa acertar mais. Tente novamente!'; continueBtn.style.display = 'none'; retryBtn.style.display = 'inline-block'; restartBtn.innerHTML = '<i class="fas fa-home"></i> Voltar ao Início'; gameState.phaseCompleted = false; } saveGameState(); }
@@ -122,9 +335,6 @@ async function loadAndDisplayClassReports(classId) { const reportContainer = doc
 function renderClassHeatmap(errors, containerId) { const heatmapContainer = document.getElementById(containerId); const sectionHeader = heatmapContainer.closest('.report-section').querySelector('h4'); sectionHeader.querySelector('.view-chart-btn')?.remove(); if (!errors || errors.length === 0) { heatmapContainer.innerHTML = '<p>Nenhum erro registrado para esta turma. Ótimo trabalho! 🎉</p>'; return; } const errorsByPhase = errors.reduce((acc, error) => { const phase = error.phase || 'Desconhecida'; if (!acc[phase]) { acc[phase] = []; } acc[phase].push(error); return acc; }, {}); let html = ''; const sortedPhases = Object.keys(errorsByPhase).sort((a, b) => a - b); for (const phase of sortedPhases) { const phaseDescription = PHASE_DESCRIPTIONS[phase] || 'Fase Desconhecida'; html += `<div class="phase-group"><h3>Fase ${phase} - ${phaseDescription}</h3>`; const phaseErrors = errorsByPhase[phase]; const errorCounts = phaseErrors.reduce((acc, error) => { const key = error.correct_answer; acc[key] = (acc[key] || 0) + 1; return acc; }, {}); const sortedErrors = Object.entries(errorCounts).sort(([, a], [, b]) => b - a); if (sortedErrors.length === 0) { html += '<p>Nenhum erro nesta fase.</p>'; } else { html += sortedErrors.map(([item, count]) => ` <div class="heatmap-item"> <div class="item-label">${item}</div> <div class="item-details"> <span class="item-count">${count} erro(s)</span> <div class="item-bar-container"> <div class="item-bar" style="width: ${(count / sortedErrors[0][1]) * 100}%;"></div> </div> </div> </div> `).join(''); } html += '</div>'; } heatmapContainer.innerHTML = html; const chartButton = document.createElement('button'); chartButton.className = 'btn small view-chart-btn'; chartButton.innerHTML = '<i class="fas fa-chart-bar"></i> Ver Gráfico Geral'; chartButton.onclick = () => { const totalErrorCounts = errors.reduce((acc, error) => { const key = error.correct_answer; acc[key] = (acc[key] || 0) + 1; return acc; }, {}); const sortedTotalErrors = Object.entries(totalErrorCounts).sort(([, a], [, b]) => b - a); const chartLabels = sortedTotalErrors.map(([item]) => item); const chartData = sortedTotalErrors.map(([, count]) => count); displayChartModal('Gráfico de Dificuldades da Turma (Geral)', chartLabels, chartData); }; sectionHeader.appendChild(chartButton); }
 function renderIndividualReports(students, allErrors, containerId) { const container = document.getElementById(containerId); if (!students || students.length === 0) { container.innerHTML = '<p>Nenhum aluno na turma.</p>'; return; } container.innerHTML = students.map(student => ` <div class="student-item student-report-item" data-student-id="${student.id}" data-student-name="${student.name}"> <div class="student-info"> <h4>${student.name}</h4> </div> <i class="fas fa-chevron-down"></i> </div> <div class="student-errors-details" id="errors-for-${student.id}" style="display: none;"></div> `).join(''); container.querySelectorAll('.student-report-item').forEach(item => { item.addEventListener('click', () => { const studentId = item.dataset.studentId; const studentName = item.dataset.studentName; const detailsContainer = document.getElementById(`errors-for-${studentId}`); const isVisible = detailsContainer.style.display === 'block'; container.querySelectorAll('.student-errors-details').forEach(d => { if (d.id !== `errors-for-${studentId}`) d.style.display = 'none'; }); container.querySelectorAll('.student-report-item i').forEach(i => i.className = 'fas fa-chevron-down'); if (!isVisible) { detailsContainer.style.display = 'block'; item.querySelector('i').className = 'fas fa-chevron-up'; const studentErrors = allErrors.filter(e => e.student_id === studentId); if (studentErrors.length === 0) { detailsContainer.innerHTML = '<p style="padding: 10px;">Este aluno não cometeu erros. Ótimo trabalho! 🌟</p>'; return; } const errorCounts = studentErrors.reduce((acc, error) => { const key = `Fase ${error.phase} | Correto: ${error.correct_answer}`; if (!acc[key]) { acc[key] = { count: 0, selections: {}, details: error }; } acc[key].count++; acc[key].selections[error.selected_answer] = (acc[key].selections[error.selected_answer] || 0) + 1; return acc; }, {}); const top5Errors = Object.entries(errorCounts).sort(([, a], [, b]) => b.count - a.count).slice(0, 5); let reportHTML = `<ul>${top5Errors.map(([, errorData]) => { const selectionsText = Object.entries(errorData.selections).map(([selection, count]) => `'${selection}' (${count}x)`).join(', '); const phaseDescription = PHASE_DESCRIPTIONS[errorData.details.phase] || ''; return `<li> <div class="error-item"> <strong>Fase ${errorData.details.phase} (${phaseDescription}):</strong> Resposta correta era <strong>"${errorData.details.correct_answer}"</strong> <small>Aluno selecionou: ${selectionsText}</small> </div> <span class="error-count">${errorData.count} ${errorData.count > 1 ? 'vezes' : 'vez'}</span> </li>`; }).join('')}</ul>`; reportHTML += `<div class="ai-button-container"> <button class="btn ai-btn" onclick="handleGenerateAITips('${studentId}', '${studentName}')"> <i class="fas fa-lightbulb"></i> Gerar Dicas com IA </button> </div>`; detailsContainer.innerHTML = reportHTML; } else { detailsContainer.style.display = 'none'; item.querySelector('i').className = 'fas fa-chevron-down'; } }); }); }
 
-// ==========================================================
-// === FUNÇÃO DA IA CORRIGIDA COM A NOVA CHAVE DE API ===
-// ==========================================================
 async function handleGenerateAITips(studentId, studentName) {
     const aiContainer = document.getElementById('aiTipsContent');
     document.getElementById('aiTipsTitle').innerHTML = `<i class="fas fa-lightbulb" style="color: #f1c40f;"></i> Dicas para <span style="color: #764ba2;">${studentName}</span>`;
@@ -132,9 +342,8 @@ async function handleGenerateAITips(studentId, studentName) {
     showModal('aiTipsModal');
 
     // ** IMPORTANTE: COLOQUE A CHAVE QUE VOCÊ GEROU NO GOOGLE AI STUDIO AQUI DENTRO DAS ASPAS **
-    const apiKey = "AIzaSyCA9vIdNExymmsVxQBwh1tIVyoldeTclKs"; 
+    const apiKey = "COLE_SUA_CHAVE_PESSOAL_AQUI"; 
 
-    // Se a chave não foi inserida, exibe um erro claro e para.
     if (!apiKey || apiKey === "COLE_SUA_CHAVE_PESSOAL_AQUI") {
         aiContainer.innerHTML = `<p class="error"><strong>Erro de Configuração:</strong> A chave de API do Gemini não foi inserida no arquivo script.js.</p>`;
         return; 
@@ -185,7 +394,6 @@ async function handleGenerateAITips(studentId, studentName) {
         if (result.candidates && result.candidates[0].content?.parts[0]) {
             let text = result.candidates[0].content.parts[0].text;
 
-            // Formata a resposta da IA para HTML
             text = text.replace(/## (.*)/g, '<h3>$1</h3>');
             text = text.replace(/\*\* (.*)\*\*/g, '<h4>$1</h4>');
             text = text.replace(/^\* (.*)/gm, '<li>$1</li>');
@@ -204,5 +412,7 @@ async function handleGenerateAITips(studentId, studentName) {
         aiContainer.innerHTML = `<p class="error"><strong>Desculpe, ocorreu um erro ao gerar as dicas.</strong><br><br>Motivo: ${err.message}</p>`;
     }
 }
+
+
 // PARTE 12: GRÁFICOS
 function displayChartModal(title, labels, data) { const modal = document.getElementById('chartModal'); const titleEl = document.getElementById('chartModalTitle'); const ctx = document.getElementById('myChartCanvas').getContext('2d'); titleEl.textContent = title; if (currentChart) { currentChart.destroy(); } currentChart = new Chart(ctx, { type: 'bar', data: { labels: labels, datasets: [{ label: 'Nº de Erros', data: data, backgroundColor: 'rgba(118, 75, 162, 0.6)', borderColor: 'rgba(118, 75, 162, 1)', borderWidth: 1 }] }, options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } }, plugins: { legend: { display: false }, title: { display: true, text: 'Itens com maior quantidade de erros na turma', font: { size: 16, family: "'Comic Neue', cursive" } } } } }); showModal('chartModal'); }
