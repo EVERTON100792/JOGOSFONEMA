@@ -1,5 +1,5 @@
 /* ======================================================= */
-/* JOGO DAS LETRAS - NOVO DESIGN (MODERNO E RESPONSIVO)    */
+/* JOGO DAS LETRAS - DESIGN FINAL (COMPLETO E RESPONSIVO)  */
 /* ======================================================= */
 
 /* --- GERAL E RESET --- */
@@ -68,11 +68,18 @@ body {
 .game-title p { font-size: 1.5rem; color: #f0f8ff; margin-bottom: 2rem; }
 .full-width { width: 100%; }
 
-/* --- PAINEL DO PROFESSOR (NOVO LAYOUT) --- */
-#teacherDashboard {
-    background-color: var(--cor-fundo-claro);
-}
+/* --- TELA DE SELEÇÃO DE USUÁRIO --- */
+.user-selection { text-align: center; margin: 40px 0; }
+.user-selection h2 { color: #fff; text-shadow: 1px 1px 3px rgba(0,0,0,0.2); margin-bottom: 30px; font-size: 1.8rem; }
+.user-types { display: flex; gap: 30px; justify-content: center; flex-wrap: wrap; }
+.user-type-btn { background: rgba(255, 255, 255, 0.2); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.3); border-radius: 20px; padding: 40px 30px; color: white; font-family: inherit; cursor: pointer; transition: all 0.3s ease; display: flex; flex-direction: column; align-items: center; gap: 15px; min-width: 200px; text-decoration: none; }
+.user-type-btn:hover { transform: translateY(-5px); background: rgba(255, 255, 255, 0.3); box-shadow: 0 10px 30px rgba(0,0,0,0.2); }
+.user-type-btn i { font-size: 3rem; }
+.user-type-btn span { font-size: 1.4rem; font-weight: bold; }
+.user-type-btn small { font-size: 1rem; opacity: 0.9; }
 
+/* --- PAINEL DO PROFESSOR (NOVO LAYOUT) --- */
+#teacherDashboard { background-color: var(--cor-fundo-claro); }
 .dashboard-container { display: flex; width: 100%; height: 100vh; max-width: 100%; }
 .sidebar { width: 260px; background: var(--cor-fundo-branco); border-right: 1px solid #e0e0e0; display: flex; flex-direction: column; padding-top: 20px; transition: width 0.3s ease; flex-shrink: 0; }
 .sidebar-header { padding: 0 25px 20px 25px; border-bottom: 1px solid #f0f0f0; }
@@ -113,7 +120,9 @@ body {
 .btn.danger:hover { background-color: var(--cor-erro); color: white; }
 .btn.small { padding: 8px 12px; }
 .create-btn { background: var(--cor-sucesso); color: white; padding: 12px 25px; font-size: 1.1rem; border-radius: 10px; }
-.back-btn { margin-top: 20px; }
+.back-btn { margin-top: 20px; background-color: transparent; border: 1px solid #ccc; }
+.login-form .btn { margin-top: 10px; }
+.login-form .btn.primary { margin-top: 20px; }
 
 /* MODAIS */
 .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: center; opacity: 0; visibility: hidden; transition: opacity 0.4s ease; }
@@ -123,8 +132,13 @@ body {
 .modal-content.large { max-width: 800px; }
 .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
 .modal-header h3 { margin: 0; font-size: 1.6rem; }
-.close-modal-btn { background: none; border: none; font-size: 2rem; cursor: pointer; color: #aaa; }
+.close-modal-btn { background: none; border: none; font-size: 2rem; cursor: pointer; color: #aaa; padding: 0; line-height: 1; }
 .modal-actions { display: flex; gap: 15px; justify-content: flex-end; margin-top: 25px; }
+.modal-tabs { display: flex; border-bottom: 2px solid #E0E0E0; margin-bottom: 25px; }
+.tab-btn { background: none; border: none; padding: 15px 25px; cursor: pointer; font-size: 1rem; color: #666; border-bottom: 3px solid transparent; transition: all 0.3s ease; }
+.tab-btn.active, .tab-btn:hover { color: var(--cor-primaria); border-bottom-color: var(--cor-primaria); }
+.tab-content { display: none; }
+.tab-content.active { display: block; animation: fadeIn 0.5s ease; }
 
 /* === LAYOUT RESPONSIVO (MOBILE) === */
 @media (max-width: 768px) {
@@ -163,6 +177,7 @@ body {
 .form-select { padding: 12px; border: 2px solid #E0E0E0; border-radius: 10px; font-size: 1.1rem; font-family: inherit; width: 100%; max-width: 400px; }
 .report-selector-container { background-color: var(--cor-fundo-branco); padding: 20px; border-radius: 12px; box-shadow: var(--sombra-card); text-align: left; }
 .report-selector-container h4 { margin-bottom: 10px; }
+/* Estilos para o Jogo da Memória */
 .memory-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; max-width: 500px; margin: 20px auto; perspective: 1000px; }
 .memory-card { background-color: transparent; width: 100%; height: auto; cursor: pointer; aspect-ratio: 1 / 1; }
 .card-inner { position: relative; width: 100%; height: 100%; transition: transform 0.6s; transform-style: preserve-3d; }
@@ -173,6 +188,7 @@ body {
 .card-back { background-color: var(--cor-sucesso); color: white; transform: rotateY(180deg); }
 .memory-card.matched .card-inner { transform: scale(0.95); opacity: 0.7; }
 .memory-card.matched .card-back { background-color: #27ae60; }
+/* Estilos para as Fases Novas */
 .image-option-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 1rem; margin-top: 1.5rem; }
 .image-option-button { background: white; border: 2px solid #ddd; border-radius: 15px; padding: 1rem; font-size: 4rem; cursor: pointer; transition: all 0.2s ease; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
 .image-option-button:hover:not(:disabled) { transform: translateY(-5px); border-color: var(--cor-primaria); box-shadow: 0 8px 20px rgba(0,0,0,0.1); }
@@ -192,3 +208,8 @@ body {
 .sentence-char-clickable:hover { background-color: #e0e0e0; }
 .sound-detective-button { background: linear-gradient(45deg, #4ecdc4, #44a08d); color: white; border: none; padding: 1.5rem; font-size: 1.2rem; font-weight: bold; border-radius: 20px; cursor: pointer; box-shadow: 0 4px 15px rgba(0,0,0,0.2); transition: all 0.3s ease; display: flex; align-items: center; justify-content: center; gap: 10px; }
 .sound-detective-button:hover:not(:disabled) { transform: translateY(-5px) scale(1.05); }
+
+/* TUTORIAL OVERLAY */
+.tutorial-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 5000; justify-content: center; align-items: center; opacity: 0; transition: opacity 0.4s ease; }
+.tutorial-overlay.show { display: flex; opacity: 1; }
+.tutorial-content { text-align: center; }
