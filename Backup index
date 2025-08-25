@@ -157,7 +157,7 @@
                             <button id="showCreateClassModalBtn" class="create-btn"><i class="fas fa-plus"></i> Criar Nova Turma</button>
                         </div>
                         <div id="classesList" class="classes-grid">
-                            </div>
+                        </div>
                     </div>
     
                     <div id="viewRelatorios" class="dashboard-view">
@@ -169,7 +169,7 @@
                             <select id="reportClassSelector" class="phase-select" style="width: 100%; max-width: 400px; font-size: 1.1rem; padding: 12px; margin-top: 10px;"></select>
                         </div>
                         <div id="reportContentContainer" style="display: none;">
-                            </div>
+                        </div>
                     </div>
     
                     <div id="viewConfig" class="dashboard-view">
