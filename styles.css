@@ -547,3 +547,45 @@ body {
     .modal-tabs { justify-content: center; }
     .tab-btn { padding: 0.8rem 1rem; font-size: 0.9rem; }
 }
+/* ======================================================= */
+/* --- CORREÇÃO DE CENTRALIZAÇÃO PARA TELA DE LOGIN (PC) --- */
+/* ======================================================= */
+
+/*
+  Esta regra garante que as telas de seleção de usuário e de login
+  usem 100% da altura da tela (vh) e centralizem seu conteúdo
+  vertical e horizontalmente.
+*/
+#userTypeScreen,
+#teacherLoginScreen,
+#teacherRegisterScreen,
+#studentLoginScreen {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    min-height: 100vh;
+}
+
+/*
+  Esta regra garante que o tutorial (com o botão "Vamos Jogar!")
+  fique escondido por padrão, e só apareça quando realmente
+  precisar (através da classe .show, controlada pelo JavaScript).
+*/
+#tutorialOverlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.7);
+    z-index: 2000;
+    justify-content: center;
+    align-items: center;
+}
+
+#tutorialOverlay.show {
+    display: flex;
+}
