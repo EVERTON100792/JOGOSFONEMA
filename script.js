@@ -550,9 +550,9 @@ async function handleGenerateLessonPlan(studentId, studentName) {
     aiContainer.innerHTML = '<div class="loading-ai"><i class="fas fa-spinner fa-spin"></i> Criando um plano de aula personalizado...</div>';
     showModal('aiTipsModal');
     
-    const apiKey = "COLE_SUA_CHAVE_PESSOAL_AQUI"; 
+    const apiKey = "AIzaSyCA9vIdNExymmsVxQBwh1tIVyoldeTclKs"; 
     
-    if (!apiKey || apiKey === "COLE_SUA_CHAVE_PESSOAL_AQUI") {
+    if (!apiKey || apiKey === "AIzaSyCA9vIdNExymmsVxQBwh1tIVyoldeTclKs") {
         aiContainer.innerHTML = `<p class="error"><strong>Erro de Configuração:</strong> A chave de API do Gemini não foi inserida no arquivo script.js.</p>`;
         return; 
     }
