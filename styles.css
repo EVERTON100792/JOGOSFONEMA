@@ -1,5 +1,5 @@
 /* ======================================================= */
-/* JOGO DAS LETRAS - ARQUIVO DE ESTILOS COMPLETO E FINAL   */
+/* JOGO DAS LETRAS - ARQUIVO DE ESTILOS COM RESPONSIVO CORRIGIDO */
 /* ======================================================= */
 
 /* Reset e Configurações Básicas */
@@ -335,6 +335,7 @@ html, body {
     color: #2c3e50;
     letter-spacing: 5px;
     margin: 1rem 0;
+    word-break: break-all;
 }
 
 .question-text h3 {
@@ -497,32 +498,6 @@ html, body {
 #globalFeedback .feedback-content { display: flex; align-items: center; gap: 10px; }
 
 
-/* Responsividade */
-@media (max-width: 768px) {
-    .screen.active {
-        padding-left: 10px;
-        padding-right: 10px;
-    }
-    .game-title h1 { font-size: 2.5rem; }
-    .game-header { flex-direction: column; gap: 1rem; align-items: stretch; padding: 1rem; }
-    .game-actions { top: 10px; right: 10px; }
-    .progress-bar { width: 100%; }
-    .letters-grid { grid-template-columns: repeat(2, 1fr); gap: 0.8rem; }
-    .letter-button { font-size: 2rem; padding: 1rem; }
-    .audio-button { width: 100px; height: 100px; font-size: 1rem; }
-    .audio-button i { font-size: 1.5rem; }
-    .result-stats { flex-direction: column; gap: 1rem; }
-}
-
-@media (max-width: 480px) {
-    .screen { padding: 10px; }
-    .game-content { padding: 1rem; }
-    .mascot { font-size: 3rem; }
-    .speech-bubble { max-width: 250px; padding: 0.8rem 1rem; }
-    .letters-grid { gap: 0.5rem; }
-    .letter-button { font-size: 1.8rem; border-radius: 15px; }
-}
-
 /* === SELEÇÃO DE USUÁRIO === */
 .user-selection { text-align: center; margin: 40px 0; }
 .user-selection h2 { color: #fff; text-shadow: 1px 1px 3px rgba(0,0,0,0.2); margin-bottom: 30px; font-size: 1.8rem; }
@@ -572,9 +547,9 @@ html, body {
 .create-form { background: #F8F9FA; padding: 20px; border-radius: 10px; margin: 20px 0; }
 .form-row { display: grid; grid-template-columns: 1fr; gap: 15px; align-items: end; }
 .form-actions { display: flex; gap: 10px; margin-top: 15px; }
-.dashboard-container { display: flex; width: 100%; height: 100vh; max-width: 100%; padding: 0; margin: 0; background-color: #f4f7fc; }
-.main-content { flex-grow: 1; padding: 0; overflow-y: auto; display: flex; flex-direction: column; }
-.dashboard-content-area { padding: 40px; flex-grow: 1; }
+
+/* === DASHBOARD COM SIDEBAR === */
+#teacherDashboard .dashboard-container { display: flex; width: 100%; height: 100vh; max-width: 100%; padding: 0; margin: 0; background-color: #f4f7fc; }
 .sidebar { width: 260px; background: #ffffff; border-right: 1px solid #e0e0e0; display: flex; flex-direction: column; padding: 20px 0; transition: width 0.3s ease; flex-shrink: 0; }
 .sidebar-header { padding: 0 25px 20px 25px; border-bottom: 1px solid #f0f0f0; }
 .sidebar-header h3 { color: #2c3e50; font-size: 1.5rem; }
@@ -586,12 +561,133 @@ html, body {
 .sidebar-footer { padding: 20px 25px 0 25px; border-top: 1px solid #f0f0f0; }
 .logout-btn-sidebar { width: 100%; background: #f8f9fa; border: 1px solid #ddd; color: #c0392b; padding: 12px; border-radius: 8px; cursor: pointer; font-size: 1.1rem; font-weight: bold; transition: all 0.2s ease; }
 .logout-btn-sidebar:hover { background: #c0392b; color: white; border-color: #c0392b; }
+.main-content { flex-grow: 1; padding: 0; overflow-y: auto; display: flex; flex-direction: column; }
+#teacherDashboard .dashboard-header { background: #ffffff; padding: 20px 40px; border-bottom: 1px solid #e0e0e0; display: flex; justify-content: space-between; align-items: center; color: #2c3e50; border-radius: 0; margin: 0; width: auto; flex-shrink: 0; }
+#teacherDashboard .dashboard-header h1 { font-size: 1.8rem; color: #333; }
+#teacherDashboard .teacher-info span { color: #333; font-size: 1.1rem; }
+.dashboard-content-area { padding: 40px; flex-grow: 1; }
+.dashboard-view { display: none; }
+.dashboard-view.active { display: block; }
+.view-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; padding-bottom: 15px; border-bottom: 1px solid #eee; }
+.view-header p { font-size: 1.1rem; color: #666; margin: 0; }
+#teacherDashboard .logout-btn { display: none; }
+
+
+/* === CORREÇÕES PARA MOBILE === */
+@media (max-width: 768px) {
+    body {
+        /* Adiciona espaço na parte inferior para a barra de navegação não cobrir o conteúdo */
+        padding-bottom: 75px; 
+    }
+
+    #teacherDashboard .dashboard-container {
+        flex-direction: column;
+        height: auto;
+        min-height: 100vh;
+    }
+
+    .main-content {
+        overflow-y: visible;
+    }
+    
+    .sidebar {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        height: 70px; /* Altura fixa para a barra */
+        background: #ffffff;
+        flex-direction: row;
+        border-top: 1px solid #e0e0e0;
+        box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+        padding: 5px 0;
+        z-index: 1000;
+        justify-content: space-around;
+        align-items: center;
+    }
+    
+    .sidebar-header, .sidebar-footer .logout-btn-sidebar span {
+        display: none; /* Esconde texto desnecessário na barra */
+    }
+
+    .sidebar-nav {
+        margin-top: 0;
+        display: flex;
+        flex-grow: 1;
+        justify-content: space-around;
+        align-items: center;
+        height: 100%;
+    }
+
+    .sidebar-nav a, .logout-btn-sidebar {
+        flex-direction: column;
+        justify-content: center;
+        padding: 8px 5px;
+        margin: 0;
+        height: 100%;
+        flex-grow: 1;
+        font-size: 0.75rem;
+        color: #888;
+        font-weight: normal;
+        background: none;
+        border: none;
+    }
+
+    .sidebar-nav a.active {
+        color: #764ba2;
+        background: #f0eaff;
+        box-shadow: none;
+    }
+
+    .sidebar-nav a:hover {
+        background-color: #f5f5f5;
+        color: #764ba2;
+    }
+
+    .sidebar-nav a i, .logout-btn-sidebar i {
+        margin-right: 0;
+        margin-bottom: 5px;
+        font-size: 1.5rem;
+    }
+
+    .sidebar-footer {
+        padding: 0;
+        border-top: none;
+    }
+
+    .logout-btn-sidebar:hover {
+        color: #c0392b;
+        background-color: #f5f5f5;
+    }
+    
+    .dashboard-content-area {
+        padding: 20px;
+    }
+
+    .view-header {
+        flex-direction: column;
+        gap: 15px;
+        align-items: flex-start;
+        text-align: left;
+    }
+
+    .classes-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .class-card {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+    }
+}
+
 
 /* === ESTILOS ADICIONAIS PARA AS NOVAS FASES === */
 .sound-detective-button { background: linear-gradient(45deg, #4ecdc4, #44a08d); color: white; border: none; padding: 1.5rem; font-size: 1.2rem; font-weight: bold; border-radius: 20px; cursor: pointer; box-shadow: 0 4px 15px rgba(0,0,0,0.2); transition: all 0.3s ease; display: flex; align-items: center; justify-content: center; gap: 10px; }
 .sound-detective-button:hover:not(:disabled) { transform: translateY(-5px) scale(1.05); }
 .memory-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; max-width: 500px; margin: 20px auto; perspective: 1000px; }
-.memory-card { background-color: transparent; width: 100px; height: 100px; cursor: pointer; aspect-ratio: 1 / 1; }
+.memory-card { background-color: transparent; width: 100%; height: auto; cursor: pointer; aspect-ratio: 1 / 1; }
 .card-inner { position: relative; width: 100%; height: 100%; transition: transform 0.6s; transform-style: preserve-3d; }
 .memory-card.flipped .card-inner { transform: rotateY(180deg); }
 .card-face { position: absolute; width: 100%; height: 100%; -webkit-backface-visibility: hidden; backface-visibility: hidden; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 2.5rem; font-weight: bold; }
