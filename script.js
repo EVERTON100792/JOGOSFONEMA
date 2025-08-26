@@ -246,13 +246,13 @@ function stopTimer() { clearInterval(timerInterval); }
 
 // PARTE 8: LÓGICA DO JOGO
 async function showStudentGame() {
-    await checkForCustomActivities(); // Checa por atividades de reforço
+    await checkForCustomActivities();
     await loadGameState();
     const canResume = gameState.currentQuestionIndex > 0 && gameState.attempts > 0 && !gameState.phaseCompleted;
     if(canResume) {
-        document.getElementById('startButton').textContent = 'Continuar Aventura';
+        document.getElementById('startButton').innerHTML = '<i class="fas fa-play"></i> Continuar Aventura';
     } else {
-        document.getElementById('startButton').textContent = 'Começar Aventura';
+        document.getElementById('startButton').innerHTML = '<i class="fas fa-play"></i> Começar Aventura';
     }
     showScreen('startScreen');
 }
@@ -269,7 +269,7 @@ async function startCustomActivity() {
     gameState.currentPhase = "Reforço";
     gameState.currentQuestionIndex = 0;
     gameState.score = 0;
-    gameState.attempts = 3; // Pode definir um número diferente para reforço
+    gameState.attempts = 3;
     gameState.phaseCompleted = false;
     
     showScreen('gameScreen');
@@ -285,437 +285,91 @@ function generateQuestions(phase) {
     const shuffleAndTake = (arr, num) => [...arr].sort(() => 0.5 - Math.random()).slice(0, num);
 
     switch (phase) {
-        case 1: // Identificação de Vogais
-            questions = Array.from({ length: questionCount }, (_, i) => {
-                const vowel = VOWELS[i % VOWELS.length];
-                return { 
-                    type: 'letter_sound', 
-                    correctAnswer: vowel, 
-                    options: generateOptions(vowel, VOWELS, 4)
-                };
-            }).sort(() => 0.5 - Math.random());
+        case 1:
+            questions = Array.from({ length: questionCount }, (_, i) => { const vowel = VOWELS[i % VOWELS.length]; return { type: 'letter_sound', correctAnswer: vowel, options: generateOptions(vowel, VOWELS, 4) }; }).sort(() => 0.5 - Math.random());
             break;
-
-        case 2: // Vogal Inicial
-            questions = shuffleAndTake(PHASE_2_WORDS, questionCount).map(item => ({
-                type: 'initial_vowel',
-                word: item.word,
-                image: item.image,
-                correctAnswer: item.vowel,
-                options: generateOptions(item.vowel, VOWELS, 4)
-            }));
+        case 2:
+            questions = shuffleAndTake(PHASE_2_WORDS, questionCount).map(item => ({ type: 'initial_vowel', ...item, options: generateOptions(item.vowel, VOWELS, 4) }));
             break;
-
-        case 3: // Encontros Vocálicos
-            questions = shuffleAndTake(PHASE_3_ENCONTROS, questionCount).map(item => ({
-                type: 'vowel_encounter',
-                word: item.word,
-                image: item.image,
-                correctAnswer: item.encontro,
-                options: generateOptions(item.encontro, VOWEL_ENCOUNTERS, 4)
-            }));
+        case 3:
+            questions = shuffleAndTake(PHASE_3_ENCONTROS, questionCount).map(item => ({ type: 'vowel_encounter', ...item, options: generateOptions(item.encontro, VOWEL_ENCOUNTERS, 4) }));
             break;
-
-        case 4: // Explorando a Letra F
-            questions = shuffleAndTake(PHASE_4_WORDS_F, questionCount).map(item => ({
-                ...item,
-                options: item.options.sort(() => 0.5 - Math.random())
-            }));
+        case 4:
+            questions = shuffleAndTake(PHASE_4_WORDS_F, questionCount).map(item => ({ ...item, options: item.options.sort(() => 0.5 - Math.random()) }));
             break;
-
-        case 5: // Pares Surdos/Sonoros
-            questions = shuffleAndTake(PHASE_5_SOUND_PAIRS, questionCount).map(item => ({
-                type: 'sound_detective',
-                image: item.image,
-                correctAnswer: item.correct,
-                options: [item.correct, item.incorrect].sort(() => 0.5 - Math.random())
-            }));
+        case 5:
+            questions = shuffleAndTake(PHASE_5_SOUND_PAIRS, questionCount).map(item => ({ type: 'sound_detective', image: item.image, correctAnswer: item.correct, options: [item.correct, item.incorrect].sort(() => 0.5 - Math.random()) }));
             break;
-            
-        case 6: // Contagem de Sílabas
-            questions = shuffleAndTake(PHASE_6_SYLLABLE_COUNT, questionCount).map(item => ({
-                type: 'count_syllables',
-                word: item.word,
-                image: item.image,
-                correctAnswer: item.syllables.toString(),
-                options: generateOptions(item.syllables.toString(), ['1', '2', '3', '4', '5'], 4)
-            }));
+        case 6:
+            questions = shuffleAndTake(PHASE_6_SYLLABLE_COUNT, questionCount).map(item => ({ type: 'count_syllables', ...item, correctAnswer: item.syllables.toString(), options: generateOptions(item.syllables.toString(), ['1', '2', '3', '4', '5'], 4) }));
             break;
-            
-        case 7: // Contagem de Palavras na Frase
-            questions = shuffleAndTake(PHASE_7_SENTENCES_COUNT, questionCount).map(item => ({
-                type: 'count_words',
-                sentence: item.sentence,
-                image: item.image,
-                correctAnswer: item.words.toString(),
-                options: generateOptions(item.words.toString(), ['2', '3', '4', '5'], 4)
-            }));
+        case 7:
+            questions = shuffleAndTake(PHASE_7_SENTENCES_COUNT, questionCount).map(item => ({ type: 'count_words', ...item, correctAnswer: item.words.toString(), options: generateOptions(item.words.toString(), ['2', '3', '4', '5'], 4) }));
             break;
-
-        case 8: // Montagem de Frases
-            questions = shuffleAndTake(PHASE_8_SENTENCES_BUILD, questionCount).map(item => ({
-                type: 'build_sentence',
-                image: item.image,
-                correctAnswer: item.answer,
-                options: item.sentence.sort(() => 0.5 - Math.random())
-            }));
+        case 8:
+            questions = shuffleAndTake(PHASE_8_SENTENCES_BUILD, questionCount).map(item => ({ type: 'build_sentence', image: item.image, correctAnswer: item.answer, options: item.sentence.sort(() => 0.5 - Math.random()) }));
             break;
-            
-        case 9: // Formando Novas Palavras
-            questions = shuffleAndTake(PHASE_9_WORD_TRANSFORM, questionCount).map(item => ({
-                type: 'word_transform',
-                image: item.image,
-                initialWord: item.initialWord,
-                toRemove: item.toRemove,
-                correctAnswer: item.correctAnswer,
-                options: item.options.sort(() => 0.5 - Math.random())
-            }));
+        case 9:
+            questions = shuffleAndTake(PHASE_9_WORD_TRANSFORM, questionCount).map(item => ({ ...item, options: item.options.sort(() => 0.5 - Math.random()) }));
             break;
-            
-        case 10: // Ordem Alfabética
-            questions = Array.from({ length: questionCount }, () => {
-                const startIndex = Math.floor(Math.random() * (ALPHABET.length - 4));
-                const sequence = ALPHABET.slice(startIndex, startIndex + 4);
-                return {
-                    type: 'alphabet_order',
-                    correctAnswer: sequence,
-                    options: [...sequence].sort(() => 0.5 - Math.random())
-                };
-            });
+        case 10:
+            questions = Array.from({ length: questionCount }, () => { const startIndex = Math.floor(Math.random() * (ALPHABET.length - 4)); const sequence = ALPHABET.slice(startIndex, startIndex + 4); return { type: 'alphabet_order', correctAnswer: sequence, options: [...sequence].sort(() => 0.5 - Math.random()) }; });
             break;
     }
-    while (questions.length > 0 && questions.length < questionCount) {
-        questions.push(questions[Math.floor(Math.random() * questions.length)]);
-    }
+    while (questions.length > 0 && questions.length < questionCount) { questions.push(questions[Math.floor(Math.random() * questions.length)]); }
     return questions.slice(0, questionCount);
 }
 
 function generateOptions(correctItem, sourceArray, count) { const options = new Set([correctItem]); const availableItems = sourceArray.filter(l => l !== correctItem); while (options.size < count && availableItems.length > 0) { options.add(availableItems.splice(Math.floor(Math.random() * availableItems.length), 1)[0]); } return Array.from(options).sort(() => 0.5 - Math.random()); }
-
 async function startQuestion() {
-    if (gameState.phaseCompleted) {
-        const accuracy = gameState.questions.length > 0 ? Math.round((gameState.score / gameState.questions.length) * 100) : 100;
-        showResultScreen(accuracy, true);
-        return;
-    }
-    if(!gameState.isCustomActivity) {
-        await showTutorial(gameState.currentPhase);
-    }
-    if (!gameState.questions || gameState.currentQuestionIndex >= gameState.questions.length) {
-        return endPhase();
-    }
+    if (gameState.phaseCompleted) { const accuracy = gameState.questions.length > 0 ? Math.round((gameState.score / gameState.questions.length) * 100) : 100; showResultScreen(accuracy, true); return; }
+    if(!gameState.isCustomActivity) { await showTutorial(gameState.currentPhase); }
+    if (!gameState.questions || gameState.currentQuestionIndex >= gameState.questions.length) { return endPhase(); }
     const q = gameState.questions[gameState.currentQuestionIndex];
     document.getElementById('nextQuestion').style.display = 'none';
     updateUI();
-
     document.getElementById('audioQuestionArea').style.display = 'none';
     document.getElementById('imageQuestionArea').style.display = 'none';
     document.getElementById('lettersGrid').style.display = 'none';
     document.getElementById('memoryGameGrid').style.display = 'none';
     document.getElementById('sentenceBuildArea').style.display = 'none';
-
     document.getElementById('lettersGrid').innerHTML = '';
     document.getElementById('memoryGameGrid').innerHTML = '';
-    
     const sentenceArea = document.getElementById('sentenceBuildArea');
     sentenceArea.innerHTML = '';
     sentenceArea.style.borderColor = '';
     sentenceArea.style.backgroundColor = '';
-
     const wordDisplay = document.getElementById('wordDisplay');
     wordDisplay.textContent = '';
     wordDisplay.style.fontSize = '2.5rem';
-
     document.getElementById('questionText').textContent = '';
     document.getElementById('repeatAudio').style.display = 'none';
-
-    switch (q.type) {
-        case 'letter_sound': renderPhase1UI(q); break;
-        case 'initial_vowel': renderPhase2UI(q); break;
-        case 'vowel_encounter': renderPhase3UI(q); break;
-        case 'initial_syllable': case 'middle_syllable': case 'full_word': renderPhase4UI(q); break;
-        case 'sound_detective': renderPhase5UI_SoundDetective(q); break;
-        case 'count_syllables': renderPhase6UI(q); break;
-        case 'count_words': renderPhase7UI_WordCount(q); break;
-        case 'build_sentence': renderPhase8UI(q); break;
-        case 'word_transform': renderPhase9UI_WordTransform(q); break;
-        case 'alphabet_order': renderPhase10UI_AlphabetOrder(q); break;
-    }
+    switch (q.type) { case 'letter_sound': renderPhase1UI(q); break; case 'initial_vowel': renderPhase2UI(q); break; case 'vowel_encounter': renderPhase3UI(q); break; case 'initial_syllable': case 'middle_syllable': case 'full_word': renderPhase4UI(q); break; case 'sound_detective': renderPhase5UI_SoundDetective(q); break; case 'count_syllables': renderPhase6UI(q); break; case 'count_words': renderPhase7UI_WordCount(q); break; case 'build_sentence': renderPhase8UI(q); break; case 'word_transform': renderPhase9UI_WordTransform(q); break; case 'alphabet_order': renderPhase10UI_AlphabetOrder(q); break; }
     if (q.type === 'letter_sound') { setTimeout(playCurrentAudio, 500); }
 }
 
 function renderPhase1UI(q) { document.getElementById('audioQuestionArea').style.display = 'block'; document.getElementById('lettersGrid').style.display = 'grid'; document.getElementById('questionText').textContent = 'Qual VOGAL faz este som?'; document.getElementById('repeatAudio').style.display = 'inline-block'; renderOptions(q.options); }
 function renderPhase2UI(q) { document.getElementById('imageQuestionArea').style.display = 'block'; document.getElementById('lettersGrid').style.display = 'grid'; document.getElementById('imageEmoji').textContent = q.image; document.getElementById('wordDisplay').textContent = `__${q.word.substring(1)}`; document.getElementById('questionText').textContent = 'Qual vogal completa a palavra?'; renderOptions(q.options); }
 function renderPhase3UI(q) { document.getElementById('imageQuestionArea').style.display = 'block'; document.getElementById('lettersGrid').style.display = 'grid'; document.getElementById('imageEmoji').textContent = q.image; document.getElementById('wordDisplay').textContent = q.word.replace(q.correctAnswer, '__'); document.getElementById('questionText').textContent = 'Qual encontro de vogais completa a palavra?'; renderOptions(q.options); }
-function renderPhase4UI(q) {
-    document.getElementById('imageQuestionArea').style.display = 'block';
-    document.getElementById('lettersGrid').style.display = 'grid';
-    document.getElementById('imageEmoji').textContent = q.image;
-    if (q.type === 'initial_syllable') {
-        document.getElementById('wordDisplay').textContent = `__${q.word.substring(q.correctAnswer.length)}`;
-        document.getElementById('questionText').textContent = 'Qual sílaba começa esta palavra?';
-    } else if (q.type === 'middle_syllable') {
-        document.getElementById('wordDisplay').textContent = q.word.replace(q.correctAnswer, '__');
-        document.getElementById('questionText').textContent = 'Qual sílaba completa esta palavra?';
-    } else { // full_word
-        document.getElementById('wordDisplay').textContent = `?`;
-        document.getElementById('questionText').textContent = 'Qual é o nome desta figura?';
-    }
-    renderOptions(q.options);
-}
-function renderPhase5UI_SoundDetective(q) {
-    document.getElementById('imageQuestionArea').style.display = 'block';
-    document.getElementById('lettersGrid').style.display = 'grid';
-    document.getElementById('imageEmoji').textContent = q.image;
-    document.getElementById('questionText').textContent = 'Qual é o som correto desta palavra?';
-    const lettersGrid = document.getElementById('lettersGrid');
-    lettersGrid.innerHTML = q.options.map((option) => `
-        <button class="sound-detective-button" data-sound="${option}">
-            <i class="fas fa-volume-up"></i> ${option}
-        </button>
-    `).join('');
-    lettersGrid.querySelectorAll('.sound-detective-button').forEach(btn => {
-        btn.addEventListener('click', () => {
-            speak(btn.dataset.sound);
-            setTimeout(() => selectAnswer(btn.dataset.sound), 300);
-        });
-    });
-}
-function renderPhase6UI(q) {
-    document.getElementById('imageQuestionArea').style.display = 'block';
-    document.getElementById('lettersGrid').style.display = 'grid';
-    document.getElementById('imageEmoji').textContent = q.image;
-    document.getElementById('wordDisplay').textContent = q.word;
-    document.getElementById('questionText').textContent = 'Quantas sílabas (pedaços) tem esta palavra?';
-    renderOptions(q.options);
-}
-function renderPhase7UI_WordCount(q) {
-    document.getElementById('imageQuestionArea').style.display = 'block';
-    document.getElementById('lettersGrid').style.display = 'grid';
-    document.getElementById('imageEmoji').textContent = q.image;
-    const wordDisplay = document.getElementById('wordDisplay');
-    wordDisplay.textContent = q.sentence;
-    wordDisplay.style.fontSize = '1.8rem';
-    document.getElementById('questionText').textContent = 'Quantas palavras tem nesta frase?';
-    renderOptions(q.options);
-}
-function renderPhase8UI(q) {
-    document.getElementById('imageQuestionArea').style.display = 'block';
-    document.getElementById('lettersGrid').style.display = 'grid';
-    document.getElementById('sentenceBuildArea').style.display = 'flex';
-    document.getElementById('imageEmoji').textContent = q.image;
-    document.getElementById('questionText').textContent = 'Clique nas palavras para formar a frase correta.';
-    renderWordOptions(q.options);
-}
-function renderPhase9UI_WordTransform(q) {
-    document.getElementById('imageQuestionArea').style.display = 'block';
-    document.getElementById('lettersGrid').style.display = 'grid';
-    document.getElementById('imageEmoji').textContent = q.image;
-    document.getElementById('wordDisplay').textContent = q.initialWord;
-    document.getElementById('questionText').textContent = `Se tirarmos "${q.toRemove}", qual palavra formamos?`;
-    renderOptions(q.options);
-}
-function renderPhase10UI_AlphabetOrder(q) {
-    document.getElementById('questionText').textContent = 'Clique nas letras na ordem alfabética correta.';
-    document.getElementById('lettersGrid').style.display = 'grid';
-    const lettersGrid = document.getElementById('lettersGrid');
-    lettersGrid.innerHTML = q.options.map(letter => `<button class="letter-button">${letter}</button>`).join('');
-    gameState.sequenceGame = { correctSequence: q.correctAnswer, userSequence: [] };
-    lettersGrid.querySelectorAll('.letter-button').forEach(btn => {
-        btn.addEventListener('click', () => handleSequenceClick(btn));
-    });
-}
+function renderPhase4UI(q) { document.getElementById('imageQuestionArea').style.display = 'block'; document.getElementById('lettersGrid').style.display = 'grid'; document.getElementById('imageEmoji').textContent = q.image; if (q.type === 'initial_syllable') { document.getElementById('wordDisplay').textContent = `__${q.word.substring(q.correctAnswer.length)}`; document.getElementById('questionText').textContent = 'Qual sílaba começa esta palavra?'; } else if (q.type === 'middle_syllable') { document.getElementById('wordDisplay').textContent = q.word.replace(q.correctAnswer, '__'); document.getElementById('questionText').textContent = 'Qual sílaba completa esta palavra?'; } else { document.getElementById('wordDisplay').textContent = `?`; document.getElementById('questionText').textContent = 'Qual é o nome desta figura?'; } renderOptions(q.options); }
+function renderPhase5UI_SoundDetective(q) { document.getElementById('imageQuestionArea').style.display = 'block'; document.getElementById('lettersGrid').style.display = 'grid'; document.getElementById('imageEmoji').textContent = q.image; document.getElementById('questionText').textContent = 'Qual é o som correto desta palavra?'; const lettersGrid = document.getElementById('lettersGrid'); lettersGrid.innerHTML = q.options.map((option) => `<button class="sound-detective-button" data-sound="${option}"><i class="fas fa-volume-up"></i> ${option}</button>`).join(''); lettersGrid.querySelectorAll('.sound-detective-button').forEach(btn => { btn.addEventListener('click', () => { speak(btn.dataset.sound); setTimeout(() => selectAnswer(btn.dataset.sound), 300); }); }); }
+function renderPhase6UI(q) { document.getElementById('imageQuestionArea').style.display = 'block'; document.getElementById('lettersGrid').style.display = 'grid'; document.getElementById('imageEmoji').textContent = q.image; document.getElementById('wordDisplay').textContent = q.word; document.getElementById('questionText').textContent = 'Quantas sílabas (pedaços) tem esta palavra?'; renderOptions(q.options); }
+function renderPhase7UI_WordCount(q) { document.getElementById('imageQuestionArea').style.display = 'block'; document.getElementById('lettersGrid').style.display = 'grid'; document.getElementById('imageEmoji').textContent = q.image; const wordDisplay = document.getElementById('wordDisplay'); wordDisplay.textContent = q.sentence; wordDisplay.style.fontSize = '1.8rem'; document.getElementById('questionText').textContent = 'Quantas palavras tem nesta frase?'; renderOptions(q.options); }
+function renderPhase8UI(q) { document.getElementById('imageQuestionArea').style.display = 'block'; document.getElementById('lettersGrid').style.display = 'grid'; document.getElementById('sentenceBuildArea').style.display = 'flex'; document.getElementById('imageEmoji').textContent = q.image; document.getElementById('questionText').textContent = 'Clique nas palavras para formar a frase correta.'; renderWordOptions(q.options); }
+function renderPhase9UI_WordTransform(q) { document.getElementById('imageQuestionArea').style.display = 'block'; document.getElementById('lettersGrid').style.display = 'grid'; document.getElementById('imageEmoji').textContent = q.image; document.getElementById('wordDisplay').textContent = q.initialWord; document.getElementById('questionText').textContent = `Se tirarmos "${q.toRemove}", qual palavra formamos?`; renderOptions(q.options); }
+function renderPhase10UI_AlphabetOrder(q) { document.getElementById('questionText').textContent = 'Clique nas letras na ordem alfabética correta.'; document.getElementById('lettersGrid').style.display = 'grid'; const lettersGrid = document.getElementById('lettersGrid'); lettersGrid.innerHTML = q.options.map(letter => `<button class="letter-button">${letter}</button>`).join(''); gameState.sequenceGame = { correctSequence: q.correctAnswer, userSequence: [] }; lettersGrid.querySelectorAll('.letter-button').forEach(btn => { btn.addEventListener('click', () => handleSequenceClick(btn)); }); }
 function renderOptions(options) { const lettersGrid = document.getElementById('lettersGrid'); lettersGrid.style.display = 'grid'; lettersGrid.innerHTML = options.map(option => `<button class="letter-button">${option}</button>`).join(''); lettersGrid.querySelectorAll('.letter-button').forEach(btn => btn.addEventListener('click', (e) => selectAnswer(e.target.textContent))); }
-function renderWordOptions(options) {
-    const lettersGrid = document.getElementById('lettersGrid');
-    lettersGrid.style.display = 'grid';
-    lettersGrid.innerHTML = options.map(option => `<button class="word-option-button">${option}</button>`).join('');
-    lettersGrid.querySelectorAll('.word-option-button').forEach(btn => {
-        btn.addEventListener('click', () => selectWordForSentence(btn));
-    });
-}
-function selectWordForSentence(buttonElement) {
-    buttonElement.disabled = true;
-    buttonElement.classList.add('disabled');
-    const sentenceBuildArea = document.getElementById('sentenceBuildArea');
-    const wordSpan = document.createElement('span');
-    wordSpan.className = 'sentence-word';
-    wordSpan.textContent = buttonElement.textContent;
-    sentenceBuildArea.appendChild(wordSpan);
-    const allButtons = document.querySelectorAll('.word-option-button');
-    const allDisabled = Array.from(allButtons).every(btn => btn.disabled);
-    if (allDisabled) {
-        const constructedSentence = Array.from(sentenceBuildArea.children).map(span => span.textContent).join(' ');
-        selectAnswer(constructedSentence);
-    }
-}
-function handleSequenceClick(buttonElement) {
-    const letter = buttonElement.textContent;
-    buttonElement.disabled = true;
-    buttonElement.classList.add('disabled');
-    gameState.sequenceGame.userSequence.push(letter);
-    const { userSequence, correctSequence } = gameState.sequenceGame;
-    const currentIndex = userSequence.length - 1;
-    if (userSequence[currentIndex] !== correctSequence[currentIndex]) {
-        gameState.attempts--;
-        updateUI();
-        showFeedback('Ops, ordem errada! Tente de novo.', 'error');
-        if (gameState.attempts <= 0) {
-            setTimeout(endPhase, 1500);
-        } else {
-            setTimeout(() => {
-                document.querySelectorAll('#lettersGrid .letter-button').forEach(btn => {
-                    btn.disabled = false;
-                    btn.classList.remove('disabled');
-                });
-                gameState.sequenceGame.userSequence = [];
-            }, 1500);
-        }
-        return;
-    }
-    if (userSequence.length === correctSequence.length) {
-        gameState.score++;
-        updateUI();
-        showFeedback('Sequência correta!', 'success');
-        document.getElementById('nextQuestion').style.display = 'block';
-    }
-}
-async function selectAnswer(selectedAnswer) {
-    const q = gameState.questions[gameState.currentQuestionIndex];
-    if (!q) return; 
-    if (['alphabet_order'].includes(q.type)) return;
-
-    document.querySelectorAll('.letter-button, .word-option-button, .sound-detective-button').forEach(btn => btn.disabled = true);
-
-    const isCorrect = selectedAnswer === q.correctAnswer;
-
-    if (q.type === 'build_sentence') {
-        const sentenceArea = document.getElementById('sentenceBuildArea');
-        if (isCorrect) {
-            sentenceArea.style.borderColor = '#4ECDC4';
-            sentenceArea.style.backgroundColor = 'rgba(78, 205, 196, 0.1)';
-        } else {
-            sentenceArea.style.borderColor = '#ff6b6b';
-            sentenceArea.style.backgroundColor = 'rgba(255, 107, 107, 0.1)';
-        }
-    } else {
-        document.querySelectorAll('.letter-button, .word-option-button, .sound-detective-button').forEach(btn => {
-            const btnIdentifier = btn.dataset.sound || btn.textContent;
-            if (btnIdentifier === q.correctAnswer) {
-                btn.classList.add('correct');
-            }
-            if (!isCorrect && btnIdentifier === selectedAnswer) {
-                btn.classList.add('incorrect');
-            }
-        });
-    }
-
-    if (isCorrect) {
-        gameState.score++;
-        showFeedback('Muito bem!', 'success');
-        playTeacherAudio('feedback_correct', 'Acertou');
-        if (q.type !== 'letter_sound' && q.type !== 'build_sentence' && q.type !== 'count_words') {
-            document.getElementById('wordDisplay').textContent = q.word || q.initialWord;
-        }
-    } else {
-        gameState.attempts--;
-        logStudentError({ question: q, selectedAnswer: selectedAnswer }).catch(console.error);
-        showFeedback(`Quase! A resposta correta era "${q.correctAnswer}"`, 'error');
-        playTeacherAudio('feedback_incorrect', 'Tente de novo');
-    }
-
-    updateUI();
-    await saveGameState();
-
-    if (gameState.attempts <= 0) {
-        setTimeout(endPhase, 2000);
-    } else {
-        document.getElementById('nextQuestion').style.display = 'block';
-    }
-}
-function nextQuestion() { 
-    gameState.currentQuestionIndex++; 
-    startQuestion(); 
-}
-function endPhase() { 
-    const accuracy = gameState.questions.length > 0 ? Math.round((gameState.score / gameState.questions.length) * 100) : 0;
-    const passed = accuracy >= 70;
-    
-    // Se não for atividade customizada, salva no histórico
-    if (!gameState.isCustomActivity) {
-        logPhaseCompletionToHistory(accuracy);
-    } else {
-        // Se for customizada, limpa a atividade do aluno
-        clearAssignedActivity();
-    }
-
-    showResultScreen(accuracy, passed); 
-}
-async function clearAssignedActivity() {
-    await supabaseClient
-        .from('students')
-        .update({ assigned_activity: null })
-        .eq('id', currentUser.id);
-    // Atualiza o objeto do usuário localmente
-    currentUser.assigned_activity = null;
-    sessionStorage.setItem('currentUser', JSON.stringify(currentUser));
-}
-function showResultScreen(accuracy, passed) {
-    showScreen('resultScreen');
-    document.getElementById('finalScore').textContent = gameState.score;
-    document.getElementById('accuracy').textContent = accuracy;
-    
-    const continueBtn = document.getElementById('continueButton');
-    const retryBtn = document.getElementById('retryButton');
-    const restartBtn = document.getElementById('restartButton');
-
-    // Se for uma atividade de reforço, o final é diferente
-    if (gameState.isCustomActivity) {
-        document.getElementById('resultTitle').textContent = 'Atividade de Reforço Concluída!';
-        document.getElementById('resultMessage').innerHTML = `Você acertou ${accuracy}% das questões. Continue praticando!`;
-        continueBtn.style.display = 'none';
-        retryBtn.style.display = 'none';
-        restartBtn.innerHTML = '<i class="fas fa-home"></i> Voltar ao Início';
-        return;
-    }
-
-    // Lógica normal para fases
-    const assignedPhases = currentUser.assigned_phases || [1];
-    const currentPhaseIndex = assignedPhases.indexOf(gameState.currentPhase);
-    const hasNextPhase = currentPhaseIndex !== -1 && currentPhaseIndex < assignedPhases.length - 1;
-    
-    if (passed) {
-        document.getElementById('resultTitle').textContent = 'Parabéns!';
-        retryBtn.style.display = 'none';
-        gameState.phaseCompleted = true;
-        if (hasNextPhase) {
-            document.getElementById('resultMessage').innerHTML = 'Você completou a fase! 🏆<br>Clique para ir para a próxima!';
-            continueBtn.style.display = 'inline-block';
-            restartBtn.innerHTML = '<i class="fas fa-home"></i> Voltar ao Início';
-        } else {
-            document.getElementById('resultMessage').innerHTML = 'Você completou TODAS as suas fases! 🥳<br>Fale com seu professor!';
-            continueBtn.style.display = 'none';
-            restartBtn.innerHTML = '<i class="fas fa-sign-out-alt"></i> Sair';
-        }
-    } else {
-        document.getElementById('resultTitle').textContent = 'Não desanime!';
-        document.getElementById('resultMessage').textContent = 'Você precisa acertar mais. Tente novamente!';
-        continueBtn.style.display = 'none';
-        retryBtn.style.display = 'inline-block';
-        restartBtn.innerHTML = '<i class="fas fa-home"></i> Voltar ao Início';
-        gameState.phaseCompleted = false;
-    }
-    saveGameState();
-}
+function renderWordOptions(options) { const lettersGrid = document.getElementById('lettersGrid'); lettersGrid.style.display = 'grid'; lettersGrid.innerHTML = options.map(option => `<button class="word-option-button">${option}</button>`).join(''); lettersGrid.querySelectorAll('.word-option-button').forEach(btn => { btn.addEventListener('click', () => selectWordForSentence(btn)); }); }
+function selectWordForSentence(buttonElement) { buttonElement.disabled = true; buttonElement.classList.add('disabled'); const sentenceBuildArea = document.getElementById('sentenceBuildArea'); const wordSpan = document.createElement('span'); wordSpan.className = 'sentence-word'; wordSpan.textContent = buttonElement.textContent; sentenceBuildArea.appendChild(wordSpan); const allButtons = document.querySelectorAll('.word-option-button'); const allDisabled = Array.from(allButtons).every(btn => btn.disabled); if (allDisabled) { const constructedSentence = Array.from(sentenceBuildArea.children).map(span => span.textContent).join(' '); selectAnswer(constructedSentence); } }
+function handleSequenceClick(buttonElement) { const letter = buttonElement.textContent; buttonElement.disabled = true; buttonElement.classList.add('disabled'); gameState.sequenceGame.userSequence.push(letter); const { userSequence, correctSequence } = gameState.sequenceGame; const currentIndex = userSequence.length - 1; if (userSequence[currentIndex] !== correctSequence[currentIndex]) { gameState.attempts--; updateUI(); showFeedback('Ops, ordem errada! Tente de novo.', 'error'); if (gameState.attempts <= 0) { setTimeout(endPhase, 1500); } else { setTimeout(() => { document.querySelectorAll('#lettersGrid .letter-button').forEach(btn => { btn.disabled = false; btn.classList.remove('disabled'); }); gameState.sequenceGame.userSequence = []; }, 1500); } return; } if (userSequence.length === correctSequence.length) { gameState.score++; updateUI(); showFeedback('Sequência correta!', 'success'); document.getElementById('nextQuestion').style.display = 'block'; } }
+async function selectAnswer(selectedAnswer) { const q = gameState.questions[gameState.currentQuestionIndex]; if (!q) return; if (['alphabet_order'].includes(q.type)) return; document.querySelectorAll('.letter-button, .word-option-button, .sound-detective-button').forEach(btn => btn.disabled = true); const isCorrect = selectedAnswer === q.correctAnswer; if (q.type === 'build_sentence') { const sentenceArea = document.getElementById('sentenceBuildArea'); if (isCorrect) { sentenceArea.style.borderColor = '#4ECDC4'; sentenceArea.style.backgroundColor = 'rgba(78, 205, 196, 0.1)'; } else { sentenceArea.style.borderColor = '#ff6b6b'; sentenceArea.style.backgroundColor = 'rgba(255, 107, 107, 0.1)'; } } else { document.querySelectorAll('.letter-button, .word-option-button, .sound-detective-button').forEach(btn => { const btnIdentifier = btn.dataset.sound || btn.textContent; if (btnIdentifier === q.correctAnswer) { btn.classList.add('correct'); } if (!isCorrect && btnIdentifier === selectedAnswer) { btn.classList.add('incorrect'); } }); } if (isCorrect) { gameState.score++; showFeedback('Muito bem!', 'success'); playTeacherAudio('feedback_correct', 'Acertou'); if (q.type !== 'letter_sound' && q.type !== 'build_sentence' && q.type !== 'count_words') { document.getElementById('wordDisplay').textContent = q.word || q.initialWord; } } else { gameState.attempts--; logStudentError({ question: q, selectedAnswer: selectedAnswer }).catch(console.error); showFeedback(`Quase! A resposta correta era "${q.correctAnswer}"`, 'error'); playTeacherAudio('feedback_incorrect', 'Tente de novo'); } updateUI(); await saveGameState(); if (gameState.attempts <= 0) { setTimeout(endPhase, 2000); } else { document.getElementById('nextQuestion').style.display = 'block'; } }
+function nextQuestion() { gameState.currentQuestionIndex++; startQuestion(); }
+function endPhase() { const accuracy = gameState.questions.length > 0 ? Math.round((gameState.score / gameState.questions.length) * 100) : 0; const passed = accuracy >= 70; if (!gameState.isCustomActivity) { logPhaseCompletionToHistory(accuracy); } else { clearAssignedActivity(); } showResultScreen(accuracy, passed); }
+async function clearAssignedActivity() { await supabaseClient.from('students').update({ assigned_activity: null }).eq('id', currentUser.id); currentUser.assigned_activity = null; sessionStorage.setItem('currentUser', JSON.stringify(currentUser)); }
+function showResultScreen(accuracy, passed) { showScreen('resultScreen'); document.getElementById('finalScore').textContent = gameState.score; document.getElementById('accuracy').textContent = accuracy; const continueBtn = document.getElementById('continueButton'); const retryBtn = document.getElementById('retryButton'); const restartBtn = document.getElementById('restartButton'); if (gameState.isCustomActivity) { document.getElementById('resultTitle').textContent = 'Atividade de Reforço Concluída!'; document.getElementById('resultMessage').innerHTML = `Você acertou ${accuracy}% das questões. Continue praticando!`; continueBtn.style.display = 'none'; retryBtn.style.display = 'none'; restartBtn.innerHTML = '<i class="fas fa-home"></i> Voltar ao Início'; return; } const assignedPhases = currentUser.assigned_phases || [1]; const currentPhaseIndex = assignedPhases.indexOf(gameState.currentPhase); const hasNextPhase = currentPhaseIndex !== -1 && currentPhaseIndex < assignedPhases.length - 1; if (passed) { document.getElementById('resultTitle').textContent = 'Parabéns!'; retryBtn.style.display = 'none'; gameState.phaseCompleted = true; if (hasNextPhase) { document.getElementById('resultMessage').innerHTML = 'Você completou a fase! 🏆<br>Clique para ir para a próxima!'; continueBtn.style.display = 'inline-block'; restartBtn.innerHTML = '<i class="fas fa-home"></i> Voltar ao Início'; } else { document.getElementById('resultMessage').innerHTML = 'Você completou TODAS as suas fases! 🥳<br>Fale com seu professor!'; continueBtn.style.display = 'none'; restartBtn.innerHTML = '<i class="fas fa-sign-out-alt"></i> Sair'; } } else { document.getElementById('resultTitle').textContent = 'Não desanime!'; document.getElementById('resultMessage').textContent = 'Você precisa acertar mais. Tente novamente!'; continueBtn.style.display = 'none'; retryBtn.style.display = 'inline-block'; restartBtn.innerHTML = '<i class="fas fa-home"></i> Voltar ao Início'; gameState.phaseCompleted = false; } saveGameState(); }
 async function nextPhase() { const assignedPhases = currentUser.assigned_phases || [1]; const currentPhaseIndex = assignedPhases.indexOf(gameState.currentPhase); const hasNextPhase = currentPhaseIndex !== -1 && currentPhaseIndex < assignedPhases.length - 1; if (hasNextPhase) { const nextPhaseNum = assignedPhases[currentPhaseIndex + 1]; gameState.currentPhase = nextPhaseNum; gameState.currentQuestionIndex = 0; gameState.score = 0; gameState.attempts = 3; gameState.questions = generateQuestions(gameState.currentPhase); gameState.phaseCompleted = false; await saveGameState(); showScreen('gameScreen'); startQuestion(); } else { showResultScreen(100, true); } }
 async function retryPhase() { gameState.currentQuestionIndex = 0; gameState.score = 0; gameState.attempts = 3; gameState.phaseCompleted = false; await saveGameState(); showScreen('gameScreen'); startQuestion(); }
-async function restartGame() {
-    if (gameState.isCustomActivity || gameState.phaseCompleted || gameState.attempts <= 0) {
-        showStudentGame();
-    } else {
-        showScreen('startScreen');
-    }
-}
+async function restartGame() { if (gameState.isCustomActivity || gameState.phaseCompleted || gameState.attempts <= 0) { await showStudentGame(); } else { showScreen('startScreen'); } }
 async function playCurrentAudio() { const q = gameState.questions[gameState.currentQuestionIndex]; if (q.type !== 'letter_sound') return; const letter = q.correctAnswer; playTeacherAudio(letter, letter); }
 
 // =========================================================================
@@ -789,19 +443,11 @@ function hideCreateStudentForm() { document.getElementById('createStudentForm').
 function showAudioSettingsModal() { const letterSelect = document.getElementById('letterSelect'); if (letterSelect) { let optionsHtml = ''; optionsHtml += '<optgroup label="Instruções e Feedbacks">'; for (const key in CUSTOM_AUDIO_KEYS) { optionsHtml += `<option value="${key}">${CUSTOM_AUDIO_KEYS[key]}</option>`; } optionsHtml += '</optgroup>'; optionsHtml += '<optgroup label="Letras do Alfabeto">'; optionsHtml += ALPHABET.map(letter => `<option value="${letter}">Letra ${letter}</option>`).join(''); optionsHtml += '</optgroup>'; letterSelect.innerHTML = optionsHtml; } showModal('audioSettingsModal'); showTab(document.querySelector('#audioSettingsModal .tab-btn[data-tab="uploadFileTab"]')); }
 function showTab(clickedButton) { const parent = clickedButton.closest('.modal-content'); const tabId = clickedButton.getAttribute('data-tab'); parent.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active')); clickedButton.classList.add('active'); parent.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active')); parent.querySelector('#' + tabId).classList.add('active'); }
 function showFeedback(message, type = 'info') { const el = document.getElementById('globalFeedback'); if (!el) return; const textEl = el.querySelector('.feedback-text'); if (textEl) textEl.textContent = message; el.className = `show ${type}`; setTimeout(() => { el.className = el.className.replace('show', ''); }, 3000); }
-function updateUI() { const gameScreen = document.getElementById('gameScreen'); if (gameScreen.classList.contains('active') && gameState.questions && gameState.questions.length > 0) { document.getElementById('score').textContent = gameState.score; document.getElementById('totalQuestions').textContent = gameState.questions.length; document.getElementById('attempts').textContent = `${gameState.attempts} tentativa(s)`; document.getElementById('currentPhase').textContent = gameState.currentPhase; const progress = ((gameState.currentQuestionIndex) / gameState.questions.length) * 100; document.getElementById('progressFill').style.width = `${progress}%`; } }
+function updateUI() { const gameScreen = document.getElementById('gameScreen'); if (gameScreen.classList.contains('active') && gameState.questions && gameState.questions.length > 0) { document.getElementById('score').textContent = gameState.score; document.getElementById('totalQuestions').textContent = gameState.questions.length; document.getElementById('attempts').textContent = `${gameState.attempts} tentativa(s)`; document.getElementById('currentPhase').textContent = gameState.isCustomActivity ? "Reforço" : gameState.currentPhase; const progress = ((gameState.currentQuestionIndex) / gameState.questions.length) * 100; document.getElementById('progressFill').style.width = `${progress}%`; } }
 async function showTutorial(phaseNumber) { if (gameState.tutorialsShown.includes(phaseNumber)) return; const instruction = gameInstructions[phaseNumber]; if (!instruction) return; const overlay = document.getElementById('tutorialOverlay'); const mascot = document.getElementById('tutorialMascot'); document.getElementById('tutorialText').textContent = instruction; overlay.classList.add('show'); mascot.classList.add('talking'); const audioKey = `instruction_${phaseNumber}`; playTeacherAudio(audioKey, instruction, () => mascot.classList.remove('talking')); gameState.tutorialsShown.push(phaseNumber); await saveGameState(); }
 function hideTutorial() { document.getElementById('tutorialOverlay').classList.remove('show'); }
 async function logStudentError({ question, selectedAnswer }) { if (!currentUser || currentUser.type !== 'student') { return; } const errorData = { student_id: currentUser.id, teacher_id: currentUser.teacher_id, class_id: currentUser.class_id, phase: gameState.currentPhase, question_type: question.type, correct_answer: String(question.correctAnswer), selected_answer: String(selectedAnswer) }; const { error } = await supabaseClient.from('student_errors').insert([errorData]); if (error) { console.error('Falha ao registrar erro:', error); } }
-async function logPhaseCompletionToHistory(accuracy) {
-    if (!currentUser || currentUser.type !== 'student') return;
-    const { error } = await supabaseClient.from('phase_history').insert({
-        student_id: currentUser.id,
-        phase: gameState.currentPhase,
-        accuracy: accuracy
-    });
-    if (error) console.error("Erro ao salvar histórico da fase:", error);
-}
+async function logPhaseCompletionToHistory(accuracy) { if (!currentUser || currentUser.type !== 'student') return; const { error } = await supabaseClient.from('phase_history').insert({ student_id: currentUser.id, phase: gameState.currentPhase, accuracy: accuracy }); if (error) console.error("Erro ao salvar histórico da fase:", error); }
 
 // === LÓGICA DE RELATÓRIOS (COM NOVAS FUNCIONALIDADES) ===
 async function populateReportClassSelector() { const selector = document.getElementById('reportClassSelector'); selector.innerHTML = '<option value="">Carregando turmas...</option>'; document.getElementById('reportContentContainer').style.display = 'none'; const { data, error } = await supabaseClient.from('classes').select('id, name').eq('teacher_id', currentUser.id).order('name', { ascending: true }); if (error || !data) { selector.innerHTML = '<option value="">Erro ao carregar</option>'; return; } if (data.length === 0) { selector.innerHTML = '<option value="">Nenhuma turma encontrada</option>'; return; } selector.innerHTML = '<option value="">-- Selecione uma turma --</option>'; data.forEach(cls => { selector.innerHTML += `<option value="${cls.id}">${cls.name}</option>`; }); }
@@ -809,190 +455,80 @@ function handleReportClassSelection(event) { const classId = event.target.value;
 async function loadAndDisplayClassReports(classId) {
     const reportContainer = document.getElementById('reportContentContainer');
     reportContainer.innerHTML = '<p><i class="fas fa-spinner fa-spin"></i> Carregando relatórios...</p>';
-    
     const { data: errors, error: errorsError } = await supabaseClient.from('student_errors').select('*').eq('class_id', classId);
-    if (errorsError) {
-        reportContainer.innerHTML = '<p class="error">Erro ao carregar dados de erros.</p>';
-        return;
-    }
-
-    const { data: students, error: studentsError } = await supabaseClient
-        .from('students')
-        .select('id, name')
-        .eq('class_id', classId)
-        .order('name', { ascending: true });
-
-    if (studentsError) {
-        reportContainer.innerHTML = '<p class="error">Erro ao carregar lista de alunos.</p>';
-        return;
-    }
-
-    reportContainer.innerHTML = `
-        <div class="report-section">
-            <h4><i class="fas fa-fire"></i> Mapa de Calor da Turma</h4>
-            <p>Os itens que a turma mais errou. Mostra qual era a resposta certa e o que selecionaram no lugar.</p>
-            <div id="classHeatmapContainer"></div>
-        </div>
-        <div class="report-section">
-            <h4><i class="fas fa-user-graduate"></i> Relatório Individual de Dificuldades</h4>
-            <p>Clique em um aluno para ver seus erros e gerar uma atividade focada com a IA.</p>
-            <div id="individualReportsContainer"></div>
-        </div>
-    `;
+    if (errorsError) { reportContainer.innerHTML = '<p class="error">Erro ao carregar dados de erros.</p>'; return; }
+    const { data: students, error: studentsError } = await supabaseClient.from('students').select('id, name').eq('class_id', classId).order('name', { ascending: true });
+    if (studentsError) { reportContainer.innerHTML = '<p class="error">Erro ao carregar lista de alunos.</p>'; return; }
+    reportContainer.innerHTML = ` <div class="report-section"> <h4><i class="fas fa-fire"></i> Mapa de Calor da Turma</h4> <p>Os itens que a turma mais errou. Mostra qual era a resposta certa e o que selecionaram no lugar.</p> <div id="classHeatmapContainer"></div> </div> <div class="report-section"> <h4><i class="fas fa-user-graduate"></i> Relatório Individual de Dificuldades</h4> <p>Clique em um aluno para ver seus erros e gerar uma atividade focada com a IA.</p> <div id="individualReportsContainer"></div> </div> `;
     renderClassHeatmap(errors, 'classHeatmapContainer');
-    renderIndividualReports(students, errors, 'individualReportsContainer');
+    renderIndividualReports(students, allErrors, 'individualReportsContainer');
 }
 
 function renderClassHeatmap(errors, containerId) {
     const heatmapContainer = document.getElementById(containerId);
     const sectionHeader = heatmapContainer.closest('.report-section').querySelector('h4');
     sectionHeader.querySelector('.view-chart-btn')?.remove();
-
-    if (!errors || errors.length === 0) {
-        heatmapContainer.innerHTML = '<p>Nenhum erro registrado para esta turma. Ótimo trabalho! 🎉</p>';
-        return;
-    }
-
-    const errorsByPhase = errors.reduce((acc, error) => {
-        const phase = error.phase || 'Desconhecida';
-        if (!acc[phase]) { acc[phase] = []; }
-        acc[phase].push(error);
-        return acc;
-    }, {});
-
+    if (!errors || errors.length === 0) { heatmapContainer.innerHTML = '<p>Nenhum erro registrado para esta turma. Ótimo trabalho! 🎉</p>'; return; }
+    const errorsByPhase = errors.reduce((acc, error) => { const phase = error.phase || 'Desconhecida'; if (!acc[phase]) { acc[phase] = []; } acc[phase].push(error); return acc; }, {});
     let html = '';
     const sortedPhases = Object.keys(errorsByPhase).sort((a, b) => a - b);
-
     html += '<div class="all-phases-scroll-container">';
-
     for (const phase of sortedPhases) {
         const phaseDescription = PHASE_DESCRIPTIONS[phase] || 'Fase Desconhecida';
         html += `<div class="phase-group"><h3>Fase ${phase} - ${phaseDescription}</h3>`;
-        
         const phaseErrors = errorsByPhase[phase];
-        const errorDetails = phaseErrors.reduce((acc, error) => {
-            const key = error.correct_answer;
-            if (!acc[key]) {
-                acc[key] = { count: 0, selections: new Set() };
-            }
-            acc[key].count++;
-            acc[key].selections.add(error.selected_answer);
-            return acc;
-        }, {});
-        
+        const errorDetails = phaseErrors.reduce((acc, error) => { const key = error.correct_answer; if (!acc[key]) { acc[key] = { count: 0, selections: new Set() }; } acc[key].count++; acc[key].selections.add(error.selected_answer); return acc; }, {});
         const sortedErrors = Object.entries(errorDetails).sort(([, a], [, b]) => b.count - a.count);
-
-        if (sortedErrors.length === 0) {
-            html += '<p>Nenhum erro nesta fase.</p>';
-        } else {
+        if (sortedErrors.length === 0) { html += '<p>Nenhum erro nesta fase.</p>'; } else {
             html += sortedErrors.map(([correctItem, data]) => {
                 const selectionsText = Array.from(data.selections).join(', ');
                 const maxCount = sortedErrors[0][1].count;
-                return `
-                <div class="heatmap-item">
-                    <div class="item-label">${correctItem}</div>
-                    <div class="item-details">
-                        <span class="item-count">${data.count} erro(s)</span>
-                        <div class="item-bar-container">
-                            <div class="item-bar" style="width: ${(data.count / maxCount) * 100}%;"></div>
-                        </div>
-                        <small class="heatmap-selections">Selecionaram: ${selectionsText}</small>
-                    </div>
-                </div>
-            `}).join('');
+                return ` <div class="heatmap-item"> <div class="item-label">${correctItem}</div> <div class="item-details"> <span class="item-count">${data.count} erro(s)</span> <div class="item-bar-container"> <div class="item-bar" style="width: ${(data.count / maxCount) * 100}%;"></div> </div> <small class="heatmap-selections">Selecionaram: ${selectionsText}</small> </div> </div> `
+            }).join('');
         }
-        
-        html += '</div>'; // Fecha o phase-group
+        html += '</div>';
     }
-    
-    html += '</div>'; // Fecha o all-phases-scroll-container
-
+    html += '</div>';
     heatmapContainer.innerHTML = html;
-
-    const chartButton = document.createElement('button');
-    chartButton.className = 'btn small view-chart-btn';
-    chartButton.innerHTML = '<i class="fas fa-chart-bar"></i> Ver Gráfico Geral';
-    chartButton.onclick = () => {
-        const totalErrorCounts = errors.reduce((acc, error) => {
-            const key = error.correct_answer;
-            acc[key] = (acc[key] || 0) + 1;
-            return acc;
-        }, {});
-        const sortedTotalErrors = Object.entries(totalErrorCounts).sort(([, a], [, b]) => b - a);
-        const chartLabels = sortedTotalErrors.map(([item]) => item);
-        const chartData = sortedTotalErrors.map(([, count]) => count);
-        displayChartModal('Gráfico de Dificuldades da Turma (Geral)', chartLabels, chartData);
-    };
+    const chartButton = document.createElement('button'); chartButton.className = 'btn small view-chart-btn'; chartButton.innerHTML = '<i class="fas fa-chart-bar"></i> Ver Gráfico Geral';
+    chartButton.onclick = () => { const totalErrorCounts = errors.reduce((acc, error) => { const key = error.correct_answer; acc[key] = (acc[key] || 0) + 1; return acc; }, {}); const sortedTotalErrors = Object.entries(totalErrorCounts).sort(([, a], [, b]) => b - a); const chartLabels = sortedTotalErrors.map(([item]) => item); const chartData = sortedTotalErrors.map(([, count]) => count); displayChartModal('Gráfico de Dificuldades da Turma (Geral)', chartLabels, chartData); };
     sectionHeader.appendChild(chartButton);
 }
 function renderIndividualReports(students, allErrors, containerId) {
     const container = document.getElementById(containerId);
-    if (!students || students.length === 0) {
-        container.innerHTML = '<p>Nenhum aluno na turma.</p>';
-        return;
-    }
-
+    if (!students || students.length === 0) { container.innerHTML = '<p>Nenhum aluno na turma.</p>'; return; }
     let html = '<div class="individual-reports-container">';
-    html += students.map(student => `
-        <div class="student-item student-report-item" data-student-id="${student.id}" data-student-name="${student.name}">
-            <div class="student-info"><h4>${student.name}</h4></div>
-            <i class="fas fa-chevron-down"></i>
-        </div>
-        <div class="student-errors-details" id="errors-for-${student.id}" style="display: none;"></div>
-    `).join('');
+    html += students.map(student => ` <div class="student-item student-report-item" data-student-id="${student.id}" data-student-name="${student.name}"> <div class="student-info"><h4>${student.name}</h4></div> <i class="fas fa-chevron-down"></i> </div> <div class="student-errors-details" id="errors-for-${student.id}" style="display: none;"></div> `).join('');
     html += '</div>';
     container.innerHTML = html;
-
     container.querySelectorAll('.student-report-item').forEach(item => {
         item.addEventListener('click', () => {
             const studentId = item.dataset.studentId;
             const studentName = item.dataset.studentName;
             const detailsContainer = document.getElementById(`errors-for-${studentId}`);
             const isVisible = detailsContainer.style.display === 'block';
-
-            container.querySelectorAll('.student-errors-details').forEach(d => {
-                d.style.display = 'none';
-            });
+            container.querySelectorAll('.student-errors-details').forEach(d => { d.style.display = 'none'; });
             container.querySelectorAll('.student-report-item i').forEach(i => i.className = 'fas fa-chevron-down');
-
             if (!isVisible) {
                 detailsContainer.style.display = 'block';
                 item.querySelector('i').className = 'fas fa-chevron-up';
                 const studentErrors = allErrors.filter(e => e.student_id === studentId);
-
                 let reportHTML = '';
                 if (studentErrors.length === 0) {
                     reportHTML = '<p style="padding: 10px;">Este aluno não cometeu erros. Ótimo trabalho! 🌟</p>';
                 } else {
-                    const errorCounts = studentErrors.reduce((acc, error) => {
-                        const key = `Fase ${error.phase} | Correto: ${error.correct_answer}`;
-                        if (!acc[key]) { acc[key] = { count: 0, selections: {}, details: error }; }
-                        acc[key].count++;
-                        acc[key].selections[error.selected_answer] = (acc[key].selections[error.selected_answer] || 0) + 1;
-                        return acc;
-                    }, {});
+                    const errorCounts = studentErrors.reduce((acc, error) => { const key = `Fase ${error.phase} | Correto: ${error.correct_answer}`; if (!acc[key]) { acc[key] = { count: 0, selections: {}, details: error }; } acc[key].count++; acc[key].selections[error.selected_answer] = (acc[key].selections[error.selected_answer] || 0) + 1; return acc; }, {});
                     const top5Errors = Object.entries(errorCounts).sort(([, a], [, b]) => b.count - a.count).slice(0, 5);
-                    reportHTML = `<ul>${top5Errors.map(([, errorData]) => {
-                        const selectionsText = Object.entries(errorData.selections).map(([selection, count]) => `'${selection}' (${count}x)`).join(', ');
-                        const phaseDescription = PHASE_DESCRIPTIONS[errorData.details.phase] || '';
-                        return `<li>
-                            <div class="error-item">
-                                <strong>Fase ${errorData.details.phase} (${phaseDescription}):</strong> Resposta correta era <strong>"${errorData.details.correct_answer}"</strong>
-                                <small>Aluno selecionou: ${selectionsText}</small>
-                            </div>
-                            <span class="error-count">${errorData.count} ${errorData.count > 1 ? 'vezes' : 'vez'}</span>
-                        </li>`;
-                    }).join('')}</ul>`;
+                    reportHTML = `<ul>${top5Errors.map(([, errorData]) => { const selectionsText = Object.entries(errorData.selections).map(([selection, count]) => `'${selection}' (${count}x)`).join(', '); const phaseDescription = PHASE_DESCRIPTIONS[errorData.details.phase] || ''; return `<li> <div class="error-item"> <strong>Fase ${errorData.details.phase} (${phaseDescription}):</strong> Resposta correta era <strong>"${errorData.details.correct_answer}"</strong> <small>Aluno selecionou: ${selectionsText}</small> </div> <span class="error-count">${errorData.count} ${errorData.count > 1 ? 'vezes' : 'vez'}</span> </li>`; }).join('')}</ul>`;
                 }
-
+                // CORREÇÃO: Restaurado o botão 'Analisar com IA'
                 reportHTML += `
                     <div class="student-details-actions">
                         <button class="btn" onclick="showEvolutionChart('${studentId}', '${studentName}')"><i class="fas fa-chart-line"></i> Ver Evolução</button>
-                        <button class="btn ai-btn" onclick="generateAndAssignActivity('${studentId}', '${studentName}')"><i class="fas fa-magic"></i> Criar Atividade de Reforço</button>
+                        <button class="btn" onclick="generateAndAssignActivity('${studentId}', '${studentName}')"><i class="fas fa-magic"></i> Criar Atividade de Reforço</button>
+                        <button class="btn ai-btn" onclick="handleGenerateLessonPlan('${studentId}', '${studentName}')"><i class="fas fa-rocket"></i> Analisar com IA</button>
                     </div>
-                    <div class="evolution-chart-container" id="chart-container-for-${studentId}" style="display:none;">
-                        <canvas id="chart-for-${studentId}"></canvas>
-                    </div>
+                    <div class="evolution-chart-container" id="chart-container-for-${studentId}" style="display:none;"></div>
                 `;
                 detailsContainer.innerHTML = reportHTML;
             }
@@ -1003,187 +539,95 @@ function renderIndividualReports(students, allErrors, containerId) {
 async function showEvolutionChart(studentId, studentName) {
     const chartContainer = document.getElementById(`chart-container-for-${studentId}`);
     if (!chartContainer) return;
-    
-    // Alterna a visibilidade do gráfico
-    if (chartContainer.style.display === 'block') {
-        chartContainer.style.display = 'none';
-        return;
-    }
-    
+    if (chartContainer.style.display === 'block') { chartContainer.style.display = 'none'; return; }
     chartContainer.style.display = 'block';
     chartContainer.innerHTML = `<p><i class="fas fa-spinner fa-spin"></i> Carregando histórico...</p>`;
-
-    const { data, error } = await supabaseClient
-        .from('phase_history')
-        .select('phase, accuracy, completed_at')
-        .eq('student_id', studentId)
-        .order('completed_at', { ascending: true });
-
-    if (error) {
-        chartContainer.innerHTML = '<p class="error">Erro ao carregar histórico.</p>';
-        return;
-    }
-    if (data.length === 0) {
-        chartContainer.innerHTML = '<p>Nenhum histórico de fases completas para exibir.</p>';
-        return;
-    }
-    
+    const { data, error } = await supabaseClient.from('phase_history').select('phase, accuracy, completed_at').eq('student_id', studentId).order('completed_at', { ascending: true });
+    if (error) { chartContainer.innerHTML = '<p class="error">Erro ao carregar histórico.</p>'; return; }
+    if (data.length === 0) { chartContainer.innerHTML = '<p>Nenhum histórico de fases completas para exibir.</p>'; return; }
     chartContainer.innerHTML = `<canvas id="chart-for-${studentId}"></canvas>`;
     const ctx = document.getElementById(`chart-for-${studentId}`).getContext('2d');
-
     const labels = data.map(d => `Fase ${d.phase} (${new Date(d.completed_at).toLocaleDateString('pt-BR')})`);
     const accuracyData = data.map(d => d.accuracy);
-
-    if (window.evolutionCharts && window.evolutionCharts[studentId]) {
-        window.evolutionCharts[studentId].destroy();
-    }
+    if (window.evolutionCharts && window.evolutionCharts[studentId]) { window.evolutionCharts[studentId].destroy(); }
     if(!window.evolutionCharts) window.evolutionCharts = {};
-
     window.evolutionCharts[studentId] = new Chart(ctx, {
         type: 'line',
         data: {
             labels: labels,
-            datasets: [{
-                label: `Evolução de ${studentName}`,
-                data: accuracyData,
-                borderColor: '#764ba2',
-                backgroundColor: 'rgba(118, 75, 162, 0.1)',
-                fill: true,
-                tension: 0.1
-            }]
+            datasets: [{ label: `Evolução de ${studentName}`, data: accuracyData, borderColor: '#764ba2', backgroundColor: 'rgba(118, 75, 162, 0.1)', fill: true, tension: 0.1 }]
         },
         options: {
             responsive: true,
             maintainAspectRatio: false,
-            scales: {
-                y: {
-                    beginAtZero: true,
-                    max: 100,
-                    ticks: {
-                        callback: function(value) { return value + "%" }
-                    }
-                }
-            },
-            plugins: {
-                title: {
-                    display: true,
-                    text: `Progresso de Acertos por Fase Concluída`
-                }
-            }
+            scales: { y: { beginAtZero: true, max: 100, ticks: { callback: function(value) { return value + "%" } } } },
+            plugins: { title: { display: true, text: `Progresso de Acertos por Fase Concluída` } }
         }
     });
 }
 
 async function generateAndAssignActivity(studentId, studentName) {
     showFeedback(`Gerando atividade para ${studentName}...`, 'info');
-    const { data: studentErrors, error } = await supabaseClient
-        .from('student_errors')
-        .select('*')
-        .eq('student_id', studentId)
-        .order('created_at', { ascending: false })
-        .limit(20);
-
-    if (error || studentErrors.length < 3) { // Precisa de um mínimo de erros para ser relevante
-        showFeedback(`Não há erros suficientes para gerar uma atividade para ${studentName}.`, 'error');
-        return;
-    }
-
-    const errorCounts = studentErrors.reduce((acc, err) => {
-        const key = `${err.question_type}|${err.correct_answer}`;
-        if (!acc[key]) {
-            acc[key] = { count: 0, question: err };
-        }
-        acc[key].count++;
-        return acc;
-    }, {});
-
+    const { data: studentErrors, error } = await supabaseClient.from('student_errors').select('*').eq('student_id', studentId).order('created_at', { ascending: false }).limit(20);
+    if (error || studentErrors.length < 3) { showFeedback(`Não há erros suficientes para gerar uma atividade para ${studentName}.`, 'error'); return; }
+    const errorCounts = studentErrors.reduce((acc, err) => { const key = `${err.question_type}|${err.correct_answer}`; if (!acc[key]) { acc[key] = { count: 0, question: err }; } acc[key].count++; return acc; }, {});
     const topErrors = Object.values(errorCounts).sort((a, b) => b.count - a.count);
-
-    let customQuestions = [];
-    let usedQuestions = new Set();
+    let customQuestions = [], usedQuestions = new Set();
     const questionCount = 10;
-
-    // Adiciona as questões com maior dificuldade
-    for (const errorDetail of topErrors) {
-        if (customQuestions.length >= questionCount) break;
-        const qTemplate = errorDetail.question;
+    for (const errorDetail of topErrors) { if (customQuestions.length >= questionCount) break; const q = generateSingleQuestionFromError(errorDetail.question); if (q && !usedQuestions.has(q.correctAnswer)) { customQuestions.push(q); usedQuestions.add(q.correctAnswer); } }
+    
+    // CORREÇÃO: Adicionada uma trava de segurança para evitar loop infinito
+    let safeguard = 0;
+    while (customQuestions.length < questionCount && topErrors.length > 0 && safeguard < 50) {
+        const qTemplate = topErrors[Math.floor(Math.random() * topErrors.length)].question;
         const q = generateSingleQuestionFromError(qTemplate);
         if (q && !usedQuestions.has(q.correctAnswer)) {
             customQuestions.push(q);
             usedQuestions.add(q.correctAnswer);
         }
+        safeguard++;
     }
 
-    // Preenche com mais questões do mesmo tipo se necessário
-    while (customQuestions.length < questionCount && topErrors.length > 0) {
-        const qTemplate = topErrors[Math.floor(Math.random() * topErrors.length)].question;
-        const q = generateSingleQuestionFromError(qTemplate);
-         if (q && !usedQuestions.has(q.correctAnswer)) {
-            customQuestions.push(q);
-            usedQuestions.add(q.correctAnswer);
-        }
-    }
-
-    if (customQuestions.length < 5) {
-        showFeedback(`Não foi possível gerar uma atividade focada para ${studentName}.`, 'error');
-        return;
-    }
-
+    if (customQuestions.length < 5) { showFeedback(`Não foi possível gerar uma atividade focada para ${studentName}.`, 'error'); return; }
     const activity = { questions: customQuestions.sort(() => 0.5 - Math.random()) };
-
-    const { error: updateError } = await supabaseClient
-        .from('students')
-        .update({ assigned_activity: activity })
-        .eq('id', studentId);
-
-    if (updateError) {
-        showFeedback(`Erro ao designar atividade: ${updateError.message}`, 'error');
-    } else {
-        showFeedback(`Atividade de reforço enviada para ${studentName}!`, 'success');
-    }
+    const { error: updateError } = await supabaseClient.from('students').update({ assigned_activity: activity }).eq('id', studentId);
+    if (updateError) { showFeedback(`Erro ao designar atividade: ${updateError.message}`, 'error'); } else { showFeedback(`Atividade de reforço enviada para ${studentName}!`, 'success'); }
 }
 function generateSingleQuestionFromError(errorTemplate) {
-    // Esta função gera uma única questão baseada em um erro
-    const phase = errorTemplate.phase;
+    const phase = parseInt(errorTemplate.phase);
+    // CORREÇÃO: Adicionadas lógicas para TODAS as fases
     switch(phase) {
         case 1:
             return { type: 'letter_sound', correctAnswer: errorTemplate.correct_answer, options: generateOptions(errorTemplate.correct_answer, VOWELS, 4) };
         case 2:
-            const wordData2 = PHASE_2_WORDS.find(w => w.vowel === errorTemplate.correct_answer);
-            if (!wordData2) return null;
+            const wordData2 = PHASE_2_WORDS.find(w => w.vowel === errorTemplate.correct_answer) || PHASE_2_WORDS[Math.floor(Math.random() * PHASE_2_WORDS.length)];
             return { type: 'initial_vowel', ...wordData2, options: generateOptions(wordData2.vowel, VOWELS, 4) };
         case 3:
-            const wordData3 = PHASE_3_ENCONTROS.find(w => w.encontro === errorTemplate.correct_answer);
-            if (!wordData3) return null;
+            const wordData3 = PHASE_3_ENCONTROS.find(w => w.encontro === errorTemplate.correct_answer) || PHASE_3_ENCONTROS[Math.floor(Math.random() * PHASE_3_ENCONTROS.length)];
             return { type: 'vowel_encounter', ...wordData3, options: generateOptions(wordData3.encontro, VOWEL_ENCOUNTERS, 4) };
+        case 4:
+            const wordData4 = PHASE_4_WORDS_F.find(w => w.correctAnswer === errorTemplate.correct_answer) || PHASE_4_WORDS_F[Math.floor(Math.random() * PHASE_4_WORDS_F.length)];
+            return { ...wordData4, options: wordData4.options.sort(() => 0.5 - Math.random()) };
         case 5:
-            const pairData = PHASE_5_SOUND_PAIRS.find(p => p.correct === errorTemplate.correct_answer);
-            if (!pairData) return null;
+            const pairData = PHASE_5_SOUND_PAIRS.find(p => p.correct === errorTemplate.correct_answer) || PHASE_5_SOUND_PAIRS[Math.floor(Math.random() * PHASE_5_SOUND_PAIRS.length)];
             return { type: 'sound_detective', image: pairData.image, correctAnswer: pairData.correct, options: [pairData.correct, pairData.incorrect].sort(() => 0.5 - Math.random()) };
-        default:
-            // Para outras fases, a lógica pode ser mais complexa. Por enquanto, focamos nas mais simples de recriar.
-            return null;
+        case 6:
+            const syllableData = PHASE_6_SYLLABLE_COUNT.find(p => p.syllables.toString() === errorTemplate.correct_answer) || PHASE_6_SYLLABLE_COUNT[Math.floor(Math.random() * PHASE_6_SYLLABLE_COUNT.length)];
+            return { type: 'count_syllables', ...syllableData, correctAnswer: syllableData.syllables.toString(), options: generateOptions(syllableData.syllables.toString(), ['1','2','3','4','5'], 4) };
+        case 7:
+            const wordCountData = PHASE_7_SENTENCES_COUNT.find(p => p.words.toString() === errorTemplate.correct_answer) || PHASE_7_SENTENCES_COUNT[Math.floor(Math.random() * PHASE_7_SENTENCES_COUNT.length)];
+            return { type: 'count_words', ...wordCountData, correctAnswer: wordCountData.words.toString(), options: generateOptions(wordCountData.words.toString(), ['2','3','4','5'], 4) };
+        default: return null;
     }
 }
 async function checkForCustomActivities() {
     if (!currentUser || currentUser.type !== 'student') return;
-
-    // Atualiza os dados do usuário para pegar a atividade mais recente
     const { data, error } = await supabaseClient.from('students').select('assigned_activity').eq('id', currentUser.id).single();
-    if (error) {
-        console.error("Erro ao checar atividades:", error);
-        return;
-    }
-
+    if (error) { console.error("Erro ao checar atividades:", error); return; }
     currentUser.assigned_activity = data.assigned_activity;
     sessionStorage.setItem('currentUser', JSON.stringify(currentUser));
-
     const customActivityBtn = document.getElementById('startCustomActivityBtn');
-    if (currentUser.assigned_activity && currentUser.assigned_activity.questions) {
-        customActivityBtn.style.display = 'inline-block';
-    } else {
-        customActivityBtn.style.display = 'none';
-    }
+    if (currentUser.assigned_activity && currentUser.assigned_activity.questions) { customActivityBtn.style.display = 'inline-block'; } else { customActivityBtn.style.display = 'none'; }
 }
 async function handleGenerateLessonPlan(studentId, studentName) {
     const aiContainer = document.getElementById('aiTipsContent');
@@ -1205,65 +649,14 @@ async function handleGenerateLessonPlan(studentId, studentName) {
 
     try {
         const { data: studentErrors, error } = await supabaseClient.from('student_errors').select('*').eq('student_id', studentId).limit(20);
-        if (error || !studentErrors || studentErrors.length === 0) {
-            aiContainer.innerHTML = '<p>Este aluno não possui erros registrados para análise. Ótimo trabalho! 🌟</p>';
-            return;
-        }
-        
+        if (error || !studentErrors || studentErrors.length === 0) { aiContainer.innerHTML = '<p>Este aluno não possui erros registrados para análise. Ótimo trabalho! 🌟</p>'; return; }
         const errorSummary = studentErrors.map(e => `Na fase '${PHASE_DESCRIPTIONS[e.phase]}', a resposta correta era '${e.correct_answer}' e o aluno escolheu '${e.selected_answer}'.`).join('\n');
-        
-        const prompt = `
-            Você é um especialista em pedagogia da alfabetização no Brasil. Um professor precisa de um relatório e uma atividade para o aluno ${studentName}, que apresentou as seguintes dificuldades:
-            ${errorSummary}
-
-            Crie uma resposta em duas partes. A resposta DEVE seguir EXATAMENTE esta estrutura de Markdown:
-
-            ## 🔍 Análise Pedagógica
-            (Faça um parágrafo curto e claro resumindo a principal dificuldade do aluno com base nos erros. Ex: "A análise indica uma dificuldade recorrente na distinção de fonemas surdos e sonoros, especificamente com os pares P/B e F/V.")
-
-            ## 💡 Sugestão de Atividade Prática (Mini Plano de Aula)
-            
-            ### 🎯 Foco da Atividade:
-            (Descreva em uma frase o ponto a ser trabalhado).
-
-            ### ✂️ Materiais Necessários:
-            (Liste 2 ou 3 itens simples de sala de aula).
-
-            ### 👣 Passo a Passo (10-15 min):
-            (Crie 3 passos curtos e práticos. Comece cada passo com "1.", "2.", etc.).
-        `;
-
+        const prompt = ` Você é um especialista em pedagogia da alfabetização no Brasil. Um professor precisa de um relatório e uma atividade para o aluno ${studentName}, que apresentou as seguintes dificuldades: ${errorSummary} Crie uma resposta em duas partes. A resposta DEVE seguir EXATAMENTE esta estrutura de Markdown: ## 🔍 Análise Pedagógica (Faça um parágrafo curto e claro resumindo a principal dificuldade do aluno com base nos erros. Ex: "A análise indica uma dificuldade recorrente na distinção de fonemas surdos e sonoros, especificamente com os pares P/B e F/V.") ## 💡 Sugestão de Atividade Prática (Mini Plano de Aula) ### 🎯 Foco da Atividade: (Descreva em uma frase o ponto a ser trabalhado). ### ✂️ Materiais Necessários: (Liste 2 ou 3 itens simples de sala de aula). ### 👣 Passo a Passo (10-15 min): (Crie 3 passos curtos e práticos. Comece cada passo com "1.", "2.", etc.). `;
         const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${apiKey}`;
-        const response = await fetch(apiUrl, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ contents: [{ role: "user", parts: [{ text: prompt }] }] })
-        });
-
-        if (!response.ok) {
-            const errorBody = await response.json();
-            console.error("API Error Body:", errorBody);
-            throw new Error(`Erro na API (${response.status}): ${errorBody.error.message}`);
-        }
-
+        const response = await fetch(apiUrl, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ contents: [{ role: "user", parts: [{ text: prompt }] }] }) });
+        if (!response.ok) { const errorBody = await response.json(); console.error("API Error Body:", errorBody); throw new Error(`Erro na API (${response.status}): ${errorBody.error.message}`); }
         const result = await response.json();
-        
-        if (result.candidates && result.candidates[0].content?.parts[0]) {
-            let text = result.candidates[0].content.parts[0].text;
-            // Formatação para HTML
-            text = text.replace(/## (.*)/g, '<h2>$1</h2>');
-            text = text.replace(/### (.*)/g, '<h3>$1</h3>');
-            text = text.replace(/\n(\d)\. (.*)/g, '<p class="lesson-step"><strong>Passo $1:</strong> $2</p>');
-            text = text.replace(/\n/g, '<br>');
-            text = text.replace(/<br>/g, ''); 
-
-            aiContainer.innerHTML = text;
-        } else {
-            throw new Error("A resposta da IA veio em um formato inesperado.");
-        }
-    } catch (err) {
-        console.error("Falha ao gerar o plano de aula com a IA:", err);
-        aiContainer.innerHTML = `<p class="error"><strong>Desculpe, ocorreu um erro ao gerar a atividade.</strong><br><br>Motivo: ${err.message}</p>`;
-    }
+        if (result.candidates && result.candidates[0].content?.parts[0]) { let text = result.candidates[0].content.parts[0].text; text = text.replace(/## (.*)/g, '<h2>$1</h2>'); text = text.replace(/### (.*)/g, '<h3>$1</h3>'); text = text.replace(/\n(\d)\. (.*)/g, '<p class="lesson-step"><strong>Passo $1:</strong> $2</p>'); text = text.replace(/\n/g, '<br>'); text = text.replace(/<br>/g, ''); aiContainer.innerHTML = text; } else { throw new Error("A resposta da IA veio em um formato inesperado."); }
+    } catch (err) { console.error("Falha ao gerar o plano de aula com a IA:", err); aiContainer.innerHTML = `<p class="error"><strong>Desculpe, ocorreu um erro ao gerar a atividade.</strong><br><br>Motivo: ${err.message}</p>`; }
 }
 function displayChartModal(title, labels, data) { const modal = document.getElementById('chartModal'); const titleEl = document.getElementById('chartModalTitle'); const ctx = document.getElementById('myChartCanvas').getContext('2d'); titleEl.textContent = title; if (currentChart) { currentChart.destroy(); } currentChart = new Chart(ctx, { type: 'bar', data: { labels: labels, datasets: [{ label: 'Nº de Erros', data: data, backgroundColor: 'rgba(118, 75, 162, 0.6)', borderColor: 'rgba(118, 75, 162, 1)', borderWidth: 1 }] }, options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } }, plugins: { legend: { display: false }, title: { display: true, text: 'Itens com maior quantidade de erros na turma', font: { size: 16, family: "'Comic Neue', cursive" } } } } }); showModal('chartModal'); }
