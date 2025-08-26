@@ -8,8 +8,9 @@
 body {
     font-family: 'Comic Neue', cursive;
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    min-height: 100vh;
+    min-height: 100dvh; /* CORRIGIDO: Usa dvh para se adaptar à UI do navegador móvel */
     overflow-x: hidden;
+    overscroll-behavior-y: contain; /* MELHORIA: Impede o scroll de "vazar" da página */
 }
 
 html, body {
@@ -19,7 +20,7 @@ html, body {
 /* Telas */
 .screen {
     display: none;
-    min-height: 100vh;
+    min-height: 100dvh; /* CORRIGIDO: Usa dvh para consistência */
     padding: 20px;
     opacity: 0;
     visibility: hidden;
@@ -607,9 +608,30 @@ html, body {
 .fa-spinner { animation: spin 1s linear infinite; }
 @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
 
-#gameScreen.active { display: flex; flex-direction: column; height: 100vh; width: 100vw; padding: 15px; box-sizing: border-box; justify-content: flex-start; overflow: hidden; }
-#gameScreen .game-header { flex-shrink: 0; width: 100%; margin-bottom: 15px; }
-#gameScreen .game-content { flex-grow: 1; overflow-y: auto; min-height: 0; width: 100%; padding: 1rem; }
+/* === CORREÇÃO PRINCIPAL PARA A TELA DE JOGO === */
+#gameScreen.active {
+    display: flex;
+    flex-direction: column;
+    height: 100dvh; /* CORRIGIDO: Garante que o container ocupe apenas a área visível */
+    width: 100vw;
+    padding: 15px;
+    box-sizing: border-box;
+    justify-content: flex-start;
+    overflow: hidden;
+}
+
+#gameScreen .game-header {
+    flex-shrink: 0;
+    width: 100%;
+    margin-bottom: 15px;
+}
+#gameScreen .game-content {
+    flex-grow: 1;
+    overflow-y: auto;
+    min-height: 0;
+    width: 100%;
+    padding: 1rem;
+}
 
 @media (max-height: 740px) {
     #gameScreen .game-content { padding: 1rem; display: flex; flex-direction: column; }
@@ -692,8 +714,8 @@ html, body {
     .sidebar-nav a i { margin-right: 0; margin-bottom: 5px; font-size: 1.5rem; }
     .sidebar-nav a span { display: block; }
     .logout-btn-sidebar { background: none; border: none; color: #888; display: flex; flex-direction: column; align-items: center; font-size: 0.75rem; height: 60px; padding: 8px 5px; }
-     .logout-btn-sidebar i { font-size: 1.5rem; margin-bottom: 5px; }
-     .logout-btn-sidebar:hover { color: #c0392b; }
+    .logout-btn-sidebar i { font-size: 1.5rem; margin-bottom: 5px; }
+    .logout-btn-sidebar:hover { color: #c0392b; }
     #teacherDashboard .dashboard-container { flex-direction: column; height: auto; min-height: 100vh; }
     .main-content { overflow-y: visible; }
     body { overflow-y: auto; }
