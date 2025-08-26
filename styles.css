@@ -1,32 +1,26 @@
 /* ======================================================= */
-/* JOGO DAS LETRAS - CSS CORRIGIDO E RESPONSIVO             */
+/* JOGO DAS LETRAS - CSS COMPLETO, CORRIGIDO E RESPONSIVO  */
 /* ======================================================= */
 
-/* --- FONTES E CONFIGURAÇÕES GERAIS --- */
 @import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;700&display=swap');
 
 * {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
-    -webkit-tap-highlight-color: transparent; /* Remove o flash azul ao tocar em botões no mobile */
+    -webkit-tap-highlight-color: transparent;
 }
 
 :root {
     --bg-gradient: linear-gradient(135deg, #1f285a 0%, #3d2f6b 50%, #764ba2 100%);
     --primary-glow: #4ECDC4;
     --primary-gradient: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
-    --success-gradient: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
-    --warning-gradient: linear-gradient(135deg, #f83600 0%, #f9d423 100%);
-    --danger-gradient: linear-gradient(135deg, #ff758c 0%, #ff7eb3 100%);
     --font-family: 'Fredoka', sans-serif;
     --text-light: #f0f8ff;
     --text-dark: #2c3e50;
     --text-muted: #6b7280;
-    --card-bg: rgba(255, 255, 255, 0.1);
     --modal-bg: #ffffff;
-    --shadow-color: rgba(0, 0, 0, 0.1);
-    --shadow-light: 0 4px 15px var(--shadow-color);
+    --shadow-light: 0 4px 15px rgba(0, 0, 0, 0.1);
     --shadow-heavy: 0 8px 30px rgba(0,0,0,0.15);
 }
 
@@ -41,9 +35,7 @@
     to { opacity: 1; transform: translateY(0); }
 }
 
-html {
-    scroll-behavior: smooth;
-}
+html { scroll-behavior: smooth; }
 
 body {
     font-family: var(--font-family);
@@ -56,12 +48,8 @@ body {
     color: var(--text-dark);
 }
 
-/* --- LÓGICA DE EXIBIÇÃO DAS TELAS (CORRIGIDA) --- */
 .screen {
     display: none;
-    opacity: 0;
-    visibility: hidden;
-    transition: opacity 0.5s ease-in-out;
     width: 100%;
     min-height: 100vh;
     padding: 20px;
@@ -72,12 +60,9 @@ body {
     flex-direction: column;
     justify-content: center;
     align-items: center;
-    opacity: 1;
-    visibility: visible;
     animation: fadeIn 0.5s ease-in-out;
 }
 
-/* CORREÇÃO CRÍTICA: Faz o dashboard ocupar a tela toda em vez de ser centralizado */
 #teacherDashboard.screen.active {
     justify-content: flex-start;
     align-items: stretch;
@@ -91,51 +76,19 @@ body {
     text-align: center;
 }
 
-/* --- TELA DE TÍTULO E MASCOTE --- */
 .game-title h1 {
     font-size: 4rem;
-    font-weight: 700;
     color: #fff;
-    text-shadow: 0 0 10px rgba(78, 205, 196, 0.5), 0 0 20px rgba(78, 205, 196, 0.5);
+    text-shadow: 0 0 10px rgba(78, 205, 196, 0.5);
     margin-bottom: 1rem;
 }
 
 .game-title p {
     font-size: 1.5rem;
     color: var(--text-light);
-    opacity: 0.9;
     margin-bottom: 2rem;
 }
 
-.mascot {
-    font-size: 6rem;
-    color: var(--primary-glow);
-    filter: drop-shadow(0 0 15px var(--primary-glow));
-    display: inline-block;
-}
-
-.bounce { animation: bounce 2s infinite; }
-@keyframes bounce {
-    0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
-    40% { transform: translateY(-25px); }
-    60% { transform: translateY(-15px); }
-}
-
-.speech-bubble {
-    background: rgba(255, 255, 255, 0.9);
-    border-radius: 20px;
-    padding: 1.2rem 1.8rem;
-    box-shadow: var(--shadow-heavy);
-    color: var(--text-dark);
-    font-weight: 500;
-    font-size: 1.2rem;
-    display: inline-block;
-    position: relative;
-    margin-top: 1rem;
-    max-width: 90%;
-}
-
-/* --- BOTÕES DE SELEÇÃO DE USUÁRIO --- */
 .user-selection h2 { color: var(--text-light); font-weight: 500; }
 .user-types {
     display: flex;
@@ -145,7 +98,7 @@ body {
     margin-top: 2rem;
 }
 .user-type-btn {
-    background: var(--card-bg);
+    background: rgba(255, 255, 255, 0.1);
     border: 1px solid rgba(255, 255, 255, 0.3);
     backdrop-filter: blur(10px);
     border-radius: 20px;
@@ -169,32 +122,6 @@ body {
 .user-type-btn span { font-size: 1.4rem; font-weight: 700; }
 .user-type-btn small { font-size: 1rem; opacity: 0.9; }
 
-/* --- BOTÕES GERAIS --- */
-.start-button, .result-button, .control-button {
-    background: var(--primary-gradient);
-    color: white;
-    border: none;
-    padding: 1rem 2.5rem;
-    font-size: 1.5rem;
-    font-weight: 700;
-    border-radius: 50px;
-    cursor: pointer;
-    box-shadow: 0 6px 20px rgba(79, 172, 254, 0.4);
-    transition: all 0.3s ease;
-    margin: 1rem;
-    letter-spacing: 1px;
-}
-.start-button:hover, .result-button:hover, .control-button:hover {
-    transform: translateY(-5px) scale(1.05);
-    box-shadow: 0 10px 30px rgba(79, 172, 254, 0.5);
-}
-.result-button.success { background: var(--success-gradient); box-shadow: 0 6px 20px rgba(67, 233, 123, 0.4); }
-.result-button.success:hover { box-shadow: 0 10px 30px rgba(67, 233, 123, 0.5); }
-.result-button.retry { background: var(--warning-gradient); box-shadow: 0 6px 20px rgba(248, 54, 0, 0.4); }
-.result-button.retry:hover { box-shadow: 0 10px 30px rgba(248, 54, 0, 0.5); }
-.control-button { font-size: 1.1rem; padding: 0.8rem 1.8rem;}
-
-/* --- LOGIN, REGISTRO E MODAIS --- */
 .login-container, .modal-content {
     background: var(--modal-bg);
     padding: 40px;
@@ -205,12 +132,9 @@ body {
     width: 100%;
     max-width: 420px;
 }
-.modal-content { max-width: 500px; }
-.modal-content.large { max-width: 95%; max-width: 800px; }
-
 .form-group { text-align: left; margin-bottom: 1rem; }
 .form-group label { display: block; margin-bottom: 0.5rem; font-weight: 500; color: var(--text-muted); }
-.form-group input, .form-group select {
+.form-group input {
     width: 100%;
     padding: 15px;
     border-radius: 10px;
@@ -220,116 +144,43 @@ body {
     border: 2px solid #e0e7ff;
     transition: all 0.3s ease;
 }
-.form-group input:focus, .form-group select:focus {
+.form-group input:focus {
     outline: none;
     border-color: var(--primary-glow);
-    background-color: #fff;
-    box-shadow: 0 0 15px rgba(79, 172, 254, 0.3);
 }
-
-.login-btn, .create-btn, .modal-btn.primary {
-    background: var(--primary-gradient);
-    box-shadow: 0 4px 15px rgba(79, 172, 254, 0.3);
-    font-weight: 500;
-    padding: 15px;
-    border-radius: 12px;
-    border: none;
-    color: white;
+.login-btn, .create-btn {
+    font-family: var(--font-family);
     cursor: pointer;
     transition: all 0.3s ease;
-    width: auto;
+    border-radius: 12px;
+    padding: 15px;
+    border: none;
     font-size: 1.1rem;
+    background: var(--primary-gradient);
+    color: white;
+    box-shadow: 0 4px 15px rgba(79, 172, 254, 0.3);
 }
-#teacherLoginForm .login-btn, #teacherRegisterForm .login-btn, #studentLoginForm .login-btn {
-    width: 100%;
-}
-.login-btn:hover, .create-btn:hover, .modal-btn.primary:hover {
+.login-form .login-btn { width: 100%; }
+.login-btn:hover, .create-btn:hover {
     box-shadow: 0 6px 20px rgba(79, 172, 254, 0.4);
     transform: translateY(-3px);
 }
 .register-btn {
+    font-family: var(--font-family);
+    cursor: pointer;
+    transition: all 0.3s ease;
+    border-radius: 12px;
+    padding: 15px;
+    font-size: 1.1rem;
     background: transparent;
     border: 2px solid #4facfe;
     color: #4facfe;
-    transition: all 0.3s ease;
-    padding: 12px;
-    border-radius: 10px;
-    font-size: 1rem;
-    cursor: pointer;
     width: 100%;
     margin-top: 10px;
 }
 .register-btn:hover { background-color: #4facfe; color: white; }
 .back-btn { margin-top: 20px; background-color: #e9ecef; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer;}
 
-.login-form > * { margin-bottom: 1rem; }
-.login-form > *:last-child { margin-bottom: 0; }
-
-/* --- TELA DE JOGO --- */
-.game-header {
-    background: rgba(0,0,0,0.1);
-    border: 1px solid rgba(255,255,255,0.2);
-    width: 100%;
-    max-width: 1000px;
-    padding: 1rem 1.5rem;
-    border-radius: 20px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 2rem;
-    flex-wrap: wrap;
-}
-.phase-info h2, .score, .attempts { color: #fff; text-shadow: 1px 1px 3px rgba(0,0,0,0.3); }
-.attempts { display: flex; align-items: center; justify-content: flex-end; gap: 8px; }
-.progress-bar { background: rgba(0,0,0,0.2); border-radius: 50px; overflow: hidden; height: 10px; width: 150px; margin-top: 0.5rem;}
-.progress-fill { background: var(--primary-gradient); height: 100%; transition: width 0.5s ease; }
-.exit-button { background: none; border: none; color: #fff; font-size: 1.5rem; cursor: pointer; opacity: 0.8; }
-.exit-button:hover { opacity: 1; }
-
-.game-content {
-    background: rgba(255, 255, 255, 0.75);
-    backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px);
-    border-radius: 30px; padding: 2.5rem;
-    box-shadow: 0 15px 40px rgba(0,0,0,0.1);
-    border: 1px solid rgba(255, 255, 255, 0.3);
-    width: 100%; max-width: 800px;
-    display: flex;
-    flex-direction: column;
-    gap: 2rem;
-}
-.question-area { text-align: center; }
-.audio-section { margin-bottom: 1rem; }
-.audio-button {
-    background: var(--primary-gradient); color: white;
-    width: 130px; height: 130px; border-radius: 50%;
-    box-shadow: 0 8px 25px rgba(79, 172, 254, 0.4);
-    border: none; cursor: pointer;
-    display: inline-flex; flex-direction: column;
-    justify-content: center; align-items: center;
-    font-size: 3rem;
-    transition: all 0.3s ease;
-}
-.audio-button span { font-size: 1rem; margin-top: 0.5rem; }
-.audio-button:hover { transform: scale(1.1); box-shadow: 0 12px 35px rgba(79, 172, 254, 0.5); }
-.image-emoji { font-size: 6rem; animation: pulse 2s infinite; }
-@keyframes pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.1); } }
-.word-display { font-size: 3rem; font-weight: 700; color: var(--text-dark); margin-top: 1rem; }
-.question-text h3 { font-size: 1.8rem; font-weight: 500; color: var(--text-dark); margin-top: 1rem; }
-.letters-grid { gap: 1.2rem; display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); }
-.letter-button {
-    background: #fff; color: var(--text-dark); font-size: 3rem; font-weight: 700;
-    border-radius: 20px; box-shadow: var(--shadow-light); border: 2px solid transparent;
-    padding: 1.5rem; cursor: pointer; transition: all 0.3s ease;
-}
-.letter-button:hover:not(:disabled) { transform: translateY(-5px) scale(1.05); box-shadow: var(--shadow-heavy); border-color: var(--primary-glow); }
-.letter-button.correct { background: var(--success-gradient); color: #fff; border: none; animation: correctPulse 0.6s ease; }
-.letter-button.incorrect { background: var(--danger-gradient); color: #fff; border: none; animation: shake 0.6s ease; }
-.letter-button:disabled { cursor: not-allowed; opacity: 0.7; }
-
-@keyframes correctPulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.2) rotate(5deg); } }
-@keyframes shake { 0%, 100% { transform: translateX(0); } 20% { transform: translateX(-12px) rotate(-3deg); } 60% { transform: translateX(12px) rotate(3deg); } }
-
-/* --- DASHBOARD --- */
 .dashboard-container { display: flex; width: 100%; height: 100vh; background-color: #f4f7fc; }
 .sidebar {
     background: #ffffff;
@@ -339,10 +190,9 @@ body {
     display: flex;
     flex-direction: column;
     padding: 1rem 0;
-    transition: width 0.3s ease, transform 0.3s ease;
 }
 .sidebar-header { padding: 0 1.5rem 1rem; border-bottom: 1px solid #e8eaf6;}
-.sidebar-nav { flex-grow: 1; list-style: none; padding: 0; margin: 1rem 0;}
+.sidebar-nav { flex-grow: 1; margin: 1rem 0;}
 .sidebar-nav a {
     display: flex; align-items: center;
     padding: 1rem 1.5rem;
@@ -356,7 +206,6 @@ body {
 .sidebar-footer { padding: 1rem; }
 .logout-btn-sidebar { width: 100%; text-align: left; background: none; border: none; cursor: pointer; padding: 1rem; border-radius: 12px; font-size: 1rem; color: var(--text-muted); }
 .logout-btn-sidebar:hover { background-color: #ffebee; color: #c62828; }
-.logout-btn-sidebar i { margin-right: 0.5rem; }
 
 .main-content { flex-grow: 1; overflow-y: auto; padding: 2rem; }
 .dashboard-header {
@@ -364,6 +213,18 @@ body {
     padding-bottom: 1.5rem; margin-bottom: 1.5rem; border-bottom: 1px solid #e0e7ff;
 }
 #dashboard-title { color: var(--text-dark); font-size: 2rem; }
+
+/* ESTA É A REGRA MAIS IMPORTANTE PARA O DASHBOARD FUNCIONAR */
+/* Esconde todas as "views" (seções) por padrão */
+.dashboard-view { 
+    display: none; 
+}
+/* Mostra APENAS a view que tiver a classe "active" */
+.dashboard-view.active { 
+    display: block; 
+    animation: fadeIn 0.5s; 
+}
+
 .view-header {
     display: flex;
     justify-content: space-between;
@@ -373,219 +234,29 @@ body {
     gap: 1rem;
 }
 
-.classes-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1.5rem; }
-.class-card {
-    background: #fff; border-radius: 15px; padding: 1.5rem;
-    box-shadow: var(--shadow-light); transition: all 0.3s ease;
-}
-.class-card:hover { transform: translateY(-5px); box-shadow: var(--shadow-heavy); }
-.class-card h3 { margin-bottom: 0.5rem; }
-.student-count { color: var(--text-muted); }
-.class-card-actions { margin-top: 1rem; display: flex; gap: 0.5rem; }
-.btn { border-radius: 8px; padding: 0.5rem 1rem; cursor: pointer; border: none; font-size: 0.9rem; transition: all 0.3s ease; }
-.btn.primary { background-color: #4facfe; color: white; }
-.btn.primary:hover { background-color: #00f2fe; }
-.btn.danger { background-color: #ff758c; color: white; }
-.btn.danger:hover { background-color: #ff7eb3; }
-
-/* --- MODAIS (VISIBILIDADE CORRIGIDA) --- */
-.modal {
-    position: fixed;
-    top: 0; left: 0; width: 100%; height: 100%;
-    background: rgba(0,0,0,0.5);
-    z-index: 1000;
-    display: none;
-    justify-content: center;
-    align-items: center;
-    opacity: 0;
-    transition: opacity 0.3s ease-in-out;
-    padding: 1rem;
-}
-.modal.show {
-    display: flex;
-    opacity: 1;
-}
-.modal.show .modal-content { animation: fadeIn 0.3s ease-out; }
-.modal-actions { margin-top: 1.5rem; display: flex; justify-content: flex-end; gap: 0.5rem; flex-wrap: wrap; }
-.modal-btn { background-color: #e9ecef; }
-.modal-btn:hover { background-color: #ced4da; }
-
-/* --- OUTROS ESTILOS --- */
 .password-wrapper { position: relative; display: flex; align-items: center; }
 .password-wrapper input { padding-right: 40px; }
 .password-toggle { position: absolute; right: 15px; cursor: pointer; color: #999; }
-.fa-spinner { animation: spin 1s linear infinite; }
-@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
 
-.students-list { margin-top: 1rem; }
-.student-item {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 1rem;
-    background-color: #f8f9fa;
-    border-radius: 8px;
-    margin-bottom: 0.5rem;
-    flex-wrap: wrap;
-    gap: 1rem;
-}
-.student-actions { display: flex; gap: 0.5rem; }
-.btn.small { padding: 0.3rem 0.6rem; font-size: 0.8rem; }
-
-.modal-tabs {
-    display: flex;
-    border-bottom: 1px solid #dee2e6;
-    margin-bottom: 1.5rem;
-    flex-wrap: wrap;
-}
-.tab-btn {
-    background: none;
-    border: none;
-    padding: 1rem 1.5rem;
-    cursor: pointer;
-    font-size: 1rem;
-    color: var(--text-muted);
-    border-bottom: 3px solid transparent;
-    margin-bottom: -1px;
-}
-.tab-btn.active {
-    color: var(--text-dark);
-    border-bottom-color: #4facfe;
-}
-.tab-content { display: none; }
-.tab-content.active { display: block; animation: fadeIn 0.3s; }
-
-.credentials-box {
-    background-color: #f4f7fc;
-    border: 1px solid #e0e7ff;
-    padding: 1rem;
-    border-radius: 8px;
-    margin-top: 1rem;
-    text-align: left;
-}
-.chart-container {
-    position: relative;
-    height: 60vh;
-    max-height: 400px;
-    width: 100%;
-}
-
-/* ======================================================= */
-/* --- SEÇÃO DE RESPONSIVIDADE (MOBILE-FIRST) ---          */
-/* ======================================================= */
-
-/* Para telas pequenas (celulares) */
 @media (max-width: 768px) {
     .game-title h1 { font-size: 2.8rem; }
-    .game-title p { font-size: 1.2rem; }
-
-    /* Transforma a sidebar em uma barra de navegação inferior */
-    .dashboard-container { flex-direction: column; height: auto; min-height: 100vh; }
+    .dashboard-container { flex-direction: column; min-height: 100vh; }
     .sidebar {
-        position: fixed;
-        bottom: 0;
-        left: 0;
-        width: 100%;
-        height: auto;
-        flex-direction: row;
-        border-top: 1px solid #e8eaf6;
-        border-right: none;
-        z-index: 100;
+        position: fixed; bottom: 0; left: 0; width: 100%; height: auto;
+        flex-direction: row; border-top: 1px solid #e8eaf6; z-index: 100;
         padding: 5px 0;
-        box-shadow: 0 -4px 15px rgba(0,0,0,0.05);
     }
     .sidebar-header, .sidebar-footer { display: none; }
-    .sidebar-nav {
-        display: flex;
-        justify-content: space-around;
-        flex-grow: 1;
-        margin: 0;
-    }
-    .sidebar-nav a {
-        flex: 1;
-        flex-direction: column;
-        justify-content: center;
-        align-items: center;
-        padding: 8px 5px;
-        margin: 0;
-        text-align: center;
-    }
+    .sidebar-nav { display: flex; justify-content: space-around; flex-grow: 1; margin: 0; }
+    .sidebar-nav a { flex: 1; flex-direction: column; justify-content: center; align-items: center; padding: 8px 5px; margin: 0; text-align: center; }
     .sidebar-nav a i { margin-right: 0; margin-bottom: 4px; font-size: 1.2rem;}
     .sidebar-nav a span { font-size: 0.75rem; }
-    
-    .main-content {
-        padding: 1.5rem 1rem 80px 1rem; /* Adiciona espaço na parte inferior para a nav bar */
-    }
+    .main-content { padding: 1.5rem 1rem 80px 1rem; }
     #dashboard-title { font-size: 1.5rem; }
-
-    .game-header { flex-direction: column; gap: 1rem; padding: 1rem; }
-    .game-content { padding: 1.5rem; }
-    .letters-grid { grid-template-columns: repeat(2, 1fr); gap: 0.8rem; }
-    .letter-button { font-size: 2.2rem; padding: 1.2rem; border-radius: 15px; }
-
-    .modal-content.large {
-        max-width: 100%;
-        height: 90vh;
-        overflow-y: auto;
-    }
 }
 
 @media (max-width: 480px) {
     .game-title h1 { font-size: 2.2rem; }
     .user-types { flex-direction: column; align-items: center; gap: 1rem; }
-    .user-type-btn { min-width: 250px; width: 80%; padding: 25px 20px;}
-
-    .game-content, .login-container, .modal-content { padding: 1.5rem 1rem; }
-    
-    .start-button, .result-button { font-size: 1.2rem; padding: 0.8rem 2rem; }
-
-    .word-display { font-size: 2rem; }
-    .question-text h3 { font-size: 1.3rem; }
-    
-    .login-container { max-width: 95%; }
-
-    .modal-tabs { justify-content: center; }
-    .tab-btn { padding: 0.8rem 1rem; font-size: 0.9rem; }
-}
-/* ======================================================= */
-/* --- CORREÇÃO DE CENTRALIZAÇÃO PARA TELA DE LOGIN (PC) --- */
-/* ======================================================= */
-
-/*
-  Esta regra garante que as telas de seleção de usuário e de login
-  usem 100% da altura da tela (vh) e centralizem seu conteúdo
-  vertical e horizontalmente.
-*/
-#userTypeScreen,
-#teacherLoginScreen,
-#teacherRegisterScreen,
-#studentLoginScreen {
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    width: 100%;
-    min-height: 100vh;
-}
-
-/*
-  Esta regra garante que o tutorial (com o botão "Vamos Jogar!")
-  fique escondido por padrão, e só apareça quando realmente
-  precisar (através da classe .show, controlada pelo JavaScript).
-*/
-#tutorialOverlay {
-    display: none;
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0, 0, 0, 0.7);
-    z-index: 2000;
-    justify-content: center;
-    align-items: center;
-}
-
-#tutorialOverlay.show {
-    display: flex;
+    .login-container, .modal-content { padding: 1.5rem 1rem; max-width: 95%;}
 }
