@@ -194,10 +194,10 @@
 			</div>
 			<div class="character-mascot">
 				<div class="mascot bounce">
-					<i class="fas fa-cat"></i>
+					<i class="fas fa-robot"></i>
 				</div>
 				<div class="speech-bubble">
-					<p>Olá! Eu sou o Gatinho Alfabeto! Vamos brincar?</p>
+					<p>Olá! Eu sou o Robô Amigo! Vamos brincar?</p>
 				</div>
 			</div>
 			<button id="startButton" class="start-button">
@@ -234,7 +234,7 @@
 			<div class="question-area">
 				<div class="mascot-helper">
 					<div class="mascot pulse">
-						<i class="fas fa-cat"></i>
+						<i class="fas fa-robot"></i>
 					</div>
 					<div class="speech-bubble" id="helperText">
 						Clique no alto-falante para ouvir o som!
@@ -443,7 +443,7 @@
     <div id="tutorialOverlay" class="tutorial-overlay">
         <div class="tutorial-content">
             <div id="tutorialMascot" class="mascot">
-                <i class="fas fa-cat"></i>
+                <i class="fas fa-robot"></i>
             </div>
             <div class="speech-bubble" id="tutorialText">
             </div>
