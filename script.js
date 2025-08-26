@@ -461,7 +461,7 @@ async function loadAndDisplayClassReports(classId) {
     if (studentsError) { reportContainer.innerHTML = '<p class="error">Erro ao carregar lista de alunos.</p>'; return; }
     reportContainer.innerHTML = ` <div class="report-section"> <h4><i class="fas fa-fire"></i> Mapa de Calor da Turma</h4> <p>Os itens que a turma mais errou. Mostra qual era a resposta certa e o que selecionaram no lugar.</p> <div id="classHeatmapContainer"></div> </div> <div class="report-section"> <h4><i class="fas fa-user-graduate"></i> Relatório Individual de Dificuldades</h4> <p>Clique em um aluno para ver seus erros e gerar uma atividade focada com a IA.</p> <div id="individualReportsContainer"></div> </div> `;
     renderClassHeatmap(errors, 'classHeatmapContainer');
-    renderIndividualReports(students, allErrors, 'individualReportsContainer');
+    renderIndividualReports(students, errors, 'individualReportsContainer'); // CORREÇÃO DO BUG: Usando 'errors' em vez de 'allErrors'
 }
 
 function renderClassHeatmap(errors, containerId) {
@@ -476,7 +476,7 @@ function renderClassHeatmap(errors, containerId) {
     for (const phase of sortedPhases) {
         const phaseDescription = PHASE_DESCRIPTIONS[phase] || 'Fase Desconhecida';
         html += `<div class="phase-group"><h3>Fase ${phase} - ${phaseDescription}</h3>`;
-        const phaseErrors = errorsByPhase[phase];
+        const phaseErrors = errorsByPhase[phase]; // CORREÇÃO DO BUG: Usando a variável correta aqui
         const errorDetails = phaseErrors.reduce((acc, error) => { const key = error.correct_answer; if (!acc[key]) { acc[key] = { count: 0, selections: new Set() }; } acc[key].count++; acc[key].selections.add(error.selected_answer); return acc; }, {});
         const sortedErrors = Object.entries(errorDetails).sort(([, a], [, b]) => b.count - a.count);
         if (sortedErrors.length === 0) { html += '<p>Nenhum erro nesta fase.</p>'; } else {
@@ -494,6 +494,7 @@ function renderClassHeatmap(errors, containerId) {
     chartButton.onclick = () => { const totalErrorCounts = errors.reduce((acc, error) => { const key = error.correct_answer; acc[key] = (acc[key] || 0) + 1; return acc; }, {}); const sortedTotalErrors = Object.entries(totalErrorCounts).sort(([, a], [, b]) => b - a); const chartLabels = sortedTotalErrors.map(([item]) => item); const chartData = sortedTotalErrors.map(([, count]) => count); displayChartModal('Gráfico de Dificuldades da Turma (Geral)', chartLabels, chartData); };
     sectionHeader.appendChild(chartButton);
 }
+
 function renderIndividualReports(students, allErrors, containerId) {
     const container = document.getElementById(containerId);
     if (!students || students.length === 0) { container.innerHTML = '<p>Nenhum aluno na turma.</p>'; return; }
@@ -521,15 +522,7 @@ function renderIndividualReports(students, allErrors, containerId) {
                     const top5Errors = Object.entries(errorCounts).sort(([, a], [, b]) => b.count - a.count).slice(0, 5);
                     reportHTML = `<ul>${top5Errors.map(([, errorData]) => { const selectionsText = Object.entries(errorData.selections).map(([selection, count]) => `'${selection}' (${count}x)`).join(', '); const phaseDescription = PHASE_DESCRIPTIONS[errorData.details.phase] || ''; return `<li> <div class="error-item"> <strong>Fase ${errorData.details.phase} (${phaseDescription}):</strong> Resposta correta era <strong>"${errorData.details.correct_answer}"</strong> <small>Aluno selecionou: ${selectionsText}</small> </div> <span class="error-count">${errorData.count} ${errorData.count > 1 ? 'vezes' : 'vez'}</span> </li>`; }).join('')}</ul>`;
                 }
-                // CORREÇÃO: Restaurado o botão 'Analisar com IA'
-                reportHTML += `
-                    <div class="student-details-actions">
-                        <button class="btn" onclick="showEvolutionChart('${studentId}', '${studentName}')"><i class="fas fa-chart-line"></i> Ver Evolução</button>
-                        <button class="btn" onclick="generateAndAssignActivity('${studentId}', '${studentName}')"><i class="fas fa-magic"></i> Criar Atividade de Reforço</button>
-                        <button class="btn ai-btn" onclick="handleGenerateLessonPlan('${studentId}', '${studentName}')"><i class="fas fa-rocket"></i> Analisar com IA</button>
-                    </div>
-                    <div class="evolution-chart-container" id="chart-container-for-${studentId}" style="display:none;"></div>
-                `;
+                reportHTML += ` <div class="student-details-actions"> <button class="btn" onclick="showEvolutionChart('${studentId}', '${studentName}')"><i class="fas fa-chart-line"></i> Ver Evolução</button> <button class="btn" onclick="generateAndAssignActivity('${studentId}', '${studentName}')"><i class="fas fa-magic"></i> Criar Atividade de Reforço</button> <button class="btn ai-btn" onclick="handleGenerateLessonPlan('${studentId}', '${studentName}')"><i class="fas fa-rocket"></i> Analisar com IA</button> </div> <div class="evolution-chart-container" id="chart-container-for-${studentId}" style="display:none;"></div> `;
                 detailsContainer.innerHTML = reportHTML;
             }
         });
@@ -575,19 +568,13 @@ async function generateAndAssignActivity(studentId, studentName) {
     let customQuestions = [], usedQuestions = new Set();
     const questionCount = 10;
     for (const errorDetail of topErrors) { if (customQuestions.length >= questionCount) break; const q = generateSingleQuestionFromError(errorDetail.question); if (q && !usedQuestions.has(q.correctAnswer)) { customQuestions.push(q); usedQuestions.add(q.correctAnswer); } }
-    
-    // CORREÇÃO: Adicionada uma trava de segurança para evitar loop infinito
     let safeguard = 0;
     while (customQuestions.length < questionCount && topErrors.length > 0 && safeguard < 50) {
         const qTemplate = topErrors[Math.floor(Math.random() * topErrors.length)].question;
         const q = generateSingleQuestionFromError(qTemplate);
-        if (q && !usedQuestions.has(q.correctAnswer)) {
-            customQuestions.push(q);
-            usedQuestions.add(q.correctAnswer);
-        }
+        if (q && !usedQuestions.has(q.correctAnswer)) { customQuestions.push(q); usedQuestions.add(q.correctAnswer); }
         safeguard++;
     }
-
     if (customQuestions.length < 5) { showFeedback(`Não foi possível gerar uma atividade focada para ${studentName}.`, 'error'); return; }
     const activity = { questions: customQuestions.sort(() => 0.5 - Math.random()) };
     const { error: updateError } = await supabaseClient.from('students').update({ assigned_activity: activity }).eq('id', studentId);
@@ -595,7 +582,6 @@ async function generateAndAssignActivity(studentId, studentName) {
 }
 function generateSingleQuestionFromError(errorTemplate) {
     const phase = parseInt(errorTemplate.phase);
-    // CORREÇÃO: Adicionadas lógicas para TODAS as fases
     switch(phase) {
         case 1:
             return { type: 'letter_sound', correctAnswer: errorTemplate.correct_answer, options: generateOptions(errorTemplate.correct_answer, VOWELS, 4) };
@@ -635,11 +621,6 @@ async function handleGenerateLessonPlan(studentId, studentName) {
     aiContainer.innerHTML = '<div class="loading-ai"><i class="fas fa-spinner fa-spin"></i> Analisando e gerando plano de aula...</div>';
     showModal('aiTipsModal');
     
-    // =================================================================================
-    // ATENÇÃO PROFESSOR/DESENVOLVEDOR:
-    // Insira sua chave de API do Google Gemini aqui.
-    // Você pode obter uma chave em: https://aistudio.google.com/app/apikey
-    // =================================================================================
     const apiKey = "COLE_SUA_CHAVE_AQUI"; 
     
     if (!apiKey || apiKey === "COLE_SUA_CHAVE_AQUI") {
