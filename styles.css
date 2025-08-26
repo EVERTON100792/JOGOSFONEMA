@@ -696,6 +696,16 @@ html, body {
 .heatmap-item .item-count { font-size: 0.9rem; color: #333; font-weight: bold; }
 .heatmap-item .item-bar-container { width: 100px; height: 8px; background-color: #e0e0e0; border-radius: 4px; margin-top: 4px; }
 .heatmap-item .item-bar { height: 100%; background: linear-gradient(90deg, #ffc0cb, #ff6b6b); border-radius: 4px; }
+
+/* NOVO: Container para a lista de relatórios individuais de alunos */
+.individual-reports-container {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    max-height: 75vh; /* Altura máxima generosa, ocupando até 75% da tela */
+    overflow-y: auto;
+    padding: 5px 10px 5px 5px; /* Espaço para a barra de rolagem */
+}
 .student-report-item { cursor: pointer; transition: background-color 0.2s ease; }
 .student-report-item:hover { background-color: #f0eaff; }
 
