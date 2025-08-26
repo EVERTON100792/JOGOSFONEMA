@@ -60,17 +60,18 @@ const PHASE_3_ENCONTROS = [
 ];
 const VOWEL_ENCOUNTERS = ['AI', 'EI', 'OI', 'UI', 'AU', 'EU', 'ÃO', 'ÃE', 'UA', 'ÉU'];
 
+// CORREÇÃO: Garantindo que todas as questões tenham 4 opções
 const PHASE_4_WORDS_F = [
-    { type: 'initial_syllable', word: 'FACA', image: '🔪', correctAnswer: 'FA', options: ['FA', 'FO', 'VA'] },
-    { type: 'initial_syllable', word: 'FOGO', image: '🔥', correctAnswer: 'FO', options: ['FE', 'VO', 'FO'] },
-    { type: 'initial_syllable', word: 'FITA', image: '🎀', correctAnswer: 'FI', options: ['VI', 'FI', 'FA'] },
-    { type: 'initial_syllable', word: 'FUMAÇA', image: '💨', correctAnswer: 'FU', options: ['FU', 'FA', 'VU'] },
-    { type: 'initial_syllable', word: 'FEIJÃO', image: '🌱', correctAnswer: 'FE', options: ['FE', 'VE', 'FO'] },
-    { type: 'middle_syllable', word: 'GARRAFA', image: '🍾', correctAnswer: 'FA', options: ['VA', 'FA', 'FO'] },
-    { type: 'middle_syllable', word: 'ALFINETE', image: '🧷', correctAnswer: 'FI', options: ['FI', 'VI', 'FE'] },
-    { type: 'middle_syllable', word: 'TELEFONE', image: '📞', correctAnswer: 'FO', options: ['VO', 'FE', 'FO'] },
-    { type: 'full_word', word: 'FOTO', image: '📷', correctAnswer: 'FOTO', options: ['FOTO', 'VOTO', 'FOGO'] },
-    { type: 'full_word', word: 'FIO', image: '🧵', correctAnswer: 'FIO', options: ['FIO', 'VIO', 'FILA'] }
+    { type: 'initial_syllable', word: 'FACA', image: '🔪', correctAnswer: 'FA', options: ['FA', 'FO', 'VA', 'CA'] },
+    { type: 'initial_syllable', word: 'FOGO', image: '🔥', correctAnswer: 'FO', options: ['FE', 'VO', 'FO', 'GO'] },
+    { type: 'initial_syllable', word: 'FITA', image: '🎀', correctAnswer: 'FI', options: ['VI', 'FI', 'FA', 'TA'] },
+    { type: 'initial_syllable', word: 'FUMAÇA', image: '💨', correctAnswer: 'FU', options: ['FU', 'FA', 'VU', 'MA'] },
+    { type: 'initial_syllable', word: 'FEIJÃO', image: '🌱', correctAnswer: 'FE', options: ['FE', 'VE', 'FO', 'JÃO'] },
+    { type: 'middle_syllable', word: 'GARRAFA', image: '🍾', correctAnswer: 'FA', options: ['VA', 'FA', 'FO', 'RA'] },
+    { type: 'middle_syllable', word: 'ALFINETE', image: '🧷', correctAnswer: 'FI', options: ['FI', 'VI', 'FE', 'NE'] },
+    { type: 'middle_syllable', word: 'TELEFONE', image: '📞', correctAnswer: 'FO', options: ['VO', 'FE', 'FO', 'LE'] },
+    { type: 'full_word', word: 'FOTO', image: '📷', correctAnswer: 'FOTO', options: ['FOTO', 'VOTO', 'FOGO', 'POTE'] },
+    { type: 'full_word', word: 'FIO', image: '🧵', correctAnswer: 'FIO', options: ['FIO', 'VIO', 'FILA', 'RIO'] }
 ];
 
 const PHASE_5_SOUND_PAIRS = [
@@ -388,18 +389,34 @@ function renderPhase3UI(q) {
     document.getElementById('imageQuestionArea').style.display = 'block';
     document.getElementById('lettersGrid').style.display = 'grid';
     document.getElementById('imageEmoji').textContent = q.image;
-    // CORREÇÃO: Lógica de substituição mais robusta
     const wordDisplay = document.getElementById('wordDisplay');
+    // CORREÇÃO: Lógica de substituição mais robusta para palavras curtas e com acentos
     const index = q.word.indexOf(q.correctAnswer);
     if (index !== -1) {
         wordDisplay.textContent = q.word.substring(0, index) + '__' + q.word.substring(index + q.correctAnswer.length);
     } else {
-        wordDisplay.textContent = q.word; // Fallback caso não encontre
+        wordDisplay.textContent = q.word.replace(q.correctAnswer, '__'); // Fallback
     }
     document.getElementById('questionText').textContent = 'Qual encontro de vogais completa a palavra?';
     renderOptions(q.options);
 }
-function renderPhase4UI(q) { document.getElementById('imageQuestionArea').style.display = 'block'; document.getElementById('lettersGrid').style.display = 'grid'; document.getElementById('imageEmoji').textContent = q.image; if (q.type === 'initial_syllable') { document.getElementById('wordDisplay').textContent = `__${q.word.substring(q.correctAnswer.length)}`; document.getElementById('questionText').textContent = 'Qual sílaba começa esta palavra?'; } else if (q.type === 'middle_syllable') { document.getElementById('wordDisplay').textContent = q.word.replace(q.correctAnswer, '__'); document.getElementById('questionText').textContent = 'Qual sílaba completa esta palavra?'; } else { document.getElementById('wordDisplay').textContent = `?`; document.getElementById('questionText').textContent = 'Qual é o nome desta figura?'; } renderOptions(q.options); }
+function renderPhase4UI(q) {
+    document.getElementById('imageQuestionArea').style.display = 'block';
+    document.getElementById('lettersGrid').style.display = 'grid';
+    document.getElementById('imageEmoji').textContent = q.image;
+    // CORREÇÃO: Não mostrar a palavra completa em questões de 'full_word'
+    if (q.type === 'full_word') {
+        document.getElementById('wordDisplay').textContent = '?';
+        document.getElementById('questionText').textContent = 'Qual é o nome desta figura?';
+    } else if (q.type === 'initial_syllable') {
+        document.getElementById('wordDisplay').textContent = `__${q.word.substring(q.correctAnswer.length)}`;
+        document.getElementById('questionText').textContent = 'Qual sílaba começa esta palavra?';
+    } else { // middle_syllable
+        document.getElementById('wordDisplay').textContent = q.word.replace(q.correctAnswer, '__');
+        document.getElementById('questionText').textContent = 'Qual sílaba completa esta palavra?';
+    }
+    renderOptions(q.options);
+}
 function renderPhase5UI_SoundDetective(q) {
     document.getElementById('imageQuestionArea').style.display = 'block';
     document.getElementById('lettersGrid').style.display = 'grid';
@@ -408,16 +425,17 @@ function renderPhase5UI_SoundDetective(q) {
     const lettersGrid = document.getElementById('lettersGrid');
     lettersGrid.innerHTML = q.options.map((option) => `
         <button class="sound-detective-button" data-sound="${option}">
-            <i class="fas fa-volume-up"></i> <span>${option}</span>
+            <i class="fas fa-volume-up"></i>
+            <span>${option}</span>
         </button>
     `).join('');
-    // CORREÇÃO: Adiciona um listener inteligente que diferencia clique no ícone e no texto
+    // CORREÇÃO: Adiciona um listener que diferencia clique no ícone e no texto
     lettersGrid.querySelectorAll('.sound-detective-button').forEach(btn => {
         btn.addEventListener('click', (event) => {
-            // Se o clique foi no ícone (ou no seu pai, o botão), apenas toca o som
-            if (event.target.closest('i')) {
+            // Se o alvo do clique foi o ícone, apenas toca o som
+            if (event.target.tagName === 'I') {
                 speak(btn.dataset.sound);
-            } else { // Se o clique foi em qualquer outra área (o texto), seleciona a resposta
+            } else { // Se o clique foi em qualquer outra área (o texto ou o fundo do botão), seleciona a resposta
                 selectAnswer(btn.dataset.sound);
             }
         });
