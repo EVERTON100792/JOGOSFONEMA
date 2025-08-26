@@ -8,8 +8,9 @@
 body {
     font-family: 'Comic Neue', cursive;
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    min-height: 100vh;
+    min-height: 100dvh;
     overflow-x: hidden;
+    overscroll-behavior-y: contain;
 }
 
 html, body {
@@ -19,7 +20,7 @@ html, body {
 /* Telas */
 .screen {
     display: none;
-    min-height: 100vh;
+    min-height: 100dvh;
     padding: 20px;
     opacity: 0;
     visibility: hidden;
@@ -560,9 +561,16 @@ html, body {
 .form-row { display: grid; grid-template-columns: 1fr; gap: 15px; align-items: end; }
 .form-actions { display: flex; gap: 10px; margin-top: 15px; }
 
-/* LISTA DE ALUNOS E PROGRESSO */
+/* LISTA DE ALUNOS E PROGRESSO - COM ROLAGEM */
 .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-wrap: wrap; gap: 10px; }
-.students-list { display: flex; flex-direction: column; gap: 15px; }
+.students-list { 
+    display: flex; 
+    flex-direction: column; 
+    gap: 15px; 
+    max-height: 40vh;
+    overflow-y: auto;
+    padding-right: 10px;
+}
 .student-item { background: #f8f9fa; padding: 15px; border-radius: 10px; border: 1px solid #E0E0E0; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }
 .student-info h4 { margin: 0 0 5px 0; color: #2C3E50; }
 .student-info p { margin: 0; color: #666; font-size: 0.9rem; }
@@ -607,10 +615,29 @@ html, body {
 .fa-spinner { animation: spin 1s linear infinite; }
 @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
 
-#gameScreen.active { display: flex; flex-direction: column; height: 100vh; width: 100vw; padding: 15px; box-sizing: border-box; justify-content: flex-start; overflow: hidden; }
-#gameScreen .game-header { flex-shrink: 0; width: 100%; margin-bottom: 15px; }
-#gameScreen .game-content { flex-grow: 1; overflow-y: auto; min-height: 0; width: 100%; padding: 1rem; }
-
+/* === TELA DE JOGO === */
+#gameScreen.active {
+    display: flex;
+    flex-direction: column;
+    height: 100dvh;
+    width: 100vw;
+    padding: 15px;
+    box-sizing: border-box;
+    justify-content: flex-start;
+    overflow: hidden;
+}
+#gameScreen .game-header {
+    flex-shrink: 0;
+    width: 100%;
+    margin-bottom: 15px;
+}
+#gameScreen .game-content {
+    flex-grow: 1;
+    overflow-y: auto;
+    min-height: 0;
+    width: 100%;
+    padding: 1rem;
+}
 @media (max-height: 740px) {
     #gameScreen .game-content { padding: 1rem; display: flex; flex-direction: column; }
     #gameScreen .question-area { margin-bottom: 1rem; }
@@ -628,33 +655,189 @@ html, body {
     #gameScreen .control-button { padding: 0.8rem 1.5rem; font-size: 1rem; }
 }
 
-/* === RELATÓRIOS E GRÁFICOS === */
-.report-section { margin-bottom: 30px; padding-bottom: 20px; border-bottom: 1px solid #eee; }
-.report-section:last-child { border-bottom: none; padding-bottom: 0; }
-.report-section h4 { color: #2C3E50; margin-bottom: 8px; font-size: 1.3rem; display: flex; align-items: center; gap: 10px; }
-.report-section p { color: #666; font-size: 0.95rem; margin-bottom: 20px; }
-.heatmap-item { background-color: #f8f9fa; border: 1px solid #e0e0e0; border-radius: 8px; padding: 10px 15px; display: flex; align-items: center; gap: 15px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
-.heatmap-item .item-label { font-size: 1.5rem; font-weight: bold; color: #764ba2; min-width: 40px; text-align: center; }
-.heatmap-item .item-details { display: flex; flex-direction: column; }
-.heatmap-item .item-count { font-size: 0.9rem; color: #333; font-weight: bold; }
-.heatmap-item .item-bar-container { width: 100px; height: 8px; background-color: #e0e0e0; border-radius: 4px; margin-top: 4px; }
-.heatmap-item .item-bar { height: 100%; background: linear-gradient(90deg, #ffc0cb, #ff6b6b); border-radius: 4px; }
-.student-report-item { cursor: pointer; transition: background-color 0.2s ease; }
-.student-report-item:hover { background-color: #f0eaff; }
-.student-errors-details { margin-top: 15px; padding: 15px; background-color: #fff; border-radius: 8px; border: 1px solid #ddd; }
-.student-errors-details ul { list-style-type: none; padding-left: 0; }
-.student-errors-details li { padding: 8px 0; display: flex; justify-content: space-between; font-size: 1.1rem; border-bottom: 1px solid #f0f0f0; }
-.student-errors-details li:last-child { border-bottom: none; }
-.student-errors-details .error-item { font-weight: bold; color: #333; }
-.student-errors-details .error-count { font-weight: bold; color: #ff6b6b; }
-.view-chart-btn { margin-left: auto; background-color: #f0eaff; color: #764ba2; font-weight: bold; border: 1px solid #dcd1ed; }
-.view-chart-btn:hover { background-color: #764ba2; color: white; }
-.chart-container { position: relative; width: 100%; max-height: 450px; padding: 1rem; background-color: #fafafa; border-radius: 8px; overflow-x: auto; }
-.phase-group { width: 100%; margin-bottom: 25px; padding: 20px; background-color: #f7f5ff; border-radius: 10px; border-left: 5px solid #764ba2; }
-.phase-group h3 { color: #764ba2; margin-top: 0; margin-bottom: 15px; border-bottom: 2px solid #e0d8f0; padding-bottom: 10px; font-size: 1.4rem; }
-.student-errors-details .error-item { font-size: 1rem; color: #333; display: flex; flex-direction: column; }
-.student-errors-details .error-item small { font-size: 0.85rem; color: #777; margin-top: 4px; font-style: italic; }
-.student-errors-details .error-count { font-size: 1rem; font-weight: bold; color: #ff6b6b; background-color: #ff6b6b1a; padding: 5px 10px; border-radius: 20px; white-space: nowrap; }
+/* === INÍCIO DO BLOCO CORRIGIDO PARA RELATÓRIOS E GRÁFICOS === */
+.report-section { 
+    margin-bottom: 30px; 
+    padding-bottom: 20px; 
+    border-bottom: 1px solid #eee; 
+}
+.report-section:last-child { 
+    border-bottom: none; 
+    padding-bottom: 0; 
+}
+.report-section h4 { 
+    color: #2C3E50; 
+    margin-bottom: 8px; 
+    font-size: 1.3rem; 
+    display: flex; 
+    align-items: center; 
+    gap: 10px; 
+}
+.report-section p { 
+    color: #666; 
+    font-size: 0.95rem; 
+    margin-bottom: 20px; 
+}
+
+/* Contêiner para a lista de relatórios individuais de alunos */
+.individual-reports-container {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    max-height: 75vh;
+    overflow-y: auto;
+    padding: 5px 10px 5px 5px;
+}
+.student-report-item { 
+    cursor: pointer; 
+    transition: background-color 0.2s ease; 
+}
+.student-report-item:hover { 
+    background-color: #f0eaff; 
+}
+.student-errors-details { 
+    margin-top: 15px; 
+    padding: 15px; 
+    background-color: #fff; 
+    border-radius: 8px; 
+    border: 1px solid #ddd; 
+}
+.student-errors-details ul { 
+    list-style-type: none; 
+    padding-left: 0; 
+    max-height: 200px;
+    overflow-y: auto;
+    padding-right: 8px;
+}
+.student-errors-details li { 
+    padding: 8px 0; 
+    display: flex; 
+    justify-content: space-between; 
+    font-size: 1rem;
+    border-bottom: 1px solid #f0f0f0; 
+}
+.student-errors-details li:last-child { 
+    border-bottom: none; 
+}
+.student-errors-details .error-item { 
+    font-size: 1rem; 
+    color: #333; 
+    display: flex; 
+    flex-direction: column; 
+}
+.student-errors-details .error-item small { 
+    font-size: 0.85rem; 
+    color: #777; 
+    margin-top: 4px; 
+    font-style: italic; 
+}
+.student-errors-details .error-count { 
+    font-size: 1rem; 
+    font-weight: bold; 
+    color: #ff6b6b; 
+    background-color: #ff6b6b1a; 
+    padding: 5px 10px; 
+    border-radius: 20px; 
+    white-space: nowrap; 
+}
+
+/* NOVA ESTRUTURA PARA O MAPA DE CALOR */
+.all-phases-scroll-container {
+    max-height: 65vh;
+    overflow-y: auto;
+    padding: 15px;
+    background-color: #fdfcff;
+    border-radius: 8px;
+    border: 1px solid #e0d8f0;
+}
+
+.phase-group {
+    background-color: #f7f5ff;
+    border-left: 5px solid #764ba2;
+    border-radius: 10px;
+    padding: 20px;
+    width: 100%;
+    margin-bottom: 15px;
+}
+.all-phases-scroll-container .phase-group:last-child {
+    margin-bottom: 0;
+}
+
+.phase-group h3 {
+    color: #764ba2;
+    margin-top: 0;
+    margin-bottom: 15px;
+    border-bottom: 2px solid #e0d8f0;
+    padding-bottom: 10px;
+    font-size: 1.4rem;
+}
+
+.heatmap-item {
+    background-color: #fff;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    padding: 8px 12px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    box-shadow: none;
+    margin-bottom: 8px;
+}
+.heatmap-item:last-child {
+    margin-bottom: 0;
+}
+.heatmap-item .item-label {
+    font-size: 1.2rem;
+    font-weight: bold;
+    color: #764ba2;
+    min-width: 35px;
+    text-align: center;
+}
+.heatmap-item .item-details {
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
+}
+.heatmap-item .item-count {
+    font-size: 0.9rem;
+    color: #333;
+    font-weight: bold;
+}
+.heatmap-item .item-bar-container {
+    width: 100%;
+    height: 8px;
+    background-color: #e0e0e0;
+    border-radius: 4px;
+    margin-top: 4px;
+}
+.heatmap-item .item-bar {
+    height: 100%;
+    background: linear-gradient(90deg, #ffc0cb, #ff6b6b);
+    border-radius: 4px;
+}
+
+.view-chart-btn { 
+    margin-left: auto; 
+    background-color: #f0eaff; 
+    color: #764ba2; 
+    font-weight: bold; 
+    border: 1px solid #dcd1ed; 
+}
+.view-chart-btn:hover { 
+    background-color: #764ba2; 
+    color: white; 
+}
+.chart-container { 
+    position: relative; 
+    width: 100%; 
+    max-height: 450px; 
+    padding: 1rem; 
+    background-color: #fafafa; 
+    border-radius: 8px; 
+    overflow-x: auto; 
+}
+/* === FIM DO BLOCO CORRIGIDO PARA RELATÓRIOS E GRÁFICOS === */
+
 
 /* === DASHBOARD COM SIDEBAR === */
 #teacherDashboard .dashboard-container { display: flex; width: 100%; height: 100vh; max-width: 100%; padding: 0; margin: 0; background-color: #f4f7fc; }
@@ -692,8 +875,8 @@ html, body {
     .sidebar-nav a i { margin-right: 0; margin-bottom: 5px; font-size: 1.5rem; }
     .sidebar-nav a span { display: block; }
     .logout-btn-sidebar { background: none; border: none; color: #888; display: flex; flex-direction: column; align-items: center; font-size: 0.75rem; height: 60px; padding: 8px 5px; }
-     .logout-btn-sidebar i { font-size: 1.5rem; margin-bottom: 5px; }
-     .logout-btn-sidebar:hover { color: #c0392b; }
+    .logout-btn-sidebar i { font-size: 1.5rem; margin-bottom: 5px; }
+    .logout-btn-sidebar:hover { color: #c0392b; }
     #teacherDashboard .dashboard-container { flex-direction: column; height: auto; min-height: 100vh; }
     .main-content { overflow-y: visible; }
     body { overflow-y: auto; }
@@ -796,3 +979,10 @@ html, body {
 .card-back { background-color: #4ECDC4; color: white; transform: rotateY(180deg); }
 .memory-card.matched .card-inner { transform: scale(0.95); opacity: 0.7; }
 .memory-card.matched .card-back { background-color: #27ae60; }
+/* Estilo adicional para o detalhe de respostas no Mapa de Calor */
+.heatmap-selections {
+    font-size: 0.8rem;
+    color: #b33939; /* Um tom de vermelho para indicar erro */
+    margin-top: 4px;
+    font-style: italic;
+}
