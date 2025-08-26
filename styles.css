@@ -695,7 +695,7 @@ html, body {
     display: flex;
     flex-direction: column;
     gap: 15px;
-    max-height: 75vh;
+    max-height: 500px;  /* CORREÇÃO: Usando valor fixo em pixels */
     overflow-y: auto;
     padding: 5px 10px 5px 5px;
 }
@@ -754,7 +754,7 @@ html, body {
 /* Estilo para detalhe de respostas no Mapa de Calor */
 .heatmap-selections {
     font-size: 0.8rem;
-    color: #b33939; /* Um tom de vermelho para indicar erro */
+    color: #b33939;
     margin-top: 4px;
     font-style: italic;
 }
@@ -770,7 +770,7 @@ html, body {
 
 /* NOVA ESTRUTURA PARA O MAPA DE CALOR */
 .all-phases-scroll-container {
-    max-height: 65vh;
+    max-height: 450px; /* CORREÇÃO: Usando valor fixo em pixels */
     overflow-y: auto;
     padding: 15px;
     background-color: #fdfcff;
