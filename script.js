@@ -1,6 +1,6 @@
 // =======================================================
 // JOGO DAS LETRAS - SCRIPT FINAL E COMPLETO
-// Inclui: Gráfico de Evolução e Atividades de Reforço
+// Inclui: Correções de UI nas Fases 3 e 5
 // =======================================================
 
 // PARTE 1: CONFIGURAÇÃO INICIAL E SUPABASE
@@ -150,7 +150,41 @@ function setupAllEventListeners() { document.querySelectorAll('.user-type-btn').
 async function checkSession() { const { data: { session } } = await supabaseClient.auth.getSession(); if (session && session.user) { currentUser = session.user; if (currentUser.user_metadata.role === 'teacher') { await showTeacherDashboard(); } else { await logout(); } } else { showScreen('userTypeScreen'); } }
 async function handleTeacherLogin(e) { e.preventDefault(); const button = e.target.querySelector('button[type="submit"]'); const originalText = button.innerHTML; button.disabled = true; button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Entrando...'; const email = document.getElementById('teacherEmail').value; const password = document.getElementById('teacherPassword').value; try { const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password }); if (error) throw error; currentUser = data.user; await showTeacherDashboard(); showFeedback('Login realizado com sucesso!', 'success'); } catch (error) { showFeedback(formatErrorMessage(error), 'error'); } finally { button.disabled = false; button.innerHTML = originalText; } }
 async function handleTeacherRegister(e) { e.preventDefault(); const button = e.target.querySelector('button[type="submit"]'); const originalText = button.innerHTML; button.disabled = true; button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Cadastrando...'; const name = document.getElementById('teacherRegName').value; const email = document.getElementById('teacherRegEmail').value; const password = document.getElementById('teacherRegPassword').value; try { const { data, error } = await supabaseClient.auth.signUp({ email, password, options: { data: { full_name: name, role: 'teacher' } } }); if (error) throw error; showFeedback('Cadastro realizado! Link de confirmação enviado para seu e-mail.', 'success'); showScreen('teacherLoginScreen'); } catch (error) { showFeedback(formatErrorMessage(error), 'error'); } finally { button.disabled = false; button.innerHTML = originalText; } }
-async function handleStudentLogin(e) { e.preventDefault(); const button = e.target.querySelector('button[type="submit"]'); const originalText = button.innerHTML; button.disabled = true; button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Entrando...'; const username = document.getElementById('studentUsername').value.trim(); const password = document.getElementById('studentPassword').value.trim(); try { const { data: studentData, error } = await supabaseClient.from('students').select('*, assigned_phases, assigned_activity').eq('username', username).single(); if (error && error.message.includes('multiple (or no) rows')) { throw new Error('Usuário ou senha inválidos.'); } if (error) throw error; if (!studentData) { throw new Error('Usuário ou senha inválidos.'); } const match = await verifyPassword(password, studentData.password); if (!match) { throw new Error('Usuário ou senha inválidos.'); } currentUser = { ...studentData, type: 'student' }; sessionStorage.setItem('currentUser', JSON.stringify(currentUser)); await showStudentGame(); showFeedback('Login realizado com sucesso!', 'success'); } catch (error) { showFeedback(formatErrorMessage(error), 'error'); } finally { button.disabled = false; button.innerHTML = originalText; } }
+async function handleStudentLogin(e) {
+    e.preventDefault();
+    const button = e.target.querySelector('button[type="submit"]');
+    const originalText = button.innerHTML;
+    button.disabled = true;
+    button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Entrando...';
+    const username = document.getElementById('studentUsername').value.trim();
+    const password = document.getElementById('studentPassword').value.trim();
+    try {
+        const { data: studentData, error } = await supabaseClient
+            .from('students')
+            .select('*, assigned_phases, assigned_activity')
+            .ilike('username', username)
+            .single();
+        
+        if (error) {
+            throw new Error('Usuário ou senha inválidos.');
+        }
+
+        const match = await verifyPassword(password, studentData.password);
+        if (!match) {
+            throw new Error('Usuário ou senha inválidos.');
+        }
+
+        currentUser = { ...studentData, type: 'student' };
+        sessionStorage.setItem('currentUser', JSON.stringify(currentUser));
+        await showStudentGame();
+        showFeedback('Login realizado com sucesso!', 'success');
+    } catch (error) {
+        showFeedback(formatErrorMessage(error), 'error');
+    } finally {
+        button.disabled = false;
+        button.innerHTML = originalText;
+    }
+}
 async function logout() { await supabaseClient.auth.signOut(); currentUser = null; currentClassId = null; sessionStorage.removeItem('currentUser'); showScreen('userTypeScreen'); }
 function handleExitGame() { if (confirm('Tem certeza que deseja sair? Seu progresso ficará salvo.')) { sessionStorage.removeItem('currentUser'); currentUser = null; showScreen('userTypeScreen'); } }
 
@@ -350,9 +384,45 @@ async function startQuestion() {
 
 function renderPhase1UI(q) { document.getElementById('audioQuestionArea').style.display = 'block'; document.getElementById('lettersGrid').style.display = 'grid'; document.getElementById('questionText').textContent = 'Qual VOGAL faz este som?'; document.getElementById('repeatAudio').style.display = 'inline-block'; renderOptions(q.options); }
 function renderPhase2UI(q) { document.getElementById('imageQuestionArea').style.display = 'block'; document.getElementById('lettersGrid').style.display = 'grid'; document.getElementById('imageEmoji').textContent = q.image; document.getElementById('wordDisplay').textContent = `__${q.word.substring(1)}`; document.getElementById('questionText').textContent = 'Qual vogal completa a palavra?'; renderOptions(q.options); }
-function renderPhase3UI(q) { document.getElementById('imageQuestionArea').style.display = 'block'; document.getElementById('lettersGrid').style.display = 'grid'; document.getElementById('imageEmoji').textContent = q.image; document.getElementById('wordDisplay').textContent = q.word.replace(q.correctAnswer, '__'); document.getElementById('questionText').textContent = 'Qual encontro de vogais completa a palavra?'; renderOptions(q.options); }
+function renderPhase3UI(q) {
+    document.getElementById('imageQuestionArea').style.display = 'block';
+    document.getElementById('lettersGrid').style.display = 'grid';
+    document.getElementById('imageEmoji').textContent = q.image;
+    // CORREÇÃO: Lógica de substituição mais robusta
+    const wordDisplay = document.getElementById('wordDisplay');
+    const index = q.word.indexOf(q.correctAnswer);
+    if (index !== -1) {
+        wordDisplay.textContent = q.word.substring(0, index) + '__' + q.word.substring(index + q.correctAnswer.length);
+    } else {
+        wordDisplay.textContent = q.word; // Fallback caso não encontre
+    }
+    document.getElementById('questionText').textContent = 'Qual encontro de vogais completa a palavra?';
+    renderOptions(q.options);
+}
 function renderPhase4UI(q) { document.getElementById('imageQuestionArea').style.display = 'block'; document.getElementById('lettersGrid').style.display = 'grid'; document.getElementById('imageEmoji').textContent = q.image; if (q.type === 'initial_syllable') { document.getElementById('wordDisplay').textContent = `__${q.word.substring(q.correctAnswer.length)}`; document.getElementById('questionText').textContent = 'Qual sílaba começa esta palavra?'; } else if (q.type === 'middle_syllable') { document.getElementById('wordDisplay').textContent = q.word.replace(q.correctAnswer, '__'); document.getElementById('questionText').textContent = 'Qual sílaba completa esta palavra?'; } else { document.getElementById('wordDisplay').textContent = `?`; document.getElementById('questionText').textContent = 'Qual é o nome desta figura?'; } renderOptions(q.options); }
-function renderPhase5UI_SoundDetective(q) { document.getElementById('imageQuestionArea').style.display = 'block'; document.getElementById('lettersGrid').style.display = 'grid'; document.getElementById('imageEmoji').textContent = q.image; document.getElementById('questionText').textContent = 'Qual é o som correto desta palavra?'; const lettersGrid = document.getElementById('lettersGrid'); lettersGrid.innerHTML = q.options.map((option) => `<button class="sound-detective-button" data-sound="${option}"><i class="fas fa-volume-up"></i> ${option}</button>`).join(''); lettersGrid.querySelectorAll('.sound-detective-button').forEach(btn => { btn.addEventListener('click', () => { speak(btn.dataset.sound); setTimeout(() => selectAnswer(btn.dataset.sound), 300); }); }); }
+function renderPhase5UI_SoundDetective(q) {
+    document.getElementById('imageQuestionArea').style.display = 'block';
+    document.getElementById('lettersGrid').style.display = 'grid';
+    document.getElementById('imageEmoji').textContent = q.image;
+    document.getElementById('questionText').textContent = 'Qual é o som correto desta palavra?';
+    const lettersGrid = document.getElementById('lettersGrid');
+    lettersGrid.innerHTML = q.options.map((option) => `
+        <button class="sound-detective-button" data-sound="${option}">
+            <i class="fas fa-volume-up"></i> <span>${option}</span>
+        </button>
+    `).join('');
+    // CORREÇÃO: Adiciona um listener inteligente que diferencia clique no ícone e no texto
+    lettersGrid.querySelectorAll('.sound-detective-button').forEach(btn => {
+        btn.addEventListener('click', (event) => {
+            // Se o clique foi no ícone (ou no seu pai, o botão), apenas toca o som
+            if (event.target.closest('i')) {
+                speak(btn.dataset.sound);
+            } else { // Se o clique foi em qualquer outra área (o texto), seleciona a resposta
+                selectAnswer(btn.dataset.sound);
+            }
+        });
+    });
+}
 function renderPhase6UI(q) { document.getElementById('imageQuestionArea').style.display = 'block'; document.getElementById('lettersGrid').style.display = 'grid'; document.getElementById('imageEmoji').textContent = q.image; document.getElementById('wordDisplay').textContent = q.word; document.getElementById('questionText').textContent = 'Quantas sílabas (pedaços) tem esta palavra?'; renderOptions(q.options); }
 function renderPhase7UI_WordCount(q) { document.getElementById('imageQuestionArea').style.display = 'block'; document.getElementById('lettersGrid').style.display = 'grid'; document.getElementById('imageEmoji').textContent = q.image; const wordDisplay = document.getElementById('wordDisplay'); wordDisplay.textContent = q.sentence; wordDisplay.style.fontSize = '1.8rem'; document.getElementById('questionText').textContent = 'Quantas palavras tem nesta frase?'; renderOptions(q.options); }
 function renderPhase8UI(q) { document.getElementById('imageQuestionArea').style.display = 'block'; document.getElementById('lettersGrid').style.display = 'grid'; document.getElementById('sentenceBuildArea').style.display = 'flex'; document.getElementById('imageEmoji').textContent = q.image; document.getElementById('questionText').textContent = 'Clique nas palavras para formar a frase correta.'; renderWordOptions(q.options); }
@@ -461,7 +531,7 @@ async function loadAndDisplayClassReports(classId) {
     if (studentsError) { reportContainer.innerHTML = '<p class="error">Erro ao carregar lista de alunos.</p>'; return; }
     reportContainer.innerHTML = ` <div class="report-section"> <h4><i class="fas fa-fire"></i> Mapa de Calor da Turma</h4> <p>Os itens que a turma mais errou. Mostra qual era a resposta certa e o que selecionaram no lugar.</p> <div id="classHeatmapContainer"></div> </div> <div class="report-section"> <h4><i class="fas fa-user-graduate"></i> Relatório Individual de Dificuldades</h4> <p>Clique em um aluno para ver seus erros e gerar uma atividade focada com a IA.</p> <div id="individualReportsContainer"></div> </div> `;
     renderClassHeatmap(errors, 'classHeatmapContainer');
-    renderIndividualReports(students, errors, 'individualReportsContainer'); // CORREÇÃO DO BUG: Usando 'errors' em vez de 'allErrors'
+    renderIndividualReports(students, errors, 'individualReportsContainer');
 }
 
 function renderClassHeatmap(errors, containerId) {
@@ -476,7 +546,7 @@ function renderClassHeatmap(errors, containerId) {
     for (const phase of sortedPhases) {
         const phaseDescription = PHASE_DESCRIPTIONS[phase] || 'Fase Desconhecida';
         html += `<div class="phase-group"><h3>Fase ${phase} - ${phaseDescription}</h3>`;
-        const phaseErrors = errorsByPhase[phase]; // CORREÇÃO DO BUG: Usando a variável correta aqui
+        const phaseErrors = errorsByPhase[phase];
         const errorDetails = phaseErrors.reduce((acc, error) => { const key = error.correct_answer; if (!acc[key]) { acc[key] = { count: 0, selections: new Set() }; } acc[key].count++; acc[key].selections.add(error.selected_answer); return acc; }, {});
         const sortedErrors = Object.entries(errorDetails).sort(([, a], [, b]) => b.count - a.count);
         if (sortedErrors.length === 0) { html += '<p>Nenhum erro nesta fase.</p>'; } else {
@@ -494,7 +564,6 @@ function renderClassHeatmap(errors, containerId) {
     chartButton.onclick = () => { const totalErrorCounts = errors.reduce((acc, error) => { const key = error.correct_answer; acc[key] = (acc[key] || 0) + 1; return acc; }, {}); const sortedTotalErrors = Object.entries(totalErrorCounts).sort(([, a], [, b]) => b - a); const chartLabels = sortedTotalErrors.map(([item]) => item); const chartData = sortedTotalErrors.map(([, count]) => count); displayChartModal('Gráfico de Dificuldades da Turma (Geral)', chartLabels, chartData); };
     sectionHeader.appendChild(chartButton);
 }
-
 function renderIndividualReports(students, allErrors, containerId) {
     const container = document.getElementById(containerId);
     if (!students || students.length === 0) { container.innerHTML = '<p>Nenhum aluno na turma.</p>'; return; }
@@ -522,7 +591,14 @@ function renderIndividualReports(students, allErrors, containerId) {
                     const top5Errors = Object.entries(errorCounts).sort(([, a], [, b]) => b.count - a.count).slice(0, 5);
                     reportHTML = `<ul>${top5Errors.map(([, errorData]) => { const selectionsText = Object.entries(errorData.selections).map(([selection, count]) => `'${selection}' (${count}x)`).join(', '); const phaseDescription = PHASE_DESCRIPTIONS[errorData.details.phase] || ''; return `<li> <div class="error-item"> <strong>Fase ${errorData.details.phase} (${phaseDescription}):</strong> Resposta correta era <strong>"${errorData.details.correct_answer}"</strong> <small>Aluno selecionou: ${selectionsText}</small> </div> <span class="error-count">${errorData.count} ${errorData.count > 1 ? 'vezes' : 'vez'}</span> </li>`; }).join('')}</ul>`;
                 }
-                reportHTML += ` <div class="student-details-actions"> <button class="btn" onclick="showEvolutionChart('${studentId}', '${studentName}')"><i class="fas fa-chart-line"></i> Ver Evolução</button> <button class="btn" onclick="generateAndAssignActivity('${studentId}', '${studentName}')"><i class="fas fa-magic"></i> Criar Atividade de Reforço</button> <button class="btn ai-btn" onclick="handleGenerateLessonPlan('${studentId}', '${studentName}')"><i class="fas fa-rocket"></i> Analisar com IA</button> </div> <div class="evolution-chart-container" id="chart-container-for-${studentId}" style="display:none;"></div> `;
+                reportHTML += `
+                    <div class="student-details-actions">
+                        <button class="btn" onclick="showEvolutionChart('${studentId}', '${studentName}')"><i class="fas fa-chart-line"></i> Ver Evolução</button>
+                        <button class="btn" onclick="generateAndAssignActivity('${studentId}', '${studentName}')"><i class="fas fa-magic"></i> Criar Atividade de Reforço</button>
+                        <button class="btn ai-btn" onclick="handleGenerateLessonPlan('${studentId}', '${studentName}')"><i class="fas fa-rocket"></i> Analisar com IA</button>
+                    </div>
+                    <div class="evolution-chart-container" id="chart-container-for-${studentId}" style="display:none;"></div>
+                `;
                 detailsContainer.innerHTML = reportHTML;
             }
         });
