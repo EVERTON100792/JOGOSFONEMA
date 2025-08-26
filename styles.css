@@ -26,30 +26,25 @@ body {
     100% { background-position: 0% 50%; }
 }
 
+/* --- CORREÇÃO PRINCIPAL APLICADA AQUI --- */
 /* Telas */
 .screen {
+    /* A tela inativa agora simplesmente não é exibida, sem afetar o layout. */
     display: none;
-    min-height: 100vh;
     width: 100%;
+    min-height: 100vh;
     padding: 20px;
-    opacity: 0;
-    visibility: hidden;
-    transition: opacity 0.5s ease-in-out, visibility 0.5s;
-    position: absolute;
-    top: 0;
-    left: 0;
 }
 
 .screen.active {
+    /* A tela ativa usa flex para centralizar seu conteúdo. */
     display: flex;
     flex-direction: column;
     justify-content: center;
     align-items: center;
-    opacity: 1;
-    visibility: visible;
-    position: relative;
     animation: fadeIn 0.5s ease-in-out;
 }
+/* --- FIM DA CORREÇÃO --- */
 
 @keyframes fadeIn {
     from { opacity: 0; transform: scale(0.98); }
@@ -385,6 +380,9 @@ body {
     }
 
     /* Dashboard Mobile */
+    #teacherDashboard.active {
+        display: block; /* Mudar para block para que o flex não centralize */
+    }
     #teacherDashboard .dashboard-container {
         padding-bottom: 70px; /* Espaço para a barra de navegação inferior */
         flex-direction: column;
