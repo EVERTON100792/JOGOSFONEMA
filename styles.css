@@ -8,9 +8,9 @@
 body {
     font-family: 'Comic Neue', cursive;
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    min-height: 100dvh; /* CORRIGIDO: Usa dvh para se adaptar à UI do navegador móvel */
+    min-height: 100dvh;
     overflow-x: hidden;
-    overscroll-behavior-y: contain; /* MELHORIA: Impede o scroll de "vazar" da página */
+    overscroll-behavior-y: contain;
 }
 
 html, body {
@@ -20,7 +20,7 @@ html, body {
 /* Telas */
 .screen {
     display: none;
-    min-height: 100dvh; /* CORRIGIDO: Usa dvh para consistência */
+    min-height: 100dvh;
     padding: 20px;
     opacity: 0;
     visibility: hidden;
@@ -567,9 +567,9 @@ html, body {
     display: flex; 
     flex-direction: column; 
     gap: 15px; 
-    max-height: 40vh; /* MODIFICADO: Altura máxima de 40% da tela */
-    overflow-y: auto;   /* MODIFICADO: Cria a rolagem vertical se necessário */
-    padding-right: 10px;/* MODIFICADO: Espaço para a barra de rolagem não sobrepor o conteúdo */
+    max-height: 40vh;
+    overflow-y: auto;
+    padding-right: 10px;
 }
 .student-item { background: #f8f9fa; padding: 15px; border-radius: 10px; border: 1px solid #E0E0E0; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }
 .student-info h4 { margin: 0 0 5px 0; color: #2C3E50; }
@@ -615,18 +615,17 @@ html, body {
 .fa-spinner { animation: spin 1s linear infinite; }
 @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
 
-/* === CORREÇÃO PRINCIPAL PARA A TELA DE JOGO === */
+/* === TELA DE JOGO === */
 #gameScreen.active {
     display: flex;
     flex-direction: column;
-    height: 100dvh; /* CORRIGIDO: Garante que o container ocupe apenas a área visível */
+    height: 100dvh;
     width: 100vw;
     padding: 15px;
     box-sizing: border-box;
     justify-content: flex-start;
     overflow: hidden;
 }
-
 #gameScreen .game-header {
     flex-shrink: 0;
     width: 100%;
@@ -639,7 +638,6 @@ html, body {
     width: 100%;
     padding: 1rem;
 }
-
 @media (max-height: 740px) {
     #gameScreen .game-content { padding: 1rem; display: flex; flex-direction: column; }
     #gameScreen .question-area { margin-bottom: 1rem; }
@@ -658,7 +656,6 @@ html, body {
 }
 
 /* === INÍCIO DO BLOCO CORRIGIDO PARA RELATÓRIOS E GRÁFICOS === */
-
 .report-section { 
     margin-bottom: 30px; 
     padding-bottom: 20px; 
@@ -744,11 +741,14 @@ html, body {
     white-space: nowrap; 
 }
 
-/* Estilos para o Mapa de Calor */
-#classHeatmapContainer {
-    display: flex;
-    flex-direction: column;
-    gap: 20px;
+/* NOVA ESTRUTURA PARA O MAPA DE CALOR */
+.all-phases-scroll-container {
+    max-height: 65vh;
+    overflow-y: auto;
+    padding: 15px;
+    background-color: #fdfcff;
+    border-radius: 8px;
+    border: 1px solid #e0d8f0;
 }
 
 .phase-group {
@@ -757,6 +757,10 @@ html, body {
     border-radius: 10px;
     padding: 20px;
     width: 100%;
+    margin-bottom: 15px;
+}
+.all-phases-scroll-container .phase-group:last-child {
+    margin-bottom: 0;
 }
 
 .phase-group h3 {
@@ -768,14 +772,6 @@ html, body {
     font-size: 1.4rem;
 }
 
-/* ESTA É A CORREÇÃO CRÍTICA PARA A ROLAGEM INDIVIDUAL */
-.heatmap-container {
-    max-height: 250px; /* Altura máxima antes de ativar a rolagem */
-    overflow-y: auto;   /* Ativa a rolagem vertical quando o conteúdo excede a altura */
-    padding: 5px 10px 5px 5px; /* Espaço para a barra de rolagem */
-    margin-right: -10px; /* Compensa o padding para alinhar visualmente */
-}
-
 .heatmap-item {
     background-color: #fff;
     border: 1px solid #e0e0e0;
@@ -785,7 +781,7 @@ html, body {
     align-items: center;
     gap: 12px;
     box-shadow: none;
-    margin-bottom: 8px; /* Adiciona espaço entre os itens */
+    margin-bottom: 8px;
 }
 .heatmap-item:last-child {
     margin-bottom: 0;
@@ -800,7 +796,7 @@ html, body {
 .heatmap-item .item-details {
     display: flex;
     flex-direction: column;
-    flex-grow: 1; /* Faz os detalhes ocuparem o espaço restante */
+    flex-grow: 1;
 }
 .heatmap-item .item-count {
     font-size: 0.9rem;
@@ -808,7 +804,7 @@ html, body {
     font-weight: bold;
 }
 .heatmap-item .item-bar-container {
-    width: 100%; /* Ocupa toda a largura disponível */
+    width: 100%;
     height: 8px;
     background-color: #e0e0e0;
     border-radius: 4px;
@@ -840,7 +836,6 @@ html, body {
     border-radius: 8px; 
     overflow-x: auto; 
 }
-
 /* === FIM DO BLOCO CORRIGIDO PARA RELATÓRIOS E GRÁFICOS === */
 
 
