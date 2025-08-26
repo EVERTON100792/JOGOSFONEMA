@@ -612,8 +612,8 @@ function showResultScreen(accuracy, passed) { showScreen('resultScreen'); docume
 async function nextPhase() { const assignedPhases = currentUser.assigned_phases || [1]; const currentPhaseIndex = assignedPhases.indexOf(gameState.currentPhase); const hasNextPhase = currentPhaseIndex !== -1 && currentPhaseIndex < assignedPhases.length - 1; if (hasNextPhase) { const nextPhaseNum = assignedPhases[currentPhaseIndex + 1]; gameState.currentPhase = nextPhaseNum; gameState.currentQuestionIndex = 0; gameState.score = 0; gameState.attempts = 3; gameState.questions = generateQuestions(gameState.currentPhase); gameState.phaseCompleted = false; await saveGameState(); showScreen('gameScreen'); startQuestion(); } else { showResultScreen(100, true); } }
 async function retryPhase() { gameState.currentQuestionIndex = 0; gameState.score = 0; gameState.attempts = 3; gameState.phaseCompleted = false; await saveGameState(); showScreen('gameScreen'); startQuestion(); }
 async function restartGame() { if (gameState.phaseCompleted || gameState.attempts <= 0) { logout(); } else { showScreen('startScreen'); } }
-async function playTeacherAudio(key, fallbackText, onEndCallback) { const teacherId = SUPER_ADMIN_TEACHER_ID; if (!teacherId) { speak(fallbackText, onEndCallback); return; } try { const { data } = await supabaseClient.storage.from('audio_uploads').list(teacherId, { search: `${key}.` }); if (data && data.length > 0) { const { data: { publicUrl } } = supabaseClient.storage.from('audio_uploads').getPublicUrl(`${teacherId}/${data[0].name}`); const audio = new Audio(publicUrl); if (onEndCallback) audio.onended = onEndCallback; audio.play(); } else { speak(fallbackText, onEndCallback); } } catch (error) { console.error("Erro ao buscar áudio:", error); speak(fallbackText, onEndCallback); } }
 async function playCurrentAudio() { const q = gameState.questions[gameState.currentQuestionIndex]; if (q.type !== 'letter_sound') return; const letter = q.correctAnswer; playTeacherAudio(letter, letter); }
+
 // =========================================================================
 // BLOCO DE CÓDIGO PARA CORREÇÃO DO SOM - Início
 // =========================================================================
@@ -709,7 +709,7 @@ async function playTeacherAudio(key, fallbackText, onEndCallback) {
 // =========================================================================
 // BLOCO DE CÓDIGO PARA CORREÇÃO DO SOM - Fim
 // =========================================================================
-function speak(text, onEndCallback) { if (!window.speechSynthesis || !speechReady) return; speechSynthesis.cancel(); const utterance = new SpeechSynthesisUtterance(text); utterance.lang = 'pt-BR'; utterance.voice = selectedVoice; if (onEndCallback) utterance.onend = onEndCallback; speechSynthesis.speak(utterance); }
+
 function showScreen(screenId) { document.querySelectorAll('.screen').forEach(s => s.classList.remove('active')); document.getElementById(screenId)?.classList.add('active'); }
 function showModal(modalId) { document.getElementById(modalId)?.classList.add('show'); }
 function closeModal(modalId) { document.getElementById(modalId)?.classList.remove('show'); }
@@ -725,8 +725,162 @@ async function logStudentError({ question, selectedAnswer }) { if (!currentUser 
 async function populateReportClassSelector() { const selector = document.getElementById('reportClassSelector'); selector.innerHTML = '<option value="">Carregando turmas...</option>'; document.getElementById('reportContentContainer').style.display = 'none'; const { data, error } = await supabaseClient.from('classes').select('id, name').eq('teacher_id', currentUser.id).order('name', { ascending: true }); if (error || !data) { selector.innerHTML = '<option value="">Erro ao carregar</option>'; return; } if (data.length === 0) { selector.innerHTML = '<option value="">Nenhuma turma encontrada</option>'; return; } selector.innerHTML = '<option value="">-- Selecione uma turma --</option>'; data.forEach(cls => { selector.innerHTML += `<option value="${cls.id}">${cls.name}</option>`; }); }
 function handleReportClassSelection(event) { const classId = event.target.value; const reportContainer = document.getElementById('reportContentContainer'); if (classId) { reportContainer.style.display = 'block'; loadAndDisplayClassReports(classId); } else { reportContainer.style.display = 'none'; reportContainer.innerHTML = ''; } }
 async function loadAndDisplayClassReports(classId) { const reportContainer = document.getElementById('reportContentContainer'); reportContainer.innerHTML = '<p><i class="fas fa-spinner fa-spin"></i> Carregando relatórios...</p>'; const { data: errors, error: errorsError } = await supabaseClient.from('student_errors').select('*').eq('class_id', classId); if (errorsError) { reportContainer.innerHTML = '<p class="error">Erro ao carregar dados de erros.</p>'; return; } const { data: students, error: studentsError } = await supabaseClient.from('students').select('id, name').eq('class_id', classId); if (studentsError) { reportContainer.innerHTML = '<p class="error">Erro ao carregar lista de alunos.</p>'; return; } reportContainer.innerHTML = ` <div class="report-section"> <h4><i class="fas fa-fire"></i> Mapa de Calor da Turma</h4> <p>As maiores dificuldades da turma inteira, mostrando o que foi mais errado.</p> <div id="classHeatmapContainer"></div> </div> <div class="report-section"> <h4><i class="fas fa-user-graduate"></i> Relatório Individual de Dificuldades</h4> <p>Clique em um aluno para ver seus erros e gerar uma atividade focada com a IA.</p> <div id="individualReportsContainer"></div> </div> `; renderClassHeatmap(errors, 'classHeatmapContainer'); renderIndividualReports(students, errors, 'individualReportsContainer'); }
-function renderClassHeatmap(errors, containerId) { const heatmapContainer = document.getElementById(containerId); const sectionHeader = heatmapContainer.closest('.report-section').querySelector('h4'); sectionHeader.querySelector('.view-chart-btn')?.remove(); if (!errors || errors.length === 0) { heatmapContainer.innerHTML = '<p>Nenhum erro registrado para esta turma. Ótimo trabalho! 🎉</p>'; return; } const errorsByPhase = errors.reduce((acc, error) => { const phase = error.phase || 'Desconhecida'; if (!acc[phase]) { acc[phase] = []; } acc[phase].push(error); return acc; }, {}); let html = ''; const sortedPhases = Object.keys(errorsByPhase).sort((a, b) => a - b); for (const phase of sortedPhases) { const phaseDescription = PHASE_DESCRIPTIONS[phase] || 'Fase Desconhecida'; html += `<div class="phase-group"><h3>Fase ${phase} - ${phaseDescription}</h3>`; const phaseErrors = errorsByPhase[phase]; const errorCounts = phaseErrors.reduce((acc, error) => { const key = error.correct_answer; acc[key] = (acc[key] || 0) + 1; return acc; }, {}); const sortedErrors = Object.entries(errorCounts).sort(([, a], [, b]) => b - a); if (sortedErrors.length === 0) { html += '<p>Nenhum erro nesta fase.</p>'; } else { html += sortedErrors.map(([item, count]) => ` <div class="heatmap-item"> <div class="item-label">${item}</div> <div class="item-details"> <span class="item-count">${count} erro(s)</span> <div class="item-bar-container"> <div class="item-bar" style="width: ${(count / sortedErrors[0][1]) * 100}%;"></div> </div> </div> </div> `).join(''); } html += '</div>'; } heatmapContainer.innerHTML = html; const chartButton = document.createElement('button'); chartButton.className = 'btn small view-chart-btn'; chartButton.innerHTML = '<i class="fas fa-chart-bar"></i> Ver Gráfico Geral'; chartButton.onclick = () => { const totalErrorCounts = errors.reduce((acc, error) => { const key = error.correct_answer; acc[key] = (acc[key] || 0) + 1; return acc; }, {}); const sortedTotalErrors = Object.entries(totalErrorCounts).sort(([, a], [, b]) => b - a); const chartLabels = sortedTotalErrors.map(([item]) => item); const chartData = sortedTotalErrors.map(([, count]) => count); displayChartModal('Gráfico de Dificuldades da Turma (Geral)', chartLabels, chartData); }; sectionHeader.appendChild(chartButton); }
-function renderIndividualReports(students, allErrors, containerId) { const container = document.getElementById(containerId); if (!students || students.length === 0) { container.innerHTML = '<p>Nenhum aluno na turma.</p>'; return; } container.innerHTML = students.map(student => ` <div class="student-item student-report-item" data-student-id="${student.id}" data-student-name="${student.name}"> <div class="student-info"> <h4>${student.name}</h4> </div> <i class="fas fa-chevron-down"></i> </div> <div class="student-errors-details" id="errors-for-${student.id}" style="display: none;"></div> `).join(''); container.querySelectorAll('.student-report-item').forEach(item => { item.addEventListener('click', () => { const studentId = item.dataset.studentId; const studentName = item.dataset.studentName; const detailsContainer = document.getElementById(`errors-for-${studentId}`); const isVisible = detailsContainer.style.display === 'block'; container.querySelectorAll('.student-errors-details').forEach(d => { if (d.id !== `errors-for-${studentId}`) d.style.display = 'none'; }); container.querySelectorAll('.student-report-item i').forEach(i => i.className = 'fas fa-chevron-down'); if (!isVisible) { detailsContainer.style.display = 'block'; item.querySelector('i').className = 'fas fa-chevron-up'; const studentErrors = allErrors.filter(e => e.student_id === studentId); if (studentErrors.length === 0) { detailsContainer.innerHTML = '<p style="padding: 10px;">Este aluno não cometeu erros. Ótimo trabalho! 🌟</p>'; return; } const errorCounts = studentErrors.reduce((acc, error) => { const key = `Fase ${error.phase} | Correto: ${error.correct_answer}`; if (!acc[key]) { acc[key] = { count: 0, selections: {}, details: error }; } acc[key].count++; acc[key].selections[error.selected_answer] = (acc[key].selections[error.selected_answer] || 0) + 1; return acc; }, {}); const top5Errors = Object.entries(errorCounts).sort(([, a], [, b]) => b.count - a.count).slice(0, 5); let reportHTML = `<ul>${top5Errors.map(([, errorData]) => { const selectionsText = Object.entries(errorData.selections).map(([selection, count]) => `'${selection}' (${count}x)`).join(', '); const phaseDescription = PHASE_DESCRIPTIONS[errorData.details.phase] || ''; return `<li> <div class="error-item"> <strong>Fase ${errorData.details.phase} (${phaseDescription}):</strong> Resposta correta era <strong>"${errorData.details.correct_answer}"</strong> <small>Aluno selecionou: ${selectionsText}</small> </div> <span class="error-count">${errorData.count} ${errorData.count > 1 ? 'vezes' : 'vez'}</span> </li>`; }).join('')}</ul>`; reportHTML += `<div class="ai-button-container"> <button class="btn ai-btn" onclick="handleGenerateLessonPlan('${studentId}', '${studentName}')"> <i class="fas fa-rocket"></i> Analisar com IA </button> </div>`; detailsContainer.innerHTML = reportHTML; } else { detailsContainer.style.display = 'none'; item.querySelector('i').className = 'fas fa-chevron-down'; } }); }); }
+
+function renderClassHeatmap(errors, containerId) {
+    const heatmapContainer = document.getElementById(containerId);
+    const sectionHeader = heatmapContainer.closest('.report-section').querySelector('h4');
+    sectionHeader.querySelector('.view-chart-btn')?.remove();
+
+    if (!errors || errors.length === 0) {
+        heatmapContainer.innerHTML = '<p>Nenhum erro registrado para esta turma. Ótimo trabalho! 🎉</p>';
+        return;
+    }
+
+    const errorsByPhase = errors.reduce((acc, error) => {
+        const phase = error.phase || 'Desconhecida';
+        if (!acc[phase]) { acc[phase] = []; }
+        acc[phase].push(error);
+        return acc;
+    }, {});
+
+    let html = '';
+    const sortedPhases = Object.keys(errorsByPhase).sort((a, b) => a - b);
+
+    for (const phase of sortedPhases) {
+        const phaseDescription = PHASE_DESCRIPTIONS[phase] || 'Fase Desconhecida';
+        html += `<div class="phase-group"><h3>Fase ${phase} - ${phaseDescription}</h3>`;
+        
+        // CORREÇÃO: Adicionando o contêiner de rolagem aqui
+        html += '<div class="heatmap-container">';
+
+        const phaseErrors = errorsByPhase[phase];
+        const errorCounts = phaseErrors.reduce((acc, error) => {
+            const key = error.correct_answer;
+            acc[key] = (acc[key] || 0) + 1;
+            return acc;
+        }, {});
+        
+        const sortedErrors = Object.entries(errorCounts).sort(([, a], [, b]) => b - a);
+
+        if (sortedErrors.length === 0) {
+            html += '<p>Nenhum erro nesta fase.</p>';
+        } else {
+            html += sortedErrors.map(([item, count]) => `
+                <div class="heatmap-item">
+                    <div class="item-label">${item}</div>
+                    <div class="item-details">
+                        <span class="item-count">${count} erro(s)</span>
+                        <div class="item-bar-container">
+                            <div class="item-bar" style="width: ${(count / sortedErrors[0][1]) * 100}%;"></div>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+        
+        html += '</div>'; // CORREÇÃO: Fechando o heatmap-container
+        html += '</div>'; // Fechando o phase-group
+    }
+
+    heatmapContainer.innerHTML = html;
+
+    const chartButton = document.createElement('button');
+    chartButton.className = 'btn small view-chart-btn';
+    chartButton.innerHTML = '<i class="fas fa-chart-bar"></i> Ver Gráfico Geral';
+    chartButton.onclick = () => {
+        const totalErrorCounts = errors.reduce((acc, error) => {
+            const key = error.correct_answer;
+            acc[key] = (acc[key] || 0) + 1;
+            return acc;
+        }, {});
+        const sortedTotalErrors = Object.entries(totalErrorCounts).sort(([, a], [, b]) => b - a);
+        const chartLabels = sortedTotalErrors.map(([item]) => item);
+        const chartData = sortedTotalErrors.map(([, count]) => count);
+        displayChartModal('Gráfico de Dificuldades da Turma (Geral)', chartLabels, chartData);
+    };
+    sectionHeader.appendChild(chartButton);
+}
+
+function renderIndividualReports(students, allErrors, containerId) {
+    const container = document.getElementById(containerId);
+    if (!students || students.length === 0) {
+        container.innerHTML = '<p>Nenhum aluno na turma.</p>';
+        return;
+    }
+
+    // CORREÇÃO: Envolvendo a lista de alunos no contêiner de rolagem
+    let html = '<div class="individual-reports-container">';
+    
+    html += students.map(student => `
+        <div class="student-item student-report-item" data-student-id="${student.id}" data-student-name="${student.name}">
+            <div class="student-info">
+                <h4>${student.name}</h4>
+            </div>
+            <i class="fas fa-chevron-down"></i>
+        </div>
+        <div class="student-errors-details" id="errors-for-${student.id}" style="display: none;"></div>
+    `).join('');
+
+    html += '</div>'; // CORREÇÃO: Fechando o individual-reports-container
+    container.innerHTML = html;
+
+    container.querySelectorAll('.student-report-item').forEach(item => {
+        item.addEventListener('click', () => {
+            const studentId = item.dataset.studentId;
+            const studentName = item.dataset.studentName;
+            const detailsContainer = document.getElementById(`errors-for-${studentId}`);
+            const isVisible = detailsContainer.style.display === 'block';
+
+            container.querySelectorAll('.student-errors-details').forEach(d => {
+                if (d.id !== `errors-for-${studentId}`) d.style.display = 'none';
+            });
+            container.querySelectorAll('.student-report-item i').forEach(i => i.className = 'fas fa-chevron-down');
+
+            if (!isVisible) {
+                detailsContainer.style.display = 'block';
+                item.querySelector('i').className = 'fas fa-chevron-up';
+                const studentErrors = allErrors.filter(e => e.student_id === studentId);
+
+                if (studentErrors.length === 0) {
+                    detailsContainer.innerHTML = '<p style="padding: 10px;">Este aluno não cometeu erros. Ótimo trabalho! 🌟</p>';
+                    return;
+                }
+
+                const errorCounts = studentErrors.reduce((acc, error) => {
+                    const key = `Fase ${error.phase} | Correto: ${error.correct_answer}`;
+                    if (!acc[key]) {
+                        acc[key] = { count: 0, selections: {}, details: error };
+                    }
+                    acc[key].count++;
+                    acc[key].selections[error.selected_answer] = (acc[key].selections[error.selected_answer] || 0) + 1;
+                    return acc;
+                }, {});
+
+                const top5Errors = Object.entries(errorCounts).sort(([, a], [, b]) => b.count - a.count).slice(0, 5);
+                let reportHTML = `<ul>${top5Errors.map(([, errorData]) => {
+                    const selectionsText = Object.entries(errorData.selections).map(([selection, count]) => `'${selection}' (${count}x)`).join(', ');
+                    const phaseDescription = PHASE_DESCRIPTIONS[errorData.details.phase] || '';
+                    return `<li>
+                        <div class="error-item">
+                            <strong>Fase ${errorData.details.phase} (${phaseDescription}):</strong> Resposta correta era <strong>"${errorData.details.correct_answer}"</strong>
+                            <small>Aluno selecionou: ${selectionsText}</small>
+                        </div>
+                        <span class="error-count">${errorData.count} ${errorData.count > 1 ? 'vezes' : 'vez'}</span>
+                    </li>`;
+                }).join('')}</ul>`;
+                reportHTML += `<div class="ai-button-container">
+                    <button class="btn ai-btn" onclick="handleGenerateLessonPlan('${studentId}', '${studentName}')">
+                        <i class="fas fa-rocket"></i> Analisar com IA
+                    </button>
+                </div>`;
+                detailsContainer.innerHTML = reportHTML;
+            } else {
+                detailsContainer.style.display = 'none';
+                item.querySelector('i').className = 'fas fa-chevron-down';
+            }
+        });
+    });
+}
 
 async function handleGenerateLessonPlan(studentId, studentName) {
     const aiContainer = document.getElementById('aiTipsContent');
@@ -734,7 +888,11 @@ async function handleGenerateLessonPlan(studentId, studentName) {
     aiContainer.innerHTML = '<div class="loading-ai"><i class="fas fa-spinner fa-spin"></i> Analisando e gerando plano de aula...</div>';
     showModal('aiTipsModal');
     
-    // ATENÇÃO: Substitua pela sua chave de API do Google. Não exponha esta chave publicamente.
+    // =================================================================================
+    // ATENÇÃO PROFESSOR/DESENVOLVEDOR:
+    // Insira sua chave de API do Google Gemini aqui.
+    // Você pode obter uma chave em: https://aistudio.google.com/app/apikey
+    // =================================================================================
     const apiKey = "COLE_SUA_CHAVE_AQUI"; 
     
     if (!apiKey || apiKey === "COLE_SUA_CHAVE_AQUI") {
