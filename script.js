@@ -724,7 +724,10 @@ function hideTutorial() { document.getElementById('tutorialOverlay').classList.r
 async function logStudentError({ question, selectedAnswer }) { if (!currentUser || currentUser.type !== 'student') { return; } const errorData = { student_id: currentUser.id, teacher_id: currentUser.teacher_id, class_id: currentUser.class_id, phase: gameState.currentPhase, question_type: question.type, correct_answer: String(question.correctAnswer), selected_answer: String(selectedAnswer) }; const { error } = await supabaseClient.from('student_errors').insert([errorData]); if (error) { console.error('Falha ao registrar erro:', error); } }
 async function populateReportClassSelector() { const selector = document.getElementById('reportClassSelector'); selector.innerHTML = '<option value="">Carregando turmas...</option>'; document.getElementById('reportContentContainer').style.display = 'none'; const { data, error } = await supabaseClient.from('classes').select('id, name').eq('teacher_id', currentUser.id).order('name', { ascending: true }); if (error || !data) { selector.innerHTML = '<option value="">Erro ao carregar</option>'; return; } if (data.length === 0) { selector.innerHTML = '<option value="">Nenhuma turma encontrada</option>'; return; } selector.innerHTML = '<option value="">-- Selecione uma turma --</option>'; data.forEach(cls => { selector.innerHTML += `<option value="${cls.id}">${cls.name}</option>`; }); }
 function handleReportClassSelection(event) { const classId = event.target.value; const reportContainer = document.getElementById('reportContentContainer'); if (classId) { reportContainer.style.display = 'block'; loadAndDisplayClassReports(classId); } else { reportContainer.style.display = 'none'; reportContainer.innerHTML = ''; } }
-async function loadAndDisplayClassReports(classId) { const reportContainer = document.getElementById('reportContentContainer'); reportContainer.innerHTML = '<p><i class="fas fa-spinner fa-spin"></i> Carregando relatórios...</p>'; const { data: errors, error: errorsError } = await supabaseClient.from('student_errors').select('*').eq('class_id', classId); if (errorsError) { reportContainer.innerHTML = '<p class="error">Erro ao carregar dados de erros.</p>'; return; } const { data: students, error: studentsError } = await supabaseClient.from('students').select('id, name').eq('class_id', classId); if (studentsError) { reportContainer.innerHTML = '<p class="error">Erro ao carregar lista de alunos.</p>'; return; } reportContainer.innerHTML = ` <div class="report-section"> <h4><i class="fas fa-fire"></i> Mapa de Calor da Turma</h4> <p>As maiores dificuldades da turma inteira, mostrando o que foi mais errado.</p> <div id="classHeatmapContainer"></div> </div> <div class="report-section"> <h4><i class="fas fa-user-graduate"></i> Relatório Individual de Dificuldades</h4> <p>Clique em um aluno para ver seus erros e gerar uma atividade focada com a IA.</p> <div id="individualReportsContainer"></div> </div> `; renderClassHeatmap(errors, 'classHeatmapContainer'); renderIndividualReports(students, errors, 'individualReportsContainer'); }
+async function loadAndDisplayClassReports(classId) { const reportContainer = document.getElementById('reportContentContainer'); reportContainer.innerHTML = '<p><i class="fas fa-spinner fa-spin"></i> Carregando relatórios...</p>'; const { data: errors, error: errorsError } = await supabaseClient.from('student_errors').select('*').eq('class_id', classId); if (errorsError) { reportContainer.innerHTML = '<p class="error">Erro ao carregar dados de erros.</p>'; return; } 
+    // MUDANÇA 1: Adicionado .order('name') para garantir a ordem alfabética
+    const { data: students, error: studentsError } = await supabaseClient.from('students').select('id, name').eq('class_id', classId).order('name', { ascending: true }); 
+    if (studentsError) { reportContainer.innerHTML = '<p class="error">Erro ao carregar lista de alunos.</p>'; return; } reportContainer.innerHTML = ` <div class="report-section"> <h4><i class="fas fa-fire"></i> Mapa de Calor da Turma</h4> <p>As maiores dificuldades da turma inteira, mostrando o que foi mais errado.</p> <div id="classHeatmapContainer"></div> </div> <div class="report-section"> <h4><i class="fas fa-user-graduate"></i> Relatório Individual de Dificuldades</h4> <p>Clique em um aluno para ver seus erros e gerar uma atividade focada com a IA.</p> <div id="individualReportsContainer"></div> </div> `; renderClassHeatmap(errors, 'classHeatmapContainer'); renderIndividualReports(students, errors, 'individualReportsContainer'); }
 
 function renderClassHeatmap(errors, containerId) {
     const heatmapContainer = document.getElementById(containerId);
@@ -746,42 +749,49 @@ function renderClassHeatmap(errors, containerId) {
     let html = '';
     const sortedPhases = Object.keys(errorsByPhase).sort((a, b) => a - b);
 
-    // MUDANÇA PRINCIPAL: Criamos um único contêiner de rolagem FORA do loop.
     html += '<div class="all-phases-scroll-container">';
 
     for (const phase of sortedPhases) {
         const phaseDescription = PHASE_DESCRIPTIONS[phase] || 'Fase Desconhecida';
         html += `<div class="phase-group"><h3>Fase ${phase} - ${phaseDescription}</h3>`;
         
-        const phaseErrors = errorsByPhase[phase];
-        const errorCounts = phaseErrors.reduce((acc, error) => {
+        // MUDANÇA 2: Lógica para agrupar as respostas erradas dos alunos
+        const errorDetails = phaseErrors.reduce((acc, error) => {
             const key = error.correct_answer;
-            acc[key] = (acc[key] || 0) + 1;
+            if (!acc[key]) {
+                acc[key] = { count: 0, selections: new Set() };
+            }
+            acc[key].count++;
+            acc[key].selections.add(error.selected_answer);
             return acc;
         }, {});
         
-        const sortedErrors = Object.entries(errorCounts).sort(([, a], [, b]) => b - a);
+        const sortedErrors = Object.entries(errorDetails).sort(([, a], [, b]) => b.count - a.count);
 
         if (sortedErrors.length === 0) {
             html += '<p>Nenhum erro nesta fase.</p>';
         } else {
-            html += sortedErrors.map(([item, count]) => `
+            html += sortedErrors.map(([correctItem, data]) => {
+                const selectionsText = Array.from(data.selections).join(', ');
+                const maxCount = sortedErrors[0][1].count; // Pega a contagem máxima para a barra de progresso
+                return `
                 <div class="heatmap-item">
-                    <div class="item-label">${item}</div>
+                    <div class="item-label">${correctItem}</div>
                     <div class="item-details">
-                        <span class="item-count">${count} erro(s)</span>
+                        <span class="item-count">${data.count} erro(s)</span>
                         <div class="item-bar-container">
-                            <div class="item-bar" style="width: ${(count / sortedErrors[0][1]) * 100}%;"></div>
+                            <div class="item-bar" style="width: ${(data.count / maxCount) * 100}%;"></div>
                         </div>
+                        <small class="heatmap-selections">Selecionaram: ${selectionsText}</small>
                     </div>
                 </div>
-            `).join('');
+            `}).join('');
         }
         
-        html += '</div>'; // Fecha o phase-group
+        html += '</div>';
     }
     
-    html += '</div>'; // Fecha o all-phases-scroll-container
+    html += '</div>';
 
     heatmapContainer.innerHTML = html;
 
