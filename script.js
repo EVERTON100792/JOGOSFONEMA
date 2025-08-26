@@ -746,13 +746,13 @@ function renderClassHeatmap(errors, containerId) {
     let html = '';
     const sortedPhases = Object.keys(errorsByPhase).sort((a, b) => a - b);
 
+    // MUDANÇA PRINCIPAL: Criamos um único contêiner de rolagem FORA do loop.
+    html += '<div class="all-phases-scroll-container">';
+
     for (const phase of sortedPhases) {
         const phaseDescription = PHASE_DESCRIPTIONS[phase] || 'Fase Desconhecida';
         html += `<div class="phase-group"><h3>Fase ${phase} - ${phaseDescription}</h3>`;
         
-        // CORREÇÃO: Adicionando o contêiner de rolagem aqui, dentro do loop de cada fase
-        html += '<div class="heatmap-container">'; 
-
         const phaseErrors = errorsByPhase[phase];
         const errorCounts = phaseErrors.reduce((acc, error) => {
             const key = error.correct_answer;
@@ -778,9 +778,10 @@ function renderClassHeatmap(errors, containerId) {
             `).join('');
         }
         
-        html += '</div>'; // Fecha o heatmap-container
         html += '</div>'; // Fecha o phase-group
     }
+    
+    html += '</div>'; // Fecha o all-phases-scroll-container
 
     heatmapContainer.innerHTML = html;
 
@@ -808,7 +809,6 @@ function renderIndividualReports(students, allErrors, containerId) {
         return;
     }
 
-    // CORREÇÃO: Envolvendo a lista de alunos no contêiner de rolagem
     let html = '<div class="individual-reports-container">';
     
     html += students.map(student => `
@@ -821,7 +821,7 @@ function renderIndividualReports(students, allErrors, containerId) {
         <div class="student-errors-details" id="errors-for-${student.id}" style="display: none;"></div>
     `).join('');
 
-    html += '</div>'; // CORREÇÃO: Fechando o individual-reports-container
+    html += '</div>';
     container.innerHTML = html;
 
     container.querySelectorAll('.student-report-item').forEach(item => {
