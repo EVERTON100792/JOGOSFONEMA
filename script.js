@@ -750,8 +750,8 @@ function renderClassHeatmap(errors, containerId) {
         const phaseDescription = PHASE_DESCRIPTIONS[phase] || 'Fase Desconhecida';
         html += `<div class="phase-group"><h3>Fase ${phase} - ${phaseDescription}</h3>`;
         
-        // CORREÇÃO: Adicionando o contêiner de rolagem aqui
-        html += '<div class="heatmap-container">';
+        // CORREÇÃO: Adicionando o contêiner de rolagem aqui, dentro do loop de cada fase
+        html += '<div class="heatmap-container">'; 
 
         const phaseErrors = errorsByPhase[phase];
         const errorCounts = phaseErrors.reduce((acc, error) => {
@@ -778,8 +778,8 @@ function renderClassHeatmap(errors, containerId) {
             `).join('');
         }
         
-        html += '</div>'; // CORREÇÃO: Fechando o heatmap-container
-        html += '</div>'; // Fechando o phase-group
+        html += '</div>'; // Fecha o heatmap-container
+        html += '</div>'; // Fecha o phase-group
     }
 
     heatmapContainer.innerHTML = html;
