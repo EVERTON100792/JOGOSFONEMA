@@ -1,85 +1,87 @@
 /* =======================================================
-// JOGO DAS LETRAS - CSS CORRIGIDO E OTIMIZADO
+// JOGO DAS LETRAS 3.1 - DESIGN GLASSMORPHISM (COMPLETO)
 // Autor: Gemini AI
-// Solução: Uso de CSS Grid para empilhamento de telas,
-// layout totalmente responsivo (mobile-first) e
-// organização com variáveis CSS.
+// Conceito: Estilo "turvo" que agora cobre 100% dos
+// componentes do HTML, garantindo uma experiência coesa.
 // ======================================================= */
 
-/* 1. VARIÁVEIS GLOBAIS E CONFIGURAÇÕES DE BASE */
+/* 1. FONTES E VARIÁVEIS GLOBAIS */
+@import url('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css');
+@import url('https://fonts.googleapis.com/css2?family=Comic+Neue:wght@400;700&display=swap');
+
 :root {
-    --primary-color: #764ba2;
-    --secondary-color: #667eea;
+    --primary-glow: rgba(151, 71, 255, 0.8);
+    --secondary-glow: rgba(102, 126, 234, 0.8);
     --accent-color: #4ECDC4;
-    --accent-hover: #45B7B8;
-    --success-color: #4ecdc4;
+    --accent-hover: #56e0d5;
+    --success-color: #45b7b8;
     --danger-color: #ff6b6b;
-    --warning-color: #ffa726;
-    --light-bg: #f4f7fc;
-    --white-bg: #ffffff;
+    --text-light: #f0f8ff;
     --text-dark: #2c3e50;
-    --text-light: #555;
-    --border-color: #e0e0e0;
-    --shadow-light: rgba(0, 0, 0, 0.08);
-    --shadow-medium: rgba(0, 0, 0, 0.15);
     --font-family: 'Comic Neue', cursive;
+
+    /* Estilo Glassmorphism */
+    --glass-bg: rgba(255, 255, 255, 0.15);
+    --glass-border: rgba(255, 255, 255, 0.25);
+    --glass-shadow: rgba(0, 0, 0, 0.1);
+    --glass-blur: 12px;
 }
 
+/* 2. ESTRUTURA E FUNDO ANIMADO */
 * {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
 }
 
-html {
-    font-size: 100%;
-}
-
 body {
     font-family: var(--font-family);
-    background: linear-gradient(135deg, var(--secondary-color) 0%, var(--primary-color) 100%);
-    color: var(--text-dark);
+    color: var(--text-light);
     min-height: 100vh;
-    overflow: hidden; /* Previne a barra de rolagem principal */
+    overflow: hidden;
     line-height: 1.6;
 
-    /* ✅ SOLUÇÃO PRINCIPAL: SISTEMA DE GRID PARA EMPILHAMENTO */
+    background: linear-gradient(-45deg, #667eea, #764ba2, #23a6d5, #23d5ab);
+    background-size: 400% 400%;
+    animation: gradientBG 15s ease infinite;
+
     display: grid;
     grid-template-areas: "stack";
-    grid-template-rows: 1fr;
 }
 
-/* 2. SISTEMA DE TELAS (O CORAÇÃO DA CORREÇÃO) */
-.screen {
-    /* Todas as telas ocupam a mesma célula da grade, empilhando-se */
-    grid-area: stack;
+@keyframes gradientBG {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+}
 
-    /* Configuração para centralizar conteúdo por padrão */
+/* 3. SISTEMA DE TELAS COM ANIMAÇÃO */
+.screen {
+    grid-area: stack;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
     padding: 1rem;
-    
-    /* Lógica de visibilidade suave */
+    width: 100%;
+    height: 100%;
+    overflow-y: auto;
+
     opacity: 0;
     visibility: hidden;
     pointer-events: none;
-    transition: opacity 0.3s ease-in-out, visibility 0.3s;
-    overflow-y: auto; /* Permite rolagem interna se necessário */
-    width: 100%;
-    height: 100%;
+    transform: scale(0.98);
+    transition: opacity 0.4s ease, transform 0.4s ease;
 }
 
 .screen.active {
     opacity: 1;
     visibility: visible;
     pointer-events: auto;
+    transform: scale(1);
 }
 
-/* Telas que não devem centralizar o conteúdo */
-#teacherDashboard.screen,
-#gameScreen.screen {
+#teacherDashboard.screen, #gameScreen.screen {
     justify-content: flex-start;
     padding: 0;
 }
@@ -92,25 +94,33 @@ body {
     padding: 1rem;
 }
 
-
-/* 3. ESTILOS GERAIS (TÍTULOS, BOTÕES, FORMULÁRIOS) */
-.game-title h1 {
-    font-size: clamp(2.5rem, 8vw, 4rem);
-    color: var(--white-bg);
-    text-shadow: 0 4px 8px var(--shadow-medium);
-    margin-bottom: 0.5rem;
+/* 4. ESTILO "GLASSMORPHISM" PARA COMPONENTES */
+.glass-panel, .login-container, .class-card, .modal-content, .game-header, .game-content, .user-type-btn, .report-section {
+    background: var(--glass-bg);
+    backdrop-filter: blur(var(--glass-blur));
+    -webkit-backdrop-filter: blur(var(--glass-blur));
+    border: 1px solid var(--glass-border);
+    border-radius: 1.5rem;
+    box-shadow: 0 8px 32px 0 var(--glass-shadow);
+    padding: clamp(1.5rem, 4vw, 2rem);
 }
 
+/* 5. TÍTULOS E TEXTOS */
+.game-title h1 {
+    font-size: clamp(2.5rem, 8vw, 4.5rem);
+    text-shadow: 0 0 15px rgba(255, 255, 255, 0.5);
+    animation: titleGlow 2s ease-in-out infinite alternate;
+}
 .game-title p {
     font-size: clamp(1.1rem, 3vw, 1.5rem);
-    color: #f0f8ff;
-    margin-bottom: 2rem;
+    opacity: 0.9;
 }
 
-/* Botões principais */
-.login-btn, .start-button, .create-btn, .modal-btn.primary {
+/* 6. BOTÕES, INPUTS E SELECTS */
+.btn, .login-btn, .start-button, .create-btn, .modal-btn, .result-button, .control-button {
     background: linear-gradient(145deg, var(--accent-color), var(--accent-hover));
     color: white;
+    text-shadow: 0 1px 3px rgba(0,0,0,0.2);
     border: none;
     padding: 0.8rem 1.8rem;
     font-size: 1.1rem;
@@ -127,326 +137,218 @@ body {
     text-decoration: none;
 }
 
-.login-btn:hover, .start-button:hover, .create-btn:hover, .modal-btn.primary:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 6px 20px -5px var(--accent-color);
+.btn:hover, .login-btn:hover, .start-button:hover, .create-btn:hover, .modal-btn:hover, .result-button:hover, .control-button:hover {
+    transform: translateY(-3px) scale(1.03);
+    box-shadow: 0 6px 20px -2px var(--accent-color);
 }
 
-/* Formulários */
-.login-container {
-    max-width: 400px;
-    width: 100%;
-    background: var(--white-bg);
-    padding: clamp(1.5rem, 5vw, 2.5rem);
-    border-radius: 1rem;
-    box-shadow: 0 10px 30px var(--shadow-light);
+.btn.danger { background: var(--danger-color); box-shadow: 0 4px 15px -5px var(--danger-color); }
+.btn.danger:hover { box-shadow: 0 6px 20px -2px var(--danger-color); }
+
+
+.modal-btn:not(.primary), .back-btn, .register-btn {
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    color: var(--text-light);
+    box-shadow: none;
+}
+.modal-btn:not(.primary):hover, .back-btn:hover, .register-btn:hover {
+    background: rgba(255, 255, 255, 0.3);
+    box-shadow: 0 0 10px rgba(255, 255, 255, 0.2);
 }
 
-.form-group {
-    margin-bottom: 1.5rem;
-    text-align: left;
-}
-
-.form-group label {
-    display: block;
-    margin-bottom: 0.5rem;
-    font-weight: bold;
-}
-
-.form-group input, .phase-select {
+.form-group input, .phase-select, select {
     width: 100%;
     padding: 0.8rem 1rem;
-    border: 1px solid var(--border-color);
+    border: 1px solid var(--glass-border);
     border-radius: 8px;
     font-size: 1rem;
     font-family: var(--font-family);
+    background: rgba(0, 0, 0, 0.2);
+    color: var(--text-light);
 }
-
-.password-wrapper {
-    position: relative;
-    display: flex;
-    align-items: center;
-}
-.password-wrapper input { padding-right: 3rem; }
-.password-toggle { position: absolute; right: 1rem; cursor: pointer; color: #aaa; }
+.form-group input::placeholder { color: rgba(240, 248, 255, 0.7); }
+.form-group label { color: var(--text-light); font-weight: bold; }
 
 
-/* 4. TELA DE SELEÇÃO DE USUÁRIO */
-.user-selection h2 {
-    color: var(--white-bg);
-    margin-bottom: 2rem;
-}
-
-.user-types {
-    display: flex;
-    gap: 1.5rem;
-    justify-content: center;
-    flex-wrap: wrap;
-}
-
-.user-type-btn {
-    background: rgba(255, 255, 255, 0.2);
-    backdrop-filter: blur(10px);
-    border: 1px solid rgba(255, 255, 255, 0.3);
-    border-radius: 1rem;
-    padding: 2rem;
-    color: white;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    width: 220px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 1rem;
-}
-.user-type-btn i { font-size: 2.5rem; }
-.user-type-btn span { font-size: 1.2rem; font-weight: bold; }
-.user-type-btn small { font-size: 0.9rem; opacity: 0.8; }
-
-.user-type-btn:hover {
-    transform: translateY(-5px);
-    background: rgba(255, 255, 255, 0.3);
-    box-shadow: 0 10px 30px var(--shadow-light);
-}
-
-
-/* 5. PAINEL DO PROFESSOR (DASHBOARD) */
-.dashboard-container {
-    display: flex;
-    width: 100%;
-    height: 100%;
-    background-color: var(--light-bg);
-}
+/* 7. PAINEL DO PROFESSOR (DASHBOARD) */
+.dashboard-container { display: flex; width: 100%; height: 100%; }
 
 .sidebar {
     width: 260px;
-    background: var(--white-bg);
-    border-right: 1px solid var(--border-color);
-    display: flex;
-    flex-direction: column;
-    padding: 1rem 0;
-    transition: transform 0.3s ease;
-    flex-shrink: 0;
+    background: var(--glass-bg);
+    border-right: 1px solid var(--glass-border);
+    display: flex; flex-direction: column; padding: 1rem 0; flex-shrink: 0;
 }
-
-.sidebar-header { padding: 1rem; }
-.sidebar-nav { margin-top: 1rem; }
 .sidebar-nav a {
-    display: flex;
-    align-items: center;
-    padding: 1rem 1.5rem;
-    color: var(--text-light);
-    text-decoration: none;
-    font-weight: bold;
-    border-radius: 0 50px 50px 0;
-    margin: 0.5rem 1rem 0.5rem 0;
-    transition: all 0.3s ease;
+    display: flex; align-items: center; padding: 1rem 1.5rem; color: var(--text-light);
+    text-decoration: none; font-weight: bold; border-radius: 0 50px 50px 0;
+    margin: 0.5rem 1rem 0.5rem 0; transition: all 0.3s ease; position: relative;
 }
-.sidebar-nav a i {
-    width: 30px;
-    text-align: center;
-    margin-right: 1rem;
-    font-size: 1.2rem;
-}
+.sidebar-nav a:hover { background: rgba(255,255,255,0.1); text-shadow: 0 0 5px white; }
+.sidebar-nav a.active { background: linear-gradient(90deg, var(--secondary-glow), var(--primary-glow)); box-shadow: 0 0 20px var(--primary-glow); }
+.sidebar-nav a i { width: 30px; text-align: center; margin-right: 1rem; font-size: 1.2rem; }
 
-.sidebar-nav a:hover {
-    background: var(--light-bg);
-    color: var(--primary-color);
-}
-.sidebar-nav a.active {
-    background: linear-gradient(90deg, var(--secondary-color), var(--primary-color));
-    color: white;
-    box-shadow: 0 4px 15px rgba(118, 75, 162, 0.3);
-}
-
-.sidebar-footer {
-    margin-top: auto;
-    padding: 1rem;
-    border-top: 1px solid var(--border-color);
-}
+.sidebar-footer { margin-top: auto; padding: 1rem; }
 .logout-btn-sidebar {
-    background: none;
-    border: none;
-    color: var(--text-light);
-    font-size: 1rem;
-    font-weight: bold;
-    cursor: pointer;
-    width: 100%;
-    text-align: left;
-    padding: 0.5rem;
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-    font-family: var(--font-family);
+    background: none; border: none; font: inherit; color: var(--text-light);
+    width: 100%; padding: 0.5rem; cursor: pointer;
+    display: flex; align-items: center; gap: 1rem;
+    opacity: 0.8; transition: opacity 0.3s;
 }
-.logout-btn-sidebar:hover { color: var(--danger-color); }
+.logout-btn-sidebar:hover { opacity: 1; color: var(--danger-color); }
 
-
-.main-content {
-    flex-grow: 1;
-    overflow-y: auto;
-    display: flex;
-    flex-direction: column;
-}
+.main-content { flex-grow: 1; overflow-y: auto; display: flex; flex-direction: column; }
 
 .dashboard-header {
-    background: var(--white-bg);
-    padding: 1.25rem 2rem;
-    border-bottom: 1px solid var(--border-color);
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
+    background: var(--glass-bg); padding: 1.25rem 2rem;
+    backdrop-filter: blur(var(--glass-blur)); border-bottom: 1px solid var(--glass-border);
 }
-#dashboard-title { color: var(--primary-color); }
+.dashboard-header h1 { text-shadow: 0 0 10px var(--primary-glow); }
 
 .dashboard-content-area {
     padding: clamp(1rem, 5vw, 2.5rem);
-    flex-grow: 1;
+    display: grid; grid-template-areas: "stack"; flex-grow: 1;
 }
+.dashboard-view {
+    grid-area: stack; opacity: 0; visibility: hidden;
+    transition: opacity 0.3s ease-in-out;
+}
+.dashboard-view.active { opacity: 1; visibility: visible; }
 
-.view-header {
-    margin-bottom: 2rem;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    flex-wrap: wrap;
-    gap: 1rem;
-}
-
-.classes-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-    gap: 1.5rem;
-}
+.classes-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1.5rem; }
 
 .class-card {
-    background-color: var(--white-bg);
-    border-radius: 1rem;
-    padding: 1.5rem;
-    box-shadow: 0 6px 20px -5px var(--shadow-light);
-    border: 1px solid var(--border-color);
-    display: flex;
-    flex-direction: column;
-    text-align: left;
+    transition: transform 0.3s ease, box-shadow 0.3s ease; text-align: left;
 }
+.class-card:hover { transform: translateY(-5px) scale(1.02); box-shadow: 0 12px 40px var(--glass-shadow), 0 0 15px var(--primary-glow); }
+.class-card h3 { color: white; }
+.class-card .student-count { background: rgba(0,0,0,0.2); border-radius: 20px; padding: 0.3rem 0.8rem; }
+.class-card-actions { margin-top: 1rem; display: flex; gap: 0.5rem; }
+.class-card-actions .btn { padding: 0.6rem 1.2rem; font-size: 0.9rem; }
 
-.class-card h3 { font-size: 1.5rem; margin-bottom: 0.5rem;}
-.class-card .student-count { background-color: var(--light-bg); padding: 0.3rem 0.8rem; border-radius: 20px; font-weight: bold; margin-bottom: 1rem; display: inline-block; }
-.class-card-actions { margin-top: auto; display: flex; gap: 0.5rem; }
 
-
-/* 6. MODAIS */
+/* 8. MODAIS E SEUS COMPONENTES INTERNOS */
 .modal {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0, 0, 0, 0.6);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    z-index: 1000;
-    opacity: 0;
-    visibility: hidden;
-    pointer-events: none;
-    transition: opacity 0.3s, visibility 0.3s;
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background-color: rgba(0, 0, 0, 0.5); z-index: 1000;
+    display: flex; justify-content: center; align-items: center;
+    opacity: 0; visibility: hidden; transition: opacity 0.3s;
 }
-.modal.show { opacity: 1; visibility: visible; pointer-events: auto; }
-
+.modal.show { opacity: 1; visibility: visible; }
 .modal-content {
-    background-color: white;
-    padding: 2rem;
-    border-radius: 1rem;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-    width: 90%;
-    max-width: 500px;
-    max-height: 90vh;
-    overflow-y: auto;
+    width: 90%; max-width: 500px; max-height: 90vh; overflow-y: auto;
+    color: var(--text-light); text-align: left;
 }
 .modal-content.large { max-width: 800px; }
+.modal-content h3 { color: white; text-shadow: 0 0 8px var(--primary-glow); margin-bottom: 1.5rem; }
 
-.modal-actions {
-    margin-top: 1.5rem;
-    display: flex;
-    justify-content: flex-end;
-    gap: 1rem;
+.modal-tabs { display: flex; gap: 0.5rem; margin-bottom: 1.5rem; border-bottom: 1px solid var(--glass-border); }
+.tab-btn {
+    background: none; border: none; color: var(--text-light); opacity: 0.7;
+    font-family: var(--font-family); font-size: 1.1rem; font-weight: bold;
+    padding: 0.5rem 1rem; cursor: pointer; transition: all 0.3s ease;
+    border-bottom: 3px solid transparent;
 }
+.tab-btn:hover { opacity: 1; }
+.tab-btn.active { opacity: 1; border-bottom-color: var(--accent-color); }
 
-/* 7. LAYOUT RESPONSIVO (MOBILE-FIRST) */
+.credentials-box {
+    background: rgba(0,0,0,0.2);
+    border-radius: 8px;
+    padding: 1rem;
+    margin: 1rem 0;
+}
+.credentials-box strong { color: var(--accent-color); }
+
+
+/* 9. TELA DO JOGO */
+.game-header { margin: 1rem; color: var(--text-light); }
+.game-content {
+    width: calc(100% - 2rem); max-width: 800px; margin: 0 auto 1rem auto;
+    flex-grow: 1; color: var(--text-light); text-align: center;
+}
+.game-content h3 { text-shadow: 0 0 5px white; }
+
+.audio-button {
+    background: var(--glass-bg); border: 2px solid var(--glass-border);
+    width: 80px; height: 80px; border-radius: 50%;
+    color: white; font-size: 2rem; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.3s ease; margin: 0 auto 1rem auto;
+}
+.audio-button:hover { background: rgba(255,255,255,0.4); transform: scale(1.1); box-shadow: 0 0 15px white; }
+
+.word-display { font-size: 2.5rem; font-weight: bold; letter-spacing: 4px; }
+.image-emoji { font-size: 5rem; }
+
+.letters-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(80px, 1fr)); gap: 1rem; margin-top: 1.5rem; }
+.letter-button {
+    background: var(--glass-bg); border: 1px solid var(--glass-border);
+    border-radius: 1rem; padding: 1rem; font-size: 1.5rem; font-weight: bold;
+    color: var(--text-light); cursor: pointer; transition: all 0.3s ease;
+    text-shadow: 0 0 5px white;
+}
+.letter-button:hover:not(:disabled) { background: rgba(255, 255, 255, 0.4); transform: scale(1.05); box-shadow: 0 0 15px var(--accent-hover); }
+.letter-button:disabled { opacity: 0.5; cursor: not-allowed; }
+.letter-button.correct { background: var(--success-color); border-color: #fff; color: #fff; transform: scale(1.1); animation: pop 0.3s ease; }
+.letter-button.incorrect { background: var(--danger-color); border-color: var(--danger-color); color: #fff; animation: shake 0.5s ease; }
+
+
+/* 10. RELATÓRIOS */
+.report-section { margin-bottom: 2rem; text-align: left; }
+.report-section p { color: var(--text-light); opacity: 0.9; }
+.heatmap-item { display: flex; align-items: center; gap: 1rem; padding: 0.5rem; border-radius: 8px; margin-bottom: 0.5rem; }
+.item-label { font-weight: bold; font-size: 1.2rem; width: 80px; }
+.item-details { flex-grow: 1; }
+.item-bar-container { width: 100%; background: rgba(0,0,0,0.2); height: 10px; border-radius: 5px; overflow: hidden; }
+.item-bar { height: 100%; background: linear-gradient(90deg, var(--accent-hover), var(--danger-color)); border-radius: 5px; }
+
+
+/* 11. RESPONSIVO: PAINEL MOBILE COMPLETO */
 @media (max-width: 768px) {
-    .dashboard-container { flex-direction: column; }
-    
-    .main-content {
-        padding-bottom: 80px; /* Espaço para a barra de navegação inferior */
-    }
+    body { overflow-y: auto; }
+    #teacherDashboard { padding-bottom: 75px; }
 
     .sidebar {
-        position: fixed;
-        bottom: 0;
-        left: 0;
-        width: 100%;
-        height: auto;
-        flex-direction: row;
-        box-shadow: 0 -2px 10px var(--shadow-light);
-        padding: 5px 0;
-        border-right: none;
-        border-top: 1px solid var(--border-color);
-        z-index: 1000;
-        background: var(--white-bg);
+        position: fixed; bottom: 0; left: 0; width: 100%; height: auto;
+        flex-direction: row; border-right: none; border-top: 1px solid var(--glass-border);
+        padding: 0.5rem; z-index: 1000; backdrop-filter: blur(20px);
     }
     .sidebar-header, .sidebar-footer { display: none; }
-    .sidebar-nav { flex-grow: 1; display: flex; justify-content: space-around; margin-top: 0; align-items: center; }
-    .sidebar-nav a {
-        flex-direction: column;
-        font-size: 0.7rem;
-        height: 60px;
-        padding: 0.5rem;
-        margin: 0;
-        border-radius: 8px;
-        flex: 1;
-        justify-content: center;
+    .sidebar-nav { flex-grow: 1; display: flex; justify-content: space-around; margin-top: 0; width: 100%; }
+
+    /* ✅ BOTÃO DE SAIR CORRIGIDO E INTEGRADO */
+    .sidebar-nav a, .logout-btn-sidebar-mobile {
+        flex-direction: column; font-size: 0.7rem; height: 60px; padding: 0.5rem;
+        margin: 0; border-radius: 12px; flex: 1; justify-content: center; text-align: center;
+        background: none; border: none; color: var(--text-light); font-family: var(--font-family);
+        cursor: pointer;
     }
-    .sidebar-nav a i {
-        font-size: 1.5rem;
-        margin-right: 0;
-        margin-bottom: 4px;
-        width: auto;
-    }
-    
-    .dashboard-header { padding: 1rem; flex-direction: column; gap: 0.5rem; }
-    .dashboard-content-area, .container { padding: 1rem; }
-}
-/* =======================================================
-// ✅ CORREÇÃO ADICIONAL: Empilhamento das Views do Dashboard
-// Este código garante que apenas uma seção (Turmas, Relatórios, etc.)
-// seja visível de cada vez dentro do painel.
-// ======================================================= */
-
-.dashboard-content-area {
-    position: relative; /* Necessário para o empilhamento funcionar */
-    display: grid;
-    grid-template-areas: "stack";
-    flex-grow: 1;
+    .sidebar-nav a i, .logout-btn-sidebar-mobile i { font-size: 1.5rem; margin: 0 0 4px 0; }
+    .sidebar-nav a.active { background: rgba(255,255,255,0.2); box-shadow: none; }
 }
 
-.dashboard-view {
-    grid-area: stack;
-    
-    /* Lógica de visibilidade */
-    opacity: 0;
-    visibility: hidden;
-    pointer-events: none;
-    transition: opacity 0.2s ease-in-out;
 
-    /* Garante que a view ocupe o espaço e permita rolagem interna */
-    width: 100%;
-    height: 100%;
-    overflow-y: auto;
-}
+/* 12. ANIMAÇÕES */
+@keyframes gradientBG { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
+@keyframes titleGlow { from { text-shadow: 0 0 15px rgba(255, 255, 255, 0.5); } to { text-shadow: 0 0 30px rgba(255, 255, 255, 1); } }
+@keyframes bounce { 0%, 20%, 50%, 80%, 100% { transform: translateY(0); } 40% { transform: translateY(-30px); } 60% { transform: translateY(-15px); } }
+@keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.1); } 100% { transform: scale(1); } }
+@keyframes pop { 0% { transform: scale(1); } 50% { transform: scale(1.2); } 100% { transform: scale(1.1); } }
+@keyframes shake { 0%, 100% { transform: translateX(0); } 10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); } 20%, 40%, 60%, 80% { transform: translateX(5px); } }
 
-.dashboard-view.active {
-    opacity: 1;
-    visibility: visible;
-    pointer-events: auto;
+.progress-fill { height: 100%; background: linear-gradient(90deg, #a8ff78, #78ffd6); border-radius: inherit; transition: width 0.5s ease-out; box-shadow: 0 0 10px #78ffd6; }
+#globalFeedback {
+    position: fixed; bottom: 20px; left: 50%;
+    transform: translateX(-50%) translateY(150%);
+    padding: 1rem 2rem; border-radius: 12px; z-index: 9999;
+    transition: transform 0.4s ease-in-out; font-weight: bold;
+    display: flex; align-items: center; gap: 1rem;
+    background: var(--glass-bg); backdrop-filter: blur(var(--glass-blur));
+    border: 1px solid var(--glass-border); box-shadow: 0 8px 32px 0 var(--glass-shadow);
 }
+#globalFeedback.show { transform: translateX(-50%) translateY(0); }
+#globalFeedback.success { background: rgba(78, 205, 196, 0.7); }
+#globalFeedback.error { background: rgba(255, 107, 107, 0.7); }
+#globalFeedback.info { background: rgba(102, 126, 234, 0.7); }
