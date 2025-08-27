@@ -441,3 +441,20 @@ input[type="file"] { display: none; }
 #nav-turmas i {
     display: none !important;
 }
+/* --- CÓDIGO FINAL PARA OCULTAR O ROBOZINHO VAZANDO --- */
+/* Esta regra esconde o mascote robô que aparece no canto superior esquerdo */
+/* quando a tela principal não é a do dashboard. */
+#userTypeScreen .mascot,
+#teacherLoginScreen .mascot,
+#teacherRegisterScreen .mascot,
+#studentLoginScreen .mascot {
+    display: none !important;
+}
+
+/* Se por acaso ele aparecer em outras telas antes do dashboard, você pode adicionar a ID da tela aqui */
+/* Exemplo: #outraTela .mascot */
+
+/* Apenas para garantir que o sidebar-header também esteja oculto, caso haja alguma anomalia */
+.sidebar-header {
+    display: none !important;
+}
