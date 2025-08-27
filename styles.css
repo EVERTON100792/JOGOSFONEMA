@@ -569,3 +569,22 @@ input::placeholder { color: rgba(255, 255, 255, 0.7); }
 #globalFeedback.success { background-color: var(--success-color); }
 #globalFeedback.error { background-color: var(--danger-color); }
 #globalFeedback.info { background-color: var(--primary-color); }
+/* Adicione ao final de styles.css */
+.empty-state {
+    padding: 2rem;
+    text-align: center;
+    background: rgba(0, 0, 0, 0.15);
+    border-radius: 12px;
+    border: 1px dashed var(--glass-border);
+}
+
+.empty-state h4 {
+    color: var(--accent-color);
+    margin-bottom: 0.5rem;
+}
+
+.empty-state p {
+    max-width: 400px;
+    margin: 0 auto;
+    opacity: 0.9;
+}
