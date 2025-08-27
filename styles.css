@@ -437,3 +437,7 @@ input[type="file"] { display: none; }
 .ai-tips-container strong { color: var(--primary-color); }
 .loading-ai { text-align: center; padding: 2rem; font-size: 1.2rem; color: var(--primary-color); }
 .chart-container { position: relative; height: 60vh; max-height: 500px; padding: 1rem; }
+/* CÓDIGO PARA REMOVER O ÍCONE "ROBOZINHO" DO MENU */
+#nav-turmas i {
+    display: none !important;
+}
