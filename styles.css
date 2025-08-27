@@ -185,9 +185,23 @@ input::placeholder { color: rgba(255, 255, 255, 0.7); }
     display: flex;
     flex-direction: column;
     padding: 1rem 0;
-    z-index: 10;
+    z-index: 100; /* Aumentado para garantir que fique acima de outros elementos */
+    position: relative; /* Importante para z-index funcionar bem */
 }
-.sidebar-header h3 { padding: 0 1.5rem 1rem; }
+.sidebar-header {
+    padding: 0 1.5rem 1rem;
+    display: flex; /* Para alinhar o ícone e o texto */
+    align-items: center; /* Alinha verticalmente */
+    gap: 0.75rem; /* Espaço entre ícone e texto */
+}
+.sidebar-header i { /* Estilo para o ícone do painel */
+    font-size: 1.8rem;
+    color: var(--accent-color);
+}
+.sidebar-header h3 {
+    margin: 0; /* Remover margin padrão do h3 */
+    font-size: 1.5rem; /* Ajustar tamanho da fonte se necessário */
+}
 .sidebar-nav { flex-grow: 1; }
 .sidebar-nav a {
     display: flex; align-items: center; padding: 1rem 1.5rem; color: var(--text-light);
@@ -302,13 +316,13 @@ input[type="file"] { display: none; }
     .main-content {
         flex-grow: 1; /* Ocupa o espaço disponível */
         height: auto; /* Altura automática para o conteúdo crescer */
-        padding-bottom: 80px; /* Espaço para a barra de navegação inferior */
+        padding-bottom: 65px; /* Espaço para a barra de navegação inferior (65px é a altura da sidebar mobile) */
     }
 
     .sidebar {
         order: 2; /* Move a sidebar para baixo */
         width: 100%;
-        height: 65px;
+        height: 65px; /* Altura fixa para a barra de navegação inferior */
         flex-direction: row;
         align-items: center;
         padding: 0 0.5rem;
@@ -317,9 +331,10 @@ input[type="file"] { display: none; }
         position: fixed; /* Fixa no final da tela */
         bottom: 0;
         left: 0;
+        z-index: 100; /* Garante que a barra inferior fique acima de tudo */
     }
 
-    .sidebar-header { display: none; }
+    .sidebar-header { display: none; /* Esconde o cabeçalho "Painel" em mobile */ }
     
     .sidebar-nav {
         display: flex;
@@ -383,7 +398,17 @@ input[type="file"] { display: none; }
     background-color: rgba(0,0,0,0.1); border-radius: 10px; height: 10px; margin-top: 5px; overflow: hidden;
 }
 .student-progress-fill { background: var(--accent-color); height: 100%; transition: width 0.5s ease; }
-.students-list { display: flex; flex-direction: column; gap: 1rem; }
+
+/* --- AQUI ESTÃO AS CORREÇÕES PARA O SCROLL DOS ALUNOS E MAPA DE CALOR --- */
+.students-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    max-height: 400px; /* Altura máxima para a lista de alunos */
+    overflow-y: auto; /* Adiciona rolagem se exceder a altura máxima */
+    padding-right: 5px; /* Para dar espaço à barra de rolagem e não cortar o conteúdo */
+}
+/* Estilo individual dos itens da lista de alunos */
 .student-item {
     display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center;
     padding: 1rem; background-color: rgba(0,0,0,0.1); border-radius: 12px;
@@ -407,6 +432,16 @@ input[type="file"] { display: none; }
 .student-errors-details ul { list-style: none; display: flex; flex-direction: column; gap: 0.5rem; }
 .student-errors-details li { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 0.5rem; }
 .student-details-actions { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 1rem; }
+
+.heatmap-grid { /* Adicionado este seletor, assumindo que você tem uma grid para o heatmap */
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); /* Exemplo de grid */
+    gap: 1rem;
+    max-height: 350px; /* Altura máxima para o mapa de calor */
+    overflow-y: auto; /* Adiciona rolagem se exceder a altura máxima */
+    padding-right: 5px; /* Para dar espaço à barra de rolagem e não cortar o conteúdo */
+}
+
 .heatmap-item { display: flex; flex-direction: column; gap: 0.5rem; padding: 0.75rem; background-color: rgba(0,0,0,0.15); border-radius: 12px; }
 .heatmap-item .item-label { font-size: 1.2rem; font-weight: bold; color: var(--accent-color); }
 .heatmap-item .item-details { width: 100%; }
