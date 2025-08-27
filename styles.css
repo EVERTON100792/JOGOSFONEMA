@@ -1,8 +1,11 @@
 /* =======================================================
-// JOGO DAS LETRAS - CSS RESPONSIVO E PADRONIZADO (v3)
+// JOGO DAS LETRAS - CSS (VERSÃO DEFINITIVA E ESTÁVEL)
+// Autor: Gemini AI
+// Descrição: CSS reescrito com Grid para gerenciamento de telas,
+// tipografia fluida e layout totalmente responsivo.
 // ======================================================= */
 
-/* :root -> Define variáveis globais para cores e fontes */
+/* 1. VARIÁVEIS GLOBAIS E CONFIGURAÇÃO DA FONTE */
 :root {
     --primary-color: #764ba2;
     --secondary-color: #667eea;
@@ -16,10 +19,12 @@
     --text-dark: #2c3e50;
     --text-light: #555;
     --border-color: #e0e0e0;
+    --shadow-light: rgba(0, 0, 0, 0.1);
+    --shadow-medium: rgba(0, 0, 0, 0.2);
     --font-family: 'Comic Neue', cursive;
 }
 
-/* 1. CONFIGURAÇÕES GLOBAIS E RESET */
+/* 2. RESET E ESTRUTURA PRINCIPAL (BODY) */
 * {
     margin: 0;
     padding: 0;
@@ -27,8 +32,7 @@
 }
 
 html {
-    font-size: 100%; /* Equivalente a 16px na maioria dos navegadores */
-    -webkit-text-size-adjust: 100%;
+    font-size: 100%;
 }
 
 body {
@@ -36,42 +40,45 @@ body {
     background: linear-gradient(135deg, var(--secondary-color) 0%, var(--primary-color) 100%);
     color: var(--text-dark);
     min-height: 100dvh;
-    display: flex;
-    flex-direction: column;
     overflow-x: hidden;
-    line-height: 1.5;
+    line-height: 1.6;
+
+    /* NOVO SISTEMA DE LAYOUT COM GRID */
+    display: grid;
+    grid-template-areas: "stack";
+    grid-template-rows: 1fr;
 }
 
-/* 2. ESTRUTURA PRINCIPAL DAS TELAS (SCREENS) */
+/* 3. SISTEMA DE TELAS (SCREEN) - A CORREÇÃO PRINCIPAL */
 .screen {
-    display: none;
-    width: 100%;
+    /* Todas as telas ocupam a mesma célula da grade, empilhando-se perfeitamente */
+    grid-area: stack;
+    
+    /* Todas as telas são flex para centralizar seu conteúdo */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+    
+    /* Lógica de visibilidade suave e sem bugs de layout */
     opacity: 0;
     visibility: hidden;
-    transition: opacity 0.5s ease, visibility 0.5s;
-    position: absolute;
-    top: 0;
-    left: 0;
-    height: 100%;
+    pointer-events: none;
+    transition: opacity 0.3s ease-in-out;
+    overflow-y: auto;
 }
 
 .screen.active {
-    display: flex;
-    flex-direction: column;
-    flex-grow: 1; /* Garante que a tela ativa ocupe todo o espaço */
-    align-items: center;
-    justify-content: center; /* Padrão: centraliza conteúdo (login, início) */
     opacity: 1;
     visibility: visible;
-    position: relative;
-    overflow-y: auto; /* Permite rolagem se o conteúdo for maior que a tela */
+    pointer-events: auto;
 }
 
-/* Ajuste para telas que não devem ser centralizadas */
-#teacherDashboard.screen.active,
-#gameScreen.screen.active {
+/* Telas que não devem centralizar conteúdo (ex: painel, jogo) */
+#teacherDashboard.screen, #gameScreen.screen {
     justify-content: flex-start;
-    padding: 0; /* Essas telas gerenciam seu próprio preenchimento interno */
+    padding: 0;
 }
 
 .container {
@@ -79,173 +86,236 @@ body {
     max-width: 1200px;
     margin: 0 auto;
     text-align: center;
-    padding: 1.25rem;
 }
 
-/* 3. COMPONENTES COMUNS (TÍTULOS, BOTÕES, MASCOTE) */
-
+/* 4. ESTILOS COMUNS (TÍTULOS, MASCOTE, BOTÕES) */
 .game-title h1 {
     font-size: clamp(2.5rem, 8vw, 4rem);
     color: var(--white-bg);
-    text-shadow: 3px 3px 6px rgba(0, 0, 0, 0.3);
-    margin-bottom: 1rem;
+    text-shadow: 0 4px 8px var(--shadow-medium);
+    margin-bottom: 0.5rem;
     animation: titleGlow 2s ease-in-out infinite alternate;
 }
 
+@keyframes titleGlow {
+    from { text-shadow: 0 4px 8px var(--shadow-medium); }
+    to { text-shadow: 0 4px 20px rgba(255,255,255,0.7); }
+}
+
 .game-title p {
-    font-size: 1.25rem;
+    font-size: clamp(1.1rem, 3vw, 1.5rem);
     color: #f0f8ff;
     margin-bottom: 2rem;
 }
 
-@keyframes titleGlow {
-    from { text-shadow: 3px 3px 6px rgba(0, 0, 0, 0.3); }
-    to { text-shadow: 3px 3px 15px rgba(255, 255, 255, 0.5); }
-}
-
-.character-mascot {
-    margin: 2rem 0;
-    position: relative;
-}
-
 .mascot {
-    font-size: clamp(4rem, 10vw, 5rem);
+    font-size: clamp(4rem, 15vw, 5rem);
     color: var(--danger-color);
     margin-bottom: 1rem;
     display: inline-block;
-    filter: drop-shadow(3px 3px 6px rgba(0, 0, 0, 0.3));
+    filter: drop-shadow(0 4px 6px var(--shadow-medium));
 }
 
 .speech-bubble {
     background: var(--white-bg);
     border-radius: 1.25rem;
     padding: 1rem 1.5rem;
-    position: relative;
-    display: inline-block;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-    max-width: 300px;
+    box-shadow: 0 4px 15px var(--shadow-light);
+    max-width: 320px;
     margin: 0 auto;
 }
 
-.speech-bubble::before {
-    content: '';
-    position: absolute;
-    top: -10px;
-    left: 50%;
-    transform: translateX(-50%);
-    border-left: 10px solid transparent;
-    border-right: 10px solid transparent;
-    border-bottom: 10px solid var(--white-bg);
-}
-
-.speech-bubble p {
-    font-size: 1.1rem;
-    font-weight: bold;
-    margin: 0;
-}
-
-/* Animações do Mascote */
-.bounce { animation: bounce 2s infinite; }
-.pulse { animation: pulse 1.5s infinite; }
-@keyframes bounce {
-    0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
-    40% { transform: translateY(-20px); }
-    60% { transform: translateY(-10px); }
-}
-@keyframes pulse {
-    0% { transform: scale(1); }
-    50% { transform: scale(1.1); }
-    100% { transform: scale(1); }
-}
-
-/* Botões Padrão */
-.start-button, .result-button, .control-button, .student-start-actions .start-button {
-    background: linear-gradient(45deg, var(--danger-color), #ffa500);
+.login-btn, .start-button, .result-button, .create-btn, .modal-btn.primary {
+    background: linear-gradient(145deg, var(--accent-color), var(--accent-hover));
     color: white;
     border: none;
-    padding: 1rem 2rem;
-    font-size: 1.25rem;
+    padding: 0.8rem 1.8rem;
+    font-size: 1.1rem;
     font-weight: bold;
     border-radius: 50px;
     cursor: pointer;
-    box-shadow: 0 6px 20px rgba(0,0,0,0.2);
     transition: all 0.3s ease;
-    margin: 0.5rem;
+    box-shadow: 0 4px 15px -5px var(--accent-color);
     font-family: var(--font-family);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
 }
 
-.start-button:hover, .result-button:hover, .control-button:hover {
+.login-btn:hover, .start-button:hover, .result-button:hover, .create-btn:hover, .modal-btn.primary:hover {
     transform: translateY(-3px);
-    box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+    box-shadow: 0 6px 20px -5px var(--accent-color);
 }
 
-.student-start-actions .reinforcement {
-    background: linear-gradient(45deg, #4ecdc4, #44a08d);
+/* 5. TELA DE LOGIN E SELEÇÃO */
+.user-selection h2 {
+    color: var(--white-bg);
+    margin-bottom: 2rem;
 }
 
-/* 4. TELAS DE LOGIN E SELEÇÃO DE USUÁRIO */
-
-.user-selection { margin: 2.5rem 0; }
-.user-selection h2 { color: var(--white-bg); text-shadow: 1px 1px 3px rgba(0,0,0,0.2); margin-bottom: 2rem; font-size: 1.8rem; }
-.user-types { display: flex; gap: 2rem; justify-content: center; flex-wrap: wrap; }
+.user-types {
+    display: flex;
+    gap: 1.5rem;
+    justify-content: center;
+    flex-wrap: wrap;
+}
 
 .user-type-btn {
     background: rgba(255, 255, 255, 0.2);
     backdrop-filter: blur(10px);
     border: 1px solid rgba(255, 255, 255, 0.3);
-    border-radius: 1.25rem;
-    padding: 2.5rem 2rem;
+    border-radius: 1rem;
+    padding: 2rem;
     color: white;
-    font-family: inherit;
     cursor: pointer;
     transition: all 0.3s ease;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 1rem;
-    min-width: 200px;
-    text-decoration: none;
+    width: 220px;
 }
-.user-type-btn:hover { transform: translateY(-5px); background: rgba(255, 255, 255, 0.3); box-shadow: 0 10px 30px rgba(0,0,0,0.2); }
-.user-type-btn i { font-size: 3rem; }
-.user-type-btn span { font-size: 1.4rem; font-weight: bold; }
-.user-type-btn small { font-size: 1rem; opacity: 0.9; }
+.user-type-btn:hover {
+    transform: translateY(-5px);
+    background: rgba(255, 255, 255, 0.3);
+    box-shadow: 0 10px 30px var(--shadow-light);
+}
 
 .login-container {
     max-width: 400px;
     width: 100%;
     background: var(--white-bg);
-    padding: 2.5rem;
-    border-radius: 1.25rem;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    padding: clamp(1.5rem, 5vw, 2.5rem);
+    border-radius: 1rem;
+    box-shadow: 0 10px 30px var(--shadow-light);
 }
-.login-container h2 { text-align: center; color: var(--text-dark); margin-bottom: 2rem; font-size: 1.8rem; }
-.login-container h2 i { margin-right: 0.5rem; color: var(--accent-color); }
 
-.login-form { display: flex; flex-direction: column; gap: 1.25rem; }
-.form-group { display: flex; flex-direction: column; text-align: left; gap: 0.5rem; }
-.form-group label { font-weight: bold; color: var(--text-dark); font-size: 1rem; }
-.form-group input, .form-group select {
-    padding: 1rem;
-    border: 2px solid var(--border-color);
-    border-radius: 0.75rem;
-    font-size: 1rem;
-    font-family: inherit;
-    transition: border-color 0.3s ease;
+.password-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
 }
-.form-group input:focus, .form-group select:focus { outline: none; border-color: var(--accent-color); }
-
-.password-wrapper { position: relative; display: flex; align-items: center; }
-.password-wrapper input { width: 100%; padding-right: 3rem; }
+.password-wrapper input { padding-right: 3rem; }
 .password-toggle { position: absolute; right: 1rem; cursor: pointer; color: #aaa; }
-.password-toggle:hover { color: #333; }
 
-.login-btn { background: linear-gradient(145deg, var(--accent-color), var(--accent-hover)); margin-top: 0.5rem; }
-.register-btn { background: transparent; color: var(--accent-color); border: 2px solid var(--accent-color); padding: 0.75rem; }
-.register-btn:hover { background: var(--accent-color); color: white; }
-.back-btn { background: var(--border-color); color: var(--text-light); border: none; padding: 0.75rem 1.25rem; border-radius: 0.75rem; cursor: pointer; margin-top: 1.25rem; }
+/* 6. PAINEL DO PROFESSOR (DASHBOARD) */
+#teacherDashboard .dashboard-container {
+    display: flex;
+    width: 100%;
+    height: 100%; /* Ocupa 100% da tela que já é 100% do viewport */
+    background-color: var(--light-bg);
+}
 
-/* 5. TELA DO JOGO */
+.sidebar {
+    width: 260px;
+    background: var(--white-bg);
+    border-right: 1px solid var(--border-color);
+    display: flex;
+    flex-direction: column;
+    padding: 1rem 0;
+    transition: width 0.3s ease;
+    flex-shrink: 0;
+}
+
+.sidebar-nav a.active {
+    background: linear-gradient(90deg, var(--secondary-color), var(--primary-color));
+    color: white;
+    box-shadow: 0 4px 15px rgba(118, 75, 162, 0.3);
+}
+
+.main-content {
+    flex-grow: 1;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+}
+
+.dashboard-header {
+    background: var(--white-bg);
+    padding: 1.25rem 2rem;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.dashboard-content-area {
+    padding: clamp(1rem, 5vw, 2.5rem);
+    flex-grow: 1;
+}
+
+.classes-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1.5rem;
+}
+
+.class-card {
+    background-color: var(--white-bg);
+    border-radius: 1rem;
+    padding: 1.5rem;
+    box-shadow: 0 6px 20px -5px var(--shadow-light);
+    border: 1px solid var(--border-color);
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+}
+
+.class-card-header {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.class-card h3 { font-size: 1.5rem; }
+.class-card .student-count { background-color: var(--light-bg); padding: 0.3rem 0.8rem; border-radius: 20px; font-weight: bold; }
+
+/* BOTÕES DO CARD REDESENHADOS */
+.class-card-actions {
+    width: 100%;
+    display: flex;
+    gap: 0.5rem;
+    margin-top: auto; /* Alinha na parte de baixo */
+}
+
+.class-card-actions .btn {
+    border: none;
+    padding: 0.6rem 1rem;
+    border-radius: 8px;
+    cursor: pointer;
+    font-family: var(--font-family);
+    font-size: 0.9rem;
+    font-weight: bold;
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-grow: 1;
+    justify-content: center;
+}
+
+.class-card-actions .btn.primary {
+    background-color: var(--primary-color);
+    color: white;
+}
+.class-card-actions .btn.primary:hover {
+    background-color: #5a3a7a;
+    transform: translateY(-2px);
+}
+
+.class-card-actions .btn.danger {
+    background-color: transparent;
+    color: var(--danger-color);
+    border: 2px solid var(--border-color);
+    flex-grow: 0;
+    padding: 0.6rem;
+    width: 40px;
+    height: 40px;
+}
+.class-card-actions .btn.danger:hover {
+    background-color: var(--danger-color);
+    color: white;
+    border-color: var(--danger-color);
+}
+
+
+/* 7. TELA DO JOGO */
 #gameScreen {
     display: flex;
     flex-direction: column;
@@ -254,234 +324,36 @@ body {
 }
 
 .game-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    flex-wrap: wrap;
-    gap: 1rem;
-    background: rgba(255,255,255,0.15);
-    padding: 1rem 1.5rem;
-    border-radius: 1.25rem;
+    padding: 1rem;
     margin: 1rem;
-    backdrop-filter: blur(10px);
     flex-shrink: 0;
+    background: rgba(255,255,255,0.15);
+    border-radius: 1.25rem;
 }
-.phase-info h2 { color: var(--white-bg); font-size: 1.5rem; margin-bottom: 0.5rem; }
-.progress-bar { width: 200px; height: 10px; background: rgba(255,255,255,0.3); border-radius: 5px; }
-.progress-fill { height: 100%; background: linear-gradient(90deg, #4ecdc4, #44a08d); width: 0%; transition: width 0.5s ease; }
-.score-info { text-align: right; }
-.score, .attempts { color: var(--white-bg); font-size: 1.2rem; }
-.score i, .attempts i { margin-right: 0.5rem; color: #ffa500; }
-.exit-button { background-color: rgba(255, 255, 255, 0.2); border: 1px solid rgba(255, 255, 255, 0.5); color: white; padding: 0.6rem 1rem; border-radius: 0.5rem; cursor: pointer; font-size: 1rem; transition: all 0.3s ease; }
-.exit-button:hover { background-color: rgba(255, 82, 82, 0.8); }
 
 .game-content {
     background: rgba(255,255,255,0.95);
-    border-radius: 1.875rem; /* 30px */
+    border-radius: 1.5rem;
     padding: 1.5rem;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
     width: 100%;
     max-width: 800px;
     margin: 0 auto 1rem auto;
     flex-grow: 1;
     overflow-y: auto;
-    display: flex;
-    flex-direction: column;
 }
 
-.question-area { text-align: center; margin-bottom: 1.5rem; }
-.mascot-helper .mascot { font-size: 3rem; margin-bottom: 1rem; }
-
-/*
- * =======================================================
- * INÍCIO DA CORREÇÃO DO ALTO-FALANTE
- * =======================================================
-*/
-.audio-button-container {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    gap: 1rem;
-    margin: 1.5rem 0;
-    flex-wrap: wrap; /* Permite quebrar linha em telas pequenas */
-}
-
-.audio-button {
-    background: linear-gradient(45deg, var(--success-color), #44a08d);
-    color: white;
-    border: none;
-    width: 100px;
-    height: 100px;
-    font-size: 1rem;
-    border-radius: 50%;
-    cursor: pointer;
-    box-shadow: 0 6px 20px rgba(0,0,0,0.2);
-    transition: all 0.3s ease;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
-}
-.audio-button:hover { transform: scale(1.1); }
-.audio-button i { font-size: 1.8rem; margin-bottom: 0.5rem; }
-.audio-button span { font-size: 0.9rem; }
-
-
-#imageQuestionArea .image-display {
-    margin-bottom: 1rem;
-}
-.image-emoji { font-size: 5rem; }
-
-.word-display {
-    font-size: clamp(2rem, 7vw, 2.5rem);
-    font-weight: bold;
-    color: var(--text-dark);
-    letter-spacing: 5px;
-    margin: 0;
-    line-height: 1.2;
-    text-align: left;
-    flex-grow: 1;
-}
-/* =======================================================
- * FIM DA CORREÇÃO DO ALTO-FALANTE
- * =======================================================
-*/
-
-.question-text h3 {
-    color: #333;
-    font-size: 1.5rem;
-    margin: 1rem 0;
-}
 .letters-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
     gap: 1rem;
-    margin: 1.5rem 0;
-    width: 100%;
-    max-width: 600px;
-    margin-left: auto;
-    margin-right: auto;
 }
 
-.letter-button {
-    background: linear-gradient(45deg, var(--secondary-color), var(--primary-color));
-    color: white;
-    border: none;
-    padding: 1.25rem;
-    font-size: 2.25rem;
-    font-weight: bold;
-    border-radius: 1.25rem;
-    cursor: pointer;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-    transition: all 0.3s ease;
-    aspect-ratio: 1;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-.letter-button:hover:not(:disabled) { transform: translateY(-5px) scale(1.05); }
-
-/* Animações de Resposta */
-.letter-button.correct, .word-option-button.correct { background: linear-gradient(45deg, var(--success-color), #44a08d); animation: correctPulse 0.6s ease; }
-.letter-button.incorrect, .word-option-button.incorrect { background: linear-gradient(45deg, var(--danger-color), #ee5a24); animation: shake 0.6s ease; }
-.letter-button.disabled, .word-option-button.disabled { background: #ced4da !important; cursor: not-allowed; transform: none !important; box-shadow: none !important; opacity: 0.7; }
-@keyframes correctPulse { 0% { transform: scale(1); } 50% { transform: scale(1.2); } 100% { transform: scale(1); } }
-@keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-10px); } 75% { transform: translateX(10px); } }
-
-/* 6. TELA DE RESULTADO */
-.result-content { background: rgba(255,255,255,0.95); border-radius: 1.875rem; padding: 3rem; box-shadow: 0 10px 30px rgba(0,0,0,0.2); max-width: 600px; }
-.result-icon { font-size: 4rem; margin-bottom: 1rem; color: #ffa500; animation: bounce 2s infinite; }
-#resultTitle { font-size: 2.5rem; color: var(--text-dark); margin-bottom: 1.5rem; }
-.result-stats { display: flex; justify-content: space-around; flex-wrap: wrap; gap: 1rem; margin: 2rem 0; padding: 1rem; background: rgba(102, 126, 234, 0.1); border-radius: 1rem; }
-.stat { text-align: center; font-size: 1.1rem; font-weight: bold; }
-.result-message { font-size: 1.3rem; color: var(--text-light); margin: 1.5rem 0; }
-.result-button.success { background: linear-gradient(45deg, var(--success-color), #44a08d); }
-.result-button.retry { background: linear-gradient(45deg, var(--warning-color), #fb8c00); }
-
-/* 7. DASHBOARD DO PROFESSOR */
-#teacherDashboard .dashboard-container {
-    display: flex;
-    width: 100%;
-    flex-grow: 1; /* Ocupa o espaço do .screen.active */
-    background-color: var(--light-bg);
-}
-
-.sidebar { width: 260px; background: var(--white-bg); border-right: 1px solid var(--border-color); display: flex; flex-direction: column; padding: 1.25rem 0; transition: width 0.3s ease; flex-shrink: 0; }
-.sidebar-header { padding: 0 1.5rem 1.25rem 1.5rem; border-bottom: 1px solid #f0f0f0; }
-.sidebar-header h3 { color: var(--text-dark); font-size: 1.5rem; }
-.sidebar-nav { flex-grow: 1; margin-top: 1.25rem; }
-.sidebar-nav a { display: flex; align-items: center; padding: 1rem 1.5rem; color: var(--text-light); text-decoration: none; font-size: 1.1rem; font-weight: bold; margin: 0.5rem; border-radius: 0.5rem; transition: all 0.2s ease; }
-.sidebar-nav a:hover { background-color: #f0eaff; color: var(--primary-color); }
-.sidebar-nav a.active { background: linear-gradient(90deg, var(--secondary-color), var(--primary-color)); color: white; box-shadow: 0 4px 15px rgba(118, 75, 162, 0.3); }
-.sidebar-nav a i { width: 30px; text-align: center; margin-right: 1rem; font-size: 1.2rem; }
-.sidebar-footer { padding: 1.25rem 1.5rem 0 1.5rem; border-top: 1px solid #f0f0f0; }
-.logout-btn-sidebar { width: 100%; background: #f8f9fa; border: 1px solid #ddd; color: var(--danger-color); padding: 0.75rem; border-radius: 0.5rem; cursor: pointer; font-size: 1.1rem; font-weight: bold; transition: all 0.2s ease; }
-.logout-btn-sidebar:hover { background: var(--danger-color); color: white; border-color: var(--danger-color); }
-
-.main-content { flex-grow: 1; overflow-y: auto; display: flex; flex-direction: column; }
-#teacherDashboard .dashboard-header { background: var(--white-bg); padding: 1.25rem 2.5rem; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
-.dashboard-content-area { padding: 2.5rem; flex-grow: 1; }
-
-.dashboard-view { display: none; }
-.dashboard-view.active { display: block; }
-
-.view-header { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; margin-bottom: 1.5rem; padding-bottom: 1rem; border-bottom: 1px solid #eee; }
-.view-header p { font-size: 1.1rem; color: var(--text-light); margin: 0; }
-.create-btn { background: linear-gradient(145deg, var(--accent-color), var(--accent-hover)); color: white; border: none; padding: 0.75rem 1.25rem; border-radius: 0.5rem; font-size: 1rem; font-weight: bold; cursor: pointer; }
-
-.classes-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.25rem; }
-.class-card { background-color: var(--white-bg); border-radius: 1rem; padding: 1.25rem 1.5rem; box-shadow: 0 6px 20px rgba(0,0,0,0.08); border: 1px solid var(--border-color); display: flex; align-items: center; flex-wrap: wrap; gap: 1rem; }
-.class-card h3 { flex-grow: 1; font-size: 1.5rem; }
-.class-card .student-count { font-size: 1rem; color: var(--text-light); background-color: var(--light-bg); padding: 0.3rem 0.75rem; border-radius: 20px; font-weight: bold; }
-
-/* 8. MODAIS */
-.modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: center; opacity: 0; visibility: hidden; transition: opacity 0.4s ease, visibility 0.4s; }
-.modal.show { display: flex; opacity: 1; visibility: visible; }
-.modal-content { background: var(--white-bg); padding: 2rem; border-radius: 1rem; max-width: 500px; width: 95%; max-height: 90vh; overflow-y: auto; transform: scale(0.95); transition: transform 0.4s ease; }
-.modal.show .modal-content { transform: scale(1); }
-.modal-content.large { max-width: 800px; }
-.modal-actions { display: flex; gap: 1rem; justify-content: flex-end; margin-top: 1.5rem; }
-.modal-btn { padding: 0.75rem 1.5rem; border: 2px solid var(--border-color); background: transparent; color: var(--text-light); border-radius: 0.5rem; cursor: pointer; font-size: 1rem; font-weight: bold; }
-.modal-btn.primary { background: var(--accent-color); border-color: var(--accent-color); color: white; }
-
-/* 9. FASES AVANÇADAS E COMPONENTES ESPECÍFICOS */
-.sentence-build-area { background-color: #e9ecef; border: 2px dashed #adb5bd; border-radius: 0.75rem; padding: 1rem; min-height: 60px; margin: 1.5rem auto; display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; justify-content: center; }
-.sentence-word { background-color: var(--white-bg); color: #495057; padding: 0.5rem 1rem; border-radius: 0.5rem; font-size: 1.4rem; font-weight: bold; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-.word-option-button { background: linear-gradient(45deg, #5c6bc0, #3f51b5); color: white; border: none; padding: 1rem; font-size: 1.5rem; font-weight: bold; border-radius: 1rem; }
-.sound-detective-button { background: linear-gradient(45deg, var(--success-color), #44a08d); color: white; padding: 1.25rem; font-size: 1.2rem; border-radius: 1.25rem; display: flex; align-items: center; justify-content: center; gap: 0.5rem; }
-.memory-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.75rem; max-width: 500px; margin: 1.25rem auto; perspective: 1000px; }
-.memory-card { background-color: transparent; width: 100%; aspect-ratio: 1; cursor: pointer; }
-.card-inner { position: relative; width: 100%; height: 100%; transition: transform 0.6s; transform-style: preserve-3d; }
-.memory-card.flipped .card-inner { transform: rotateY(180deg); }
-.card-face { position: absolute; width: 100%; height: 100%; backface-visibility: hidden; border-radius: 0.75rem; display: flex; align-items: center; justify-content: center; font-size: 2.5rem; font-weight: bold; }
-.card-front { background: linear-gradient(135deg, var(--secondary-color), var(--primary-color)); color: white; }
-.card-front::before { content: '?'; }
-.card-back { background-color: var(--accent-color); color: white; transform: rotateY(180deg); }
-.memory-card.matched .card-inner { transform: scale(0.95); opacity: 0.7; }
-.fa-spinner { animation: spin 1s linear infinite; }
-@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-
-/* 10. MEDIA QUERIES (AJUSTES PARA TELAS MENORES) */
+/* 8. LAYOUT RESPONSIVO (MOBILE) */
 @media (max-width: 768px) {
-    /* Ajustes Gerais */
-    .container { padding: 1rem; }
-    .game-title p { font-size: 1.1rem; margin-bottom: 1rem; }
-
-    /* Tela do Jogo */
-    .game-header { flex-direction: column; align-items: stretch; margin: 0.5rem; }
-    .progress-bar { width: 100%; }
-    .letters-grid { gap: 0.5rem; }
-
-    /*
-     * =======================================================
-     * INÍCIO DA CORREÇÃO DO LAYOUT DO DASHBOARD E BOTÃO SAIR
-     * =======================================================
-    */
     .main-content {
-        /* Adiciona espaço na parte inferior para não ser coberto pela barra de navegação */
-        padding-bottom: 80px;
+        padding-bottom: 70px; /* Espaço para a barra de navegação inferior */
     }
+
     .sidebar {
         position: fixed;
         bottom: 0;
@@ -489,26 +361,24 @@ body {
         width: 100%;
         height: auto;
         flex-direction: row;
-        box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+        box-shadow: 0 -2px 10px var(--shadow-light);
         padding: 5px 0;
         border-right: none;
         border-top: 1px solid var(--border-color);
         z-index: 1000;
+        background: var(--white-bg);
     }
     .sidebar-header { display: none; }
-    .sidebar-nav { margin-top: 0; display: flex; flex-grow: 1; justify-content: space-around; }
-    .sidebar-nav a { flex-direction: column; padding: 0.5rem; margin: 0; height: 60px; flex-grow: 1; font-size: 0.75rem; font-weight: normal; }
-    .sidebar-nav a i { margin-right: 0; margin-bottom: 5px; font-size: 1.5rem; }
-    
-    /* Correção do botão Sair */
+    .sidebar-nav { flex-grow: 1; display: flex; justify-content: space-around; margin-top: 0;}
+    .sidebar-nav a { flex-direction: column; font-size: 0.7rem; height: 60px; padding: 0.5rem; }
+    .sidebar-nav a i { font-size: 1.5rem; margin-right: 0; margin-bottom: 4px; }
+
     .sidebar-footer {
-        display: block;
         padding: 0;
-        border-top: none;
+        border: none;
         display: flex;
-        align-items: center;
-        justify-content: center;
     }
+
     .logout-btn-sidebar {
         background: none;
         border: none;
@@ -517,35 +387,14 @@ body {
         flex-direction: column;
         align-items: center;
         justify-content: center;
-        font-size: 0.75rem;
+        font-size: 0.7rem;
         height: 60px;
         padding: 0.5rem;
-        margin: 0 0.5rem;
         font-weight: normal;
-        width: auto;
     }
-    .logout-btn-sidebar i { font-size: 1.5rem; margin-bottom: 5px; }
-    .logout-btn-sidebar:hover { color: var(--danger-color); background-color: transparent; }
-    /* =======================================================
-     * FIM DA CORREÇÃO
-     * =======================================================
-    */
+    .logout-btn-sidebar i { font-size: 1.5rem; margin-bottom: 4px; }
+    .logout-btn-sidebar:hover { color: var(--danger-color); background: none; }
 
-    #teacherDashboard .dashboard-header { padding: 1rem; }
-    .dashboard-content-area { padding: 1.25rem; }
-    .view-header { flex-direction: column; gap: 1rem; align-items: flex-start; }
-}
-
-@media (max-width: 480px) {
-    /* Ajustes para celulares bem pequenos */
-    .login-container, .result-content { padding: 1.5rem; }
-    .container { padding: 0.5rem; }
-    .user-type-btn { padding: 1.5rem 1rem; min-width: 150px; }
-    .letter-button { font-size: 1.8rem; border-radius: 1rem; }
-    .game-content { padding: 1rem; }
+    .dashboard-header { padding: 1rem; }
     .dashboard-content-area { padding: 1rem; }
-    .audio-button-container {
-        flex-direction: column; /* Empilha botão e palavra em telas muito pequenas */
-        gap: 0.5rem;
-    }
 }
