@@ -1,323 +1,517 @@
-/* =======================================================
-// JOGO DAS LETRAS - STYLESHEET FINAL E ESTABILIZADO
-// Autor: Gemini AI
-// Foco: Estrutura de layout robusta para Desktop e Mobile.
-// ======================================================= */
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jogo de Alfabetização - Aprenda as Letras!</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Comic+Neue:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div id="userTypeScreen" class="screen active">
+        <div class="container">
+            <div class="game-title">
+                <h1>🌟 Jogo das Letras 🌟</h1>
+                <p>Aprendendo o alfabeto com diversão!</p>
+            </div>
+            <div class="user-selection">
+                <h2>Como você quer acessar?</h2>
+                <div class="user-types">
+                    <button class="user-type-btn" data-type="student">
+                        <i class="fas fa-child"></i>
+                        <span>Sou Aluno</span>
+                        <small>Jogar e aprender</small>
+                    </button>
+                    <button class="user-type-btn" data-type="teacher">
+                        <i class="fas fa-chalkboard-teacher"></i>
+                        <span>Sou Professor</span>
+                        <small>Gerenciar turmas</small>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
 
-/* 1. FONTES E VARIÁVEIS GLOBAIS */
-@import url('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css');
-@import url('https://fonts.googleapis.com/css2?family=Comic+Neue:wght@400;700&display=swap');
+    <div id="teacherLoginScreen" class="screen">
+        <div class="container">
+            <div class="login-container">
+                <h2><i class="fas fa-chalkboard-teacher"></i> Login do Professor</h2>
+                <form id="teacherLoginForm" class="login-form">
+                    <div class="form-group">
+                        <label for="teacherEmail">Email:</label>
+                        <input type="email" id="teacherEmail" required autocomplete="username">
+                    </div>
+                    <div class="form-group">
+                        <label for="teacherPassword">Senha:</label>
+                        <div class="password-wrapper">
+                            <input type="password" id="teacherPassword" required autocomplete="current-password">
+                            <i class="fas fa-eye password-toggle" aria-label="Mostrar/ocultar senha"></i>
+                        </div>
+                    </div>
+                    <button type="submit" class="login-btn">Entrar</button>
+                    <button type="button" class="register-btn" id="showRegisterBtn">Não tenho conta</button>
+                </form>
+                <button class="back-btn" data-target="userTypeScreen">
+                    <i class="fas fa-arrow-left"></i> Voltar
+                </button>
+            </div>
+        </div>
+    </div>
 
-:root {
-    --primary-color: #764ba2;
-    --secondary-color: #667eea;
-    --accent-color: #4ECDC4;
-    --accent-hover: #56e0d5;
-    --success-color: #45b7b8;
-    --danger-color: #ff6b6b;
-    --text-light: #f0f8ff;
-    --text-dark: #2c3e50;
-    --font-family: 'Comic Neue', cursive;
-    --glass-bg: rgba(255, 255, 255, 0.15);
-    --glass-border: rgba(255, 255, 255, 0.25);
-    --glass-shadow: rgba(0, 0, 0, 0.15);
-    --glass-blur: 12px;
-    --scrollbar-thumb: rgba(255, 255, 255, 0.4);
-    --scrollbar-track: rgba(255, 255, 255, 0.1);
-}
+    <div id="teacherRegisterScreen" class="screen">
+        <div class="container">
+            <div class="login-container">
+                <h2><i class="fas fa-user-plus"></i> Cadastro do Professor</h2>
+                <form id="teacherRegisterForm" class="login-form">
+                    <div class="form-group">
+                        <label for="teacherRegName">Nome:</label>
+                        <input type="text" id="teacherRegName" required autocomplete="name">
+                    </div>
+                    <div class="form-group">
+                        <label for="teacherRegEmail">Email:</label>
+                        <input type="email" id="teacherRegEmail" required autocomplete="email">
+                    </div>
+                    <div class="form-group">
+                        <label for="teacherRegPassword">Senha:</label>
+                         <div class="password-wrapper">
+                            <input type="password" id="teacherRegPassword" required autocomplete="new-password">
+                            <i class="fas fa-eye password-toggle" aria-label="Mostrar/ocultar senha"></i>
+                        </div>
+                    </div>
+                    <button type="submit" class="login-btn">Cadastrar</button>
+                    <button type="button" class="register-btn" id="showLoginBtn">Já tenho conta</button>
+                </form>
+               <button class="back-btn" data-target="userTypeScreen">
+                    <i class="fas fa-arrow-left"></i> Voltar
+                </button>
+            </div>
+        </div>
+    </div>
 
-/* 2. RESET E FUNDO ANIMADO */
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-}
+    <div id="studentLoginScreen" class="screen">
+        <div class="container">
+            <div class="login-container">
+                <h2><i class="fas fa-child"></i> Login do Aluno</h2>
+                <form id="studentLoginForm" class="login-form">
+                    <div class="form-group">
+                        <label for="studentUsername">Nome de usuário:</label>
+                        <input type="text" id="studentUsername" required autocomplete="username">
+                    </div>
+                    <div class="form-group">
+                        <label for="studentPassword">Senha:</label>
+                        <div class="password-wrapper">
+                            <input type="password" id="studentPassword" required autocomplete="current-password">
+                            <i class="fas fa-eye password-toggle" aria-label="Mostrar/ocultar senha"></i>
+                        </div>
+                    </div>
+                    <button type="submit" class="login-btn">Entrar</button>
+                </form>
+                <button class="back-btn" data-target="userTypeScreen">
+                    <i class="fas fa-arrow-left"></i> Voltar
+                </button>
+            </div>
+        </div>
+    </div>
 
-html, body {
-    height: 100%;
-    width: 100%;
-    overflow: hidden;
-}
-
-body {
-    font-family: var(--font-family);
-    color: var(--text-light);
-    line-height: 1.6;
-    background: linear-gradient(-45deg, var(--secondary-color), var(--primary-color), #23a6d5, #23d5ab);
-    background-size: 400% 400%;
-    animation: gradientBG 15s ease infinite;
-    display: grid;
-    grid-template-areas: "stack";
-}
-
-@keyframes gradientBG {
-    0% { background-position: 0% 50%; }
-    50% { background-position: 100% 50%; }
-    100% { background-position: 0% 50%; }
-}
-
-/* 3. SISTEMA DE TELAS */
-.screen {
-    grid-area: stack;
-    display: flex; /* MUDANÇA: Telas serão flex por padrão */
-    width: 100%;
-    height: 100%;
-    opacity: 0;
-    visibility: hidden;
-    transition: opacity 0.4s ease, transform 0.4s ease;
-    z-index: 1;
-}
-
-.screen.active {
-    opacity: 1;
-    visibility: visible;
-    z-index: 10;
-}
-
-/* Telas que não são o dashboard voltam ao normal */
-.screen:not(#teacherDashboard) {
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    padding: 1rem;
-}
-
-#gameScreen {
-    padding: 0;
-    justify-content: flex-start;
-}
-
-/* 4. COMPONENTES GERAIS */
-.login-container, .class-card, .modal-content, .game-header, .game-content, .user-type-btn, .report-section, .credentials-box {
-    background: var(--glass-bg);
-    backdrop-filter: blur(var(--glass-blur));
-    -webkit-backdrop-filter: blur(var(--glass-blur));
-    border: 1px solid var(--glass-border);
-    border-radius: 1.5rem;
-    box-shadow: 0 8px 32px 0 var(--glass-shadow);
-    padding: clamp(1.5rem, 4vw, 2rem);
-    text-align: left;
-}
-
-.btn, .login-btn, .start-button, .create-btn, .modal-btn, .result-button, .control-button {
-    background: linear-gradient(145deg, var(--accent-color), var(--accent-hover));
-    color: white;
-    text-shadow: 0 1px 3px rgba(0,0,0,0.2);
-    border: none;
-    padding: 0.8rem 1.8rem;
-    font-size: 1.1rem;
-    font-weight: bold;
-    border-radius: 50px;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    box-shadow: 0 4px 15px -5px var(--accent-color);
-    font-family: var(--font-family);
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.5rem;
-    text-decoration: none;
-}
-.btn:hover, .login-btn:hover, .start-button:hover, .create-btn:hover, .modal-btn:hover, .result-button:hover, .control-button:hover {
-    transform: translateY(-3px) scale(1.03);
-    box-shadow: 0 6px 20px -2px var(--accent-color);
-}
-.btn.danger {
-    background: linear-gradient(145deg, var(--danger-color), #ff8a8a);
-    box-shadow: 0 4px 15px -5px var(--danger-color);
-}
-
-.form-group { margin-bottom: 1.25rem; }
-.form-group label { display: block; margin-bottom: 0.5rem; font-weight: bold; }
-input[type="text"], input[type="email"], input[type="password"], select {
-    width: 100%; padding: 0.8rem; border-radius: 8px; border: 1px solid var(--glass-border);
-    background: rgba(255, 255, 255, 0.2); color: var(--text-light);
-    font-family: var(--font-family); font-size: 1rem;
-}
-input::placeholder { color: rgba(255, 255, 255, 0.7); }
-
-/* 5. TELA INICIAL E LOGIN */
-.game-title h1 { font-size: clamp(2.5rem, 6vw, 3.5rem); }
-.login-container { width: 100%; max-width: 450px; }
-.user-types { display: flex; justify-content: center; gap: 1.5rem; flex-wrap: wrap; }
-.user-type-btn {
-    flex-direction: column; padding: 2rem; width: 200px; height: 180px; font-size: 1.2rem;
-}
-.user-type-btn i { font-size: 3rem; margin-bottom: 1rem; }
-
-/* ======================================================= */
-/* 6. PAINEL DO PROFESSOR (ESTRUTURA ROBUSTA)              */
-/* ======================================================= */
-
-/* A própria tela do dashboard é o container flex principal. */
-#teacherDashboard {
-    display: flex;
-    flex-direction: row; /* Layout de colunas lado a lado no desktop */
-    padding: 0;
-    justify-content: flex-start;
-    align-items: stretch;
-}
-
-.sidebar {
-    width: 260px;
-    flex-shrink: 0; /* Impede que a sidebar encolha */
-    background: var(--glass-bg);
-    border-right: 1px solid var(--glass-border);
-    display: flex;
-    flex-direction: column;
-    padding: 1rem 0;
-}
-.sidebar-header { padding: 0 1.5rem 1rem; }
-.sidebar-nav { flex-grow: 1; }
-.sidebar-nav a {
-    display: flex; align-items: center; padding: 1rem 1.5rem; color: var(--text-light);
-    text-decoration: none; font-weight: bold; border-radius: 0 50px 50px 0;
-    margin: 0.5rem 1rem 0.5rem 0; transition: all 0.3s ease; white-space: nowrap;
-}
-.sidebar-nav a.active, .sidebar-nav a:hover {
-    background: linear-gradient(90deg, var(--secondary-color), var(--primary-color));
-}
-.sidebar-nav a i { width: 30px; text-align: center; margin-right: 1rem; font-size: 1.2rem; }
-.sidebar-footer { padding: 1rem; }
-.logout-btn-sidebar {
-    background: none; border: none; font: inherit; color: var(--text-light); width: 100%;
-    padding: 0.8rem 1.5rem; cursor: pointer; display: flex; align-items: center;
-    gap: 1rem; opacity: 0.8; transition: opacity 0.3s; text-align: left;
-}
-.logout-btn-sidebar:hover { opacity: 1; }
-
-
-.main-content {
-    flex: 1; /* ESSENCIAL: Faz o conteúdo principal ocupar todo o espaço restante */
-    display: flex;
-    flex-direction: column;
-    overflow-y: auto; /* Permite rolar o conteúdo principal se ele for maior que a tela */
-    background: transparent; /* Garante que o fundo do body apareça */
-}
-.dashboard-header {
-    background: var(--glass-bg);
-    padding: 1.25rem 2rem;
-    backdrop-filter: blur(var(--glass-blur));
-    border-bottom: 1px solid var(--glass-border);
-    flex-shrink: 0;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-.dashboard-content-area {
-    padding: clamp(1.5rem, 5vw, 2.5rem);
-    flex-grow: 1;
-}
-
-.view-header {
-    display: flex; justify-content: space-between; align-items: center;
-    margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem;
-}
-.classes-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1.5rem; }
-.class-card { display: flex; flex-direction: column; gap: 1rem; }
-.class-card h3 { color: var(--accent-color); }
-.class-card-actions { margin-top: auto; display: flex; gap: 0.5rem; }
-
-/* 7. MODAIS E OUTROS COMPONENTES */
-.modal {
-    position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6);
-    backdrop-filter: blur(5px); display: flex; align-items: center; justify-content: center;
-    z-index: 1000; opacity: 0; visibility: hidden; transition: opacity 0.3s ease;
-}
-.modal.show { opacity: 1; visibility: visible; }
-.modal-content { width: 90%; max-width: 500px; }
-.modal-actions { margin-top: 1.5rem; display: flex; justify-content: flex-end; gap: 0.5rem; }
-.student-item {
-    display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center;
-    padding: 1rem; background: rgba(0,0,0,0.1); border-radius: 8px; margin-bottom: 0.5rem;
-}
-.students-list { max-height: 50vh; overflow-y: auto; }
-
-/* 8. RELATÓRIOS E JOGO */
-.report-section { margin-bottom: 2rem; }
-.game-header { width: 100%; padding: 1rem; display: flex; justify-content: space-between; align-items: center; gap: 1rem; flex-wrap: wrap; }
-.game-content { flex-grow: 1; width: 100%; max-width: 900px; margin: 1rem auto; padding: 2rem; display: flex; flex-direction: column; align-items: center; justify-content: center; }
-.letters-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); gap: 1rem; width: 100%; max-width: 600px; }
-.letter-button { padding: 1.5rem; font-size: 1.8rem; font-weight: bold; border-radius: 1rem; cursor: pointer; border: 2px solid var(--glass-border); background: var(--glass-bg); color: var(--text-light); transition: all 0.2s ease; }
-.letter-button:hover { background: var(--accent-color); border-color: var(--accent-hover); }
-.letter-button.correct { background: var(--success-color); animation: pop 0.3s ease; }
-.letter-button.incorrect { background: var(--danger-color); animation: shake 0.5s ease; }
-
-/* ======================================================= */
-/* 10. RESPONSIVIDADE (MOBILE) - ESTRUTURA FINAL           */
-/* ======================================================= */
-@media (max-width: 768px) {
-    #teacherDashboard {
-        flex-direction: column; /* Conteúdo em cima, menu embaixo */
-    }
-
-    .main-content {
-        order: 1; /* Conteúdo vem primeiro */
-        flex: 1;  /* Ocupa o espaço disponível */
-        min-height: 0; /* Essencial para o flex-box funcionar corretamente em colunas */
-    }
-
-    .sidebar {
-        order: 2; /* Menu vem por último */
-        width: 100%;
-        height: 65px; /* Altura fixa para a barra de navegação */
-        flex-direction: row; /* Ícones lado a lado */
-        align-items: stretch;
-        border-right: none;
-        border-top: 1px solid var(--glass-border);
-        padding: 0.2rem;
-    }
+    <div id="teacherDashboard" class="screen">
+        <div class="dashboard-container">
+            <aside id="dashboardSidebar" class="sidebar">
+                <div class="sidebar-header">
+                    <h3><i class="fas fa-user-cog"></i> Painel</h3>
+                </div>
+                <nav class="sidebar-nav">
+                    <a href="#" id="nav-turmas" class="active" data-view="viewTurmas">
+                        <i class="fas fa-chalkboard"></i>
+                        <span>Minhas Turmas</span>
+                    </a>
+                    <a href="#" id="nav-relatorios" data-view="viewRelatorios">
+                        <i class="fas fa-chart-pie"></i>
+                        <span>Relatórios e Gráficos</span>
+                    </a>
+                    <a href="#" id="nav-config" data-view="viewConfig">
+                        <i class="fas fa-sliders-h"></i>
+                        <span>Configurações</span>
+                    </a>
+                </nav>
+                <div class="sidebar-footer">
+                     <button id="logoutBtnSidebar" class="logout-btn-sidebar" aria-label="Sair da conta">
+                        <i class="fas fa-sign-out-alt"></i> Sair
+                    </button>
+                </div>
+            </aside>
     
-    .sidebar-header { display: none; }
+            <main id="dashboardMainContent" class="main-content">
+                <div class="dashboard-header">
+                    <h1 id="dashboard-title">Minhas Turmas</h1>
+                    <div class="teacher-info">
+                        <span id="teacherName"></span>
+                    </div>
+                </div>
+                
+                <div class="dashboard-content-area">
+                    
+                    <div id="viewTurmas" class="dashboard-view active">
+                        <div class="view-header">
+                            <p>Gerencie suas turmas, adicione alunos e acompanhe o progresso individual.</p>
+                            <button id="showCreateClassModalBtn" class="create-btn"><i class="fas fa-plus"></i> Criar Nova Turma</button>
+                        </div>
+                        <div id="classesList" class="classes-grid">
+                        </div>
+                    </div>
     
-    .sidebar-nav {
-        display: flex; 
-        justify-content: space-around;
-        width: 100%; 
-        align-items: center;
-    }
-
-    .sidebar-nav a {
-        flex-direction: column; 
-        font-size: 0.7rem; 
-        height: 100%;
-        padding: 0.5rem; 
-        margin: 0; 
-        border-radius: 12px;
-        flex: 1; 
-        justify-content: center; 
-        text-align: center;
-    }
-
-    .sidebar-nav a i { font-size: 1.5rem; margin: 0 0 4px 0; }
+                    <div id="viewRelatorios" class="dashboard-view">
+                         <div class="view-header">
+                            <p>Analise o desempenho e as dificuldades de cada turma através de gráficos e relatórios detalhados.</p>
+                        </div>
+                        <div class="report-selector-container" style="margin-bottom: 25px;">
+                            <h4><i class="fas fa-filter"></i> Selecione uma turma para ver os relatórios:</h4>
+                            <select id="reportClassSelector" class="phase-select" style="width: 100%; max-width: 400px; font-size: 1.1rem; padding: 12px; margin-top: 10px;"></select>
+                        </div>
+                        <div id="reportContentContainer" style="display: none;">
+                        </div>
+                    </div>
     
-    .sidebar-footer {
-        display: flex; 
-        flex: 1; 
-        max-width: 25%; 
-        padding: 0;
-        justify-content: center; 
-        align-items: center;
-    }
+                    <div id="viewConfig" class="dashboard-view">
+                         <div class="view-header">
+                            <p>Opções e configurações gerais da sua conta de professor.</p>
+                        </div>
+                         <button id="showAudioSettingsModalBtn" class="create-btn" style="background-color: #5c6bc0;">
+                            <i class="fas fa-microphone-alt"></i> Gerenciar Áudios das Letras
+                        </button>
+                    </div>
     
-    .logout-btn-sidebar {
-        flex-direction: column; 
-        justify-content: center;
-        align-items: center; 
-        height: 100%; 
-        width: 100%; 
-        padding: 0.5rem;
-        margin: 0; 
-        border-radius: 12px; 
-        font-size: 0.7rem;
-        gap: 4px;
-    }
-    .logout-btn-sidebar i { font-size: 1.5rem; margin: 0; }
-}
+                </div>
+            </main>
+        </div>
+    </div>
 
-/* 11. ANIMAÇÕES E UTILITÁRIOS */
-@keyframes pop { 0% { transform: scale(1); } 50% { transform: scale(1.2); } 100% { transform: scale(1.1); } }
-@keyframes shake { 0%, 100% { transform: translateX(0); } 10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); } 20%, 40%, 60%, 80% { transform: translateX(5px); } }
-::-webkit-scrollbar { width: 8px; }
-::-webkit-scrollbar-track { background: var(--scrollbar-track); }
-::-webkit-scrollbar-thumb { background: var(--scrollbar-thumb); border-radius: 10px; }
+    <div id="startScreen" class="screen">
+		<div class="container">
+			<div class="game-title">
+				<h1>🌟 Jogo das Letras 🌟</h1>
+				<p>Vamos aprender o alfabeto juntos!</p>
+			</div>
+			<div class="character-mascot">
+				<div class="mascot bounce">
+					<i class="fas fa-robot"></i>
+				</div>
+				<div class="speech-bubble">
+					<p>Olá! Eu sou o Robô Amigo! Vamos brincar?</p>
+				</div>
+			</div>
+            <div class="student-start-actions">
+                <button id="startButton" class="start-button">
+                    <i class="fas fa-play"></i> Continuar Aventura
+                </button>
+                <button id="startCustomActivityBtn" class="start-button reinforcement" style="display: none;">
+                    <i class="fas fa-star-of-life"></i> Atividade de Reforço
+                </button>
+            </div>
+		</div>
+	</div>
+
+	<div id="gameScreen" class="screen">
+		<div class="game-header">
+			<div class="phase-info">
+				<h2>Fase <span id="currentPhase">1</span></h2>
+				<div class="progress-bar">
+					<div id="progressFill" class="progress-fill"></div>
+				</div>
+			</div>
+			<div class="score-info">
+				<div class="score">
+					<i class="fas fa-star"></i>
+					<span id="score">0</span>/<span id="totalQuestions">0</span>
+				</div>
+				<div class="attempts">
+					<i class="fas fa-heart"></i>
+					<span id="attempts">3</span> tentativas
+				</div>
+			</div>
+            <div class="game-actions">
+                <button id="exitGameButton" class="exit-button" title="Sair do Jogo">
+                    <i class="fas fa-sign-out-alt"></i> Sair
+                </button>
+            </div>
+		</div>
+		<div class="game-content">
+			<div class="question-area">
+				<div class="mascot-helper">
+					<div class="mascot pulse">
+						<i class="fas fa-robot"></i>
+					</div>
+					<div class="speech-bubble" id="helperText">
+						Clique no alto-falante para ouvir o som!
+					</div>
+				</div>
+
+                <div class="audio-section" id="audioQuestionArea">
+					<button id="playAudioButton" class="audio-button" aria-label="Ouvir o som da letra">
+						<i class="fas fa-volume-up"></i>
+						<span>Ouvir Som</span>
+					</button>
+				</div>
+
+                <div id="imageQuestionArea" style="display: none;">
+                    <div class="image-display">
+                        <span id="imageEmoji" class="image-emoji"></span>
+                    </div>
+                    <div id="sentenceBuildArea" class="sentence-build-area"></div>
+                    <h3 id="wordDisplay" class="word-display"></h3>
+                </div>
+
+				<div class="question-text">
+					<h3 id="questionText"></h3>
+				</div>
+			</div>
+            
+            <div id="memoryGameGrid" class="memory-grid"></div>
+			<div class="letters-grid" id="lettersGrid"></div>
+            
+			<div class="game-controls">
+				<button id="repeatAudio" class="control-button">
+					<i class="fas fa-redo"></i> Ouvir Novamente
+				</button>
+				<button id="nextQuestion" class="control-button" style="display: none;">
+					<i class="fas fa-arrow-right"></i> Próxima
+				</button>
+			</div>
+		</div>
+	</div>
+
+	<div id="resultScreen" class="screen">
+		<div class="container">
+			<div class="result-content">
+				<div class="result-icon" id="resultIcon">
+					<i class="fas fa-trophy"></i>
+				</div>
+				<h2 id="resultTitle">Parabéns!</h2>
+				<div class="result-stats">
+					<div class="stat">
+						<i class="fas fa-star"></i>
+						<span>Acertos: <span id="finalScore">0</span></span>
+					</div>
+					<div class="stat">
+						<i class="fas fa-percentage"></i>
+						<span>Precisão: <span id="accuracy">0</span>%</span>
+					</div>
+				</div>
+				<div class="result-message" id="resultMessage">
+					Você conseguiu! Continue assim!
+				</div>
+				<div class="result-actions">
+					<button id="continueButton" class="result-button success" style="display: none;">
+						<i class="fas fa-arrow-right"></i> Próxima Fase
+					</button>
+					<button id="retryButton" class="result-button retry" style="display: none;">
+						<i class="fas fa-redo"></i> Tentar Novamente
+					</button>
+					<button id="restartButton" class="result-button">
+						<i class="fas fa-home"></i> Voltar ao Início
+					</button>
+				</div>
+			</div>
+		</div>
+	</div>
+
+    <div id="globalFeedback" aria-live="polite">
+        <div class="feedback-content">
+            <span class="feedback-icon"></span>
+            <span class="feedback-text"></span>
+        </div>
+    </div>
+
+    <div id="createClassModal" class="modal">
+        <div class="modal-content">
+            <h3>Criar Nova Turma</h3>
+            <form id="createClassForm">
+                <div class="form-group">
+                    <label for="className">Nome da Turma:</label>
+                    <input type="text" id="className" required placeholder="Ex: 1º Ano A">
+                </div>
+                <div class="modal-actions">
+                    <button type="submit" class="modal-btn primary">Criar</button>
+                    <button type="button" class="modal-btn" data-close="createClassModal">Cancelar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="manageClassModal" class="modal">
+        <div class="modal-content large">
+            <h3 id="manageClassTitle">Gerenciar Turma</h3>
+            <div class="modal-tabs">
+                <button class="tab-btn active" data-tab="studentsTab">Alunos</button>
+                <button class="tab-btn" data-tab="studentProgressTab">Progresso</button>
+            </div>
+            <div id="studentsTab" class="tab-content active">
+                <div class="students-section">
+                    <div class="section-header">
+                        <h4>Alunos da Turma</h4>
+                        <button id="showCreateStudentFormBtn" class="create-btn small"><i class="fas fa-plus"></i> Adicionar Aluno</button>
+                    </div>
+                    <div id="createStudentForm" class="create-form" style="display: none;">
+                        <form id="createStudentFormElement">
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="createStudentUsername">Nome do Aluno (usuário):</label>
+                                    <input type="text" id="createStudentUsername" required autocomplete="username">
+                                </div>
+                                <div class="form-group password-group">
+                                    <label for="createStudentPassword">Senha:</label>
+                                    <input type="password" id="createStudentPassword" required autocomplete="new-password">
+                                    <button type="button" id="generatePasswordBtn" class="generate-password-btn" title="Gerar senha automática">
+                                        <i class="fas fa-magic-wand-sparkles"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="form-actions">
+                                <button type="button" id="createStudentSubmitBtn" class="btn primary">Criar Aluno</button>
+                                <button type="button" id="hideCreateStudentFormBtn" class="btn">Cancelar</button>
+                            </div>
+                        </form>
+                    </div>
+                    <div id="studentsList" class="students-list"></div>
+                </div>
+            </div>
+            <div id="studentProgressTab" class="tab-content">
+                <div class="progress-section">
+                    <div class="section-header">
+                        <h4>Relatório de Progresso da Turma</h4>
+                        <div class="sort-buttons">
+                            <span>Ordenar por:</span>
+                            <button class="btn small sort-btn" data-sort="name">
+                                <i class="fas fa-font"></i> Nome
+                            </button>
+                            <button class="btn small sort-btn active" data-sort="last_played">
+                                <i class="fas fa-clock"></i> Último Acesso
+                            </button>
+                        </div>
+                    </div>
+                    <div id="studentProgressList" class="students-list"></div>
+                </div>
+            </div>
+            <div class="modal-actions">
+                <button type="button" class="modal-btn" data-close="manageClassModal">Fechar</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="audioSettingsModal" class="modal">
+        <div class="modal-content large">
+            <h3>Gerenciar Áudios das Letras</h3>
+            <div class="modal-tabs">
+                <button class="tab-btn active" data-tab="uploadFileTab">Enviar Arquivos</button>
+                <button class="tab-btn" data-tab="recordVoiceTab">Gravar com Microfone</button>
+            </div>
+            <div id="uploadFileTab" class="tab-content active">
+                <div class="upload-section">
+                    <p>Envie os arquivos de áudio (.mp3, .wav, .m4a) para cada letra.</p>
+                    <div class="upload-instructions">
+                        <p><i class="fas fa-info-circle"></i> <strong>Nomeie os arquivos exatamente como a letra.</strong> Ex: <code>A.mp3</code></p>
+                    </div>
+                    <div class="upload-area">
+                        <input type="file" id="audioUpload" accept="audio/*" multiple>
+                        <label for="audioUpload" class="upload-label"><i class="fas fa-cloud-upload-alt"></i><span>Clique para selecionar</span></label>
+                    </div>
+                    <div id="uploadStatus"></div>
+                    <button id="uploadAudioBtn" class="modal-btn primary">Enviar Arquivos</button>
+                </div>
+            </div>
+            <div id="recordVoiceTab" class="tab-content">
+                <div class="record-section">
+                    <p>Grave sua voz falando o som de cada letra.</p>
+                    <div class="form-group">
+                        <label for="letterSelect">1. Escolha a Letra para Gravar:</label>
+                        <select id="letterSelect"></select>
+                    </div>
+                    <div class="record-controls">
+                        <button id="recordBtn" class="record-btn" aria-label="Iniciar gravação"><i class="fas fa-microphone"></i> Gravar</button>
+                        <button id="stopBtn" class="stop-btn" disabled aria-label="Parar gravação"><i class="fas fa-stop"></i> Parar</button>
+                        <span id="recordTimer">00:00</span>
+                    </div>
+                    <div class="audio-playback">
+                        <label>2. Ouça a Gravação:</label>
+                        <audio id="audioPlayback" controls></audio>
+                    </div>
+                    <div id="recordStatus"></div>
+                    <button id="saveRecordingBtn" class="modal-btn primary" disabled><i class="fas fa-save"></i> Salvar Gravação</button>
+                </div>
+            </div>
+            <div class="modal-actions">
+                <button type="button" class="modal-btn" data-close="audioSettingsModal">Fechar</button>
+            </div>
+        </div>
+    </div>
+    
+    <div id="tutorialOverlay" class="tutorial-overlay">
+        <div class="tutorial-content">
+            <div id="tutorialMascot" class="mascot">
+                <i class="fas fa-robot"></i>
+            </div>
+            <div class="speech-bubble" id="tutorialText">
+            </div>
+            <button id="closeTutorialBtn" class="start-button">
+                <i class="fas fa-play"></i> Vamos Jogar!
+            </button>
+        </div>
+    </div>
+
+    <div id="studentCreatedModal" class="modal">
+        <div class="modal-content">
+            <h3 style="color: #4ECDC4;"><i class="fas fa-check-circle"></i> Aluno Criado com Sucesso!</h3>
+            <p>Anote os dados de acesso abaixo para entregar ao aluno.</p>
+            <div class="credentials-box">
+                <p><strong>Usuário:</strong> <span id="newStudentUsername"></span></p>
+                <p><strong>Senha:</strong> <span id="newStudentPassword" style="font-weight: bold; color: #764ba2;"></span></p>
+            </div>
+            <div class="modal-actions">
+                <button type="button" id="copyCredentialsBtn" class="modal-btn"><i class="fas fa-copy"></i> Copiar Dados</button>
+                <button type="button" class="modal-btn primary" data-close="studentCreatedModal">Fechar</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="chartModal" class="modal">
+        <div class="modal-content large">
+            <h3 id="chartModalTitle">Visualização Gráfica</h3>
+            <div class="chart-container">
+                <canvas id="myChartCanvas"></canvas>
+            </div>
+            <div class="modal-actions">
+                <button type="button" class="modal-btn" data-close="chartModal">Fechar</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="aiTipsModal" class="modal">
+        <div class="modal-content large">
+            <h3 id="aiTipsTitle"><i class="fas fa-rocket" style="color: #764ba2;"></i> Assistente Pedagógico IA</h3>
+            <div id="aiTipsContent" class="ai-tips-container">
+                </div>
+            <div class="modal-actions">
+                <button type="button" class="modal-btn" data-close="aiTipsModal">Fechar</button>
+            </div>
+        </div>
+    </div>
+
+	<div id="resetPasswordModal" class="modal">
+        <div class="modal-content">
+            <h3 style="color: #764ba2;"><i class="fas fa-key"></i> Senha Redefinida!</h3>
+            <p>A senha do aluno(a) <strong id="resetStudentName" style="color: #2c3e50;"></strong> foi alterada. Anote os novos dados de acesso abaixo.</p>
+            <div class="credentials-box">
+                <p><strong>Nova Senha:</strong> <span id="resetStudentPassword" style="font-weight: bold; font-size: 1.2rem; color: #764ba2;"></span></p>
+            </div>
+            <div class="modal-actions">
+                <button type="button" id="copyResetPasswordBtn" class="modal-btn primary"><i class="fas fa-copy"></i> Copiar Senha</button>
+                <button type="button" class="modal-btn" data-close="resetPasswordModal">Fechar</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
