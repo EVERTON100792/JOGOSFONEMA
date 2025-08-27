@@ -1,8 +1,8 @@
 /* =======================================================
-// JOGO DAS LETRAS 3.1 - DESIGN GLASSMORPHISM (COMPLETO)
+// JOGO DAS LETRAS 4.0 - DESIGN GLASSMORPHISM (REFINADO)
 // Autor: Gemini AI
-// Conceito: Estilo "turvo" que agora cobre 100% dos
-// componentes do HTML, garantindo uma experiência coesa.
+// Foco: Usabilidade, clareza, scroll independente para listas,
+// remoção do mascote e correção de todos os problemas anteriores.
 // ======================================================= */
 
 /* 1. FONTES E VARIÁVEIS GLOBAIS */
@@ -10,21 +10,25 @@
 @import url('https://fonts.googleapis.com/css2?family=Comic+Neue:wght@400;700&display=swap');
 
 :root {
-    --primary-glow: rgba(151, 71, 255, 0.8);
-    --secondary-glow: rgba(102, 126, 234, 0.8);
-    --accent-color: #4ECDC4;
-    --accent-hover: #56e0d5;
-    --success-color: #45b7b8;
-    --danger-color: #ff6b6b;
-    --text-light: #f0f8ff;
-    --text-dark: #2c3e50;
+    --primary-color: #764ba2; /* Roxo */
+    --secondary-color: #667eea; /* Azul */
+    --accent-color: #4ECDC4; /* Aqua */
+    --accent-hover: #56e0d5; /* Aqua mais claro */
+    --success-color: #45b7b8; /* Verde sucesso */
+    --danger-color: #ff6b6b; /* Vermelho perigo */
+    --text-light: #f0f8ff; /* Branco acinzentado */
+    --text-dark: #2c3e50; /* Cinza escuro */
     --font-family: 'Comic Neue', cursive;
 
     /* Estilo Glassmorphism */
-    --glass-bg: rgba(255, 255, 255, 0.15);
-    --glass-border: rgba(255, 255, 255, 0.25);
-    --glass-shadow: rgba(0, 0, 0, 0.1);
-    --glass-blur: 12px;
+    --glass-bg: rgba(255, 255, 255, 0.15); /* Fundo semi-transparente */
+    --glass-border: rgba(255, 255, 255, 0.25); /* Borda mais sutil */
+    --glass-shadow: rgba(0, 0, 0, 0.15); /* Sombra para profundidade */
+    --glass-blur: 12px; /* Efeito de desfoque */
+
+    /* Scrollbars personalizadas */
+    --scrollbar-thumb: rgba(255, 255, 255, 0.4);
+    --scrollbar-track: rgba(255, 255, 255, 0.1);
 }
 
 /* 2. ESTRUTURA E FUNDO ANIMADO */
@@ -38,10 +42,10 @@ body {
     font-family: var(--font-family);
     color: var(--text-light);
     min-height: 100vh;
-    overflow: hidden;
+    overflow: hidden; /* Controlado pelas telas e sub-elementos */
     line-height: 1.6;
 
-    background: linear-gradient(-45deg, #667eea, #764ba2, #23a6d5, #23d5ab);
+    background: linear-gradient(-45deg, var(--secondary-color), var(--primary-color), #23a6d5, #23d5ab);
     background-size: 400% 400%;
     animation: gradientBG 15s ease infinite;
 
@@ -65,7 +69,7 @@ body {
     padding: 1rem;
     width: 100%;
     height: 100%;
-    overflow-y: auto;
+    overflow-y: auto; /* Permite rolagem apenas na tela ativa */
 
     opacity: 0;
     visibility: hidden;
@@ -81,7 +85,9 @@ body {
     transform: scale(1);
 }
 
-#teacherDashboard.screen, #gameScreen.screen {
+/* Telas que não devem centralizar o conteúdo (Dashboard, Jogo) */
+#teacherDashboard.screen,
+#gameScreen.screen {
     justify-content: flex-start;
     padding: 0;
 }
@@ -94,7 +100,25 @@ body {
     padding: 1rem;
 }
 
-/* 4. ESTILO "GLASSMORPHISM" PARA COMPONENTES */
+/* Scrollbar personalizada */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+::-webkit-scrollbar-track {
+    background: var(--scrollbar-track);
+    border-radius: 10px;
+}
+::-webkit-scrollbar-thumb {
+    background: var(--scrollbar-thumb);
+    border-radius: 10px;
+}
+::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.6);
+}
+
+
+/* 4. ESTILO "GLASSMORPHISM" PARA COMPONENTES GENÉRICOS */
 .glass-panel, .login-container, .class-card, .modal-content, .game-header, .game-content, .user-type-btn, .report-section {
     background: var(--glass-bg);
     backdrop-filter: blur(var(--glass-blur));
@@ -114,6 +138,7 @@ body {
 .game-title p {
     font-size: clamp(1.1rem, 3vw, 1.5rem);
     opacity: 0.9;
+    margin-bottom: 2rem;
 }
 
 /* 6. BOTÕES, INPUTS E SELECTS */
@@ -135,6 +160,7 @@ body {
     justify-content: center;
     gap: 0.5rem;
     text-decoration: none;
+    margin-top: 1rem; /* Espaçamento padrão para botões */
 }
 
 .btn:hover, .login-btn:hover, .start-button:hover, .create-btn:hover, .modal-btn:hover, .result-button:hover, .control-button:hover {
@@ -144,7 +170,6 @@ body {
 
 .btn.danger { background: var(--danger-color); box-shadow: 0 4px 15px -5px var(--danger-color); }
 .btn.danger:hover { box-shadow: 0 6px 20px -2px var(--danger-color); }
-
 
 .modal-btn:not(.primary), .back-btn, .register-btn {
     background: var(--glass-bg);
@@ -157,6 +182,16 @@ body {
     box-shadow: 0 0 10px rgba(255, 255, 255, 0.2);
 }
 
+.form-group {
+    margin-bottom: 1.5rem;
+    text-align: left;
+}
+.form-group label {
+    color: var(--text-light);
+    font-weight: bold;
+    display: block;
+    margin-bottom: 0.5rem;
+}
 .form-group input, .phase-select, select {
     width: 100%;
     padding: 0.8rem 1rem;
@@ -166,66 +201,217 @@ body {
     font-family: var(--font-family);
     background: rgba(0, 0, 0, 0.2);
     color: var(--text-light);
+    appearance: none; /* Remove estilo padrão do select */
 }
 .form-group input::placeholder { color: rgba(240, 248, 255, 0.7); }
-.form-group label { color: var(--text-light); font-weight: bold; }
+
+.password-wrapper { position: relative; }
+.password-toggle {
+    position: absolute;
+    right: 1rem;
+    top: 50%;
+    transform: translateY(-50%);
+    cursor: pointer;
+    color: rgba(240, 248, 255, 0.7);
+    font-size: 1.1rem;
+}
 
 
 /* 7. PAINEL DO PROFESSOR (DASHBOARD) */
-.dashboard-container { display: flex; width: 100%; height: 100%; }
+.dashboard-container {
+    display: flex;
+    width: 100%;
+    height: 100%;
+    background-color: transparent;
+}
 
 .sidebar {
     width: 260px;
     background: var(--glass-bg);
     border-right: 1px solid var(--glass-border);
-    display: flex; flex-direction: column; padding: 1rem 0; flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    padding: 1rem 0;
+    flex-shrink: 0;
 }
+.sidebar-header {
+    padding: 1rem;
+    text-align: center;
+    margin-bottom: 1rem;
+}
+.sidebar-header h2 {
+    color: white;
+    text-shadow: 0 0 10px rgba(255,255,255,0.7);
+}
+
+.sidebar-nav { flex-grow: 1; }
 .sidebar-nav a {
-    display: flex; align-items: center; padding: 1rem 1.5rem; color: var(--text-light);
-    text-decoration: none; font-weight: bold; border-radius: 0 50px 50px 0;
-    margin: 0.5rem 1rem 0.5rem 0; transition: all 0.3s ease; position: relative;
+    display: flex;
+    align-items: center;
+    padding: 1rem 1.5rem;
+    color: var(--text-light);
+    text-decoration: none;
+    font-weight: bold;
+    border-radius: 0 50px 50px 0;
+    margin: 0.5rem 1rem 0.5rem 0;
+    transition: all 0.3s ease;
+    position: relative;
 }
 .sidebar-nav a:hover { background: rgba(255,255,255,0.1); text-shadow: 0 0 5px white; }
-.sidebar-nav a.active { background: linear-gradient(90deg, var(--secondary-glow), var(--primary-glow)); box-shadow: 0 0 20px var(--primary-glow); }
-.sidebar-nav a i { width: 30px; text-align: center; margin-right: 1rem; font-size: 1.2rem; }
+.sidebar-nav a.active {
+    background: linear-gradient(90deg, var(--secondary-color), var(--primary-color));
+    box-shadow: 0 0 20px rgba(118, 75, 162, 0.5);
+}
+.sidebar-nav a i {
+    width: 30px;
+    text-align: center;
+    margin-right: 1rem;
+    font-size: 1.2rem;
+}
 
-.sidebar-footer { margin-top: auto; padding: 1rem; }
+.sidebar-footer {
+    margin-top: auto;
+    padding: 1rem;
+    border-top: 1px solid var(--glass-border);
+}
+/* ✅ BOTÃO DE SAIR VISÍVEL NO DESKTOP */
 .logout-btn-sidebar {
     background: none; border: none; font: inherit; color: var(--text-light);
-    width: 100%; padding: 0.5rem; cursor: pointer;
+    width: 100%; padding: 0.8rem 1.5rem; cursor: pointer;
     display: flex; align-items: center; gap: 1rem;
-    opacity: 0.8; transition: opacity 0.3s;
+    opacity: 0.8; transition: opacity 0.3s, color 0.3s;
+    border-radius: 50px; text-align: left;
 }
-.logout-btn-sidebar:hover { opacity: 1; color: var(--danger-color); }
+.logout-btn-sidebar:hover { opacity: 1; color: var(--danger-color); background: rgba(255,255,255,0.1); }
+.logout-btn-sidebar i { font-size: 1.2rem; }
 
-.main-content { flex-grow: 1; overflow-y: auto; display: flex; flex-direction: column; }
+
+.main-content {
+    flex-grow: 1;
+    overflow-y: auto; /* Permite rolagem apenas no conteúdo principal */
+    display: flex;
+    flex-direction: column;
+}
 
 .dashboard-header {
-    background: var(--glass-bg); padding: 1.25rem 2rem;
-    backdrop-filter: blur(var(--glass-blur)); border-bottom: 1px solid var(--glass-border);
+    background: var(--glass-bg);
+    padding: 1.25rem 2rem;
+    backdrop-filter: blur(var(--glass-blur));
+    border-bottom: 1px solid var(--glass-border);
+    text-align: left;
 }
-.dashboard-header h1 { text-shadow: 0 0 10px var(--primary-glow); }
+.dashboard-header h1 {
+    color: white;
+    text-shadow: 0 0 10px var(--primary-color);
+    margin-bottom: 0.5rem;
+}
+.dashboard-header p {
+    font-size: 0.95rem;
+    opacity: 0.8;
+}
 
 .dashboard-content-area {
     padding: clamp(1rem, 5vw, 2.5rem);
-    display: grid; grid-template-areas: "stack"; flex-grow: 1;
+    display: grid;
+    grid-template-areas: "stack";
+    flex-grow: 1;
 }
 .dashboard-view {
-    grid-area: stack; opacity: 0; visibility: hidden;
+    grid-area: stack;
+    opacity: 0;
+    visibility: hidden;
     transition: opacity 0.3s ease-in-out;
+    width: 100%;
+    height: 100%;
+    overflow-y: auto; /* ✅ Garante rolagem independente para cada VIEW */
 }
-.dashboard-view.active { opacity: 1; visibility: visible; }
+.dashboard-view.active {
+    opacity: 1;
+    visibility: visible;
+}
 
-.classes-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1.5rem; }
+.view-header {
+    margin-bottom: 2rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 1rem;
+    color: white;
+}
+.view-header h2 {
+    font-size: clamp(1.8rem, 4vw, 2.5rem);
+    text-shadow: 0 0 8px rgba(255,255,255,0.5);
+}
 
+
+/* Minhas Turmas View */
+.classes-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 1.5rem;
+}
 .class-card {
-    transition: transform 0.3s ease, box-shadow 0.3s ease; text-align: left;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    text-align: left;
+    color: var(--text-light);
+    display: flex;
+    flex-direction: column;
 }
-.class-card:hover { transform: translateY(-5px) scale(1.02); box-shadow: 0 12px 40px var(--glass-shadow), 0 0 15px var(--primary-glow); }
-.class-card h3 { color: white; }
-.class-card .student-count { background: rgba(0,0,0,0.2); border-radius: 20px; padding: 0.3rem 0.8rem; }
-.class-card-actions { margin-top: 1rem; display: flex; gap: 0.5rem; }
-.class-card-actions .btn { padding: 0.6rem 1.2rem; font-size: 0.9rem; }
+.class-card:hover {
+    transform: translateY(-5px) scale(1.02);
+    box-shadow: 0 12px 40px var(--glass-shadow), 0 0 15px var(--primary-color);
+}
+.class-card h3 { color: white; margin-bottom: 0.5rem; }
+.class-card .student-count { background: rgba(0,0,0,0.2); border-radius: 20px; padding: 0.3rem 0.8rem; font-size: 0.9rem; margin-bottom: 1rem; display: inline-block; }
+.class-card-actions { margin-top: auto; display: flex; gap: 0.5rem; flex-wrap: wrap; justify-content: flex-end;}
+.class-card-actions .btn { padding: 0.6rem 1.2rem; font-size: 0.9rem; margin-top: 0; }
+.class-card-actions .btn:first-child { margin-right: auto; } /* Ajuste para o botão Gerenciar */
+
+
+/* Relatórios e Gráficos View */
+.reports-overview {
+    margin-bottom: 2rem;
+    padding: 1.5rem;
+    border-radius: 1rem;
+    background: rgba(0, 0, 0, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+.reports-overview p { margin-bottom: 1rem; opacity: 0.9; }
+
+.report-section {
+    margin-bottom: 2rem;
+    text-align: left;
+    color: var(--text-light);
+}
+.report-section h3 {
+    color: white;
+    text-shadow: 0 0 5px rgba(255,255,255,0.7);
+    margin-bottom: 1rem;
+}
+.report-section p { color: var(--text-light); opacity: 0.9; margin-bottom: 0.5rem; }
+
+/* Estilos para a lista de erros/acertos (se houver um div para elas) */
+.report-details-list {
+    background: rgba(0, 0, 0, 0.1);
+    border-radius: 8px;
+    padding: 1rem;
+    max-height: 400px; /* Limita a altura da lista */
+    overflow-y: auto; /* ✅ SCROLL ESPECÍFICO PARA A LISTA */
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+.report-details-item {
+    padding: 0.8rem 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+.report-details-item:last-child { border-bottom: none; }
+.report-details-item strong { color: var(--accent-color); }
+
+.heatmap-item { display: flex; align-items: center; gap: 1rem; padding: 0.5rem; border-radius: 8px; margin-bottom: 0.5rem; }
+.item-label { font-weight: bold; font-size: 1.2rem; width: 80px; }
+.item-details { flex-grow: 1; }
+.item-bar-container { width: 100%; background: rgba(0,0,0,0.2); height: 10px; border-radius: 5px; overflow: hidden; }
+.item-bar { height: 100%; background: linear-gradient(90deg, var(--accent-hover), var(--danger-color)); border-radius: 5px; }
 
 
 /* 8. MODAIS E SEUS COMPONENTES INTERNOS */
@@ -241,7 +427,7 @@ body {
     color: var(--text-light); text-align: left;
 }
 .modal-content.large { max-width: 800px; }
-.modal-content h3 { color: white; text-shadow: 0 0 8px var(--primary-glow); margin-bottom: 1.5rem; }
+.modal-content h3 { color: white; text-shadow: 0 0 8px var(--primary-color); margin-bottom: 1.5rem; }
 
 .modal-tabs { display: flex; gap: 0.5rem; margin-bottom: 1.5rem; border-bottom: 1px solid var(--glass-border); }
 .tab-btn {
@@ -258,29 +444,47 @@ body {
     border-radius: 8px;
     padding: 1rem;
     margin: 1rem 0;
+    border: 1px solid rgba(255, 255, 255, 0.1);
 }
 .credentials-box strong { color: var(--accent-color); }
+.student-list {
+    max-height: 300px; /* Limita a altura da lista de alunos no modal */
+    overflow-y: auto; /* ✅ SCROLL ESPECÍFICO PARA A LISTA DE ALUNOS */
+    padding-right: 10px; /* Espaço para a barra de rolagem */
+}
+.student-item {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 0.8rem 0; border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+.student-item:last-child { border-bottom: none; }
 
 
 /* 9. TELA DO JOGO */
-.game-header { margin: 1rem; color: var(--text-light); }
+.game-header { margin: 1rem; color: var(--text-light); text-align: center; }
+.game-header h2 { text-shadow: 0 0 10px rgba(255,255,255,0.7); margin-bottom: 0.5rem; }
+
 .game-content {
     width: calc(100% - 2rem); max-width: 800px; margin: 0 auto 1rem auto;
     flex-grow: 1; color: var(--text-light); text-align: center;
 }
-.game-content h3 { text-shadow: 0 0 5px white; }
+.game-content h3 { text-shadow: 0 0 5px white; margin-bottom: 1.5rem;}
 
 .audio-button {
     background: var(--glass-bg); border: 2px solid var(--glass-border);
     width: 80px; height: 80px; border-radius: 50%;
     color: white; font-size: 2rem; cursor: pointer;
     display: flex; align-items: center; justify-content: center;
-    transition: all 0.3s ease; margin: 0 auto 1rem auto;
+    transition: all 0.3s ease; margin: 0 auto 1.5rem auto;
+    box-shadow: 0 0 15px rgba(255,255,255,0.3);
 }
-.audio-button:hover { background: rgba(255,255,255,0.4); transform: scale(1.1); box-shadow: 0 0 15px white; }
+.audio-button:hover { background: rgba(255,255,255,0.4); transform: scale(1.1); box-shadow: 0 0 25px white; }
 
-.word-display { font-size: 2.5rem; font-weight: bold; letter-spacing: 4px; }
-.image-emoji { font-size: 5rem; }
+.word-display { font-size: 2.5rem; font-weight: bold; letter-spacing: 4px; margin-bottom: 1rem; }
+.image-emoji {
+    font-size: 5rem;
+    margin-bottom: 1.5rem;
+    /* ✅ REMOÇÃO DO ROBÔ: As animações de mascote foram removidas daqui */
+}
 
 .letters-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(80px, 1fr)); gap: 1rem; margin-top: 1.5rem; }
 .letter-button {
@@ -295,46 +499,51 @@ body {
 .letter-button.incorrect { background: var(--danger-color); border-color: var(--danger-color); color: #fff; animation: shake 0.5s ease; }
 
 
-/* 10. RELATÓRIOS */
-.report-section { margin-bottom: 2rem; text-align: left; }
-.report-section p { color: var(--text-light); opacity: 0.9; }
-.heatmap-item { display: flex; align-items: center; gap: 1rem; padding: 0.5rem; border-radius: 8px; margin-bottom: 0.5rem; }
-.item-label { font-weight: bold; font-size: 1.2rem; width: 80px; }
-.item-details { flex-grow: 1; }
-.item-bar-container { width: 100%; background: rgba(0,0,0,0.2); height: 10px; border-radius: 5px; overflow: hidden; }
-.item-bar { height: 100%; background: linear-gradient(90deg, var(--accent-hover), var(--danger-color)); border-radius: 5px; }
-
-
-/* 11. RESPONSIVO: PAINEL MOBILE COMPLETO */
+/* 10. RESPONSIVO: PAINEL MOBILE COMPLETO */
 @media (max-width: 768px) {
     body { overflow-y: auto; }
-    #teacherDashboard { padding-bottom: 75px; }
+    #teacherDashboard { padding-bottom: 75px; } /* Espaço para a nav bar inferior */
 
     .sidebar {
         position: fixed; bottom: 0; left: 0; width: 100%; height: auto;
         flex-direction: row; border-right: none; border-top: 1px solid var(--glass-border);
         padding: 0.5rem; z-index: 1000; backdrop-filter: blur(20px);
     }
-    .sidebar-header, .sidebar-footer { display: none; }
-    .sidebar-nav { flex-grow: 1; display: flex; justify-content: space-around; margin-top: 0; width: 100%; }
+    .sidebar-header { display: none; } /* Esconde o cabeçalho no mobile */
+    .sidebar-nav {
+        flex-grow: 1; display: flex; justify-content: space-around; margin-top: 0; width: 100%;
+        align-items: center; /* Centraliza os itens na barra */
+    }
 
-    /* ✅ BOTÃO DE SAIR CORRIGIDO E INTEGRADO */
+    /* ✅ ITENS DA NAV BAR MOBILE (incluindo o botão de SAIR) */
     .sidebar-nav a, .logout-btn-sidebar-mobile {
         flex-direction: column; font-size: 0.7rem; height: 60px; padding: 0.5rem;
         margin: 0; border-radius: 12px; flex: 1; justify-content: center; text-align: center;
         background: none; border: none; color: var(--text-light); font-family: var(--font-family);
-        cursor: pointer;
+        cursor: pointer; opacity: 0.8; transition: opacity 0.3s, background 0.3s;
     }
+    .sidebar-nav a:hover, .logout-btn-sidebar-mobile:hover { opacity: 1; background: rgba(255,255,255,0.1); }
     .sidebar-nav a i, .logout-btn-sidebar-mobile i { font-size: 1.5rem; margin: 0 0 4px 0; }
-    .sidebar-nav a.active { background: rgba(255,255,255,0.2); box-shadow: none; }
+    .sidebar-nav a.active { background: rgba(255,255,255,0.2); box-shadow: none; opacity: 1; }
+
+    .logout-btn-sidebar { display: none; } /* Esconde o botão de sair lateral no mobile */
+    .logout-btn-sidebar-mobile { display: flex; } /* Mostra o botão de sair na barra inferior */
+
+
+    .dashboard-header { padding: 1rem; text-align: center; }
+    .dashboard-header h1 { font-size: 1.8rem; }
+    .dashboard-header p { display: none; } /* Opcional: esconder descrição no mobile */
+
+    .view-header { flex-direction: column; align-items: flex-start; }
+    .view-header .btn { width: 100%; }
+
+    .class-card-actions { justify-content: space-between; }
+    .class-card-actions .btn { flex-grow: 1; }
 }
 
 
-/* 12. ANIMAÇÕES */
-@keyframes gradientBG { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
+/* 11. ANIMAÇÕES (REFINADAS E ONDE SÃO RELEVANTES) */
 @keyframes titleGlow { from { text-shadow: 0 0 15px rgba(255, 255, 255, 0.5); } to { text-shadow: 0 0 30px rgba(255, 255, 255, 1); } }
-@keyframes bounce { 0%, 20%, 50%, 80%, 100% { transform: translateY(0); } 40% { transform: translateY(-30px); } 60% { transform: translateY(-15px); } }
-@keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.1); } 100% { transform: scale(1); } }
 @keyframes pop { 0% { transform: scale(1); } 50% { transform: scale(1.2); } 100% { transform: scale(1.1); } }
 @keyframes shake { 0%, 100% { transform: translateX(0); } 10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); } 20%, 40%, 60%, 80% { transform: translateX(5px); } }
 
@@ -347,8 +556,9 @@ body {
     display: flex; align-items: center; gap: 1rem;
     background: var(--glass-bg); backdrop-filter: blur(var(--glass-blur));
     border: 1px solid var(--glass-border); box-shadow: 0 8px 32px 0 var(--glass-shadow);
+    color: white;
 }
 #globalFeedback.show { transform: translateX(-50%) translateY(0); }
-#globalFeedback.success { background: rgba(78, 205, 196, 0.7); }
-#globalFeedback.error { background: rgba(255, 107, 107, 0.7); }
-#globalFeedback.info { background: rgba(102, 126, 234, 0.7); }
+#globalFeedback.success { background: rgba(78, 205, 196, 0.7); border-color: rgba(255,255,255,0.4); }
+#globalFeedback.error { background: rgba(255, 107, 107, 0.7); border-color: rgba(255,255,255,0.4); }
+#globalFeedback.info { background: rgba(102, 126, 234, 0.7); border-color: rgba(255,255,255,0.4); }
