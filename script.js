@@ -2,6 +2,7 @@
 // JOGO DAS LETRAS - SCRIPT FINAL E COMPLETO
 // Inclui: Correção de bugs de lógica de resposta nas fases
 // E Correção do comportamento de recarregamento da página
+// E Correção da lógica de resposta da Fase 2
 // =======================================================
 
 
@@ -156,9 +157,6 @@ async function initApp() {
     setupAllEventListeners();
     const studentSession = sessionStorage.getItem('currentUser');
     
-    // =========================================================================
-    // CORREÇÃO - Início: Lógica de recarregamento de página
-    // =========================================================================
     if (studentSession) {
         currentUser = JSON.parse(studentSession);
         // Em vez de forçar o início do jogo, mostramos a tela inicial do aluno.
@@ -168,23 +166,6 @@ async function initApp() {
     } else {
         // A checagem de sessão do professor ou tela de login continua a mesma.
         await checkSession();
-    }
-    // =========================================================================
-    // CORREÇÃO - Fim
-    // =========================================================================
-}
-
-async function restoreOrStartGame() {
-    await loadGameState();
-    if (gameState.phaseCompleted) {
-        const accuracy = gameState.questions.length > 0 ? Math.round((gameState.score / gameState.questions.length) * 100) : 100;
-        showResultScreen(accuracy, true);
-    } else if (gameState.attempts <= 0) {
-        const accuracy = gameState.questions.length > 0 ? Math.round((gameState.score / gameState.questions.length) * 100) : 0;
-        showResultScreen(accuracy, false);
-    } else {
-        showScreen('gameScreen');
-        startQuestion();
     }
 }
 
@@ -416,11 +397,24 @@ function generateQuestions(phase) {
         case 1:
             questions = Array.from({ length: questionCount }, (_, i) => { const vowel = VOWELS[i % VOWELS.length]; return { type: 'letter_sound', correctAnswer: vowel, options: generateOptions(vowel, VOWELS, 4) }; }).sort(() => 0.5 - Math.random());
             break;
+        
+        // =========================================================================
+        // CORREÇÃO FASE 2 - Início
+        // =========================================================================
         case 2:
-            questions = shuffleAndTake(PHASE_2_WORDS, questionCount).map(item => ({ type: 'initial_vowel', ...item, options: generateOptions(item.vowel, VOWELS, 4) }));
+            questions = shuffleAndTake(PHASE_2_WORDS, questionCount).map(item => ({
+                type: 'initial_vowel',
+                ...item,
+                correctAnswer: item.vowel, // Adicionado para padronizar a verificação da resposta
+                options: generateOptions(item.vowel, VOWELS, 4)
+            }));
             break;
+        // =========================================================================
+        // CORREÇÃO FASE 2 - Fim
+        // =========================================================================
+
         case 3:
-            questions = shuffleAndTake(PHASE_3_ENCONTROS, questionCount).map(item => ({ type: 'vowel_encounter', ...item, options: generateOptions(item.encontro, VOWEL_ENCOUNTERS, 4) }));
+            questions = shuffleAndTake(PHASE_3_ENCONTROS, questionCount).map(item => ({ type: 'vowel_encounter', ...item, correctAnswer: item.encontro, options: generateOptions(item.encontro, VOWEL_ENCOUNTERS, 4) }));
             break;
         case 4:
             questions = shuffleAndTake(PHASE_4_WORDS_F, questionCount).map(item => ({ ...item, options: item.options.sort(() => 0.5 - Math.random()) }));
@@ -540,7 +534,7 @@ function renderOptions(options) { const lettersGrid = document.getElementById('l
 function renderWordOptions(options) { const lettersGrid = document.getElementById('lettersGrid'); lettersGrid.style.display = 'grid'; lettersGrid.innerHTML = options.map(option => `<button class="word-option-button">${option}</button>`).join(''); lettersGrid.querySelectorAll('.word-option-button').forEach(btn => { btn.addEventListener('click', () => selectWordForSentence(btn)); }); }
 function selectWordForSentence(buttonElement) { buttonElement.disabled = true; buttonElement.classList.add('disabled'); const sentenceBuildArea = document.getElementById('sentenceBuildArea'); const wordSpan = document.createElement('span'); wordSpan.className = 'sentence-word'; wordSpan.textContent = buttonElement.textContent; sentenceBuildArea.appendChild(wordSpan); const allButtons = document.querySelectorAll('.word-option-button'); const allDisabled = Array.from(allButtons).every(btn => btn.disabled); if (allDisabled) { const constructedSentence = Array.from(sentenceBuildArea.children).map(span => span.textContent).join(' '); selectAnswer(constructedSentence); } }
 function handleSequenceClick(buttonElement) { const letter = buttonElement.textContent; buttonElement.disabled = true; buttonElement.classList.add('disabled'); gameState.sequenceGame.userSequence.push(letter); const { userSequence, correctSequence } = gameState.sequenceGame; const currentIndex = userSequence.length - 1; if (userSequence[currentIndex] !== correctSequence[currentIndex]) { gameState.attempts--; updateUI(); showFeedback('Ops, ordem errada! Tente de novo.', 'error'); if (gameState.attempts <= 0) { setTimeout(endPhase, 1500); } else { setTimeout(() => { document.querySelectorAll('#lettersGrid .letter-button').forEach(btn => { btn.disabled = false; btn.classList.remove('disabled'); }); gameState.sequenceGame.userSequence = []; }, 1500); } return; } if (userSequence.length === correctSequence.length) { gameState.score++; updateUI(); showFeedback('Sequência correta!', 'success'); document.getElementById('nextQuestion').style.display = 'block'; } }
-async function selectAnswer(selectedAnswer) { const q = gameState.questions[gameState.currentQuestionIndex]; if (!q) return; if (['alphabet_order'].includes(q.type)) return; document.querySelectorAll('.letter-button, .word-option-button, .sound-detective-button').forEach(btn => btn.disabled = true); const isCorrect = selectedAnswer === q.correctAnswer; if (q.type === 'build_sentence') { const sentenceArea = document.getElementById('sentenceBuildArea'); if (isCorrect) { sentenceArea.style.borderColor = '#4ECDC4'; sentenceArea.style.backgroundColor = 'rgba(78, 205, 196, 0.1)'; } else { sentenceArea.style.borderColor = '#ff6b6b'; sentenceArea.style.backgroundColor = 'rgba(255, 107, 107, 0.1)'; } } else { document.querySelectorAll('.letter-button, .word-option-button, .sound-detective-button').forEach(btn => { const btnIdentifier = btn.dataset.sound || btn.textContent; if (btnIdentifier === q.correctAnswer) { btn.classList.add('correct'); } if (!isCorrect && btnIdentifier === selectedAnswer) { btn.classList.add('incorrect'); } }); } if (isCorrect) { gameState.score++; showFeedback('Muito bem!', 'success'); playTeacherAudio('feedback_correct', 'Acertou'); if (q.type !== 'letter_sound' && q.type !== 'build_sentence' && q.type !== 'count_words') { document.getElementById('wordDisplay').textContent = q.word || q.initialWord; } } else { gameState.attempts--; logStudentError({ question: q, selectedAnswer: selectedAnswer }).catch(console.error); showFeedback(`Quase! A resposta correta era "${q.correctAnswer}"`, 'error'); playTeacherAudio('feedback_incorrect', 'Tente de novo'); } updateUI(); await saveGameState(); if (gameState.attempts <= 0) { setTimeout(endPhase, 2000); } else { document.getElementById('nextQuestion').style.display = 'block'; } }
+async function selectAnswer(selectedAnswer) { const q = gameState.questions[gameState.currentQuestionIndex]; if (!q) return; if (['alphabet_order'].includes(q.type)) return; document.querySelectorAll('.letter-button, .word-option-button, .sound-detective-button').forEach(btn => btn.disabled = true); const isCorrect = selectedAnswer === q.correctAnswer; if (q.type === 'build_sentence') { const sentenceArea = document.getElementById('sentenceBuildArea'); if (isCorrect) { sentenceArea.style.borderColor = '#4ECDC4'; sentenceArea.style.backgroundColor = 'rgba(78, 205, 196, 0.1)'; } else { sentenceArea.style.borderColor = '#ff6b6b'; sentenceArea.style.backgroundColor = 'rgba(255, 107, 107, 0.1)'; } } else { document.querySelectorAll('.letter-button, .word-option-button, .sound-detective-button').forEach(btn => { const btnIdentifier = btn.dataset.sound || btn.textContent; if (btnIdentifier === q.correctAnswer) { btn.classList.add('correct'); } if (!isCorrect && btnIdentifier === selectedAnswer) { btn.classList.add('incorrect'); } }); } if (isCorrect) { gameState.score++; showFeedback('Muito bem!', 'success'); playTeacherAudio('feedback_correct', 'Acertou'); if (q.type !== 'letter_sound' && q.type !== 'build_sentence' && q.type !== 'count_words') { document.getElementById('wordDisplay').textContent = q.word || q.initialWord || q.correctAnswer; } } else { gameState.attempts--; logStudentError({ question: q, selectedAnswer: selectedAnswer }).catch(console.error); showFeedback(`Quase! A resposta correta era "${q.correctAnswer}"`, 'error'); playTeacherAudio('feedback_incorrect', 'Tente de novo'); } updateUI(); await saveGameState(); if (gameState.attempts <= 0) { setTimeout(endPhase, 2000); } else { document.getElementById('nextQuestion').style.display = 'block'; } }
 function nextQuestion() { gameState.currentQuestionIndex++; startQuestion(); }
 function endPhase() { const accuracy = gameState.questions.length > 0 ? Math.round((gameState.score / gameState.questions.length) * 100) : 0; const passed = accuracy >= 70; if (!gameState.isCustomActivity) { logPhaseCompletionToHistory(accuracy); } else { clearAssignedActivity(); } showResultScreen(accuracy, passed); }
 async function clearAssignedActivity() { await supabaseClient.from('students').update({ assigned_activity: null }).eq('id', currentUser.id); currentUser.assigned_activity = null; sessionStorage.setItem('currentUser', JSON.stringify(currentUser)); }
@@ -792,10 +786,10 @@ function generateSingleQuestionFromError(errorTemplate) {
             return { type: 'letter_sound', correctAnswer: errorTemplate.correct_answer, options: generateOptions(errorTemplate.correct_answer, VOWELS, 4) };
         case 2:
             const wordData2 = PHASE_2_WORDS.find(w => w.vowel === errorTemplate.correct_answer) || PHASE_2_WORDS[Math.floor(Math.random() * PHASE_2_WORDS.length)];
-            return { type: 'initial_vowel', ...wordData2, options: generateOptions(wordData2.vowel, VOWELS, 4) };
+            return { type: 'initial_vowel', ...wordData2, correctAnswer: wordData2.vowel, options: generateOptions(wordData2.vowel, VOWELS, 4) };
         case 3:
             const wordData3 = PHASE_3_ENCONTROS.find(w => w.encontro === errorTemplate.correct_answer) || PHASE_3_ENCONTROS[Math.floor(Math.random() * PHASE_3_ENCONTROS.length)];
-            return { type: 'vowel_encounter', ...wordData3, options: generateOptions(wordData3.encontro, VOWEL_ENCOUNTERS, 4) };
+            return { type: 'vowel_encounter', ...wordData3, correctAnswer: wordData3.encontro, options: generateOptions(wordData3.encontro, VOWEL_ENCOUNTERS, 4) };
         case 4:
             const wordData4 = PHASE_4_WORDS_F.find(w => w.correctAnswer === errorTemplate.correct_answer) || PHASE_4_WORDS_F[Math.floor(Math.random() * PHASE_4_WORDS_F.length)];
             return { ...wordData4, options: [...wordData4.options].sort(() => 0.5 - Math.random()) };
