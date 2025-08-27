@@ -1,6 +1,6 @@
 // =======================================================
 // JOGO DAS LETRAS - SCRIPT FINAL E COMPLETO
-// Inclui: Correção de performance na inicialização da voz
+// Inclui: Correções de bugs de lógica de resposta e UI nas fases
 // =======================================================
 
 // PARTE 1: CONFIGURAÇÃO INICIAL E SUPABASE
@@ -61,10 +61,8 @@ function formatErrorMessage(error) { if (!error || !error.message) { return 'Oco
 // BLOCO DE INICIALIZAÇÃO DE VOZ - CORRIGIDO PARA PERFORMANCE
 // =========================================================================
 let speechPromise = null;
-
 function initializeSpeech() {
     if (speechPromise) return speechPromise;
-
     speechPromise = new Promise((resolve, reject) => {
         const setVoice = () => {
             const voices = speechSynthesis.getVoices();
@@ -76,57 +74,26 @@ function initializeSpeech() {
                 resolve();
             }
         };
-
-        if (speechSynthesis.getVoices().length > 0) {
-            setVoice();
-        } else {
-            speechSynthesis.addEventListener('voiceschanged', setVoice);
-        }
-
-        setTimeout(() => reject(new Error("Timeout: Vozes não carregaram a tempo.")), 3000);
+        if (speechSynthesis.getVoices().length > 0) { setVoice(); } else { speechSynthesis.addEventListener('voiceschanged', setVoice); }
+        setTimeout(() => { if (!speechReady) reject(new Error("Timeout: Vozes não carregaram a tempo.")); }, 3000);
     }).catch(error => {
         console.warn(error.message, "Usando a primeira voz disponível como fallback.");
         if (!speechReady) {
             const voices = speechSynthesis.getVoices();
-            if(voices.length > 0) {
-                selectedVoice = voices[0];
-                speechReady = true;
-            } else {
-                console.error("Nenhuma voz de sistema disponível.");
-            }
+            if(voices.length > 0) { selectedVoice = voices[0]; speechReady = true; } else { console.error("Nenhuma voz de sistema disponível."); }
         }
     });
-
     return speechPromise;
 }
-
 async function speak(text, onEndCallback) {
-    if (!window.speechSynthesis) {
-        console.error("API de Síntese de Voz não suportada.");
-        return;
-    }
-    
-    if (!speechReady) {
-        await initializeSpeech();
-    }
-    
-    if (!speechReady) {
-        console.error("Não foi possível inicializar a narração. A função 'speak' será desativada.");
-        if(onEndCallback) onEndCallback();
-        return;
-    }
-    
+    if (!window.speechSynthesis) { console.error("API de Síntese de Voz não suportada."); return; }
+    if (!speechReady) { await initializeSpeech(); }
+    if (!speechReady) { console.error("Não foi possível inicializar a narração. A função 'speak' será desativada."); if(onEndCallback) onEndCallback(); return; }
     speechSynthesis.cancel();
     const utterance = new SpeechSynthesisUtterance(text);
     utterance.lang = 'pt-BR';
-    if(selectedVoice) {
-        utterance.voice = selectedVoice;
-    }
-    
-    if (onEndCallback) {
-        utterance.onend = onEndCallback;
-    }
-    
+    if(selectedVoice) { utterance.voice = selectedVoice; }
+    if (onEndCallback) { utterance.onend = onEndCallback; }
     speechSynthesis.speak(utterance);
 }
 // =========================================================================
@@ -138,7 +105,6 @@ async function restoreOrStartGame() { await loadGameState(); if (gameState.phase
 function setupAllEventListeners() { document.querySelectorAll('.user-type-btn').forEach(btn => btn.addEventListener('click', (e) => { const type = e.currentTarget.getAttribute('data-type'); if (type === 'teacher') showScreen('teacherLoginScreen'); else if (type === 'student') showScreen('studentLoginScreen'); })); document.querySelectorAll('.back-btn').forEach(btn => btn.addEventListener('click', (e) => { const targetScreen = e.currentTarget.getAttribute('data-target'); showScreen(targetScreen); })); document.getElementById('showRegisterBtn').addEventListener('click', () => showScreen('teacherRegisterScreen')); document.getElementById('showLoginBtn').addEventListener('click', () => showScreen('teacherLoginScreen')); document.getElementById('teacherLoginForm')?.addEventListener('submit', handleTeacherLogin); document.getElementById('teacherRegisterForm')?.addEventListener('submit', handleTeacherRegister); document.getElementById('studentLoginForm')?.addEventListener('submit', handleStudentLogin); document.getElementById('showCreateClassModalBtn').addEventListener('click', () => showModal('createClassModal')); document.getElementById('showAudioSettingsModalBtn').addEventListener('click', showAudioSettingsModal); document.getElementById('createClassForm')?.addEventListener('submit', handleCreateClass); document.getElementById('showCreateStudentFormBtn').addEventListener('click', showCreateStudentForm); document.getElementById('hideCreateStudentFormBtn').addEventListener('click', hideCreateStudentForm); document.getElementById('createStudentSubmitBtn')?.addEventListener('click', handleCreateStudent); document.getElementById('startButton')?.addEventListener('click', startGame); document.getElementById('startCustomActivityBtn')?.addEventListener('click', startCustomActivity); document.getElementById('playAudioButton')?.addEventListener('click', playCurrentAudio); document.getElementById('repeatAudio')?.addEventListener('click', playCurrentAudio); document.getElementById('nextQuestion')?.addEventListener('click', nextQuestion); document.getElementById('continueButton')?.addEventListener('click', nextPhase); document.getElementById('retryButton')?.addEventListener('click', retryPhase); document.getElementById('restartButton')?.addEventListener('click', restartGame); document.getElementById('exitGameButton')?.addEventListener('click', handleExitGame); document.querySelectorAll('[data-close]').forEach(btn => { btn.addEventListener('click', () => closeModal(btn.getAttribute('data-close'))); }); document.querySelectorAll('#manageClassModal .tab-btn').forEach(btn => { btn.addEventListener('click', (e) => showTab(e.currentTarget)); }); document.getElementById('uploadAudioBtn')?.addEventListener('click', handleAudioUpload); document.getElementById('recordBtn')?.addEventListener('click', startRecording); document.getElementById('stopBtn')?.addEventListener('click', stopRecording); document.getElementById('saveRecordingBtn')?.addEventListener('click', saveRecording); document.getElementById('closeTutorialBtn')?.addEventListener('click', hideTutorial); document.getElementById('copyCredentialsBtn')?.addEventListener('click', handleCopyCredentials); document.getElementById('copyResetPasswordBtn')?.addEventListener('click', handleCopyResetPassword); document.querySelectorAll('.password-toggle').forEach(toggle => { toggle.addEventListener('click', () => { const passwordInput = toggle.previousElementSibling; const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password'; passwordInput.setAttribute('type', type); toggle.classList.toggle('fa-eye-slash'); }); }); document.querySelectorAll('.sort-btn').forEach(btn => { btn.addEventListener('click', (e) => { const sortBy = e.currentTarget.dataset.sort; document.querySelectorAll('.sort-btn').forEach(b => b.classList.remove('active')); e.currentTarget.classList.add('active'); renderStudentProgress(sortBy); }); }); document.getElementById('reportClassSelector').addEventListener('change', handleReportClassSelection); }
 
 // PARTE 5: AUTENTICAÇÃO E SESSÃO
-// ... (O restante do código é idêntico ao da última versão, você pode copiar a partir daqui se preferir, ou substituir o arquivo inteiro)
 async function checkSession() { const { data: { session } } = await supabaseClient.auth.getSession(); if (session && session.user) { currentUser = session.user; if (currentUser.user_metadata.role === 'teacher') { await showTeacherDashboard(); } else { await logout(); } } else { showScreen('userTypeScreen'); } }
 async function handleTeacherLogin(e) { e.preventDefault(); const button = e.target.querySelector('button[type="submit"]'); const originalText = button.innerHTML; button.disabled = true; button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Entrando...'; const email = document.getElementById('teacherEmail').value; const password = document.getElementById('teacherPassword').value; try { const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password }); if (error) throw error; currentUser = data.user; await showTeacherDashboard(); showFeedback('Login realizado com sucesso!', 'success'); } catch (error) { showFeedback(formatErrorMessage(error), 'error'); } finally { button.disabled = false; button.innerHTML = originalText; } }
 async function handleTeacherRegister(e) { e.preventDefault(); const button = e.target.querySelector('button[type="submit"]'); const originalText = button.innerHTML; button.disabled = true; button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Cadastrando...'; const name = document.getElementById('teacherRegName').value; const email = document.getElementById('teacherRegEmail').value; const password = document.getElementById('teacherRegPassword').value; try { const { data, error } = await supabaseClient.auth.signUp({ email, password, options: { data: { full_name: name, role: 'teacher' } } }); if (error) throw error; showFeedback('Cadastro realizado! Link de confirmação enviado para seu e-mail.', 'success'); showScreen('teacherLoginScreen'); } catch (error) { showFeedback(formatErrorMessage(error), 'error'); } finally { button.disabled = false; button.innerHTML = originalText; } }
@@ -185,8 +151,41 @@ async function showTeacherDashboard() { showScreen('teacherDashboard'); await lo
 function handleSidebarClick(event) { event.preventDefault(); const viewId = event.currentTarget.dataset.view; showDashboardView(viewId); }
 function showDashboardView(viewId) { document.querySelectorAll('.dashboard-view').forEach(view => { view.classList.remove('active'); }); const activeView = document.getElementById(viewId); if (activeView) { activeView.classList.add('active'); } document.querySelectorAll('.sidebar-nav a').forEach(link => { link.classList.remove('active'); if (link.dataset.view === viewId) { link.classList.add('active'); } }); const linkText = document.querySelector(`.sidebar-nav a[data-view="${viewId}"] span`).textContent; document.getElementById('dashboard-title').textContent = linkText; if (viewId === 'viewRelatorios') { populateReportClassSelector(); } }
 async function loadTeacherData() { if (!currentUser) return; document.getElementById('teacherName').textContent = currentUser.user_metadata.full_name || 'Professor(a)'; const audioSettingsButton = document.getElementById('showAudioSettingsModalBtn'); if (currentUser.id === SUPER_ADMIN_TEACHER_ID) { audioSettingsButton.style.display = 'block'; } else { audioSettingsButton.style.display = 'none'; } await loadTeacherClasses(); }
-async function loadTeacherClasses() { const { data, error } = await supabaseClient.from('classes').select('*, students(count)').eq('teacher_id', currentUser.id); if (error) { console.error('Erro ao carregar turmas:', error); return; } renderClasses(data); }
-function renderClasses(classes) { const container = document.getElementById('classesList'); if (!classes || classes.length === 0) { container.innerHTML = '<p>Nenhuma turma criada ainda.</p>'; return; } container.innerHTML = classes.map(cls => { const studentCount = cls.students[0]?.count || 0; return ` <div class="class-card"> <h3>${cls.name}</h3> <span class="student-count">👥 ${studentCount} aluno(s)</span> <div class="class-card-actions"> <button class="btn primary" onclick="manageClass('${cls.id}', '${cls.name.replace(/'/g, "\\'")}')">Gerenciar</button> <button class="btn danger" onclick="handleDeleteClass('${cls.id}', '${cls.name.replace(/'/g, "\\'")}')" title="Excluir Turma"> <i class="fas fa-trash"></i> </button> </div> </div>`; }).join(''); }
+async function loadTeacherClasses() {
+    const { data, error } = await supabaseClient
+        .from('classes')
+        .select('*, students(count)')
+        .eq('teacher_id', currentUser.id);
+    if (error) {
+        console.error('Erro ao carregar turmas:', error);
+        return;
+    }
+    renderClasses(data);
+}
+function renderClasses(classes) {
+    const container = document.getElementById('classesList');
+    if (!classes || classes.length === 0) {
+        container.innerHTML = '<p>Nenhuma turma criada ainda.</p>';
+        return;
+    }
+    container.innerHTML = classes.map(cls => {
+        // CORREÇÃO: Lógica mais segura para ler a contagem de alunos
+        const studentCount = (cls.students && cls.students.length > 0 && typeof cls.students[0].count === 'number') 
+            ? cls.students[0].count 
+            : 0;
+        return `
+            <div class="class-card">
+                <h3>${cls.name}</h3>
+                <span class="student-count">👥 ${studentCount} aluno(s)</span>
+                <div class="class-card-actions">
+                    <button class="btn primary" onclick="manageClass('${cls.id}', '${cls.name.replace(/'/g, "\\'")}')">Gerenciar</button>
+                    <button class="btn danger" onclick="handleDeleteClass('${cls.id}', '${cls.name.replace(/'/g, "\\'")}')" title="Excluir Turma">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+            </div>`;
+    }).join('');
+}
 async function handleCreateClass(e) { e.preventDefault(); const name = document.getElementById('className').value; if (!name) return; const { error } = await supabaseClient.from('classes').insert([{ name, teacher_id: currentUser.id }]); if (error) { showFeedback(`Erro: ${error.message}`, 'error'); return; } closeModal('createClassModal'); await loadTeacherClasses(); showFeedback('Turma criada com sucesso!', 'success'); document.getElementById('createClassForm').reset(); }
 async function handleDeleteClass(classId, className) { if (!confirm(`ATENÇÃO! Deseja excluir a turma "${className}"?\nTODOS os alunos e progressos serão apagados.`)) return; const { error } = await supabaseClient.from('classes').delete().eq('id', classId); if (error) { showFeedback(`Erro: ${error.message}`, 'error'); } else { showFeedback(`Turma "${className}" excluída.`, 'success'); await loadTeacherClasses(); } }
 async function manageClass(classId, className) { currentClassId = classId; document.getElementById('manageClassTitle').textContent = `Gerenciar: ${className}`; const modal = document.getElementById('manageClassModal'); modal.querySelectorAll('.tab-btn').forEach(btn => { const tabId = btn.dataset.tab; if (!btn.getAttribute('data-listener')) { btn.setAttribute('data-listener', 'true'); btn.addEventListener('click', () => { if (tabId === 'studentsTab') loadClassStudents(); else if (tabId === 'studentProgressTab') loadStudentProgress(); }); } }); showTab(document.querySelector('#manageClassModal .tab-btn[data-tab="studentsTab"]')); await loadClassStudents(); showModal('manageClassModal'); }
@@ -202,6 +201,7 @@ function handleCopyCredentials() { const username = document.getElementById('new
 function handleCopyResetPassword() { const password = document.getElementById('resetStudentPassword').textContent; navigator.clipboard.writeText(password).then(() => { showFeedback('Nova senha copiada!', 'success'); }).catch(() => { showFeedback('Erro ao copiar a senha.', 'error'); }); }
 
 // PARTE 7: ÁUDIO
+// ... (O restante do código é idêntico ao da última versão)
 async function handleAudioUpload() { const files = document.getElementById('audioUpload').files; if (files.length === 0) return; const uploadStatus = document.getElementById('uploadStatus'); uploadStatus.innerHTML = `<p><i class="fas fa-spinner fa-spin"></i> Enviando...</p>`; let successCount = 0, errorCount = 0; for (const file of files) { const fileName = file.name.split('.').slice(0, -1).join('.').toUpperCase(); const filePath = `${currentUser.id}/${fileName}.${file.name.split('.').pop()}`; try { const { error } = await supabaseClient.storage.from('audio_uploads').upload(filePath, file, { upsert: true }); if (error) throw error; successCount++; } catch (error) { console.error(`Erro no upload:`, error); errorCount++; } } uploadStatus.innerHTML = `<p style="color: green;">${successCount} enviados!</p>`; if (errorCount > 0) { uploadStatus.innerHTML += `<p style="color: red;">Falha em ${errorCount}.</p>`; } }
 async function startRecording() { const recordBtn = document.getElementById('recordBtn'), stopBtn = document.getElementById('stopBtn'), statusEl = document.getElementById('recordStatus'); recordBtn.disabled = true; statusEl.textContent = 'Pedindo permissão...'; try { const stream = await navigator.mediaDevices.getUserMedia({ audio: true }); audioChunks = []; mediaRecorder = new MediaRecorder(stream, { mimeType: 'audio/webm' }); mediaRecorder.addEventListener('dataavailable', e => audioChunks.push(e.data)); mediaRecorder.addEventListener('stop', () => { const audioBlob = new Blob(audioChunks, { type: 'audio/webm' }); const audioUrl = URL.createObjectURL(audioBlob); document.getElementById('audioPlayback').src = audioUrl; document.getElementById('saveRecordingBtn').disabled = false; stream.getTracks().forEach(track => track.stop()); }); mediaRecorder.start(); statusEl.textContent = 'Gravando...'; stopBtn.disabled = false; startTimer(); } catch (err) { console.error("Erro ao gravar:", err); alert("Não foi possível gravar. Verifique as permissões."); statusEl.textContent = 'Falha.'; recordBtn.disabled = false; } }
 function stopRecording() { if (mediaRecorder?.state === 'recording') { mediaRecorder.stop(); stopTimer(); document.getElementById('recordBtn').disabled = false; document.getElementById('stopBtn').disabled = true; document.getElementById('recordStatus').textContent = 'Parado.'; } }
@@ -246,24 +246,22 @@ async function saveGameState() { if (!currentUser || currentUser.type !== 'stude
 function generateQuestions(phase) {
     let questions = [];
     const questionCount = 10;
-    
     const shuffleAndTake = (arr, num) => [...arr].sort(() => 0.5 - Math.random()).slice(0, num);
-
     switch (phase) {
         case 1:
             questions = Array.from({ length: questionCount }, (_, i) => { const vowel = VOWELS[i % VOWELS.length]; return { type: 'letter_sound', correctAnswer: vowel, options: generateOptions(vowel, VOWELS, 4) }; }).sort(() => 0.5 - Math.random());
             break;
         case 2:
-            questions = shuffleAndTake(PHASE_2_WORDS, questionCount).map(item => ({ type: 'initial_vowel', ...item, options: generateOptions(item.vowel, VOWELS, 4) }));
+            questions = shuffleAndTake(PHASE_2_WORDS, questionCount).map(item => ({ type: 'initial_vowel', correctAnswer: item.vowel, ...item, options: generateOptions(item.vowel, VOWELS, 4) }));
             break;
         case 3:
-            questions = shuffleAndTake(PHASE_3_ENCONTROS, questionCount).map(item => ({ type: 'vowel_encounter', ...item, options: generateOptions(item.encontro, VOWEL_ENCOUNTERS, 4) }));
+            questions = shuffleAndTake(PHASE_3_ENCONTROS, questionCount).map(item => ({ type: 'vowel_encounter', correctAnswer: item.encontro, ...item, options: generateOptions(item.encontro, VOWEL_ENCOUNTERS, 4) }));
             break;
         case 4:
             questions = shuffleAndTake(PHASE_4_WORDS_F, questionCount).map(item => ({ ...item, options: item.options.sort(() => 0.5 - Math.random()) }));
             break;
         case 5:
-            questions = shuffleAndTake(PHASE_5_SOUND_PAIRS, questionCount).map(item => ({ type: 'sound_detective', image: item.image, correctAnswer: item.correct, options: [item.correct, item.incorrect].sort(() => 0.5 - Math.random()) }));
+            questions = shuffleAndTake(PHASE_5_SOUND_PAIRS, questionCount).map(item => ({ type: 'sound_detective', image: item.image, word: item.word, correctAnswer: item.correct, options: [item.correct, item.incorrect].sort(() => 0.5 - Math.random()) }));
             break;
         case 6:
             questions = shuffleAndTake(PHASE_6_SYLLABLE_COUNT, questionCount).map(item => ({ type: 'count_syllables', ...item, correctAnswer: item.syllables.toString(), options: generateOptions(item.syllables.toString(), ['1', '2', '3', '4'], 4) }));
@@ -421,6 +419,7 @@ async function loadAndDisplayClassReports(classId) {
     renderClassHeatmap(errors, 'classHeatmapContainer');
     renderIndividualReports(students, errors, 'individualReportsContainer');
 }
+
 function renderClassHeatmap(errors, containerId) {
     const heatmapContainer = document.getElementById(containerId);
     const sectionHeader = heatmapContainer.closest('.report-section').querySelector('h4');
@@ -525,7 +524,7 @@ async function showEvolutionChart(studentId, studentName) {
 async function generateAndAssignActivity(studentId, studentName) {
     showFeedback(`Gerando atividade para ${studentName}...`, 'info');
     const { data: studentErrors, error } = await supabaseClient.from('student_errors').select('*').eq('student_id', studentId).order('created_at', { ascending: false }).limit(20);
-    if (error || studentErrors.length < 1) { 
+    if (error || !studentErrors || studentErrors.length < 1) { 
         showFeedback(`O aluno ${studentName} não tem erros recentes para gerar uma atividade.`, 'error');
         return;
     }
@@ -544,7 +543,7 @@ async function generateAndAssignActivity(studentId, studentName) {
         }
         safeguard++;
     }
-    if (customQuestions.length === 0) { 
+    if (customQuestions.length < 1) { 
         showFeedback(`Não foi possível gerar atividade (erros de fases complexas).`, 'error');
         return;
     }
@@ -559,16 +558,16 @@ function generateSingleQuestionFromError(errorTemplate) {
             return { type: 'letter_sound', correctAnswer: errorTemplate.correct_answer, options: generateOptions(errorTemplate.correct_answer, VOWELS, 4) };
         case 2:
             const wordData2 = PHASE_2_WORDS.find(w => w.word === errorTemplate.question_details?.word) || PHASE_2_WORDS.find(w => w.vowel === errorTemplate.correct_answer) || PHASE_2_WORDS[Math.floor(Math.random()*PHASE_2_WORDS.length)];
-            return { type: 'initial_vowel', ...wordData2, options: generateOptions(wordData2.vowel, VOWELS, 4) };
+            return { type: 'initial_vowel', correctAnswer: wordData2.vowel, ...wordData2, options: generateOptions(wordData2.vowel, VOWELS, 4) };
         case 3:
             const wordData3 = PHASE_3_ENCONTROS.find(w => w.encontro === errorTemplate.correct_answer) || PHASE_3_ENCONTROS[Math.floor(Math.random() * PHASE_3_ENCONTROS.length)];
-            return { type: 'vowel_encounter', ...wordData3, options: generateOptions(wordData3.encontro, VOWEL_ENCOUNTERS, 4) };
+            return { type: 'vowel_encounter', correctAnswer: wordData3.encontro, ...wordData3, options: generateOptions(wordData3.encontro, VOWEL_ENCOUNTERS, 4) };
         case 4:
             const wordData4 = PHASE_4_WORDS_F.find(w => w.correctAnswer === errorTemplate.correct_answer) || PHASE_4_WORDS_F[Math.floor(Math.random() * PHASE_4_WORDS_F.length)];
             return { ...wordData4, options: [...wordData4.options].sort(() => 0.5 - Math.random()) };
         case 5:
             const pairData = PHASE_5_SOUND_PAIRS.find(p => p.correct === errorTemplate.correct_answer) || PHASE_5_SOUND_PAIRS[Math.floor(Math.random() * PHASE_5_SOUND_PAIRS.length)];
-            return { type: 'sound_detective', image: pairData.image, correctAnswer: pairData.correct, options: [pairData.correct, pairData.incorrect].sort(() => 0.5 - Math.random()) };
+            return { type: 'sound_detective', image: pairData.image, word: pairData.word, correctAnswer: pairData.correct, options: [pairData.correct, pairData.incorrect].sort(() => 0.5 - Math.random()) };
         case 6:
             const syllableData = PHASE_6_SYLLABLE_COUNT.find(p => p.syllables.toString() === errorTemplate.correct_answer) || PHASE_6_SYLLABLE_COUNT[Math.floor(Math.random() * PHASE_6_SYLLABLE_COUNT.length)];
             return { type: 'count_syllables', ...syllableData, correctAnswer: syllableData.syllables.toString(), options: generateOptions(syllableData.syllables.toString(), ['1','2','3','4'], 4) };
