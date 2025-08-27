@@ -1,6 +1,6 @@
 // =======================================================
 // JOGO DAS LETRAS - SCRIPT FINAL E COMPLETO
-// Inclui: Correções de UI nas Fases 3 e 5
+// Inclui: Correções de UI nas Fases 3, 4 e 5, e consistência de 4 opções
 // =======================================================
 
 // PARTE 1: CONFIGURAÇÃO INICIAL E SUPABASE
@@ -390,12 +390,11 @@ function renderPhase3UI(q) {
     document.getElementById('lettersGrid').style.display = 'grid';
     document.getElementById('imageEmoji').textContent = q.image;
     const wordDisplay = document.getElementById('wordDisplay');
-    // CORREÇÃO: Lógica de substituição mais robusta para palavras curtas e com acentos
     const index = q.word.indexOf(q.correctAnswer);
     if (index !== -1) {
         wordDisplay.textContent = q.word.substring(0, index) + '__' + q.word.substring(index + q.correctAnswer.length);
     } else {
-        wordDisplay.textContent = q.word.replace(q.correctAnswer, '__'); // Fallback
+        wordDisplay.textContent = q.word.replace(q.correctAnswer, '__');
     }
     document.getElementById('questionText').textContent = 'Qual encontro de vogais completa a palavra?';
     renderOptions(q.options);
@@ -404,14 +403,13 @@ function renderPhase4UI(q) {
     document.getElementById('imageQuestionArea').style.display = 'block';
     document.getElementById('lettersGrid').style.display = 'grid';
     document.getElementById('imageEmoji').textContent = q.image;
-    // CORREÇÃO: Não mostrar a palavra completa em questões de 'full_word'
     if (q.type === 'full_word') {
         document.getElementById('wordDisplay').textContent = '?';
         document.getElementById('questionText').textContent = 'Qual é o nome desta figura?';
     } else if (q.type === 'initial_syllable') {
         document.getElementById('wordDisplay').textContent = `__${q.word.substring(q.correctAnswer.length)}`;
         document.getElementById('questionText').textContent = 'Qual sílaba começa esta palavra?';
-    } else { // middle_syllable
+    } else {
         document.getElementById('wordDisplay').textContent = q.word.replace(q.correctAnswer, '__');
         document.getElementById('questionText').textContent = 'Qual sílaba completa esta palavra?';
     }
@@ -429,13 +427,11 @@ function renderPhase5UI_SoundDetective(q) {
             <span>${option}</span>
         </button>
     `).join('');
-    // CORREÇÃO: Adiciona um listener que diferencia clique no ícone e no texto
     lettersGrid.querySelectorAll('.sound-detective-button').forEach(btn => {
         btn.addEventListener('click', (event) => {
-            // Se o alvo do clique foi o ícone, apenas toca o som
             if (event.target.tagName === 'I') {
                 speak(btn.dataset.sound);
-            } else { // Se o clique foi em qualquer outra área (o texto ou o fundo do botão), seleciona a resposta
+            } else {
                 selectAnswer(btn.dataset.sound);
             }
         });
@@ -656,26 +652,43 @@ async function showEvolutionChart(studentId, studentName) {
 async function generateAndAssignActivity(studentId, studentName) {
     showFeedback(`Gerando atividade para ${studentName}...`, 'info');
     const { data: studentErrors, error } = await supabaseClient.from('student_errors').select('*').eq('student_id', studentId).order('created_at', { ascending: false }).limit(20);
-    if (error || studentErrors.length < 3) { showFeedback(`Não há erros suficientes para gerar uma atividade para ${studentName}.`, 'error'); return; }
+    
+    // CORREÇÃO: Reduzido o número mínimo de erros de 3 para 1.
+    if (error || !studentErrors || studentErrors.length < 1) { 
+        showFeedback(`O aluno ${studentName} não tem erros recentes para gerar uma atividade.`, 'error');
+        return;
+    }
+
     const errorCounts = studentErrors.reduce((acc, err) => { const key = `${err.question_type}|${err.correct_answer}`; if (!acc[key]) { acc[key] = { count: 0, question: err }; } acc[key].count++; return acc; }, {});
     const topErrors = Object.values(errorCounts).sort((a, b) => b.count - a.count);
     let customQuestions = [], usedQuestions = new Set();
     const questionCount = 10;
-    for (const errorDetail of topErrors) { if (customQuestions.length >= questionCount) break; const q = generateSingleQuestionFromError(errorDetail.question); if (q && !usedQuestions.has(q.correctAnswer)) { customQuestions.push(q); usedQuestions.add(q.correctAnswer); } }
+    
+    for (const errorDetail of topErrors) { if (customQuestions.length >= questionCount) break; const q = generateSingleQuestionFromError(errorDetail.question); if (q && !usedQuestions.has(JSON.stringify(q))) { customQuestions.push(q); usedQuestions.add(JSON.stringify(q)); } }
+    
     let safeguard = 0;
     while (customQuestions.length < questionCount && topErrors.length > 0 && safeguard < 50) {
         const qTemplate = topErrors[Math.floor(Math.random() * topErrors.length)].question;
         const q = generateSingleQuestionFromError(qTemplate);
-        if (q && !usedQuestions.has(q.correctAnswer)) { customQuestions.push(q); usedQuestions.add(q.correctAnswer); }
+        if (q && !usedQuestions.has(JSON.stringify(q))) {
+            customQuestions.push(q);
+            usedQuestions.add(JSON.stringify(q));
+        }
         safeguard++;
     }
-    if (customQuestions.length < 5) { showFeedback(`Não foi possível gerar uma atividade focada para ${studentName}.`, 'error'); return; }
+
+    if (customQuestions.length === 0) { 
+        showFeedback(`Não foi possível gerar uma atividade focada para ${studentName} (erros de fases complexas).`, 'error');
+        return;
+    }
+
     const activity = { questions: customQuestions.sort(() => 0.5 - Math.random()) };
     const { error: updateError } = await supabaseClient.from('students').update({ assigned_activity: activity }).eq('id', studentId);
     if (updateError) { showFeedback(`Erro ao designar atividade: ${updateError.message}`, 'error'); } else { showFeedback(`Atividade de reforço enviada para ${studentName}!`, 'success'); }
 }
 function generateSingleQuestionFromError(errorTemplate) {
     const phase = parseInt(errorTemplate.phase);
+    // CORREÇÃO: Lógica expandida para ser mais robusta
     switch(phase) {
         case 1:
             return { type: 'letter_sound', correctAnswer: errorTemplate.correct_answer, options: generateOptions(errorTemplate.correct_answer, VOWELS, 4) };
@@ -687,17 +700,19 @@ function generateSingleQuestionFromError(errorTemplate) {
             return { type: 'vowel_encounter', ...wordData3, options: generateOptions(wordData3.encontro, VOWEL_ENCOUNTERS, 4) };
         case 4:
             const wordData4 = PHASE_4_WORDS_F.find(w => w.correctAnswer === errorTemplate.correct_answer) || PHASE_4_WORDS_F[Math.floor(Math.random() * PHASE_4_WORDS_F.length)];
-            return { ...wordData4, options: wordData4.options.sort(() => 0.5 - Math.random()) };
+            return { ...wordData4, options: [...wordData4.options].sort(() => 0.5 - Math.random()) };
         case 5:
             const pairData = PHASE_5_SOUND_PAIRS.find(p => p.correct === errorTemplate.correct_answer) || PHASE_5_SOUND_PAIRS[Math.floor(Math.random() * PHASE_5_SOUND_PAIRS.length)];
             return { type: 'sound_detective', image: pairData.image, correctAnswer: pairData.correct, options: [pairData.correct, pairData.incorrect].sort(() => 0.5 - Math.random()) };
         case 6:
             const syllableData = PHASE_6_SYLLABLE_COUNT.find(p => p.syllables.toString() === errorTemplate.correct_answer) || PHASE_6_SYLLABLE_COUNT[Math.floor(Math.random() * PHASE_6_SYLLABLE_COUNT.length)];
-            return { type: 'count_syllables', ...syllableData, correctAnswer: syllableData.syllables.toString(), options: generateOptions(syllableData.syllables.toString(), ['1','2','3','4','5'], 4) };
+            return { type: 'count_syllables', ...syllableData, correctAnswer: syllableData.syllables.toString(), options: generateOptions(syllableData.syllables.toString(), ['1','2','3','4'], 4) };
         case 7:
             const wordCountData = PHASE_7_SENTENCES_COUNT.find(p => p.words.toString() === errorTemplate.correct_answer) || PHASE_7_SENTENCES_COUNT[Math.floor(Math.random() * PHASE_7_SENTENCES_COUNT.length)];
             return { type: 'count_words', ...wordCountData, correctAnswer: wordCountData.words.toString(), options: generateOptions(wordCountData.words.toString(), ['2','3','4','5'], 4) };
-        default: return null;
+        // Fases 8, 9, 10 são muito complexas para recriar a partir de um único erro, então retornamos null.
+        default: 
+            return null;
     }
 }
 async function checkForCustomActivities() {
