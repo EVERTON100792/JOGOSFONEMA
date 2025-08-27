@@ -588,3 +588,23 @@ input::placeholder { color: rgba(255, 255, 255, 0.7); }
     margin: 0 auto;
     opacity: 0.9;
 }
+/* ======================================================= */
+/* CORREÇÃO FINAL PARA VISUALIZAÇÃO DOS RELATÓRIOS NO CELULAR */
+/* ======================================================= */
+
+@media (max-width: 768px) {
+    /* Diminui a margem entre os painéis para economizar espaço */
+    .report-section {
+        margin-bottom: 1rem;
+    }
+
+    /* Reduz a altura máxima do painel do Mapa de Calor no celular */
+    .all-phases-scroll-container {
+        max-height: 35vh; /* Antes era 45vh */
+    }
+
+    /* Reduz a altura máxima do painel da Lista de Alunos no celular */
+    .individual-reports-container {
+        max-height: 38vh; /* Antes era 50vh */
+    }
+}
