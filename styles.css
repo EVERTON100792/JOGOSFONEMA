@@ -458,3 +458,52 @@ input[type="file"] { display: none; }
 .sidebar-header {
     display: none !important;
 }
+/* =======================================================
+// 13. ESTILOS PARA NOTIFICAÇÃO GLOBAL (FEEDBACK TOAST)
+// Este código corrige a posição da mensagem "Login realizado..."
+// ======================================================= */
+
+#globalFeedback {
+    position: fixed; /* Faz a mensagem flutuar sobre todo o conteúdo */
+    top: 30px; /* Distância do topo da tela */
+    left: 50%; /* Centraliza na horizontal */
+    transform: translate(-50%, -100px); /* Move para o centro e para cima (fora da tela) */
+    
+    background: var(--glass-bg);
+    color: var(--text-light);
+    padding: 1rem 2rem;
+    border-radius: 50px;
+    border: 1px solid var(--glass-border);
+    box-shadow: 0 8px 32px 0 var(--glass-shadow);
+    backdrop-filter: blur(var(--glass-blur));
+    
+    z-index: 2000; /* Garante que fique na frente de tudo */
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transition: opacity 0.4s ease, transform 0.4s ease;
+}
+
+#globalFeedback.show {
+    opacity: 1;
+    visibility: visible;
+    transform: translate(-50%, 0); /* Move para a posição final, visível */
+}
+
+/* Cores para os tipos de feedback */
+#globalFeedback.success {
+    background: rgba(78, 205, 196, 0.6); /* Tom de verde */
+    border-color: var(--accent-color);
+}
+
+#globalFeedback.error {
+    background: rgba(255, 107, 107, 0.6); /* Tom de vermelho */
+    border-color: var(--danger-color);
+}
+
+.feedback-content {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-weight: bold;
+}
