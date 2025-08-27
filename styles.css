@@ -341,21 +341,84 @@ input::placeholder { color: rgba(255, 255, 255, 0.7); }
 
 
 /* 8. RELATÓRIOS */
-.report-section { margin-bottom: 2rem; }
-.heatmap-item { display: flex; align-items: center; margin-bottom: 0.5rem; }
-.item-label { font-weight: bold; width: 80px; text-align: right; margin-right: 1rem; }
-.item-details { flex-grow: 1; }
-.item-bar-container { background: rgba(0,0,0,0.2); border-radius: 5px; height: 1.2rem; }
-.item-bar { background: linear-gradient(90deg, #ffafbd, var(--danger-color)); height: 100%; border-radius: 5px; }
-.student-report-item { cursor: pointer; transition: background-color 0.2s; }
-.student-report-item:hover { background: rgba(0,0,0,0.2); }
+.report-section { 
+    margin-bottom: 2rem; 
+}
+
+/* NOVO: Contêiner para o Mapa de Calor com Scroll */
+.all-phases-scroll-container {
+    max-height: 45vh; /* Define uma altura máxima (45% da altura da tela) */
+    overflow-y: auto; /* Adiciona o scroll vertical SE necessário */
+    padding: 1rem;
+    background: rgba(0, 0, 0, 0.1);
+    border-radius: 12px;
+    border: 1px solid var(--glass-border);
+}
+
+.heatmap-item { 
+    display: flex; 
+    align-items: center; 
+    margin-bottom: 0.75rem; /* Aumentei um pouco o espaçamento */
+}
+.item-label { 
+    font-weight: bold; 
+    width: 80px; 
+    text-align: right; 
+    margin-right: 1rem; 
+}
+.item-details { 
+    flex-grow: 1; 
+}
+.item-bar-container { 
+    background: rgba(0,0,0,0.2); 
+    border-radius: 5px; 
+    height: 1.2rem; 
+    margin-top: 4px;
+}
+.item-bar { 
+    background: linear-gradient(90deg, #ffafbd, var(--danger-color)); 
+    height: 100%; 
+    border-radius: 5px; 
+}
+.heatmap-selections {
+    font-size: 0.85rem;
+    opacity: 0.9;
+}
+
+/* NOVO: Contêiner para a Lista de Alunos com Scroll */
+.individual-reports-container {
+    max-height: 50vh; /* Define uma altura máxima */
+    overflow-y: auto; /* Adiciona o scroll vertical SE necessário */
+    padding-right: 5px; /* Espaço para a barra de rolagem */
+}
+
+.student-report-item { 
+    cursor: pointer; 
+    transition: background-color 0.2s; 
+    display: flex; /* Adicionado para melhor alinhamento */
+    justify-content: space-between; /* Adicionado para melhor alinhamento */
+    align-items: center; /* Adicionado para melhor alinhamento */
+    padding: 1rem; 
+    background: rgba(0,0,0,0.1);
+    border-radius: 8px; 
+    margin-bottom: 0.5rem;
+}
+.student-report-item:hover { 
+    background: rgba(0,0,0,0.2); 
+}
 .student-errors-details {
     background: rgba(0,0,0,0.2);
     border-radius: 0 0 8px 8px;
     margin: -8px 0 8px 0;
     padding: 1rem;
+    animation: fadeIn 0.4s;
 }
-.student-details-actions { margin-top: 1rem; display: flex; gap: 0.5rem; flex-wrap: wrap; }
+.student-details-actions { 
+    margin-top: 1rem; 
+    display: flex; 
+    gap: 0.5rem; 
+    flex-wrap: wrap; 
+}
 .ai-btn {
     background: linear-gradient(145deg, #8e44ad, #9b59b6);
     box-shadow: 0 4px 15px -5px #8e44ad;
