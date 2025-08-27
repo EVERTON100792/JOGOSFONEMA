@@ -345,7 +345,7 @@ input::placeholder { color: rgba(255, 255, 255, 0.7); }
     margin-bottom: 2rem; 
 }
 
-/* NOVO: Contêiner para o Mapa de Calor com Scroll */
+/* Contêiner para o Mapa de Calor com Scroll */
 .all-phases-scroll-container {
     max-height: 45vh; /* Define uma altura máxima (45% da altura da tela) */
     overflow-y: auto; /* Adiciona o scroll vertical SE necessário */
@@ -358,7 +358,7 @@ input::placeholder { color: rgba(255, 255, 255, 0.7); }
 .heatmap-item { 
     display: flex; 
     align-items: center; 
-    margin-bottom: 0.75rem; /* Aumentei um pouco o espaçamento */
+    margin-bottom: 0.75rem;
 }
 .item-label { 
     font-weight: bold; 
@@ -385,7 +385,7 @@ input::placeholder { color: rgba(255, 255, 255, 0.7); }
     opacity: 0.9;
 }
 
-/* NOVO: Contêiner para a Lista de Alunos com Scroll */
+/* Contêiner para a Lista de Alunos com Scroll */
 .individual-reports-container {
     max-height: 50vh; /* Define uma altura máxima */
     overflow-y: auto; /* Adiciona o scroll vertical SE necessário */
@@ -395,9 +395,9 @@ input::placeholder { color: rgba(255, 255, 255, 0.7); }
 .student-report-item { 
     cursor: pointer; 
     transition: background-color 0.2s; 
-    display: flex; /* Adicionado para melhor alinhamento */
-    justify-content: space-between; /* Adicionado para melhor alinhamento */
-    align-items: center; /* Adicionado para melhor alinhamento */
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
     padding: 1rem; 
     background: rgba(0,0,0,0.1);
     border-radius: 8px; 
@@ -488,10 +488,10 @@ input::placeholder { color: rgba(255, 255, 255, 0.7); }
         width: 100%;
         height: auto;
         flex-direction: row; /* Itens lado a lado */
+        align-items: stretch; /* Garante que os filhos preencham a altura */
         border-right: none;
         border-top: 1px solid var(--glass-border);
         padding: 0.2rem;
-        position: static; /* Remove posicionamento fixo */
         flex-shrink: 0;
     }
     .sidebar-header { display: none; }
@@ -509,24 +509,53 @@ input::placeholder { color: rgba(255, 255, 255, 0.7); }
     .sidebar-nav a i { font-size: 1.5rem; margin: 0 0 4px 0; }
     .sidebar-nav a span { white-space: normal; }
 
-    /* Botão de Sair no Mobile */
-    .sidebar-footer { display: none; } /* Esconde o footer original */
-    #logoutBtnSidebar { /* Reestiliza o botão para se encaixar na barra */
+    /* ======================================================= */
+    /* INÍCIO DA CORREÇÃO DO BOTÃO SAIR E RELATÓRIOS */
+    /* ======================================================= */
+
+    /* 1. CORREÇÃO: Torna o rodapé da sidebar (que contém o botão "Sair") visível e o integra ao layout flex da barra inferior. */
+    .sidebar-footer {
+        display: flex; /* Garante que o footer seja exibido */
+        flex: 1; /* Permite que ocupe espaço proporcionalmente */
+        max-width: 25%; /* Limita a largura para não espremer os outros ícones */
+        padding: 0;
+        justify-content: center;
+        align-items: center;
+    }
+    /* 2. CORREÇÃO: Estiliza o botão de logout para se parecer com os outros itens de navegação. */
+    .logout-btn-sidebar {
         display: flex;
         flex-direction: column;
-        font-size: 0.7rem;
+        justify-content: center;
+        align-items: center;
         height: 60px;
+        width: 100%;
         padding: 0.5rem;
         margin: 0;
         border-radius: 12px;
-        flex: 1;
-        justify-content: center;
+        font-size: 0.7rem;
         text-align: center;
-        background: none;
-        opacity: 0.8;
-        max-width: 25%;
+        gap: 4px; /* Espaço entre ícone e texto */
+        color: var(--text-light); /* Garante a cor do texto */
     }
-    #logoutBtnSidebar i { font-size: 1.5rem; margin: 0 0 4px 0; }
+    .logout-btn-sidebar i {
+        font-size: 1.5rem;
+        margin: 0;
+    }
+
+    /* 3. CORREÇÃO: Ajusta a altura máxima dos painéis de relatório para caberem na tela do celular. */
+    .report-section {
+        margin-bottom: 1rem;
+    }
+    .all-phases-scroll-container {
+        max-height: 35vh; /* Antes era 45vh */
+    }
+    .individual-reports-container {
+        max-height: 38vh; /* Antes era 50vh */
+    }
+    /* ======================================================= */
+    /* FIM DA CORREÇÃO */
+    /* ======================================================= */
 
     .back-btn { top: 1rem; left: 1rem; }
     .game-header { flex-direction: column; }
@@ -569,7 +598,8 @@ input::placeholder { color: rgba(255, 255, 255, 0.7); }
 #globalFeedback.success { background-color: var(--success-color); }
 #globalFeedback.error { background-color: var(--danger-color); }
 #globalFeedback.info { background-color: var(--primary-color); }
-/* Adicione ao final de styles.css */
+
+/* Estilo para quando não há turmas/alunos */
 .empty-state {
     padding: 2rem;
     text-align: center;
@@ -587,24 +617,4 @@ input::placeholder { color: rgba(255, 255, 255, 0.7); }
     max-width: 400px;
     margin: 0 auto;
     opacity: 0.9;
-}
-/* ======================================================= */
-/* CORREÇÃO FINAL PARA VISUALIZAÇÃO DOS RELATÓRIOS NO CELULAR */
-/* ======================================================= */
-
-@media (max-width: 768px) {
-    /* Diminui a margem entre os painéis para economizar espaço */
-    .report-section {
-        margin-bottom: 1rem;
-    }
-
-    /* Reduz a altura máxima do painel do Mapa de Calor no celular */
-    .all-phases-scroll-container {
-        max-height: 35vh; /* Antes era 45vh */
-    }
-
-    /* Reduz a altura máxima do painel da Lista de Alunos no celular */
-    .individual-reports-container {
-        max-height: 38vh; /* Antes era 50vh */
-    }
 }
