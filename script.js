@@ -1,10 +1,6 @@
 // =======================================================
-// JOGO DAS LETRAS - SCRIPT FINAL E COMPLETO
-// Inclui: Correção de bugs de lógica de resposta nas fases
-// E Correção do comportamento de recarregamento da página
-// E Correção da lógica de resposta da Fase 2
-// E Correção de bugs em Atividades de Reforço
-// E Correção do layout do botão de áudio
+// JOGO DAS LETRAS - SCRIPT FINAL E CORRIGIDO
+// CORREÇÃO: Lógica de renderização dos relatórios para garantir que ambas as seções sempre apareçam.
 // =======================================================
 
 
@@ -698,17 +694,62 @@ async function logPhaseCompletionToHistory(accuracy) { if (!currentUser || curre
 // === LÓGICA DE RELATÓRIOS (COM NOVAS FUNCIONALIDADES) ===
 async function populateReportClassSelector() { const selector = document.getElementById('reportClassSelector'); selector.innerHTML = '<option value="">Carregando turmas...</option>'; document.getElementById('reportContentContainer').style.display = 'none'; const { data, error } = await supabaseClient.from('classes').select('id, name').eq('teacher_id', currentUser.id).order('name', { ascending: true }); if (error || !data) { selector.innerHTML = '<option value="">Erro ao carregar</option>'; return; } if (data.length === 0) { selector.innerHTML = '<option value="">Nenhuma turma encontrada</option>'; return; } selector.innerHTML = '<option value="">-- Selecione uma turma --</option>'; data.forEach(cls => { selector.innerHTML += `<option value="${cls.id}">${cls.name}</option>`; }); }
 function handleReportClassSelection(event) { const classId = event.target.value; const reportContainer = document.getElementById('reportContentContainer'); if (classId) { reportContainer.style.display = 'block'; loadAndDisplayClassReports(classId); } else { reportContainer.style.display = 'none'; reportContainer.innerHTML = ''; } }
+
+// =========================================================================
+// FUNÇÃO CORRIGIDA ABAIXO
+// =========================================================================
 async function loadAndDisplayClassReports(classId) {
     const reportContainer = document.getElementById('reportContentContainer');
     reportContainer.innerHTML = '<p><i class="fas fa-spinner fa-spin"></i> Carregando relatórios...</p>';
-    const { data: errors, error: errorsError } = await supabaseClient.from('student_errors').select('*').eq('class_id', classId);
-    if (errorsError) { reportContainer.innerHTML = '<p class="error">Erro ao carregar dados de erros.</p>'; return; }
-    const { data: students, error: studentsError } = await supabaseClient.from('students').select('id, name').eq('class_id', classId).order('name', { ascending: true });
-    if (studentsError) { reportContainer.innerHTML = '<p class="error">Erro ao carregar lista de alunos.</p>'; return; }
-    reportContainer.innerHTML = ` <div class="report-section"> <h4><i class="fas fa-fire"></i> Mapa de Calor da Turma</h4> <p>Os itens que a turma mais errou. Mostra qual era a resposta certa e o que selecionaram no lugar.</p> <div id="classHeatmapContainer"></div> </div> <div class="report-section"> <h4><i class="fas fa-user-graduate"></i> Relatório Individual de Dificuldades</h4> <p>Clique em um aluno para ver seus erros e gerar uma atividade focada com a IA.</p> <div id="individualReportsContainer"></div> </div> `;
+
+    // Busca os dados de erros e alunos em paralelo para mais eficiência
+    const [errorsResponse, studentsResponse] = await Promise.all([
+        supabaseClient.from('student_errors').select('*').eq('class_id', classId),
+        supabaseClient.from('students').select('id, name').eq('class_id', classId).order('name', { ascending: true })
+    ]);
+
+    const { data: errors, error: errorsError } = errorsResponse;
+    if (errorsError) {
+        reportContainer.innerHTML = '<p class="error">Erro ao carregar dados de erros.</p>';
+        return;
+    }
+
+    const { data: students, error: studentsError } = studentsResponse;
+    if (studentsError) {
+        reportContainer.innerHTML = '<p class="error">Erro ao carregar lista de alunos.</p>';
+        return;
+    }
+
+    // Limpa o contêiner antes de adicionar os novos elementos
+    reportContainer.innerHTML = '';
+
+    // --- LÓGICA DE CONSTRUÇÃO SEGURA (PASSO A PASSO) ---
+
+    // 1. Cria e adiciona a seção do Mapa de Calor
+    const heatmapSection = document.createElement('div');
+    heatmapSection.className = 'report-section';
+    heatmapSection.innerHTML = `
+        <h4><i class="fas fa-fire"></i> Mapa de Calor da Turma</h4>
+        <p>Os itens que a turma mais errou. Mostra qual era a resposta certa e o que selecionaram no lugar.</p>
+        <div id="classHeatmapContainer"></div>
+    `;
+    reportContainer.appendChild(heatmapSection);
+    // Popula a seção recém-criada
     renderClassHeatmap(errors, 'classHeatmapContainer');
+
+    // 2. Cria e adiciona a seção de Relatórios Individuais
+    const individualSection = document.createElement('div');
+    individualSection.className = 'report-section';
+    individualSection.innerHTML = `
+        <h4><i class="fas fa-user-graduate"></i> Relatório Individual de Dificuldades</h4>
+        <p>Clique em um aluno para ver seus erros e gerar uma atividade focada com a IA.</p>
+        <div id="individualReportsContainer"></div>
+    `;
+    reportContainer.appendChild(individualSection);
+    // Popula a segunda seção
     renderIndividualReports(students, errors, 'individualReportsContainer');
 }
+
 
 function renderClassHeatmap(errors, containerId) {
     const heatmapContainer = document.getElementById(containerId);
@@ -742,7 +783,15 @@ function renderClassHeatmap(errors, containerId) {
 }
 function renderIndividualReports(students, allErrors, containerId) {
     const container = document.getElementById(containerId);
-    if (!students || students.length === 0) { container.innerHTML = '<p>Nenhum aluno na turma.</p>'; return; }
+    if (!students) {
+        console.error("A lista de alunos chegou como nula. Verifique a consulta ao Supabase.");
+        container.innerHTML = `<div class="empty-state"><h4><i class="fas fa-exclamation-triangle"></i> Erro ao carregar</h4><p>Não foi possível carregar a lista de alunos.</p></div>`;
+        return;
+    }
+    if (students.length === 0) {
+        container.innerHTML = `<div class="empty-state"><h4><i class="fas fa-user-friends"></i> Nenhum aluno encontrado</h4><p>Não há alunos cadastrados nesta turma. Vá para a seção 'Minhas Turmas' para adicionar novos alunos.</p></div>`;
+        return;
+    }
     let html = '<div class="individual-reports-container">';
     html += students.map(student => ` <div class="student-item student-report-item" data-student-id="${student.id}" data-student-name="${student.name}"> <div class="student-info"><h4>${student.name}</h4></div> <i class="fas fa-chevron-down"></i> </div> <div class="student-errors-details" id="errors-for-${student.id}" style="display: none;"></div> `).join('');
     html += '</div>';
