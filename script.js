@@ -1,6 +1,6 @@
 // =======================================================
 // JOGO DAS LETRAS - SCRIPT FINAL E COMPLETO
-// Inclui: Correções de UI nas Fases 3, 4 e 5, e consistência de 4 opções
+// Inclui: Correção de bugs de lógica de resposta nas fases
 // =======================================================
 
 // PARTE 1: CONFIGURAÇÃO INICIAL E SUPABASE
@@ -653,7 +653,6 @@ async function generateAndAssignActivity(studentId, studentName) {
     showFeedback(`Gerando atividade para ${studentName}...`, 'info');
     const { data: studentErrors, error } = await supabaseClient.from('student_errors').select('*').eq('student_id', studentId).order('created_at', { ascending: false }).limit(20);
     
-    // CORREÇÃO: Reduzido o número mínimo de erros de 3 para 1.
     if (error || !studentErrors || studentErrors.length < 1) { 
         showFeedback(`O aluno ${studentName} não tem erros recentes para gerar uma atividade.`, 'error');
         return;
@@ -677,8 +676,8 @@ async function generateAndAssignActivity(studentId, studentName) {
         safeguard++;
     }
 
-    if (customQuestions.length === 0) { 
-        showFeedback(`Não foi possível gerar uma atividade focada para ${studentName} (erros de fases complexas).`, 'error');
+    if (customQuestions.length < 1) { 
+        showFeedback(`Não foi possível gerar atividade (erros de fases complexas).`, 'error');
         return;
     }
 
@@ -688,7 +687,6 @@ async function generateAndAssignActivity(studentId, studentName) {
 }
 function generateSingleQuestionFromError(errorTemplate) {
     const phase = parseInt(errorTemplate.phase);
-    // CORREÇÃO: Lógica expandida para ser mais robusta
     switch(phase) {
         case 1:
             return { type: 'letter_sound', correctAnswer: errorTemplate.correct_answer, options: generateOptions(errorTemplate.correct_answer, VOWELS, 4) };
@@ -710,9 +708,7 @@ function generateSingleQuestionFromError(errorTemplate) {
         case 7:
             const wordCountData = PHASE_7_SENTENCES_COUNT.find(p => p.words.toString() === errorTemplate.correct_answer) || PHASE_7_SENTENCES_COUNT[Math.floor(Math.random() * PHASE_7_SENTENCES_COUNT.length)];
             return { type: 'count_words', ...wordCountData, correctAnswer: wordCountData.words.toString(), options: generateOptions(wordCountData.words.toString(), ['2','3','4','5'], 4) };
-        // Fases 8, 9, 10 são muito complexas para recriar a partir de um único erro, então retornamos null.
-        default: 
-            return null;
+        default: return null;
     }
 }
 async function checkForCustomActivities() {
