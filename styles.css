@@ -1,7 +1,8 @@
 /* =======================================================
-// JOGO DAS LETRAS - STYLESHEET COMPLETO E OTIMIZADO (VERSÃO DEFINITIVA)
+// JOGO DAS LETRAS - STYLESHEET FINAL E IMPLEMENTADO
 // Autor: Gemini AI
-// Foco: Correção de layout mobile, performance e restauração visual.
+// Foco: Compatibilidade total com o HTML fornecido,
+// layout robusto para Desktop/Mobile e estilo completo.
 // ======================================================= */
 
 /* 1. FONTES E VARIÁVEIS GLOBAIS */
@@ -26,7 +27,6 @@
     --scrollbar-track: rgba(255, 255, 255, 0.1);
 }
 
-
 /* 2. RESET E FUNDO ANIMADO */
 * {
     margin: 0;
@@ -38,6 +38,7 @@ html, body {
     height: 100%;
     width: 100%;
     overflow: hidden;
+    background-color: var(--primary-color); /* Cor de fallback */
 }
 
 body {
@@ -47,11 +48,6 @@ body {
     background: linear-gradient(-45deg, var(--secondary-color), var(--primary-color), #23a6d5, #23d5ab);
     background-size: 400% 400%;
     animation: gradientBG 15s ease infinite;
-    /* Otimização para a animação de fundo */
-    transform: translateZ(0);
-    will-change: background-position;
-    display: grid;
-    grid-template-areas: "stack";
 }
 
 @keyframes gradientBG {
@@ -60,60 +56,52 @@ body {
     100% { background-position: 0% 50%; }
 }
 
-
 /* 3. SISTEMA DE TELAS */
 .screen {
-    grid-area: stack;
+    width: 100%;
+    height: 100%;
+    position: absolute;
+    top: 0;
+    left: 0;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
     padding: 1rem;
-    width: 100%;
-    height: 100%;
     opacity: 0;
     visibility: hidden;
-    pointer-events: none;
     transform: scale(0.98);
     transition: opacity 0.4s ease, transform 0.4s ease;
-    will-change: opacity, transform;
-    z-index: 1;
+    pointer-events: none;
 }
 
 .screen.active {
     opacity: 1;
     visibility: visible;
-    pointer-events: auto;
     transform: scale(1);
-    z-index: 10;
+    pointer-events: auto;
 }
-
-#teacherDashboard, #gameScreen {
-    padding: 0;
-    justify-content: flex-start;
-}
-
-.container {
-    width: 100%;
-    max-width: 900px;
-    text-align: center;
-    padding: 1rem;
-}
-
 
 /* 4. COMPONENTES GERAIS */
-.login-container, .class-card, .modal-content, .game-header, .game-content, .user-type-btn, .report-section, .credentials-box, .ai-tips-container {
+.container {
+    width: 100%;
+    max-width: 1100px;
+    padding: 1rem;
+    text-align: center;
+}
+
+.login-container, .class-card, .modal-content, .game-header, .game-content, .user-type-btn, .report-section, .credentials-box, .ai-tips-container, .result-content {
     background: var(--glass-bg);
     backdrop-filter: blur(var(--glass-blur));
     -webkit-backdrop-filter: blur(var(--glass-blur));
     border: 1px solid var(--glass-border);
     border-radius: 1.5rem;
     box-shadow: 0 8px 32px 0 var(--glass-shadow);
-    padding: clamp(1.5rem, 4vw, 2rem);
+    padding: clamp(1.5rem, 4vw, 2.5rem);
     text-align: left;
 }
 
-.btn, .login-btn, .start-button, .create-btn, .modal-btn, .result-button, .control-button {
+.btn, .login-btn, .start-button, .create-btn, .modal-btn, .result-button, .control-button, .register-btn, .exit-button {
     background: linear-gradient(145deg, var(--accent-color), var(--accent-hover));
     color: white;
     text-shadow: 0 1px 3px rgba(0,0,0,0.2);
@@ -131,58 +119,46 @@ body {
     justify-content: center;
     gap: 0.5rem;
     text-decoration: none;
-    will-change: transform, box-shadow;
 }
-.btn:hover, .login-btn:hover, .start-button:hover, .create-btn:hover, .modal-btn:hover, .result-button:hover, .control-button:hover {
+.btn:hover, .login-btn:hover, .start-button:hover, .create-btn:hover, .modal-btn:hover, .result-button:hover, .control-button:hover, .register-btn:hover, .exit-button:hover {
     transform: translateY(-3px) scale(1.03);
     box-shadow: 0 6px 20px -2px var(--accent-color);
-}
-.btn:disabled, .login-btn:disabled {
-    background: #aaa;
-    cursor: not-allowed;
-    transform: none;
-    box-shadow: none;
 }
 .btn.danger {
     background: linear-gradient(145deg, var(--danger-color), #ff8a8a);
     box-shadow: 0 4px 15px -5px var(--danger-color);
 }
 .btn.small { padding: 0.4rem 0.8rem; font-size: 0.9rem; }
-.modal-btn:not(.primary) {
-    background: var(--glass-bg);
-    border: 1px solid var(--glass-border);
+.register-btn {
+    background: none;
+    border: 2px solid var(--accent-color);
     color: var(--text-light);
+    margin-top: 1rem;
     box-shadow: none;
 }
 
 .form-group { margin-bottom: 1.25rem; }
 .form-group label { display: block; margin-bottom: 0.5rem; font-weight: bold; }
 input[type="text"], input[type="email"], input[type="password"], select {
-    width: 100%;
-    padding: 0.8rem;
-    border-radius: 8px;
-    border: 1px solid var(--glass-border);
-    background: rgba(255, 255, 255, 0.2);
-    color: var(--text-light);
-    font-family: var(--font-family);
-    font-size: 1rem;
+    width: 100%; padding: 0.8rem; border-radius: 8px; border: 1px solid var(--glass-border);
+    background: rgba(255, 255, 255, 0.2); color: var(--text-light);
+    font-family: var(--font-family); font-size: 1rem;
 }
 input::placeholder { color: rgba(255, 255, 255, 0.7); }
 .password-wrapper { position: relative; }
 .password-toggle { position: absolute; right: 15px; top: 50%; transform: translateY(-50%); cursor: pointer; opacity: 0.7; }
 
 .back-btn {
-    position: absolute;
-    top: 1.5rem;
-    left: 1.5rem;
-    padding: 0.6rem 1rem;
-    border-radius: 50px;
+    position: absolute; top: 1.5rem; left: 1.5rem;
+    background: none; border: 1px solid var(--glass-border);
+    box-shadow: none; padding: 0.6rem 1rem; font-size: 1rem;
 }
 
-/* 5. TELA INICIAL E LOGIN */
-.game-title { text-align: center; margin-bottom: 2rem; }
-.game-title h1 { font-size: clamp(2.5rem, 6vw, 3.5rem); margin-bottom: 0.5rem; }
-.login-container { width: 100%; max-width: 450px; position: relative; }
+/* 5. TELA DE LOGIN E CADASTRO */
+.game-title h1 { font-size: clamp(2.5rem, 6vw, 3.5rem); margin-bottom: 0.5rem; text-align: center;}
+.game-title p { text-align: center; opacity: 0.9; font-size: 1.2rem; }
+.login-container { width: 100%; max-width: 480px; position: relative; }
+.login-container h2 { text-align: center; margin-bottom: 1.5rem; }
 .user-types { display: flex; justify-content: center; gap: 1.5rem; margin-top: 1.5rem; flex-wrap: wrap; }
 .user-type-btn {
     flex-direction: column; padding: 2rem; width: 200px; height: 180px; font-size: 1.2rem;
@@ -190,225 +166,168 @@ input::placeholder { color: rgba(255, 255, 255, 0.7); }
 .user-type-btn i { font-size: 3rem; margin-bottom: 1rem; }
 .user-type-btn small { font-size: 0.9rem; opacity: 0.8; font-weight: normal; }
 
-
 /* 6. PAINEL DO PROFESSOR (DASHBOARD) */
+#teacherDashboard { padding: 0; }
 .dashboard-container {
     display: flex;
+    flex-direction: row; /* Desktop: lado a lado */
     width: 100%;
     height: 100%;
-    background: none;
 }
 
-/* Sidebar (Desktop) */
 .sidebar {
     width: 260px;
+    flex-shrink: 0;
     background: var(--glass-bg);
     border-right: 1px solid var(--glass-border);
     display: flex;
     flex-direction: column;
     padding: 1rem 0;
-    flex-shrink: 0;
-    transition: width 0.3s ease;
 }
-.sidebar-header { padding: 0 1.5rem 1rem; }
+.sidebar-header h3 { padding: 0 1.5rem 1rem; }
 .sidebar-nav { flex-grow: 1; }
 .sidebar-nav a {
-    display: flex; align-items: center; padding: 1rem 1.5rem; color: var(--text-light); text-decoration: none;
-    font-weight: bold; border-radius: 0 50px 50px 0; margin: 0.5rem 1rem 0.5rem 0; transition: all 0.3s ease; white-space: nowrap;
+    display: flex; align-items: center; padding: 1rem 1.5rem; color: var(--text-light);
+    text-decoration: none; font-weight: bold; border-radius: 0 50px 50px 0;
+    margin: 0.5rem 1rem 0.5rem 0; transition: all 0.3s ease;
 }
 .sidebar-nav a.active, .sidebar-nav a:hover {
     background: linear-gradient(90deg, var(--secondary-color), var(--primary-color));
-    box-shadow: 0 0 20px rgba(118, 75, 162, 0.5);
 }
 .sidebar-nav a i { width: 30px; text-align: center; margin-right: 1rem; font-size: 1.2rem; }
-.sidebar-footer { padding: 1rem; }
+.sidebar-footer { padding: 1rem; border-top: 1px solid var(--glass-border); }
 .logout-btn-sidebar {
-    background: none; border: none; font: inherit; color: var(--text-light); width: 100%; padding: 0.8rem 1.5rem;
-    cursor: pointer; display: flex; align-items: center; gap: 1rem; opacity: 0.8; transition: all 0.3s;
-    border-radius: 50px; text-align: left;
+    background: none; border: none; font: inherit; color: var(--text-light); width: 100%;
+    padding: 0.8rem 0; cursor: pointer; display: flex; align-items: center;
+    gap: 1rem; opacity: 0.8; transition: all 0.3s; text-align: left; font-weight: bold; font-size: 1rem;
 }
-.logout-btn-sidebar:hover { opacity: 1; color: var(--danger-color); background: rgba(255,255,255,0.1); }
+.logout-btn-sidebar:hover { opacity: 1; color: var(--danger-color); }
 
-/* Conteúdo Principal */
 .main-content {
-    flex-grow: 1;
-    overflow-y: auto;
+    flex: 1; /* Ocupa todo o espaço restante */
     display: flex;
     flex-direction: column;
-    height: 100%;
+    overflow-y: auto;
 }
 .dashboard-header {
     background: var(--glass-bg); padding: 1.25rem 2rem; backdrop-filter: blur(var(--glass-blur));
-    border-bottom: 1px solid var(--glass-border); flex-shrink: 0; display: flex; justify-content: space-between; align-items: center;
+    border-bottom: 1px solid var(--glass-border); flex-shrink: 0;
+    display: flex; justify-content: space-between; align-items: center;
 }
-.dashboard-content-area {
-    padding: clamp(1.5rem, 5vw, 2.5rem); display: grid; grid-template-areas: "stack"; flex-grow: 1;
-}
-.dashboard-view {
-    grid-area: stack; opacity: 0; visibility: hidden; transition: opacity 0.3s ease-in-out;
-}
-.dashboard-view.active { opacity: 1; visibility: visible; }
-.view-header {
-    display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem;
-}
+.dashboard-content-area { padding: clamp(1.5rem, 5vw, 2.5rem); flex-grow: 1; }
+.dashboard-view { display: none; }
+.dashboard-view.active { display: block; animation: fadeIn 0.5s; }
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+.view-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem; }
 .classes-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1.5rem; }
 .class-card { display: flex; flex-direction: column; gap: 1rem; }
-.class-card h3 { color: var(--accent-color); }
 .class-card-actions { margin-top: auto; display: flex; gap: 0.5rem; }
 
+/* 7. TELA DE INÍCIO E JOGO DO ALUNO */
+.character-mascot { text-align: center; margin: 2rem 0; }
+.mascot { font-size: 5rem; color: var(--accent-color); display: inline-block; }
+.bounce { animation: bounce 2s infinite; }
+@keyframes bounce { 0%, 20%, 50%, 80%, 100% { transform: translateY(0); } 40% { transform: translateY(-30px); } 60% { transform: translateY(-15px); } }
+.speech-bubble { background: var(--glass-bg); padding: 1rem 1.5rem; border-radius: 20px; margin-top: 1rem; display: inline-block; }
+.student-start-actions { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; }
 
-/* 7. MODAIS */
-.modal {
-    position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); backdrop-filter: blur(5px);
-    display: flex; align-items: center; justify-content: center; z-index: 1000; opacity: 0; visibility: hidden;
-    transition: opacity 0.3s ease, visibility 0.3s ease;
+#gameScreen { padding: 0; justify-content: flex-start; }
+.game-header { width: 100%; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 1rem; padding: 1rem 2rem; }
+.progress-bar { width: 100%; height: 10px; background: rgba(0,0,0,0.2); border-radius: 10px; overflow: hidden; margin-top: 0.5rem;}
+.progress-fill { width: 0%; height: 100%; background: var(--accent-color); border-radius: 10px; transition: width 0.5s ease; }
+.score, .attempts { display: flex; align-items: center; gap: 0.5rem; font-size: 1.2rem; }
+.game-content { flex: 1; width: 100%; max-width: 900px; margin: 0 auto; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 1rem 2rem; }
+.question-area { text-align: center; margin-bottom: 2rem; }
+.audio-button {
+    background: var(--accent-color); color: white; border: none; width: 100px; height: 100px;
+    border-radius: 50%; font-size: 2.5rem; cursor: pointer; display: flex; flex-direction: column;
+    align-items: center; justify-content: center; transition: transform 0.3s;
 }
-.modal.show { opacity: 1; visibility: visible; }
-.modal-content {
-    width: 90%; max-width: 500px; transform: scale(0.95); transition: transform 0.3s ease;
-    will-change: transform;
-}
-.modal.show .modal-content { transform: scale(1); }
-.modal-actions { margin-top: 1.5rem; display: flex; justify-content: flex-end; gap: 0.5rem; }
-.students-list, #studentProgressList { max-height: 50vh; overflow-y: auto; padding-right: 10px; margin-top: 1rem; }
-.student-item {
-    display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; padding: 1rem;
-    background: rgba(0,0,0,0.1); border-radius: 8px; margin-bottom: 0.5rem;
-}
-
-
-/* 8. RELATÓRIOS */
-.report-section { margin-bottom: 2rem; }
-.all-phases-scroll-container, .individual-reports-container {
-    overflow-y: auto; padding: 1rem; background: rgba(0, 0, 0, 0.1);
-    border-radius: 12px; border: 1px solid var(--glass-border);
-}
-.student-report-item {
-    cursor: pointer; transition: background-color 0.2s; display: flex; justify-content: space-between;
-    align-items: center; padding: 1rem; background: rgba(0,0,0,0.1); border-radius: 8px; margin-bottom: 0.5rem;
-}
-.student-report-item:hover { background: rgba(0,0,0,0.2); }
-
-
-/* 9. TELA DO JOGO */
-.game-header { width: 100%; padding: 1rem; display: flex; justify-content: space-between; align-items: center; gap: 1rem; flex-wrap: wrap; }
-.game-content {
-    flex-grow: 1; width: 100%; max-width: 900px; margin: 1rem auto; padding: 2rem;
-    display: flex; flex-direction: column; align-items: center; justify-content: center;
-}
+.audio-button:hover { transform: scale(1.1); }
 .letters-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); gap: 1rem; width: 100%; max-width: 600px; }
-.letter-button {
-    padding: 1.5rem; font-size: 1.8rem; font-weight: bold; border-radius: 1rem; cursor: pointer;
-    border: 2px solid var(--glass-border); background: var(--glass-bg); color: var(--text-light);
-    transition: all 0.2s ease;
-}
-.letter-button:hover { background: var(--accent-color); border-color: var(--accent-hover); }
-.letter-button.correct { background: var(--success-color); border-color: #6ee6e7; animation: pop 0.3s ease; }
-.letter-button.incorrect { background: var(--danger-color); border-color: #ff8a8a; animation: shake 0.5s ease; }
-.letter-button:disabled { cursor: not-allowed; opacity: 0.7; }
+.letter-button { padding: 1.5rem; font-size: 1.8rem; font-weight: bold; border-radius: 1rem; cursor: pointer; border: 2px solid var(--glass-border); background: var(--glass-bg); color: var(--text-light); transition: all 0.2s ease; }
+.letter-button.correct { background: var(--success-color); animation: pop 0.3s ease; }
+.letter-button.incorrect { background: var(--danger-color); animation: shake 0.5s ease; }
 
-/* ======================================================= */
-/* 10. RESPONSIVIDADE (MOBILE) - VERSÃO SUPER CORRIGIDA    */
-/* ======================================================= */
+/* 8. TELA DE RESULTADOS */
+.result-content { text-align: center; }
+.result-icon { font-size: 6rem; color: #FFD700; margin-bottom: 1rem; }
+.result-stats { display: flex; justify-content: center; gap: 2rem; margin: 1.5rem 0; font-size: 1.2rem; }
+.result-actions { margin-top: 2rem; display: flex; gap: 1rem; justify-content: center; }
+
+/* 9. MODAIS */
+.modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); backdrop-filter: blur(5px); display: flex; align-items: center; justify-content: center; z-index: 1000; opacity: 0; visibility: hidden; transition: opacity 0.3s ease; }
+.modal.active { opacity: 1; visibility: visible; }
+.modal-content { width: 90%; max-width: 500px; }
+.modal-content.large { max-width: 800px; }
+.modal-actions { margin-top: 1.5rem; display: flex; justify-content: flex-end; gap: 0.5rem; }
+.modal-tabs { display: flex; border-bottom: 1px solid var(--glass-border); margin-bottom: 1rem; }
+.tab-btn { background: none; border: none; color: var(--text-light); opacity: 0.6; padding: 0.8rem 1.2rem; cursor: pointer; font-family: var(--font-family); font-size: 1rem; border-bottom: 3px solid transparent; transition: all 0.3s ease; }
+.tab-btn.active { opacity: 1; border-bottom-color: var(--accent-color); }
+.tab-content { display: none; }
+.tab-content.active { display: block; animation: fadeIn 0.4s; }
+.credentials-box { background: rgba(0,0,0,0.1); padding: 1rem; border-radius: 8px; margin: 1rem 0; }
+.upload-label { border: 2px dashed var(--glass-border); padding: 2rem; display: block; text-align: center; cursor: pointer; }
+.record-controls, .audio-playback { margin: 1rem 0; }
+
+/* 10. RESPONSIVIDADE (MOBILE) */
 @media (max-width: 768px) {
     .dashboard-container {
-        flex-direction: column;
-        height: 100%; /* Garante que o container ocupe a tela toda */
+        flex-direction: column; /* Conteúdo em cima, menu embaixo */
     }
 
     .main-content {
-        order: 1; /* Conteúdo vem primeiro (no topo) */
-        flex: 1 1 auto; /* Permite crescer e encolher, base automática */
-        min-height: 0; /* ESSENCIAL: Permite que o contêiner encolha e a rolagem funcione */
-        overflow-y: auto; /* Habilita a rolagem interna do conteúdo */
-        -webkit-overflow-scrolling: touch; /* Melhora a rolagem no iOS */
+        order: 1;
+        flex: 1;
+        min-height: 0; /* Essencial para o flex-box funcionar em colunas */
     }
 
     .sidebar {
-        order: 2; /* Barra de navegação vem por último (embaixo) */
+        order: 2;
         width: 100%;
         height: 65px; /* Altura fixa para a barra de navegação */
-        flex-direction: row; /* Itens lado a lado */
+        flex-direction: row;
         align-items: stretch;
         border-right: none;
         border-top: 1px solid var(--glass-border);
         padding: 0.2rem;
-        flex-shrink: 0; /* Impede que a barra seja esmagada */
     }
     
-    .sidebar-header { display: none; }
+    .sidebar-header, .sidebar-footer { display: none; } /* Esconde header e footer originais */
     
     .sidebar-nav {
-        flex-grow: 1; display: flex; justify-content: space-around;
-        width: 100%; align-items: center;
+        display: flex; 
+        justify-content: space-around;
+        width: 100%; 
+        align-items: center;
+        /* Adiciona o botão de logout ao final da navegação */
+        gap: 0.2rem;
     }
 
     .sidebar-nav a {
         flex-direction: column; font-size: 0.7rem; height: 100%;
-        padding: 0.5rem; margin: 0; border-radius: 12px; flex: 1;
-        justify-content: center; text-align: center; background: none;
-        box-shadow: none; opacity: 0.8;
+        padding: 0.5rem; margin: 0; border-radius: 12px;
+        flex: 1; justify-content: center; text-align: center;
     }
 
-    .sidebar-nav a.active { background: rgba(255,255,255,0.2); opacity: 1; }
     .sidebar-nav a i { font-size: 1.5rem; margin: 0 0 4px 0; }
-    .sidebar-nav a span { white-space: normal; }
-
-    .sidebar-footer {
-        display: flex; flex: 1; max-width: 25%; padding: 0;
-        justify-content: center; align-items: center;
-    }
     
-    .logout-btn-sidebar {
-        display: flex; flex-direction: column; justify-content: center;
-        align-items: center; height: 100%; width: 100%; padding: 0.5rem;
-        margin: 0; border-radius: 12px; font-size: 0.7rem; text-align: center;
-        gap: 4px; color: var(--text-light);
+    /* Recria o botão de logout para se integrar à navegação */
+    #logoutBtnSidebar {
+        display: flex; flex-direction: column; font-size: 0.7rem; height: 100%;
+        padding: 0.5rem; margin: 0; border-radius: 12px; flex: 1; max-width: 25%;
+        justify-content: center; text-align: center; color: var(--text-light); opacity: 0.8;
+        background: none; border: none;
     }
-    .logout-btn-sidebar i { font-size: 1.5rem; margin: 0; }
+    #logoutBtnSidebar i { font-size: 1.5rem; margin: 0 0 4px 0; }
 
-    /* Ajusta a altura máxima dos painéis de relatório para caberem melhor */
-    .all-phases-scroll-container, .individual-reports-container {
-        max-height: 40vh;
-    }
-    
-    .back-btn { top: 1rem; left: 1rem; }
-    .game-header { flex-direction: column; }
+    .game-header { flex-direction: column; gap: 1.5rem; }
 }
-
 
 /* 11. ANIMAÇÕES E UTILITÁRIOS */
-@keyframes pop {
-    0% { transform: scale(1); } 50% { transform: scale(1.2); } 100% { transform: scale(1.1); }
-}
-@keyframes shake {
-    0%, 100% { transform: translateX(0); }
-    10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
-    20%, 40%, 60%, 80% { transform: translateX(5px); }
-}
-
-::-webkit-scrollbar { width: 8px; height: 8px; }
-::-webkit-scrollbar-track { background: var(--scrollbar-track); border-radius: 10px; }
+@keyframes pop { 0% { transform: scale(1); } 50% { transform: scale(1.2); } 100% { transform: scale(1.1); } }
+@keyframes shake { 0%, 100% { transform: translateX(0); } 10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); } 20%, 40%, 60%, 80% { transform: translateX(5px); } }
+::-webkit-scrollbar { width: 8px; }
+::-webkit-scrollbar-track { background: var(--scrollbar-track); }
 ::-webkit-scrollbar-thumb { background: var(--scrollbar-thumb); border-radius: 10px; }
-::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.6); }
-
-/* Feedback Global (Toast) */
-#globalFeedback {
-    position: fixed; bottom: 80px; /* Sobe para não ficar atrás da nova barra de nav */
-    left: 50%; transform: translateX(-50%) translateY(150%); padding: 1rem 1.5rem;
-    border-radius: 50px; color: white; z-index: 9999;
-    transition: transform 0.4s ease-in-out; font-weight: bold;
-    box-shadow: 0 5px 15px rgba(0,0,0,0.2);
-    will-change: transform;
-}
-#globalFeedback.show { transform: translateX(-50%) translateY(0); }
-#globalFeedback.success { background-color: var(--success-color); }
-#globalFeedback.error { background-color: var(--danger-color); }
-
-/* Estilo para quando não há turmas/alunos */
-.empty-state {
-    padding: 2rem; text-align: center; background: rgba(0, 0, 0, 0.15);
-    border-radius: 12px; border: 1px dashed var(--glass-border);
-}
-.empty-state h4 { color: var(--accent-color); margin-bottom: 0.5rem; }
-.empty-state p { max-width: 400px; margin: 0 auto; opacity: 0.9; }
