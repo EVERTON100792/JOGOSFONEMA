@@ -331,3 +331,116 @@ input::placeholder { color: rgba(255, 255, 255, 0.7); }
 ::-webkit-scrollbar { width: 8px; }
 ::-webkit-scrollbar-track { background: var(--scrollbar-track); }
 ::-webkit-scrollbar-thumb { background: var(--scrollbar-thumb); border-radius: 10px; }
+/* =======================================================
+// 8.5. ESTILOS PARA A PÁGINA DE RELATÓRIOS
+// ======================================================= */
+
+/* Contêiner principal para os relatórios de uma turma */
+.report-content {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem; /* Espaço entre o Mapa de Calor e Relatórios Individuais */
+}
+
+/* Estilo para cada grande seção do relatório (Mapa de Calor, etc) */
+.report-section {
+    background: var(--glass-bg);
+    backdrop-filter: blur(var(--glass-blur));
+    -webkit-backdrop-filter: blur(var(--glass-blur));
+    border: 1px solid var(--glass-border);
+    border-radius: 1.5rem;
+    box-shadow: 0 8px 32px 0 var(--glass-shadow);
+    padding: clamp(1.5rem, 4vw, 2.5rem);
+}
+
+.report-title {
+    font-size: 1.5rem;
+    color: var(--accent-color);
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--glass-border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+}
+
+.report-title i {
+    margin-right: 0.5rem;
+}
+
+/* Estilo para cada bloco de fase (Ex: Fase 1 - Vogais) */
+.phase-report-block {
+    margin-top: 1rem;
+}
+
+.phase-title {
+    font-size: 1.2rem;
+    font-weight: bold;
+    margin-bottom: 1rem;
+    opacity: 0.9;
+}
+
+/* Grid para listar os cartões de erro de forma responsiva */
+.error-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 1rem;
+}
+
+/* Card individual para cada item de erro */
+.error-item-card {
+    background: rgba(0, 0, 0, 0.2);
+    padding: 1rem;
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.error-item-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 6px 20px rgba(0,0,0,0.1);
+}
+
+.error-count {
+    font-size: 1.1rem;
+    font-weight: bold;
+    color: var(--danger-color);
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid var(--glass-border);
+}
+
+.wrong-letters-label {
+    font-size: 0.9rem;
+    opacity: 0.8;
+}
+
+.wrong-letters {
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: var(--accent-hover);
+    word-wrap: break-word; /* Para não quebrar o layout se houver muitas letras */
+    background-color: rgba(0,0,0,0.15);
+    padding: 0.5rem;
+    border-radius: 8px;
+    text-align: center;
+    letter-spacing: 2px;
+}
+
+/* Estilo para o botão de ver gráfico */
+.view-chart-btn {
+    font-size: 0.9rem;
+    padding: 0.5rem 1rem;
+    background: none;
+    border: 1px solid var(--accent-color);
+    color: var(--accent-color);
+    box-shadow: none;
+}
+
+.view-chart-btn:hover {
+    background: var(--accent-color);
+    color: white;
+}
