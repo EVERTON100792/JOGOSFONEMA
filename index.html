@@ -176,7 +176,7 @@
                          <div class="view-header">
                             <p>Opções e configurações gerais da sua conta de professor.</p>
                         </div>
-                         <button id="showAudioSettingsModalBtn" class="create-btn" style="background-color: #5c6bc0;">
+                          <button id="showAudioSettingsModalBtn" class="create-btn" style="background-color: #5c6bc0;">
                             <i class="fas fa-microphone-alt"></i> Gerenciar Áudios das Letras
                         </button>
                     </div>
@@ -187,19 +187,19 @@
     </div>
 
     <div id="startScreen" class="screen">
-		<div class="container">
-			<div class="game-title">
-				<h1>🌟 Jogo das Letras 🌟</h1>
-				<p>Vamos aprender o alfabeto juntos!</p>
-			</div>
-			<div class="character-mascot">
-				<div class="mascot bounce">
-					<i class="fas fa-robot"></i>
-				</div>
-				<div class="speech-bubble">
-					<p>Olá! Eu sou o Robô Amigo! Vamos brincar?</p>
-				</div>
-			</div>
+        <div class="container">
+            <div class="game-title">
+                <h1>🌟 Jogo das Letras 🌟</h1>
+                <p>Vamos aprender o alfabeto juntos!</p>
+            </div>
+            <div class="character-mascot">
+                <div class="mascot bounce">
+                    <i class="fas fa-robot"></i>
+                </div>
+                <div class="speech-bubble">
+                    <p>Olá! Eu sou o Robô Amigo! Vamos brincar?</p>
+                </div>
+            </div>
             <div class="student-start-actions">
                 <button id="startButton" class="start-button">
                     <i class="fas fa-play"></i> Continuar Aventura
@@ -208,112 +208,112 @@
                     <i class="fas fa-star-of-life"></i> Atividade de Reforço
                 </button>
             </div>
-		</div>
-	</div>
+        </div>
+    </div>
 
-	<div id="gameScreen" class="screen">
-		<div class="game-header">
-			<div class="phase-info">
-				<h2>Fase <span id="currentPhase">1</span></h2>
-				<div class="progress-bar">
-					<div id="progressFill" class="progress-fill"></div>
-				</div>
-			</div>
-			<div class="score-info">
-				<div class="score">
-					<i class="fas fa-star"></i>
-					<span id="score">0</span>/<span id="totalQuestions">0</span>
-				</div>
-				<div class="attempts">
-					<i class="fas fa-heart"></i>
-					<span id="attempts">3</span> tentativas
-				</div>
-			</div>
+    <div id="gameScreen" class="screen">
+        <div class="game-header">
+            <div class="phase-info">
+                <h2>Fase <span id="currentPhase">1</span></h2>
+                <div class="progress-bar">
+                    <div id="progressFill" class="progress-fill"></div>
+                </div>
+            </div>
+            <div class="score-info">
+                <div class="score">
+                    <i class="fas fa-star"></i>
+                    <span id="score">0</span>/<span id="totalQuestions">0</span>
+                </div>
+                <div class="attempts">
+                    <i class="fas fa-heart"></i>
+                    <span id="attempts">3</span> tentativas
+                </div>
+            </div>
             <div class="game-actions">
                 <button id="exitGameButton" class="exit-button" title="Sair do Jogo">
                     <i class="fas fa-sign-out-alt"></i> Sair
                 </button>
             </div>
-		</div>
-		<div class="game-content">
-			<div class="question-area">
-				<div class="mascot-helper">
-					<div class="mascot pulse">
-						<i class="fas fa-robot"></i>
-					</div>
-					<div class="speech-bubble" id="helperText">
-						Clique no alto-falante para ouvir o som!
-					</div>
-				</div>
+        </div>
+        <div class="game-content">
+            <div class="question-area">
+                <div class="mascot-helper">
+                    <div class="mascot pulse">
+                        <i class="fas fa-robot"></i>
+                    </div>
+                    <div class="speech-bubble" id="helperText">
+                        Clique no alto-falante para ouvir o som!
+                    </div>
+                </div>
 
-                <div class="audio-section" id="audioQuestionArea">
-					<button id="playAudioButton" class="audio-button" aria-label="Ouvir o som da letra">
+                <div class="audio-button-container" id="audioButtonContainer" style="display: none;">
+                    <button id="playAudioButton" class="audio-button" aria-label="Ouvir o som da letra">
 						<i class="fas fa-volume-up"></i>
 						<span>Ouvir Som</span>
 					</button>
-				</div>
+                    <h3 id="wordDisplay" class="word-display"></h3>
+                </div>
 
                 <div id="imageQuestionArea" style="display: none;">
                     <div class="image-display">
                         <span id="imageEmoji" class="image-emoji"></span>
                     </div>
-                    <div id="sentenceBuildArea" class="sentence-build-area"></div>
-                    <h3 id="wordDisplay" class="word-display"></h3>
                 </div>
-
-				<div class="question-text">
-					<h3 id="questionText"></h3>
-				</div>
-			</div>
+                
+                <div id="sentenceBuildArea" class="sentence-build-area"></div>
+                <div class="question-text">
+                    <h3 id="questionText"></h3>
+                </div>
+            </div>
             
             <div id="memoryGameGrid" class="memory-grid"></div>
-			<div class="letters-grid" id="lettersGrid"></div>
+            <div class="letters-grid" id="lettersGrid"></div>
             
-			<div class="game-controls">
-				<button id="repeatAudio" class="control-button">
-					<i class="fas fa-redo"></i> Ouvir Novamente
-				</button>
-				<button id="nextQuestion" class="control-button" style="display: none;">
-					<i class="fas fa-arrow-right"></i> Próxima
-				</button>
-			</div>
-		</div>
-	</div>
+            <div class="game-controls">
+                <button id="repeatAudio" class="control-button">
+                    <i class="fas fa-redo"></i> Ouvir Novamente
+                </button>
+                <button id="nextQuestion" class="control-button" style="display: none;">
+                    <i class="fas fa-arrow-right"></i> Próxima
+                </button>
+            </div>
+        </div>
+    </div>
 
-	<div id="resultScreen" class="screen">
-		<div class="container">
-			<div class="result-content">
-				<div class="result-icon" id="resultIcon">
-					<i class="fas fa-trophy"></i>
-				</div>
-				<h2 id="resultTitle">Parabéns!</h2>
-				<div class="result-stats">
-					<div class="stat">
-						<i class="fas fa-star"></i>
-						<span>Acertos: <span id="finalScore">0</span></span>
-					</div>
-					<div class="stat">
-						<i class="fas fa-percentage"></i>
-						<span>Precisão: <span id="accuracy">0</span>%</span>
-					</div>
-				</div>
-				<div class="result-message" id="resultMessage">
-					Você conseguiu! Continue assim!
-				</div>
-				<div class="result-actions">
-					<button id="continueButton" class="result-button success" style="display: none;">
-						<i class="fas fa-arrow-right"></i> Próxima Fase
-					</button>
-					<button id="retryButton" class="result-button retry" style="display: none;">
-						<i class="fas fa-redo"></i> Tentar Novamente
-					</button>
-					<button id="restartButton" class="result-button">
-						<i class="fas fa-home"></i> Voltar ao Início
-					</button>
-				</div>
-			</div>
-		</div>
-	</div>
+    <div id="resultScreen" class="screen">
+        <div class="container">
+            <div class="result-content">
+                <div class="result-icon" id="resultIcon">
+                    <i class="fas fa-trophy"></i>
+                </div>
+                <h2 id="resultTitle">Parabéns!</h2>
+                <div class="result-stats">
+                    <div class="stat">
+                        <i class="fas fa-star"></i>
+                        <span>Acertos: <span id="finalScore">0</span></span>
+                    </div>
+                    <div class="stat">
+                        <i class="fas fa-percentage"></i>
+                        <span>Precisão: <span id="accuracy">0</span>%</span>
+                    </div>
+                </div>
+                <div class="result-message" id="resultMessage">
+                    Você conseguiu! Continue assim!
+                </div>
+                <div class="result-actions">
+                    <button id="continueButton" class="result-button success" style="display: none;">
+                        <i class="fas fa-arrow-right"></i> Próxima Fase
+                    </button>
+                    <button id="retryButton" class="result-button retry" style="display: none;">
+                        <i class="fas fa-redo"></i> Tentar Novamente
+                    </button>
+                    <button id="restartButton" class="result-button">
+                        <i class="fas fa-home"></i> Voltar ao Início
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <div id="globalFeedback" aria-live="polite">
         <div class="feedback-content">
@@ -496,7 +496,7 @@
         </div>
     </div>
 
-	<div id="resetPasswordModal" class="modal">
+    <div id="resetPasswordModal" class="modal">
         <div class="modal-content">
             <h3 style="color: #764ba2;"><i class="fas fa-key"></i> Senha Redefinida!</h3>
             <p>A senha do aluno(a) <strong id="resetStudentName" style="color: #2c3e50;"></strong> foi alterada. Anote os novos dados de acesso abaixo.</p>
