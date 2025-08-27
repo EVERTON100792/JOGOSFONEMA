@@ -1,6 +1,6 @@
 // =======================================================
 // JOGO DAS LETRAS - SCRIPT FINAL E COMPLETO
-// Inclui: Correção de bugs de lógica de resposta nas fases
+// Inclui: Correção de performance na inicialização da voz
 // =======================================================
 
 // PARTE 1: CONFIGURAÇÃO INICIAL E SUPABASE
@@ -28,7 +28,6 @@ const gameInstructions = {
     9: "Se tirarmos um pedaço da palavra, qual nova palavra formamos?",
     10: "Coloque as letras na ordem certa do alfabeto!"
 };
-
 const PHASE_DESCRIPTIONS = {
     1: "Identificação de Vogais",
     2: "Vogal Inicial",
@@ -41,98 +40,15 @@ const PHASE_DESCRIPTIONS = {
     9: "Formando Novas Palavras",
     10: "Ordem Alfabética"
 };
-
-// BANCO DE DADOS DAS FASES (EXPANDIDO PARA 10 RODADAS)
-const PHASE_2_WORDS = [
-    { word: 'ABELHA', image: '🐝', vowel: 'A' }, { word: 'ELEFANTE', image: '🐘', vowel: 'E' },
-    { word: 'IGREJA', image: '⛪', vowel: 'I' }, { word: 'ÔNIBUS', image: '🚌', vowel: 'O' },
-    { word: 'UVA', image: '🍇', vowel: 'U' }, { word: 'ANEL', image: '💍', vowel: 'A' },
-    { word: 'ESTRELA', image: '⭐', vowel: 'E' }, { word: 'ÍNDIO', image: '🧍', vowel: 'I' },
-    { word: 'OLHO', image: '👁️', vowel: 'O' }, { word: 'URSO', image: '🐻', vowel: 'U' }
-];
-
-const PHASE_3_ENCONTROS = [
-    { word: 'PEIXE', image: '🐠', encontro: 'EI' }, { word: 'BOI', image: '🐂', encontro: 'OI' },
-    { word: 'CAIXA', image: '📦', encontro: 'AI' }, { word: 'LUA', image: '🌙', encontro: 'UA' },
-    { word: 'PÃO', image: '🍞', encontro: 'ÃO' }, { word: 'MÃE', image: '👩', encontro: 'ÃE' },
-    { word: 'CÉU', image: '☁️', encontro: 'ÉU' }, { word: 'LEÃO', image: '🦁', encontro: 'ÃO' },
-    { word: 'SAIA', image: '👗', encontro: 'AI' }, { word: 'BALÃO', image: '🎈', encontro: 'ÃO' }
-];
-const VOWEL_ENCOUNTERS = ['AI', 'EI', 'OI', 'UI', 'AU', 'EU', 'ÃO', 'ÃE', 'UA', 'ÉU'];
-
-// CORREÇÃO: Garantindo que todas as questões tenham 4 opções
-const PHASE_4_WORDS_F = [
-    { type: 'initial_syllable', word: 'FACA', image: '🔪', correctAnswer: 'FA', options: ['FA', 'FO', 'VA', 'CA'] },
-    { type: 'initial_syllable', word: 'FOGO', image: '🔥', correctAnswer: 'FO', options: ['FE', 'VO', 'FO', 'GO'] },
-    { type: 'initial_syllable', word: 'FITA', image: '🎀', correctAnswer: 'FI', options: ['VI', 'FI', 'FA', 'TA'] },
-    { type: 'initial_syllable', word: 'FUMAÇA', image: '💨', correctAnswer: 'FU', options: ['FU', 'FA', 'VU', 'MA'] },
-    { type: 'initial_syllable', word: 'FEIJÃO', image: '🌱', correctAnswer: 'FE', options: ['FE', 'VE', 'FO', 'JÃO'] },
-    { type: 'middle_syllable', word: 'GARRAFA', image: '🍾', correctAnswer: 'FA', options: ['VA', 'FA', 'FO', 'RA'] },
-    { type: 'middle_syllable', word: 'ALFINETE', image: '🧷', correctAnswer: 'FI', options: ['FI', 'VI', 'FE', 'NE'] },
-    { type: 'middle_syllable', word: 'TELEFONE', image: '📞', correctAnswer: 'FO', options: ['VO', 'FE', 'FO', 'LE'] },
-    { type: 'full_word', word: 'FOTO', image: '📷', correctAnswer: 'FOTO', options: ['FOTO', 'VOTO', 'FOGO', 'POTE'] },
-    { type: 'full_word', word: 'FIO', image: '🧵', correctAnswer: 'FIO', options: ['FIO', 'VIO', 'FILA', 'RIO'] }
-];
-
-const PHASE_5_SOUND_PAIRS = [
-    { word: 'VACA', image: '🐄', correct: 'VACA', incorrect: 'FACA' },
-    { word: 'PATO', image: '🦆', correct: 'PATO', incorrect: 'BATO' },
-    { word: 'DADO', image: '🎲', correct: 'DADO', incorrect: 'TADO' },
-    { word: 'FOTO', image: '📷', correct: 'FOTO', incorrect: 'VOTO' },
-    { word: 'BOTE', image: '⛵', correct: 'BOTE', incorrect: 'POTE' },
-    { word: 'TELA', image: '🖼️', correct: 'TELA', incorrect: 'DELA' },
-    { word: 'FARINHA', image: '🌾', correct: 'FARINHA', incorrect: 'VARINHA' },
-    { word: 'BINGO', image: '🎯', correct: 'BINGO', incorrect: 'PINGO' },
-    { word: 'TIA', image: '🙋‍♀️', correct: 'TIA', incorrect: 'DIA' },
-    { word: 'VILA', image: '🏘️', correct: 'VILA', incorrect: 'FILA' }
-];
-
-const PHASE_6_SYLLABLE_COUNT = [
-    { word: 'FÉ', image: '🙏', syllables: 1 }, { word: 'SOL', image: '☀️', syllables: 1 },
-    { word: 'BIFE', image: '🥩', syllables: 2 }, { word: 'BOLA', image: '⚽', syllables: 2 },
-    { word: 'FIGURA', image: '👤', syllables: 3 }, { word: 'SAPATO', image: '👟', syllables: 3 },
-    { word: 'FÁBRICA', image: '🏭', syllables: 3 }, { word: 'TELEFONE', image: '📞', syllables: 4 },
-    { word: 'ABACATE', image: '🥑', syllables: 4 }, { word: 'BORBOLETA', image: '🦋', syllables: 4 }
-];
-
-const PHASE_7_SENTENCES_COUNT = [
-    { sentence: 'A FADA VOOU', image: '🧚‍♀️', words: 3 },
-    { sentence: 'O GATO BEBE LEITE', image: '🐈', words: 4 },
-    { sentence: 'O SOL É AMARELO', image: '☀️', words: 4 },
-    { sentence: 'EU GOSTO DE BOLO', image: '🎂', words: 4 },
-    { sentence: 'A BOLA ROLOU', image: '⚽', words: 3 },
-    { sentence: 'O CARRO É RÁPIDO', image: '🚗', words: 4 },
-    { sentence: 'A FLOR CHEIRA BEM', image: '🌸', words: 4 },
-    { sentence: 'O PÁSSARO CANTA', image: '🐦', words: 3 },
-    { sentence: 'A LUA BRILHA', image: '🌙', words: 3 },
-    { sentence: 'O SAPO PULA ALTO', image: '🐸', words: 4 }
-];
-
-const PHASE_8_SENTENCES_BUILD = [
-    { sentence: ['O', 'FOGO', 'QUEIMA'], image: '🔥', answer: 'O FOGO QUEIMA' },
-    { sentence: ['O', 'CAFÉ', 'É', 'FORTE'], image: '☕', answer: 'O CAFÉ É FORTE' },
-    { sentence: ['A', 'FADA', 'VOOU'], image: '🧚‍♀️', answer: 'A FADA VOOU' },
-    { sentence: ['O', 'GATO', 'DORME'], image: '😴', answer: 'O GATO DORME' },
-    { sentence: ['A', 'BOLA', 'É', 'REDONDA'], image: '⚽', answer: 'A BOLA É REDONDA' },
-    { sentence: ['O', 'CACHORRO', 'LATE'], image: '🐕', answer: 'O CACHORRO LATE' },
-    { sentence: ['EU', 'AMO', 'LER'], image: '📚', answer: 'EU AMO LER' },
-    { sentence: ['O', 'PEIXE', 'NADA'], image: '🐠', answer: 'O PEIXE NADA' },
-    { sentence: ['A', 'CASA', 'É', 'GRANDE'], image: '🏠', answer: 'A CASA É GRANDE' },
-    { sentence: ['NÓS', 'VAMOS', 'BRINCAR'], image: '🤹', answer: 'NÓS VAMOS BRINCAR' }
-];
-
-const PHASE_9_WORD_TRANSFORM = [
-    { image: '👟', initialWord: 'SAPATO', toRemove: 'SA', correctAnswer: 'PATO', options: ['PATO', 'SAPO', 'MATO'] },
-    { image: '🧤', initialWord: 'LUVA', toRemove: 'L', correctAnswer: 'UVA', options: ['UVA', 'LUA', 'VILA'] },
-    { image: '🦁', initialWord: 'CAMALEÃO', toRemove: 'CAMA', correctAnswer: 'LEÃO', options: ['LEÃO', 'SALÃO', 'LAMA'] },
-    { image: '🎖️', initialWord: 'SOLDADO', toRemove: 'SOL', correctAnswer: 'DADO', options: ['DADO', 'SOLD', 'ADO'] },
-    { image: '🐔', initialWord: 'GALINHA', toRemove: 'GA', correctAnswer: 'LINHA', options: ['LINHA', 'GALO', 'NINHA'] },
-    { image: '🦜', initialWord: 'TUCANO', toRemove: 'TU', correctAnswer: 'CANO', options: ['CANO', 'TUCA', 'NANO'] },
-    { image: '🚪', initialWord: 'PORTA', toRemove: 'POR', correctAnswer: 'TA', options: ['TA', 'PORT', 'TARTA'] },
-    { image: '🐚', initialWord: 'CASCA', toRemove: 'SCA', correctAnswer: 'CA', options: ['CA', 'CASA', 'ASCA'] },
-    { image: '🐍', initialWord: 'SERPENTE', toRemove: 'SER', correctAnswer: 'PENTE', options: ['PENTE', 'DENTE', 'GENTE'] },
-    { image: '🪜', initialWord: 'PESCADA', toRemove: 'PES', correctAnswer: 'CADA', options: ['CADA', 'FADA', 'NADA'] }
-];
+const PHASE_2_WORDS = [{word:"ABELHA",image:"🐝",vowel:"A"},{word:"ELEFANTE",image:"🐘",vowel:"E"},{word:"IGREJA",image:"⛪",vowel:"I"},{word:"ÔNIBUS",image:"🚌",vowel:"O"},{word:"UVA",image:"🍇",vowel:"U"},{word:"ANEL",image:"💍",vowel:"A"},{word:"ESTRELA",image:"⭐",vowel:"E"},{word:"ÍNDIO",image:"🧍",vowel:"I"},{word:"OLHO",image:"👁️",vowel:"O"},{word:"URSO",image:"🐻",vowel:"U"}];
+const PHASE_3_ENCONTROS = [{word:"PEIXE",image:"🐠",encontro:"EI"},{word:"BOI",image:"🐂",encontro:"OI"},{word:"CAIXA",image:"📦",encontro:"AI"},{word:"LUA",image:"🌙",encontro:"UA"},{word:"PÃO",image:"🍞",encontro:"ÃO"},{word:"MÃE",image:"👩",encontro:"ÃE"},{word:"CÉU",image:"☁️",encontro:"ÉU"},{word:"LEÃO",image:"🦁",encontro:"ÃO"},{word:"SAIA",image:"👗",encontro:"AI"},{word:"BALÃO",image:"🎈",encontro:"ÃO"}];
+const VOWEL_ENCOUNTERS = ['AI','EI','OI','UI','AU','EU','ÃO','ÃE','UA','ÉU'];
+const PHASE_4_WORDS_F = [{type:"initial_syllable",word:"FACA",image:"🔪",correctAnswer:"FA",options:["FA","FO","VA","CA"]},{type:"initial_syllable",word:"FOGO",image:"🔥",correctAnswer:"FO",options:["FE","VO","FO","GO"]},{type:"initial_syllable",word:"FITA",image:"🎀",correctAnswer:"FI",options:["VI","FI","FA","TA"]},{type:"initial_syllable",word:"FUMAÇA",image:"💨",correctAnswer:"FU",options:["FU","FA","VU","MA"]},{type:"initial_syllable",word:"FEIJÃO",image:"🌱",correctAnswer:"FE",options:["FE","VE","FO","JÃO"]},{type:"middle_syllable",word:"GARRAFA",image:"🍾",correctAnswer:"FA",options:["VA","FA","FO","RA"]},{type:"middle_syllable",word:"ALFINETE",image:"🧷",correctAnswer:"FI",options:["FI","VI","FE","NE"]},{type:"middle_syllable",word:"TELEFONE",image:"📞",correctAnswer:"FO",options:["VO","FE","FO","LE"]},{type:"full_word",word:"FOTO",image:"📷",correctAnswer:"FOTO",options:["FOTO","VOTO","FOGO","POTE"]},{type:"full_word",word:"FIO",image:"🧵",correctAnswer:"FIO",options:["FIO","VIO","FILA","RIO"]}];
+const PHASE_5_SOUND_PAIRS = [{word:"VACA",image:"🐄",correct:"VACA",incorrect:"FACA"},{word:"PATO",image:"🦆",correct:"PATO",incorrect:"BATO"},{word:"DADO",image:"🎲",correct:"DADO",incorrect:"TADO"},{word:"FOTO",image:"📷",correct:"FOTO",incorrect:"VOTO"},{word:"BOTE",image:"⛵",correct:"BOTE",incorrect:"POTE"},{word:"TELA",image:"🖼️",correct:"TELA",incorrect:"DELA"},{word:"FARINHA",image:"🌾",correct:"FARINHA",incorrect:"VARINHA"},{word:"BINGO",image:"🎯",correct:"BINGO",incorrect:"PINGO"},{word:"TIA",image:"🙋‍♀️",correct:"TIA",incorrect:"DIA"},{word:"VILA",image:"🏘️",correct:"VILA",incorrect:"FILA"}];
+const PHASE_6_SYLLABLE_COUNT = [{word:"FÉ",image:"🙏",syllables:1},{word:"SOL",image:"☀️",syllables:1},{word:"BIFE",image:"🥩",syllables:2},{word:"BOLA",image:"⚽",syllables:2},{word:"FIGURA",image:"👤",syllables:3},{word:"SAPATO",image:"👟",syllables:3},{word:"FÁBRICA",image:"🏭",syllables:3},{word:"TELEFONE",image:"📞",syllables:4},{word:"ABACATE",image:"🥑",syllables:4},{word:"BORBOLETA",image:"🦋",syllables:4}];
+const PHASE_7_SENTENCES_COUNT = [{sentence:"A FADA VOOU",image:"🧚‍♀️",words:3},{sentence:"O GATO BEBE LEITE",image:"🐈",words:4},{sentence:"O SOL É AMARELO",image:"☀️",words:4},{sentence:"EU GOSTO DE BOLO",image:"🎂",words:4},{sentence:"A BOLA ROLOU",image:"⚽",words:3},{sentence:"O CARRO É RÁPIDO",image:"🚗",words:4},{sentence:"A FLOR CHEIRA BEM",image:"🌸",words:4},{sentence:"O PÁSSARO CANTA",image:"🐦",words:3},{sentence:"A LUA BRILHA",image:"🌙",words:3},{sentence:"O SAPO PULA ALTO",image:"🐸",words:4}];
+const PHASE_8_SENTENCES_BUILD = [{sentence:["O","FOGO","QUEIMA"],image:"🔥",answer:"O FOGO QUEIMA"},{sentence:["O","CAFÉ","É","FORTE"],image:"☕",answer:"O CAFÉ É FORTE"},{sentence:["A","FADA","VOOU"],image:"🧚‍♀️",answer:"A FADA VOOU"},{sentence:["O","GATO","DORME"],image:"😴",answer:"O GATO DORME"},{sentence:["A","BOLA","É","REDONDA"],image:"⚽",answer:"A BOLA É REDONDA"},{sentence:["O","CACHORRO","LATE"],image:"🐕",answer:"O CACHORRO LATE"},{sentence:["EU","AMO","LER"],image:"📚",answer:"EU AMO LER"},{sentence:["O","PEIXE","NADA"],image:"🐠",answer:"O PEIXE NADA"},{sentence:["A","CASA","É","GRANDE"],image:"🏠",answer:"A CASA É GRANDE"},{sentence:["NÓS","VAMOS","BRINCAR"],image:"🤹",answer:"NÓS VAMOS BRINCAR"}];
+const PHASE_9_WORD_TRANSFORM = [{image:"👟",initialWord:"SAPATO",toRemove:"SA",correctAnswer:"PATO",options:["PATO","SAPO","MATO"]},{image:"🧤",initialWord:"LUVA",toRemove:"L",correctAnswer:"UVA",options:["UVA","LUA","VILA"]},{image:"🦁",initialWord:"CAMALEÃO",toRemove:"CAMA",correctAnswer:"LEÃO",options:["LEÃO","SALÃO","LAMA"]},{image:"🎖️",initialWord:"SOLDADO",toRemove:"SOL",correctAnswer:"DADO",options:["DADO","SOLD","ADO"]},{image:"🐔",initialWord:"GALINHA",toRemove:"GA",correctAnswer:"LINHA",options:["LINHA","GALO","NINHA"]},{image:"🦜",initialWord:"TUCANO",toRemove:"TU",correctAnswer:"CANO",options:["CANO","TUCA","NANO"]},{image:"🚪",initialWord:"PORTA",toRemove:"POR",correctAnswer:"TA",options:["TA","PORT","TARTA"]},{image:"🐚",initialWord:"CASCA",toRemove:"SCA",correctAnswer:"CA",options:["CA","CASA","ASCA"]},{image:"🐍",initialWord:"SERPENTE",toRemove:"SER",correctAnswer:"PENTE",options:["PENTE","DENTE","GENTE"]},{image:"🪜",initialWord:"PESCADA",toRemove:"PES",correctAnswer:"CADA",options:["CADA","FADA","NADA"]}];
 
 
 // PARTE 3: FUNÇÕES UTILITÁRIAS
@@ -141,6 +57,80 @@ async function verifyPassword(password, storedHash) { const newHash = await hash
 function generateRandomPassword() { const words = ['sol', 'lua', 'rio', 'mar', 'flor', 'gato', 'cao', 'pato', 'rei', 'luz']; const word = words[Math.floor(Math.random() * words.length)]; const number = Math.floor(100 + Math.random() * 900); return `${word}${number}`; }
 function formatErrorMessage(error) { if (!error || !error.message) { return 'Ocorreu um erro inesperado. Tente mais tarde.'; } const message = error.message.toLowerCase(); if (message.includes('duplicate key')) { return 'Este nome de usuário já existe. Escolha outro.'; } if (message.includes('invalid login credentials') || message.includes('usuário ou senha inválidos.')) { return 'Usuário ou senha inválidos.'; } console.error("Erro não tratado:", error); return 'Ocorreu um erro inesperado. Tente mais tarde.'; }
 
+// =========================================================================
+// BLOCO DE INICIALIZAÇÃO DE VOZ - CORRIGIDO PARA PERFORMANCE
+// =========================================================================
+let speechPromise = null;
+
+function initializeSpeech() {
+    if (speechPromise) return speechPromise;
+
+    speechPromise = new Promise((resolve, reject) => {
+        const setVoice = () => {
+            const voices = speechSynthesis.getVoices();
+            if (voices.length > 0) {
+                selectedVoice = voices.find(v => v.lang === 'pt-BR') || voices[0];
+                speechReady = true;
+                console.log("Voz de narração pronta:", selectedVoice?.name);
+                speechSynthesis.removeEventListener('voiceschanged', setVoice);
+                resolve();
+            }
+        };
+
+        if (speechSynthesis.getVoices().length > 0) {
+            setVoice();
+        } else {
+            speechSynthesis.addEventListener('voiceschanged', setVoice);
+        }
+
+        setTimeout(() => reject(new Error("Timeout: Vozes não carregaram a tempo.")), 3000);
+    }).catch(error => {
+        console.warn(error.message, "Usando a primeira voz disponível como fallback.");
+        if (!speechReady) {
+            const voices = speechSynthesis.getVoices();
+            if(voices.length > 0) {
+                selectedVoice = voices[0];
+                speechReady = true;
+            } else {
+                console.error("Nenhuma voz de sistema disponível.");
+            }
+        }
+    });
+
+    return speechPromise;
+}
+
+async function speak(text, onEndCallback) {
+    if (!window.speechSynthesis) {
+        console.error("API de Síntese de Voz não suportada.");
+        return;
+    }
+    
+    if (!speechReady) {
+        await initializeSpeech();
+    }
+    
+    if (!speechReady) {
+        console.error("Não foi possível inicializar a narração. A função 'speak' será desativada.");
+        if(onEndCallback) onEndCallback();
+        return;
+    }
+    
+    speechSynthesis.cancel();
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = 'pt-BR';
+    if(selectedVoice) {
+        utterance.voice = selectedVoice;
+    }
+    
+    if (onEndCallback) {
+        utterance.onend = onEndCallback;
+    }
+    
+    speechSynthesis.speak(utterance);
+}
+// =========================================================================
+
 // PARTE 4: LÓGICA PRINCIPAL E EVENTOS
 document.addEventListener('DOMContentLoaded', initApp);
 async function initApp() { if (!window.supabase) { alert("ERRO CRÍTICO: Supabase não carregou."); return; } initializeSpeech(); setupAllEventListeners(); const studentSession = sessionStorage.getItem('currentUser'); if (studentSession) { currentUser = JSON.parse(studentSession); await restoreOrStartGame(); } else { await checkSession(); } }
@@ -148,6 +138,7 @@ async function restoreOrStartGame() { await loadGameState(); if (gameState.phase
 function setupAllEventListeners() { document.querySelectorAll('.user-type-btn').forEach(btn => btn.addEventListener('click', (e) => { const type = e.currentTarget.getAttribute('data-type'); if (type === 'teacher') showScreen('teacherLoginScreen'); else if (type === 'student') showScreen('studentLoginScreen'); })); document.querySelectorAll('.back-btn').forEach(btn => btn.addEventListener('click', (e) => { const targetScreen = e.currentTarget.getAttribute('data-target'); showScreen(targetScreen); })); document.getElementById('showRegisterBtn').addEventListener('click', () => showScreen('teacherRegisterScreen')); document.getElementById('showLoginBtn').addEventListener('click', () => showScreen('teacherLoginScreen')); document.getElementById('teacherLoginForm')?.addEventListener('submit', handleTeacherLogin); document.getElementById('teacherRegisterForm')?.addEventListener('submit', handleTeacherRegister); document.getElementById('studentLoginForm')?.addEventListener('submit', handleStudentLogin); document.getElementById('showCreateClassModalBtn').addEventListener('click', () => showModal('createClassModal')); document.getElementById('showAudioSettingsModalBtn').addEventListener('click', showAudioSettingsModal); document.getElementById('createClassForm')?.addEventListener('submit', handleCreateClass); document.getElementById('showCreateStudentFormBtn').addEventListener('click', showCreateStudentForm); document.getElementById('hideCreateStudentFormBtn').addEventListener('click', hideCreateStudentForm); document.getElementById('createStudentSubmitBtn')?.addEventListener('click', handleCreateStudent); document.getElementById('startButton')?.addEventListener('click', startGame); document.getElementById('startCustomActivityBtn')?.addEventListener('click', startCustomActivity); document.getElementById('playAudioButton')?.addEventListener('click', playCurrentAudio); document.getElementById('repeatAudio')?.addEventListener('click', playCurrentAudio); document.getElementById('nextQuestion')?.addEventListener('click', nextQuestion); document.getElementById('continueButton')?.addEventListener('click', nextPhase); document.getElementById('retryButton')?.addEventListener('click', retryPhase); document.getElementById('restartButton')?.addEventListener('click', restartGame); document.getElementById('exitGameButton')?.addEventListener('click', handleExitGame); document.querySelectorAll('[data-close]').forEach(btn => { btn.addEventListener('click', () => closeModal(btn.getAttribute('data-close'))); }); document.querySelectorAll('#manageClassModal .tab-btn').forEach(btn => { btn.addEventListener('click', (e) => showTab(e.currentTarget)); }); document.getElementById('uploadAudioBtn')?.addEventListener('click', handleAudioUpload); document.getElementById('recordBtn')?.addEventListener('click', startRecording); document.getElementById('stopBtn')?.addEventListener('click', stopRecording); document.getElementById('saveRecordingBtn')?.addEventListener('click', saveRecording); document.getElementById('closeTutorialBtn')?.addEventListener('click', hideTutorial); document.getElementById('copyCredentialsBtn')?.addEventListener('click', handleCopyCredentials); document.getElementById('copyResetPasswordBtn')?.addEventListener('click', handleCopyResetPassword); document.querySelectorAll('.password-toggle').forEach(toggle => { toggle.addEventListener('click', () => { const passwordInput = toggle.previousElementSibling; const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password'; passwordInput.setAttribute('type', type); toggle.classList.toggle('fa-eye-slash'); }); }); document.querySelectorAll('.sort-btn').forEach(btn => { btn.addEventListener('click', (e) => { const sortBy = e.currentTarget.dataset.sort; document.querySelectorAll('.sort-btn').forEach(b => b.classList.remove('active')); e.currentTarget.classList.add('active'); renderStudentProgress(sortBy); }); }); document.getElementById('reportClassSelector').addEventListener('change', handleReportClassSelection); }
 
 // PARTE 5: AUTENTICAÇÃO E SESSÃO
+// ... (O restante do código é idêntico ao da última versão, você pode copiar a partir daqui se preferir, ou substituir o arquivo inteiro)
 async function checkSession() { const { data: { session } } = await supabaseClient.auth.getSession(); if (session && session.user) { currentUser = session.user; if (currentUser.user_metadata.role === 'teacher') { await showTeacherDashboard(); } else { await logout(); } } else { showScreen('userTypeScreen'); } }
 async function handleTeacherLogin(e) { e.preventDefault(); const button = e.target.querySelector('button[type="submit"]'); const originalText = button.innerHTML; button.disabled = true; button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Entrando...'; const email = document.getElementById('teacherEmail').value; const password = document.getElementById('teacherPassword').value; try { const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password }); if (error) throw error; currentUser = data.user; await showTeacherDashboard(); showFeedback('Login realizado com sucesso!', 'success'); } catch (error) { showFeedback(formatErrorMessage(error), 'error'); } finally { button.disabled = false; button.innerHTML = originalText; } }
 async function handleTeacherRegister(e) { e.preventDefault(); const button = e.target.querySelector('button[type="submit"]'); const originalText = button.innerHTML; button.disabled = true; button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Cadastrando...'; const name = document.getElementById('teacherRegName').value; const email = document.getElementById('teacherRegEmail').value; const password = document.getElementById('teacherRegPassword').value; try { const { data, error } = await supabaseClient.auth.signUp({ email, password, options: { data: { full_name: name, role: 'teacher' } } }); if (error) throw error; showFeedback('Cadastro realizado! Link de confirmação enviado para seu e-mail.', 'success'); showScreen('teacherLoginScreen'); } catch (error) { showFeedback(formatErrorMessage(error), 'error'); } finally { button.disabled = false; button.innerHTML = originalText; } }
@@ -202,68 +193,7 @@ async function manageClass(classId, className) { currentClassId = classId; docum
 async function loadClassStudents() { const { data, error } = await supabaseClient.from('students').select('*').eq('class_id', currentClassId).order('name', { ascending: true }); if (error) { console.error('Erro ao carregar alunos:', error); document.getElementById('studentsList').innerHTML = '<p>Erro ao carregar.</p>'; return; } renderStudents(data); }
 function renderStudents(students) { const container = document.getElementById('studentsList'); if (!students || students.length === 0) { container.innerHTML = '<p>Nenhum aluno cadastrado.</p>'; return; } container.innerHTML = students.map(student => ` <div class="student-item"> <div class="student-info"> <h4>${student.name}</h4> <p>Usuário: ${student.username}</p> </div> <div class="student-actions"> <button onclick="handleShowOrResetPassword('${student.id}', '${student.name}')" class="btn small" title="Ver/Redefinir Senha"> <i class="fas fa-eye"></i> </button> <button onclick="handleDeleteStudent('${student.id}', '${student.name}')" class="btn small danger" title="Excluir Aluno"> <i class="fas fa-trash"></i> </button> </div> </div>`).join(''); }
 async function loadStudentProgress() { const progressList = document.getElementById('studentProgressList'); progressList.innerHTML = '<p><i class="fas fa-spinner fa-spin"></i> Carregando progresso...</p>'; const { data: studentsData, error: studentsError } = await supabaseClient.from('students').select(`*`).eq('class_id', currentClassId); if (studentsError) { console.error("Erro ao buscar alunos:", studentsError); progressList.innerHTML = `<p style="color:red;">Erro ao carregar alunos: ${studentsError.message}</p>`; return; } if (!studentsData || studentsData.length === 0) { progressList.innerHTML = '<p>Nenhum aluno nesta turma para exibir o progresso.</p>'; return; } const studentIds = studentsData.map(s => s.id); const { data: progressData, error: progressError } = await supabaseClient.from('progress').select('*').in('student_id', studentIds); if (progressError) { console.error("Erro ao buscar progresso:", progressError); progressList.innerHTML = `<p style="color:red;">Erro ao carregar o progresso: ${progressError.message}</p>`; return; } const combinedData = studentsData.map(student => { const studentProgress = progressData.find(p => p.student_id === student.id); return { ...student, progress: studentProgress ? [studentProgress] : [] }; }); studentProgressData = combinedData; renderStudentProgress('last_played'); }
-
-function renderStudentProgress(sortBy = 'last_played') {
-    const progressList = document.getElementById('studentProgressList');
-    const sortedData = [...studentProgressData].sort((a, b) => {
-        if (sortBy === 'name') { return a.name.localeCompare(b.name); }
-        if (sortBy === 'last_played') { const dateA = (a.progress && a.progress.length > 0) ? new Date(a.progress[0].last_played) : new Date(0); const dateB = (b.progress && b.progress.length > 0) ? new Date(b.progress[0].last_played) : new Date(0); return dateB - dateA; }
-        return 0;
-    });
-    let html = sortedData.map(student => {
-        const progressRecord = (student.progress && student.progress.length > 0) ? student.progress[0] : null;
-        const assignedPhases = student.assigned_phases && student.assigned_phases.length > 0 ? student.assigned_phases : [1];
-        const currentPhase = progressRecord?.current_phase || 'N/J';
-        const gameState = progressRecord?.game_state;
-        let score = 0, total = 10, accuracy = 0;
-        if (gameState && gameState.questions && gameState.questions.length > 0) {
-            score = gameState.score ?? 0;
-            total = gameState.questions.length;
-            accuracy = Math.round((score / total) * 100);
-        }
-        let lastPlayedStr = 'Nunca jogou';
-        let statusClass = 'inactive';
-        if (progressRecord?.last_played) {
-            const lastPlayedDate = new Date(progressRecord.last_played);
-            lastPlayedStr = lastPlayedDate.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' });
-            const sevenDaysAgo = new Date();
-            sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-            if (lastPlayedDate > sevenDaysAgo) { statusClass = 'active'; }
-        }
-        const statusIcon = statusClass === 'active' ? '🟢' : '🔴';
-        
-        const phaseCheckboxes = Object.keys(PHASE_DESCRIPTIONS).map(phaseNumStr => {
-            const phaseNum = parseInt(phaseNumStr);
-            const phaseName = PHASE_DESCRIPTIONS[phaseNum] || `Fase ${phaseNum}`;
-            return ` <label class="phase-checkbox-label" title="${phaseName}"> 
-                        <input type="checkbox" class="phase-checkbox" value="${phaseNum}" ${assignedPhases.includes(phaseNum) ? 'checked' : ''} onchange="assignPhases('${student.id}', this)" > 
-                        Fase ${phaseNum} - ${phaseName}
-                       </label> `;
-        }).join('');
-        
-        return `
-            <div class="student-item">
-                <div class="student-info" style="flex-grow: 1;">
-                    <h4>${student.name} <span class="status-indicator ${statusClass}">${statusIcon}</span></h4>
-                    <p>Último Acesso: ${lastPlayedStr}</p>
-                    <p>Progresso na Fase ${currentPhase}: ${accuracy}% (${score}/${total})</p>
-                    <div class="student-progress-container">
-                        <div class="student-progress-bar">
-                            <div class="student-progress-fill" style="width: ${accuracy}%;"></div>
-                        </div>
-                    </div>
-                </div>
-                <div class="student-actions">
-                    <label class="select-label">Designar Fases:</label>
-                    <div class="phase-checkbox-group">
-                        ${phaseCheckboxes}
-                    </div>
-                </div>
-            </div>`;
-    }).join('');
-    progressList.innerHTML = html || '<p>Nenhum aluno para exibir.</p>';
-}
-
+function renderStudentProgress(sortBy = 'last_played') { const progressList = document.getElementById('studentProgressList'); const sortedData = [...studentProgressData].sort((a, b) => { if (sortBy === 'name') { return a.name.localeCompare(b.name); } if (sortBy === 'last_played') { const dateA = (a.progress && a.progress.length > 0) ? new Date(a.progress[0].last_played) : new Date(0); const dateB = (b.progress && b.progress.length > 0) ? new Date(b.progress[0].last_played) : new Date(0); return dateB - dateA; } return 0; }); let html = sortedData.map(student => { const progressRecord = (student.progress && student.progress.length > 0) ? student.progress[0] : null; const assignedPhases = student.assigned_phases && student.assigned_phases.length > 0 ? student.assigned_phases : [1]; const currentPhase = progressRecord?.current_phase || 'N/J'; const gameState = progressRecord?.game_state; let score = 0, total = 10, accuracy = 0; if (gameState && gameState.questions && gameState.questions.length > 0) { score = gameState.score ?? 0; total = gameState.questions.length; accuracy = Math.round((score / total) * 100); } let lastPlayedStr = 'Nunca jogou'; let statusClass = 'inactive'; if (progressRecord?.last_played) { const lastPlayedDate = new Date(progressRecord.last_played); lastPlayedStr = lastPlayedDate.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' }); const sevenDaysAgo = new Date(); sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7); if (lastPlayedDate > sevenDaysAgo) { statusClass = 'active'; } } const statusIcon = statusClass === 'active' ? '🟢' : '🔴'; const phaseCheckboxes = Object.keys(PHASE_DESCRIPTIONS).map(phaseNumStr => { const phaseNum = parseInt(phaseNumStr); const phaseName = PHASE_DESCRIPTIONS[phaseNum] || `Fase ${phaseNum}`; return ` <label class="phase-checkbox-label" title="${phaseName}"> <input type="checkbox" class="phase-checkbox" value="${phaseNum}" ${assignedPhases.includes(phaseNum) ? 'checked' : ''} onchange="assignPhases('${student.id}', this)" > Fase ${phaseNum} - ${phaseName} </label> `; }).join(''); return ` <div class="student-item"> <div class="student-info" style="flex-grow: 1;"> <h4>${student.name} <span class="status-indicator ${statusClass}">${statusIcon}</span></h4> <p>Último Acesso: ${lastPlayedStr}</p> <p>Progresso na Fase ${currentPhase}: ${accuracy}% (${score}/${total})</p> <div class="student-progress-container"> <div class="student-progress-bar"> <div class="student-progress-fill" style="width: ${accuracy}%;"></div> </div> </div> </div> <div class="student-actions"> <label class="select-label">Designar Fases:</label> <div class="phase-checkbox-group"> ${phaseCheckboxes} </div> </div> </div>`; }).join(''); progressList.innerHTML = html || '<p>Nenhum aluno para exibir.</p>'; }
 async function assignPhases(studentId, changedElement) { const checkboxGroup = changedElement.closest('.phase-checkbox-group'); const checkboxes = checkboxGroup.querySelectorAll('.phase-checkbox'); const newPhases = Array.from(checkboxes).filter(cb => cb.checked).map(cb => parseInt(cb.value)).sort((a, b) => a - b); if (newPhases.length === 0) { showFeedback("O aluno precisa ter pelo menos uma fase designada.", "error"); changedElement.checked = true; return; } const studentData = studentProgressData.find(s => s.id === studentId); if (!studentData) return; showFeedback(`Atualizando fases para ${studentData.name}...`, 'info'); try { const { error: assignError } = await supabaseClient.from('students').update({ assigned_phases: newPhases }).eq('id', studentId); if (assignError) throw assignError; const firstPhase = newPhases[0]; const newGameState = { currentPhase: firstPhase, score: 0, attempts: 3, questions: generateQuestions(firstPhase), currentQuestionIndex: 0, tutorialsShown: [], phaseCompleted: false }; const { error: progressError } = await supabaseClient.from('progress').upsert({ student_id: studentId, current_phase: firstPhase, game_state: newGameState, last_played: new Date().toISOString() }, { onConflict: 'student_id' }); if (progressError) throw progressError; showFeedback(`Fases de ${studentData.name} atualizadas!`, 'success'); await loadStudentProgress(); } catch (error) { console.error("Erro ao designar fases:", error); showFeedback(`Erro: ${error.message}`, 'error'); await loadStudentProgress(); } }
 async function handleCreateStudent(event) { event.preventDefault(); const username = document.getElementById('createStudentUsername').value.trim(); const password = document.getElementById('createStudentPassword').value; const submitButton = document.getElementById('createStudentSubmitBtn'); if (!username || !password) { return showFeedback("Preencha nome e senha.", "error"); } if (!currentClassId || !currentUser?.id) { return showFeedback("Erro de sessão.", "error"); } submitButton.disabled = true; submitButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Criando...'; try { const hashedPassword = await hashPassword(password); const { error } = await supabaseClient.from('students').insert([{ name: username, username: username, password: hashedPassword, class_id: currentClassId, teacher_id: currentUser.id }]); if (error) throw error; document.getElementById('newStudentUsername').textContent = username; document.getElementById('newStudentPassword').textContent = password; showModal('studentCreatedModal'); hideCreateStudentForm(); await loadClassStudents(); await loadStudentProgress(); } catch (error) { showFeedback(formatErrorMessage(error), 'error'); } finally { submitButton.disabled = false; submitButton.innerHTML = 'Criar Aluno'; } }
 async function handleDeleteStudent(studentId, studentName) { if (!confirm(`Tem certeza que deseja excluir "${studentName}"?`)) return; const { error } = await supabaseClient.from('students').delete().eq('id', studentId); if (error) { showFeedback(`Erro: ${error.message}`, 'error'); } else { showFeedback(`Aluno "${studentName}" excluído.`, 'success'); await loadClassStudents(); await loadStudentProgress(); } }
@@ -310,7 +240,7 @@ async function startCustomActivity() {
     showScreen('gameScreen');
     startQuestion();
 }
-async function loadGameState() { const { data: progressData, error } = await supabaseClient.from('progress').select('game_state, current_phase').eq('student_id', currentUser.id).single(); if (error && error.code !== 'PGRST116') { console.error("Erro ao carregar progresso:", error); } const assignedPhases = currentUser.assigned_phases && currentUser.assigned_phases.length > 0 ? currentUser.assigned_phases : [1]; const firstAssignedPhase = assignedPhases[0]; if (progressData?.game_state?.questions) { gameState = progressData.game_state; if (!assignedPhases.includes(gameState.currentPhase)) { gameState = { currentPhase: firstAssignedPhase, score: 0, attempts: 3, questions: generateQuestions(firstAssignedPhase), currentQuestionIndex: 0, teacherId: currentUser.teacher_id, tutorialsShown: [], phaseCompleted: false }; await saveGameState(); } if (!gameState.tutorialsShown) gameState.tutorialsShown = []; } else { gameState = { currentPhase: firstAssignedPhase, score: 0, attempts: 3, questions: generateQuestions(firstAssignedPhase), currentQuestionIndex: 0, teacherId: currentUser.teacher_id, tutorialsShown: [], phaseCompleted: false }; await saveGameState(); } }
+async function loadGameState() { const { data: progressData, error } = await supabaseClient.from('progress').select('game_state, current_phase').eq('student_id', currentUser.id).single(); if (error && error.code !== 'PGRST116') { console.error("Erro ao carregar progresso:", error); } const assignedPhases = currentUser.assigned_phases && currentUser.assigned_phases.length > 0 ? currentUser.assigned_phases : [1]; const firstAssignedPhase = assignedPhases[0]; if (progressData?.game_state) { gameState = progressData.game_state; if (!assignedPhases.includes(gameState.currentPhase)) { gameState = { currentPhase: firstAssignedPhase, score: 0, attempts: 3, questions: generateQuestions(firstAssignedPhase), currentQuestionIndex: 0, teacherId: currentUser.teacher_id, tutorialsShown: [], phaseCompleted: false }; await saveGameState(); } if (!gameState.tutorialsShown) gameState.tutorialsShown = []; } else { gameState = { currentPhase: firstAssignedPhase, score: 0, attempts: 3, questions: generateQuestions(firstAssignedPhase), currentQuestionIndex: 0, teacherId: currentUser.teacher_id, tutorialsShown: [], phaseCompleted: false }; await saveGameState(); } }
 async function saveGameState() { if (!currentUser || currentUser.type !== 'student' || gameState.isCustomActivity) return; await supabaseClient.from('progress').upsert({ student_id: currentUser.id, current_phase: gameState.currentPhase, game_state: gameState, last_played: new Date().toISOString() }, { onConflict: 'student_id' }); }
 
 function generateQuestions(phase) {
@@ -336,7 +266,7 @@ function generateQuestions(phase) {
             questions = shuffleAndTake(PHASE_5_SOUND_PAIRS, questionCount).map(item => ({ type: 'sound_detective', image: item.image, correctAnswer: item.correct, options: [item.correct, item.incorrect].sort(() => 0.5 - Math.random()) }));
             break;
         case 6:
-            questions = shuffleAndTake(PHASE_6_SYLLABLE_COUNT, questionCount).map(item => ({ type: 'count_syllables', ...item, correctAnswer: item.syllables.toString(), options: generateOptions(item.syllables.toString(), ['1', '2', '3', '4', '5'], 4) }));
+            questions = shuffleAndTake(PHASE_6_SYLLABLE_COUNT, questionCount).map(item => ({ type: 'count_syllables', ...item, correctAnswer: item.syllables.toString(), options: generateOptions(item.syllables.toString(), ['1', '2', '3', '4'], 4) }));
             break;
         case 7:
             questions = shuffleAndTake(PHASE_7_SENTENCES_COUNT, questionCount).map(item => ({ type: 'count_words', ...item, correctAnswer: item.words.toString(), options: generateOptions(item.words.toString(), ['2', '3', '4', '5'], 4) }));
@@ -345,7 +275,7 @@ function generateQuestions(phase) {
             questions = shuffleAndTake(PHASE_8_SENTENCES_BUILD, questionCount).map(item => ({ type: 'build_sentence', image: item.image, correctAnswer: item.answer, options: item.sentence.sort(() => 0.5 - Math.random()) }));
             break;
         case 9:
-            questions = shuffleAndTake(PHASE_9_WORD_TRANSFORM, questionCount).map(item => ({ ...item, options: item.options.sort(() => 0.5 - Math.random()) }));
+            questions = shuffleAndTake(PHASE_9_WORD_TRANSFORM, questionCount).map(item => ({ ...item, options: generateOptions(item.correctAnswer, item.options, 4) }));
             break;
         case 10:
             questions = Array.from({ length: questionCount }, () => { const startIndex = Math.floor(Math.random() * (ALPHABET.length - 4)); const sequence = ALPHABET.slice(startIndex, startIndex + 4); return { type: 'alphabet_order', correctAnswer: sequence, options: [...sequence].sort(() => 0.5 - Math.random()) }; });
@@ -385,58 +315,9 @@ async function startQuestion() {
 
 function renderPhase1UI(q) { document.getElementById('audioQuestionArea').style.display = 'block'; document.getElementById('lettersGrid').style.display = 'grid'; document.getElementById('questionText').textContent = 'Qual VOGAL faz este som?'; document.getElementById('repeatAudio').style.display = 'inline-block'; renderOptions(q.options); }
 function renderPhase2UI(q) { document.getElementById('imageQuestionArea').style.display = 'block'; document.getElementById('lettersGrid').style.display = 'grid'; document.getElementById('imageEmoji').textContent = q.image; document.getElementById('wordDisplay').textContent = `__${q.word.substring(1)}`; document.getElementById('questionText').textContent = 'Qual vogal completa a palavra?'; renderOptions(q.options); }
-function renderPhase3UI(q) {
-    document.getElementById('imageQuestionArea').style.display = 'block';
-    document.getElementById('lettersGrid').style.display = 'grid';
-    document.getElementById('imageEmoji').textContent = q.image;
-    const wordDisplay = document.getElementById('wordDisplay');
-    const index = q.word.indexOf(q.correctAnswer);
-    if (index !== -1) {
-        wordDisplay.textContent = q.word.substring(0, index) + '__' + q.word.substring(index + q.correctAnswer.length);
-    } else {
-        wordDisplay.textContent = q.word.replace(q.correctAnswer, '__');
-    }
-    document.getElementById('questionText').textContent = 'Qual encontro de vogais completa a palavra?';
-    renderOptions(q.options);
-}
-function renderPhase4UI(q) {
-    document.getElementById('imageQuestionArea').style.display = 'block';
-    document.getElementById('lettersGrid').style.display = 'grid';
-    document.getElementById('imageEmoji').textContent = q.image;
-    if (q.type === 'full_word') {
-        document.getElementById('wordDisplay').textContent = '?';
-        document.getElementById('questionText').textContent = 'Qual é o nome desta figura?';
-    } else if (q.type === 'initial_syllable') {
-        document.getElementById('wordDisplay').textContent = `__${q.word.substring(q.correctAnswer.length)}`;
-        document.getElementById('questionText').textContent = 'Qual sílaba começa esta palavra?';
-    } else {
-        document.getElementById('wordDisplay').textContent = q.word.replace(q.correctAnswer, '__');
-        document.getElementById('questionText').textContent = 'Qual sílaba completa esta palavra?';
-    }
-    renderOptions(q.options);
-}
-function renderPhase5UI_SoundDetective(q) {
-    document.getElementById('imageQuestionArea').style.display = 'block';
-    document.getElementById('lettersGrid').style.display = 'grid';
-    document.getElementById('imageEmoji').textContent = q.image;
-    document.getElementById('questionText').textContent = 'Qual é o som correto desta palavra?';
-    const lettersGrid = document.getElementById('lettersGrid');
-    lettersGrid.innerHTML = q.options.map((option) => `
-        <button class="sound-detective-button" data-sound="${option}">
-            <i class="fas fa-volume-up"></i>
-            <span>${option}</span>
-        </button>
-    `).join('');
-    lettersGrid.querySelectorAll('.sound-detective-button').forEach(btn => {
-        btn.addEventListener('click', (event) => {
-            if (event.target.tagName === 'I') {
-                speak(btn.dataset.sound);
-            } else {
-                selectAnswer(btn.dataset.sound);
-            }
-        });
-    });
-}
+function renderPhase3UI(q) { document.getElementById('imageQuestionArea').style.display = 'block'; document.getElementById('lettersGrid').style.display = 'grid'; document.getElementById('imageEmoji').textContent = q.image; const wordDisplay = document.getElementById('wordDisplay'); const index = q.word.indexOf(q.correctAnswer); if (index !== -1) { wordDisplay.textContent = q.word.substring(0, index) + '__' + q.word.substring(index + q.correctAnswer.length); } else { wordDisplay.textContent = q.word.replace(q.correctAnswer, '__'); } document.getElementById('questionText').textContent = 'Qual encontro de vogais completa a palavra?'; renderOptions(q.options); }
+function renderPhase4UI(q) { document.getElementById('imageQuestionArea').style.display = 'block'; document.getElementById('lettersGrid').style.display = 'grid'; document.getElementById('imageEmoji').textContent = q.image; if (q.type === 'full_word') { document.getElementById('wordDisplay').textContent = '?'; document.getElementById('questionText').textContent = 'Qual é o nome desta figura?'; } else if (q.type === 'initial_syllable') { document.getElementById('wordDisplay').textContent = `__${q.word.substring(q.correctAnswer.length)}`; document.getElementById('questionText').textContent = 'Qual sílaba começa esta palavra?'; } else { document.getElementById('wordDisplay').textContent = q.word.replace(q.correctAnswer, '__'); document.getElementById('questionText').textContent = 'Qual sílaba completa esta palavra?'; } renderOptions(q.options); }
+function renderPhase5UI_SoundDetective(q) { document.getElementById('imageQuestionArea').style.display = 'block'; document.getElementById('lettersGrid').style.display = 'grid'; document.getElementById('imageEmoji').textContent = q.image; document.getElementById('questionText').textContent = 'Qual é o som correto desta palavra?'; const lettersGrid = document.getElementById('lettersGrid'); lettersGrid.innerHTML = q.options.map((option) => `<button class="sound-detective-button" data-sound="${option}"><i class="fas fa-volume-up"></i><span>${option}</span></button>`).join(''); lettersGrid.querySelectorAll('.sound-detective-button').forEach(btn => { btn.addEventListener('click', (event) => { if (event.target.tagName === 'I') { speak(btn.dataset.sound); } else { selectAnswer(btn.dataset.sound); } }); }); }
 function renderPhase6UI(q) { document.getElementById('imageQuestionArea').style.display = 'block'; document.getElementById('lettersGrid').style.display = 'grid'; document.getElementById('imageEmoji').textContent = q.image; document.getElementById('wordDisplay').textContent = q.word; document.getElementById('questionText').textContent = 'Quantas sílabas (pedaços) tem esta palavra?'; renderOptions(q.options); }
 function renderPhase7UI_WordCount(q) { document.getElementById('imageQuestionArea').style.display = 'block'; document.getElementById('lettersGrid').style.display = 'grid'; document.getElementById('imageEmoji').textContent = q.image; const wordDisplay = document.getElementById('wordDisplay'); wordDisplay.textContent = q.sentence; wordDisplay.style.fontSize = '1.8rem'; document.getElementById('questionText').textContent = 'Quantas palavras tem nesta frase?'; renderOptions(q.options); }
 function renderPhase8UI(q) { document.getElementById('imageQuestionArea').style.display = 'block'; document.getElementById('lettersGrid').style.display = 'grid'; document.getElementById('sentenceBuildArea').style.display = 'flex'; document.getElementById('imageEmoji').textContent = q.image; document.getElementById('questionText').textContent = 'Clique nas palavras para formar a frase correta.'; renderWordOptions(q.options); }
@@ -446,7 +327,39 @@ function renderOptions(options) { const lettersGrid = document.getElementById('l
 function renderWordOptions(options) { const lettersGrid = document.getElementById('lettersGrid'); lettersGrid.style.display = 'grid'; lettersGrid.innerHTML = options.map(option => `<button class="word-option-button">${option}</button>`).join(''); lettersGrid.querySelectorAll('.word-option-button').forEach(btn => { btn.addEventListener('click', () => selectWordForSentence(btn)); }); }
 function selectWordForSentence(buttonElement) { buttonElement.disabled = true; buttonElement.classList.add('disabled'); const sentenceBuildArea = document.getElementById('sentenceBuildArea'); const wordSpan = document.createElement('span'); wordSpan.className = 'sentence-word'; wordSpan.textContent = buttonElement.textContent; sentenceBuildArea.appendChild(wordSpan); const allButtons = document.querySelectorAll('.word-option-button'); const allDisabled = Array.from(allButtons).every(btn => btn.disabled); if (allDisabled) { const constructedSentence = Array.from(sentenceBuildArea.children).map(span => span.textContent).join(' '); selectAnswer(constructedSentence); } }
 function handleSequenceClick(buttonElement) { const letter = buttonElement.textContent; buttonElement.disabled = true; buttonElement.classList.add('disabled'); gameState.sequenceGame.userSequence.push(letter); const { userSequence, correctSequence } = gameState.sequenceGame; const currentIndex = userSequence.length - 1; if (userSequence[currentIndex] !== correctSequence[currentIndex]) { gameState.attempts--; updateUI(); showFeedback('Ops, ordem errada! Tente de novo.', 'error'); if (gameState.attempts <= 0) { setTimeout(endPhase, 1500); } else { setTimeout(() => { document.querySelectorAll('#lettersGrid .letter-button').forEach(btn => { btn.disabled = false; btn.classList.remove('disabled'); }); gameState.sequenceGame.userSequence = []; }, 1500); } return; } if (userSequence.length === correctSequence.length) { gameState.score++; updateUI(); showFeedback('Sequência correta!', 'success'); document.getElementById('nextQuestion').style.display = 'block'; } }
-async function selectAnswer(selectedAnswer) { const q = gameState.questions[gameState.currentQuestionIndex]; if (!q) return; if (['alphabet_order'].includes(q.type)) return; document.querySelectorAll('.letter-button, .word-option-button, .sound-detective-button').forEach(btn => btn.disabled = true); const isCorrect = selectedAnswer === q.correctAnswer; if (q.type === 'build_sentence') { const sentenceArea = document.getElementById('sentenceBuildArea'); if (isCorrect) { sentenceArea.style.borderColor = '#4ECDC4'; sentenceArea.style.backgroundColor = 'rgba(78, 205, 196, 0.1)'; } else { sentenceArea.style.borderColor = '#ff6b6b'; sentenceArea.style.backgroundColor = 'rgba(255, 107, 107, 0.1)'; } } else { document.querySelectorAll('.letter-button, .word-option-button, .sound-detective-button').forEach(btn => { const btnIdentifier = btn.dataset.sound || btn.textContent; if (btnIdentifier === q.correctAnswer) { btn.classList.add('correct'); } if (!isCorrect && btnIdentifier === selectedAnswer) { btn.classList.add('incorrect'); } }); } if (isCorrect) { gameState.score++; showFeedback('Muito bem!', 'success'); playTeacherAudio('feedback_correct', 'Acertou'); if (q.type !== 'letter_sound' && q.type !== 'build_sentence' && q.type !== 'count_words') { document.getElementById('wordDisplay').textContent = q.word || q.initialWord; } } else { gameState.attempts--; logStudentError({ question: q, selectedAnswer: selectedAnswer }).catch(console.error); showFeedback(`Quase! A resposta correta era "${q.correctAnswer}"`, 'error'); playTeacherAudio('feedback_incorrect', 'Tente de novo'); } updateUI(); await saveGameState(); if (gameState.attempts <= 0) { setTimeout(endPhase, 2000); } else { document.getElementById('nextQuestion').style.display = 'block'; } }
+async function selectAnswer(selectedAnswer) {
+    const q = gameState.questions[gameState.currentQuestionIndex];
+    if (!q || q.correctAnswer === undefined) {
+        console.error("ERRO CRÍTICO: A questão atual não tem uma resposta correta definida.", q);
+        showFeedback("Ocorreu um erro no jogo. Pulando para a próxima questão.", "error");
+        setTimeout(nextQuestion, 1500);
+        return;
+    }
+    if (['alphabet_order'].includes(q.type)) return;
+    document.querySelectorAll('.letter-button, .word-option-button, .sound-detective-button').forEach(btn => btn.disabled = true);
+    const isCorrect = selectedAnswer === q.correctAnswer;
+    if (q.type === 'build_sentence') { const sentenceArea = document.getElementById('sentenceBuildArea'); if (isCorrect) { sentenceArea.style.borderColor = '#4ECDC4'; sentenceArea.style.backgroundColor = 'rgba(78, 205, 196, 0.1)'; } else { sentenceArea.style.borderColor = '#ff6b6b'; sentenceArea.style.backgroundColor = 'rgba(255, 107, 107, 0.1)'; } } else { document.querySelectorAll('.letter-button, .word-option-button, .sound-detective-button').forEach(btn => { const btnIdentifier = btn.dataset.sound || btn.textContent.trim(); if (btnIdentifier === q.correctAnswer) { btn.classList.add('correct'); } if (!isCorrect && btnIdentifier === selectedAnswer) { btn.classList.add('incorrect'); } }); }
+    if (isCorrect) {
+        gameState.score++;
+        showFeedback('Muito bem!', 'success');
+        playTeacherAudio('feedback_correct', 'Acertou');
+        if (q.type !== 'letter_sound' && q.type !== 'build_sentence' && q.type !== 'count_words' && q.word) {
+            document.getElementById('wordDisplay').textContent = q.word;
+        }
+    } else {
+        gameState.attempts--;
+        logStudentError({ question: q, selectedAnswer: selectedAnswer }).catch(console.error);
+        showFeedback(`Quase! A resposta correta era "${q.correctAnswer}"`, 'error');
+        playTeacherAudio('feedback_incorrect', 'Tente de novo');
+    }
+    updateUI();
+    await saveGameState();
+    if (gameState.attempts <= 0) {
+        setTimeout(endPhase, 2000);
+    } else {
+        document.getElementById('nextQuestion').style.display = 'block';
+    }
+}
 function nextQuestion() { gameState.currentQuestionIndex++; startQuestion(); }
 function endPhase() { const accuracy = gameState.questions.length > 0 ? Math.round((gameState.score / gameState.questions.length) * 100) : 0; const passed = accuracy >= 70; if (!gameState.isCustomActivity) { logPhaseCompletionToHistory(accuracy); } else { clearAssignedActivity(); } showResultScreen(accuracy, passed); }
 async function clearAssignedActivity() { await supabaseClient.from('students').update({ assigned_activity: null }).eq('id', currentUser.id); currentUser.assigned_activity = null; sessionStorage.setItem('currentUser', JSON.stringify(currentUser)); }
@@ -456,42 +369,6 @@ async function retryPhase() { gameState.currentQuestionIndex = 0; gameState.scor
 async function restartGame() { if (gameState.isCustomActivity || gameState.phaseCompleted || gameState.attempts <= 0) { await showStudentGame(); } else { showScreen('startScreen'); } }
 async function playCurrentAudio() { const q = gameState.questions[gameState.currentQuestionIndex]; if (q.type !== 'letter_sound') return; const letter = q.correctAnswer; playTeacherAudio(letter, letter); }
 
-// =========================================================================
-// BLOCO DE CÓDIGO PARA CORREÇÃO DO SOM - Início
-// =========================================================================
-function initializeSpeech() {
-    const checkVoices = (resolve) => {
-        const voices = speechSynthesis.getVoices();
-        if (voices.length > 0) {
-            selectedVoice = voices.find(v => v.lang === 'pt-BR');
-            if (!selectedVoice) selectedVoice = voices[0];
-            console.log("Voz de narração pronta:", selectedVoice?.name);
-            speechReady = true;
-            resolve();
-        }
-    };
-    return new Promise((resolve) => {
-        if (speechSynthesis.getVoices().length > 0) {
-            checkVoices(resolve);
-        } else {
-            speechSynthesis.onvoiceschanged = () => checkVoices(resolve);
-        }
-    });
-}
-function speak(text, onEndCallback) {
-    if (!window.speechSynthesis) return;
-    if (!speechReady) {
-        console.warn("Ainda não pronto para falar, esperando inicialização...");
-        initializeSpeech().then(() => speak(text, onEndCallback));
-        return;
-    }
-    speechSynthesis.cancel();
-    const utterance = new SpeechSynthesisUtterance(text);
-    utterance.lang = 'pt-BR';
-    if(selectedVoice) utterance.voice = selectedVoice;
-    if (onEndCallback) utterance.onend = onEndCallback;
-    speechSynthesis.speak(utterance);
-}
 async function playTeacherAudio(key, fallbackText, onEndCallback) {
     const teacherId = SUPER_ADMIN_TEACHER_ID;
     if (!teacherId) {
@@ -515,9 +392,6 @@ async function playTeacherAudio(key, fallbackText, onEndCallback) {
         speak(fallbackText, onEndCallback);
     }
 }
-// =========================================================================
-// BLOCO DE CÓDIGO PARA CORREÇÃO DO SOM - Fim
-// =========================================================================
 
 function showScreen(screenId) { document.querySelectorAll('.screen').forEach(s => s.classList.remove('active')); document.getElementById(screenId)?.classList.add('active'); }
 function showModal(modalId) { document.getElementById(modalId)?.classList.add('show'); }
@@ -547,7 +421,6 @@ async function loadAndDisplayClassReports(classId) {
     renderClassHeatmap(errors, 'classHeatmapContainer');
     renderIndividualReports(students, errors, 'individualReportsContainer');
 }
-
 function renderClassHeatmap(errors, containerId) {
     const heatmapContainer = document.getElementById(containerId);
     const sectionHeader = heatmapContainer.closest('.report-section').querySelector('h4');
@@ -652,19 +525,15 @@ async function showEvolutionChart(studentId, studentName) {
 async function generateAndAssignActivity(studentId, studentName) {
     showFeedback(`Gerando atividade para ${studentName}...`, 'info');
     const { data: studentErrors, error } = await supabaseClient.from('student_errors').select('*').eq('student_id', studentId).order('created_at', { ascending: false }).limit(20);
-    
-    if (error || !studentErrors || studentErrors.length < 1) { 
+    if (error || studentErrors.length < 1) { 
         showFeedback(`O aluno ${studentName} não tem erros recentes para gerar uma atividade.`, 'error');
         return;
     }
-
     const errorCounts = studentErrors.reduce((acc, err) => { const key = `${err.question_type}|${err.correct_answer}`; if (!acc[key]) { acc[key] = { count: 0, question: err }; } acc[key].count++; return acc; }, {});
     const topErrors = Object.values(errorCounts).sort((a, b) => b.count - a.count);
     let customQuestions = [], usedQuestions = new Set();
     const questionCount = 10;
-    
     for (const errorDetail of topErrors) { if (customQuestions.length >= questionCount) break; const q = generateSingleQuestionFromError(errorDetail.question); if (q && !usedQuestions.has(JSON.stringify(q))) { customQuestions.push(q); usedQuestions.add(JSON.stringify(q)); } }
-    
     let safeguard = 0;
     while (customQuestions.length < questionCount && topErrors.length > 0 && safeguard < 50) {
         const qTemplate = topErrors[Math.floor(Math.random() * topErrors.length)].question;
@@ -675,12 +544,10 @@ async function generateAndAssignActivity(studentId, studentName) {
         }
         safeguard++;
     }
-
-    if (customQuestions.length < 1) { 
+    if (customQuestions.length === 0) { 
         showFeedback(`Não foi possível gerar atividade (erros de fases complexas).`, 'error');
         return;
     }
-
     const activity = { questions: customQuestions.sort(() => 0.5 - Math.random()) };
     const { error: updateError } = await supabaseClient.from('students').update({ assigned_activity: activity }).eq('id', studentId);
     if (updateError) { showFeedback(`Erro ao designar atividade: ${updateError.message}`, 'error'); } else { showFeedback(`Atividade de reforço enviada para ${studentName}!`, 'success'); }
@@ -691,7 +558,7 @@ function generateSingleQuestionFromError(errorTemplate) {
         case 1:
             return { type: 'letter_sound', correctAnswer: errorTemplate.correct_answer, options: generateOptions(errorTemplate.correct_answer, VOWELS, 4) };
         case 2:
-            const wordData2 = PHASE_2_WORDS.find(w => w.vowel === errorTemplate.correct_answer) || PHASE_2_WORDS[Math.floor(Math.random() * PHASE_2_WORDS.length)];
+            const wordData2 = PHASE_2_WORDS.find(w => w.word === errorTemplate.question_details?.word) || PHASE_2_WORDS.find(w => w.vowel === errorTemplate.correct_answer) || PHASE_2_WORDS[Math.floor(Math.random()*PHASE_2_WORDS.length)];
             return { type: 'initial_vowel', ...wordData2, options: generateOptions(wordData2.vowel, VOWELS, 4) };
         case 3:
             const wordData3 = PHASE_3_ENCONTROS.find(w => w.encontro === errorTemplate.correct_answer) || PHASE_3_ENCONTROS[Math.floor(Math.random() * PHASE_3_ENCONTROS.length)];
