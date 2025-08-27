@@ -469,23 +469,26 @@ input::placeholder { color: rgba(255, 255, 255, 0.7); }
 .letter-button:disabled { cursor: not-allowed; opacity: 0.7; }
 
 /* 10. RESPONSIVIDADE (MOBILE) */
+/* ======================================================= */
+/* 10. RESPONSIVIDADE (MOBILE) - VERSÃO FINAL CORRIGIDA    */
+/* ======================================================= */
 @media (max-width: 768px) {
     .dashboard-container {
         flex-direction: column; /* Empilha os elementos */
-        height: 100%;
+        height: 100vh; /* Garante que o container ocupe a tela toda */
     }
 
-    /* ======================================================= */
-    /* INÍCIO DAS CORREÇÕES DE RESPONSIVIDADE                  */
-    /* ======================================================= */
-
-    /* 1. CORREÇÃO CRÍTICA PARA ROLAGEM VERTICAL */
+    /* O conteúdo principal ocupa o espaço, empurrando a nav para baixo */
     .main-content {
-        order: 1;
-        flex-grow: 1;
-        /* Força o contêiner a se limitar ao espaço visível, ativando a rolagem */
-        min-height: 0; 
-        overflow-y: auto;
+        order: 1; /* Vem primeiro */
+        
+        /* CORREÇÃO DEFINITIVA: Usar 'flex: 1' é a forma mais robusta. */
+        /* Isso diz: "cresça e encolha conforme necessário, começando com 0 de altura". */
+        /* Isso força o cálculo a levar em conta a altura da barra de navegação. */
+        flex: 1;
+        
+        min-height: 0; /* Essencial para permitir que o contêiner encolha */
+        overflow-y: auto; /* Habilita a rolagem interna */
         -webkit-overflow-scrolling: touch; /* Melhora a rolagem no iOS */
     }
 
@@ -499,32 +502,58 @@ input::placeholder { color: rgba(255, 255, 255, 0.7); }
         border-right: none;
         border-top: 1px solid var(--glass-border);
         padding: 0.2rem;
-        flex-shrink: 0;
+        flex-shrink: 0; /* Impede que a barra de navegação seja esmagada */
     }
-    .sidebar-header { display: none; }
-    .sidebar-nav {
-        flex-grow: 1; display: flex; justify-content: space-around;
-        width: 100%; align-items: center;
-    }
-    .sidebar-nav a {
-        flex-direction: column; font-size: 0.7rem; height: 60px;
-        padding: 0.5rem; margin: 0; border-radius: 12px;
-        flex: 1; justify-content: center; text-align: center;
-        background: none; box-shadow: none; opacity: 0.8;
-    }
-    .sidebar-nav a.active { background: rgba(255,255,255,0.2); opacity: 1; }
-    .sidebar-nav a i { font-size: 1.5rem; margin: 0 0 4px 0; }
-    .sidebar-nav a span { white-space: normal; }
     
-    /* 2. CORREÇÃO DO BOTÃO SAIR */
+    .sidebar-header { display: none; }
+    
+    .sidebar-nav {
+        flex-grow: 1; 
+        display: flex; 
+        justify-content: space-around;
+        width: 100%; 
+        align-items: center;
+    }
+
+    .sidebar-nav a {
+        flex-direction: column; 
+        font-size: 0.7rem; 
+        height: 60px;
+        padding: 0.5rem; 
+        margin: 0; 
+        border-radius: 12px;
+        flex: 1; 
+        justify-content: center; 
+        text-align: center;
+        background: none; 
+        box-shadow: none; 
+        opacity: 0.8;
+    }
+
+    .sidebar-nav a.active { 
+        background: rgba(255,255,255,0.2); 
+        opacity: 1; 
+    }
+
+    .sidebar-nav a i { 
+        font-size: 1.5rem; 
+        margin: 0 0 4px 0; 
+    }
+    
+    .sidebar-nav a span { 
+        white-space: normal; 
+    }
+
+    /* Garante que o botão de Sair fique visível e formatado */
     .sidebar-footer {
-        display: flex; /* Garante que o footer seja exibido */
-        flex: 1; /* Permite que ocupe espaço proporcionalmente */
+        display: flex;
+        flex: 1;
         max-width: 25%;
         padding: 0;
         justify-content: center;
         align-items: center;
     }
+    
     .logout-btn-sidebar {
         display: flex;
         flex-direction: column;
@@ -540,28 +569,31 @@ input::placeholder { color: rgba(255, 255, 255, 0.7); }
         gap: 4px;
         color: var(--text-light);
     }
+
     .logout-btn-sidebar i {
         font-size: 1.5rem;
         margin: 0;
     }
 
-    /* 3. CORREÇÃO DA VISIBILIDADE DOS RELATÓRIOS */
+    /* Ajusta a altura máxima dos painéis de relatório para caberem na tela */
     .report-section {
         margin-bottom: 1rem;
     }
     .all-phases-scroll-container {
-        max-height: 35vh; /* Antes era 45vh */
+        max-height: 35vh;
     }
     .individual-reports-container {
-        max-height: 38vh; /* Antes era 50vh */
+        max-height: 38vh;
     }
     
-    /* ======================================================= */
-    /* FIM DAS CORREÇÕES DE RESPONSIVIDADE                     */
-    /* ======================================================= */
+    .back-btn { 
+        top: 1rem; 
+        left: 1rem; 
+    }
 
-    .back-btn { top: 1rem; left: 1rem; }
-    .game-header { flex-direction: column; }
+    .game-header { 
+        flex-direction: column; 
+    }
 }
 
 
