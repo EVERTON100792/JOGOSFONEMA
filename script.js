@@ -1,6 +1,7 @@
 // =======================================================
-// JOGO DAS LETRAS - VERSÃO FINAL COM CORREÇÃO
+// JOGO DAS LETRAS - VERSÃO FINAL COM CORREÇÃO E FASE 1 MELHORADA
 // CORRIGE: Bug crítico "generateOptions is not defined" que ocorria ao designar fases.
+// INCLUI: Fase 1 refeita para abranger múltiplos sons de letras (consoantes).
 // INCLUI: Todas as funcionalidades anteriores (16 fases, IA, Status, Scrolls, etc).
 // =======================================================
 
@@ -23,7 +24,7 @@ let studentChannel = null;
 
 // PARTE 2: CONTEÚDO DO JOGO (SEQUÊNCIA PEDAGÓGICA FINAL ALINHADA À IMAGEM)
 const PHASE_DESCRIPTIONS = {
-    1: "O Som da Letra F",
+    1: "O Som das Letras", // <-- ALTERADO
     2: "Jogo da Memória: Maiúsculas e Minúsculas",
     3: "Formando Sílabas com F",
     4: "Caça-Palavras da Letra F",
@@ -42,6 +43,21 @@ const PHASE_DESCRIPTIONS = {
 };
 
 // BANCO DE DADOS DAS FASES (EXPANDIDO PARA 10+ ITENS)
+
+// <-- NOVO BANCO DE DADOS PARA A FASE 1 (O Som das Letras)
+const PHASE_1_LETTER_SOUNDS = [
+    { letter: 'F', audioKey: 'F', description: 'de soprar uma vela (ffff...)?', optionsPool: 'AMOPV' },
+    { letter: 'V', audioKey: 'V', description: 'de um motor vibrando (vvvv...)?', optionsPool: 'AMOPF' },
+    { letter: 'S', audioKey: 'S', description: 'da cobrinha (ssss...)?', optionsPool: 'AMOPZ' },
+    { letter: 'Z', audioKey: 'Z', description: 'da abelhinha (zzzz...)?', optionsPool: 'AMOPS' },
+    { letter: 'M', audioKey: 'M', description: 'de quando a comida está gostosa (mmmm...)?', optionsPool: 'AOPNS' },
+    { letter: 'P', audioKey: 'P', description: 'de uma pequena explosão, sem voz (p, p, p)?', optionsPool: 'AFOVB' },
+    { letter: 'B', audioKey: 'B', description: 'de uma pequena explosão, com voz (b, b, b)?', optionsPool: 'AFOVP' },
+    { letter: 'T', audioKey: 'T', description: 'da batidinha da língua no dente, sem voz (t, t, t)?', optionsPool: 'AFOVD' },
+    { letter: 'D', audioKey: 'D', description: 'da batidinha da língua no dente, com voz (d, d, d)?', optionsPool: 'AFOVT' },
+    { letter: 'L', audioKey: 'L', description: 'com a língua no céu da boca (llll...)?', optionsPool: 'ARFMN' }
+];
+
 const PHASE_3_SYLLABLE_F = [
     { base: 'F', vowel: 'A', result: 'FA', image: '🔪', word: 'FACA' }, { base: 'F', vowel: 'E', result: 'FE', image: '🌱', word: 'FEIJÃO' },
     { base: 'F', vowel: 'I', result: 'FI', image: '🎀', word: 'FITA' }, { base: 'F', vowel: 'O', result: 'FO', image: '🔥', word: 'FOGO' },
@@ -142,14 +158,14 @@ function generateRandomPassword() { const words = ['sol', 'lua', 'rio', 'mar', '
 function formatErrorMessage(error) { if (!error || !error.message) { return 'Ocorreu um erro inesperado. Tente mais tarde.'; } const message = error.message.toLowerCase(); if (message.includes('duplicate key')) { return 'Este nome de usuário já existe. Escolha outro.'; } if (message.includes('invalid login credentials') || message.includes('usuário ou senha inválidos.')) { return 'Usuário ou senha inválidos.'; } console.error("Erro não tratado:", error); return 'Ocorreu um erro inesperado. Tente mais tarde.'; }
 
 // CORREÇÃO: Nome da função está correto agora.
-function _generateOptions(correctItem, sourceArray, count) { 
-    const options = new Set([correctItem]); 
-    const availableItems = [...sourceArray].filter(l => l !== correctItem); 
-    while (options.size < count && availableItems.length > 0) { 
-        const randomIndex = Math.floor(Math.random() * availableItems.length); 
-        options.add(availableItems.splice(randomIndex, 1)[0]); 
-    } 
-    return Array.from(options).sort(() => 0.5 - Math.random()); 
+function _generateOptions(correctItem, sourceArray, count) {
+    const options = new Set([correctItem]);
+    const availableItems = [...sourceArray].filter(l => l !== correctItem);
+    while (options.size < count && availableItems.length > 0) {
+        const randomIndex = Math.floor(Math.random() * availableItems.length);
+        options.add(availableItems.splice(randomIndex, 1)[0]);
+    }
+    return Array.from(options).sort(() => 0.5 - Math.random());
 }
 
 
@@ -493,19 +509,25 @@ function generateQuestions(phase) {
     const shuffleAndTake = (arr, num) => [...arr].sort(() => 0.5 - Math.random()).slice(0, num);
 
     // CORREÇÃO: O nome da função de gerar opções é _generateOptions
-    const _generateOptions = (correctItem, sourceArray, count) => { 
-        const options = new Set([correctItem]); 
-        const availableItems = [...sourceArray].filter(l => l !== correctItem); 
-        while (options.size < count && availableItems.length > 0) { 
-            const randomIndex = Math.floor(Math.random() * availableItems.length); 
-            options.add(availableItems.splice(randomIndex, 1)[0]); 
-        } 
-        return Array.from(options).sort(() => 0.5 - Math.random()); 
+    const _generateOptions = (correctItem, sourceArray, count) => {
+        const options = new Set([correctItem]);
+        const availableItems = [...sourceArray].filter(l => l !== correctItem);
+        while (options.size < count && availableItems.length > 0) {
+            const randomIndex = Math.floor(Math.random() * availableItems.length);
+            options.add(availableItems.splice(randomIndex, 1)[0]);
+        }
+        return Array.from(options).sort(() => 0.5 - Math.random());
     };
 
     switch (phase) {
-        case 1: 
-            questions = Array.from({ length: questionCount }, () => ({ type: 'f_sound', correctAnswer: 'F', options: _generateOptions('F', 'AMOPL', 4) }));
+        case 1: // <-- LÓGICA DA FASE 1 TOTALMENTE MODIFICADA
+            questions = shuffleAndTake(PHASE_1_LETTER_SOUNDS, questionCount).map(item => ({
+                type: 'letter_sound', // Nome do tipo atualizado para ser mais genérico
+                correctAnswer: item.letter,
+                audioKey: item.audioKey,
+                description: item.description,
+                options: _generateOptions(item.letter, item.optionsPool, 4)
+            }));
             break;
         case 2:
             questions = [{ type: 'memory_game' }];
@@ -569,8 +591,8 @@ async function startQuestion() {
     
     const q = gameState.questions[gameState.currentQuestionIndex];
     
-    const renderMap = {
-        'f_sound': renderPhase1UI_FSound, 'memory_game': renderPhase2UI_MemoryGame, 'form_f_syllable': renderPhase3UI_FormFSyllable, 
+    const renderMap = { // <-- ALTERADO AQUI
+        'letter_sound': renderPhase1UI_LetterSound, 'memory_game': renderPhase2UI_MemoryGame, 'form_f_syllable': renderPhase3UI_FormFSyllable, 
         'f_word_search': renderPhase4UI_FWordSearch, 'sound_detective': renderPhase5UI_SoundDetective, 'count_words': renderPhase6UI_WordCount,
         'build_sentence': renderPhase7UI_BuildSentence, 'vowel_sound': renderPhase8UI_VowelSound, 'count_syllables': renderPhase9UI_SyllableCount,
         'initial_syllable': renderPhase10UI_InitialSyllable, 'f_position': renderPhase11UI_FPosition, 'word_transform': renderPhase12UI_WordTransform, 
@@ -582,7 +604,16 @@ async function startQuestion() {
     updateUI(); 
 }
 
-function renderPhase1UI_FSound(q) { document.getElementById('audioQuestionArea').style.display = 'block'; document.getElementById('lettersGrid').style.display = 'grid'; document.getElementById('questionText').textContent = 'Qual letra faz o som de /ffff/?'; document.getElementById('repeatAudio').style.display = 'inline-block'; renderOptions(q.options); setTimeout(playCurrentAudio, 500); }
+// <-- FUNÇÃO DA FASE 1 RENOMEADA E ATUALIZADA
+function renderPhase1UI_LetterSound(q) {
+    document.getElementById('audioQuestionArea').style.display = 'block';
+    document.getElementById('lettersGrid').style.display = 'grid';
+    document.getElementById('questionText').textContent = `Qual letra faz o som ${q.description}`;
+    document.getElementById('repeatAudio').style.display = 'inline-block';
+    renderOptions(q.options);
+    setTimeout(playCurrentAudio, 500);
+}
+
 function renderPhase2UI_MemoryGame() {
     const memoryGrid = document.getElementById('memoryGameGrid');
     if (!memoryGrid) { console.error("Elemento memoryGameGrid não encontrado!"); return; }
@@ -680,7 +711,6 @@ async function endPhase() {
         totalQuestions = gameState.memoryGame.totalPairs;
     }
     const accuracy = totalQuestions > 0 ? Math.round((gameState.score / totalQuestions) * 100) : 0;
-    const passed = accuracy >= 70;
     
     if (gameState.isCustomActivity) {
         await logCustomActivityCompletion(accuracy);
@@ -696,7 +726,16 @@ function showResultScreen(accuracy, passed) { showScreen('resultScreen'); docume
 async function nextPhase() { const assignedPhases = currentUser.assigned_phases || [1]; const currentPhaseIndex = assignedPhases.indexOf(gameState.currentPhase); const hasNextPhase = currentPhaseIndex !== -1 && currentPhaseIndex < assignedPhases.length - 1; if (hasNextPhase) { const nextPhaseNum = assignedPhases[currentPhaseIndex + 1]; gameState.currentPhase = nextPhaseNum; gameState.currentQuestionIndex = 0; gameState.score = 0; gameState.attempts = 3; gameState.questions = generateQuestions(gameState.currentPhase); gameState.phaseCompleted = false; await saveGameState(); showScreen('gameScreen'); startQuestion(); } else { showResultScreen(100, true); } }
 async function retryPhase() { gameState.currentQuestionIndex = 0; gameState.score = 0; gameState.attempts = 3; gameState.phaseCompleted = false; gameState.questions = generateQuestions(gameState.currentPhase); await saveGameState(); showScreen('gameScreen'); startQuestion(); }
 async function restartGame() { await showStudentGame(); }
-async function playCurrentAudio() { const q = gameState.questions[gameState.currentQuestionIndex]; if (q.type === 'vowel_sound') { playTeacherAudio(q.correctAnswer, q.correctAnswer); } else if (q.type === 'f_sound') { playTeacherAudio('F', 'f'); } }
+
+// <-- FUNÇÃO playCurrentAudio ATUALIZADA
+async function playCurrentAudio() {
+    const q = gameState.questions[gameState.currentQuestionIndex];
+    // Adicionamos o novo tipo 'letter_sound' e removemos o 'f_sound'
+    if (q.type === 'vowel_sound' || q.type === 'letter_sound') {
+        // Usa a propriedade 'audioKey' que definimos no nosso banco de dados da Fase 1
+        playTeacherAudio(q.audioKey, q.correctAnswer);
+    }
+}
 
 // PARTE 9: SÍNTESE DE VOZ E ÁUDIOS
 function initializeSpeech() { const checkVoices = (resolve) => { const voices = speechSynthesis.getVoices(); if (voices.length > 0) { selectedVoice = voices.find(v => v.lang === 'pt-BR'); if (!selectedVoice) selectedVoice = voices[0]; speechReady = true; resolve(); } }; return new Promise((resolve) => { if (speechSynthesis.getVoices().length > 0) { checkVoices(resolve); } else { speechSynthesis.onvoiceschanged = () => checkVoices(resolve); } }); }
