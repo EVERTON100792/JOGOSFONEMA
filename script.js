@@ -1,7 +1,7 @@
 // =======================================================
-// JOGO DAS LETRAS - VERSÃO FINAL CORRIGIDA
-// CORRIGE: Botões de navegação do painel que não respondiam ao clique.
-// INCLUI: Todas as funcionalidades anteriores, incluindo scrolls e status de aluno.
+// JOGO DAS LETRAS - VERSÃO FINAL COM CORREÇÃO GERAL
+// CORRIGE: Bug de loop infinito que travava a "Atividade de Reforço".
+// INCLUI: Todas as funcionalidades anteriores.
 // =======================================================
 
 
@@ -23,8 +23,8 @@ let studentChannel = null;
 
 // PARTE 2: CONTEÚDO DO JOGO (SEQUÊNCIA PEDAGÓGICA FINAL ALINHADA À IMAGEM)
 const PHASE_DESCRIPTIONS = {
-    1: "Jogo da Memória: Maiúsculas e Minúsculas",
-    2: "O Som da Letra F",
+    1: "O Som da Letra F",
+    2: "Jogo da Memória: Maiúsculas e Minúsculas",
     3: "Formando Sílabas com F",
     4: "Caça-Palavras da Letra F",
     5: "Pares Surdos/Sonoros",
@@ -41,7 +41,7 @@ const PHASE_DESCRIPTIONS = {
     16: "Completando com Sílabas Complexas"
 };
 
-// BANCO DE DADOS DAS FASES
+// BANCO DE DADOS DAS FASES (EXPANDIDO PARA 10+ ITENS)
 const PHASE_3_SYLLABLE_F = [
     { base: 'F', vowel: 'A', result: 'FA', image: '🔪', word: 'FACA' }, { base: 'F', vowel: 'E', result: 'FE', image: '🌱', word: 'FEIJÃO' },
     { base: 'F', vowel: 'I', result: 'FI', image: '🎀', word: 'FITA' }, { base: 'F', vowel: 'O', result: 'FO', image: '🔥', word: 'FOGO' },
@@ -557,7 +557,7 @@ async function startQuestion() {
     };
     renderMap[q.type]?.(q);
     
-    updateUI(); 
+    updateUI();
 }
 
 function renderPhase1UI_FSound(q) { document.getElementById('audioQuestionArea').style.display = 'block'; document.getElementById('lettersGrid').style.display = 'grid'; document.getElementById('questionText').textContent = 'Qual letra faz o som de /ffff/?'; document.getElementById('repeatAudio').style.display = 'inline-block'; renderOptions(q.options); setTimeout(playCurrentAudio, 500); }
@@ -890,16 +890,14 @@ async function generateAndAssignActivity(studentId, studentName) {
     let customQuestions = [];
     const questionCount = 10;
     
-    for (const errorDetail of topErrors) {
-        if (customQuestions.length >= questionCount) break;
-        const newQuestion = generateSingleQuestionFromError(errorDetail.questionTemplate);
-        if (newQuestion) customQuestions.push(newQuestion);
-    }
-    
-    while (customQuestions.length < questionCount && topErrors.length > 0) {
+    let safeguard = 0;
+    while (customQuestions.length < questionCount && topErrors.length > 0 && safeguard < 50) {
         const randomErrorTemplate = topErrors[Math.floor(Math.random() * topErrors.length)].questionTemplate;
         const newQuestion = generateSingleQuestionFromError(randomErrorTemplate);
-        if (newQuestion) customQuestions.push(newQuestion);
+        if (newQuestion) {
+            customQuestions.push(newQuestion);
+        }
+        safeguard++;
     }
     
     if (customQuestions.length < 1) { 
@@ -925,6 +923,7 @@ function generateSingleQuestionFromError(errorTemplate) {
         case 5: const pairData = PHASE_5_SOUND_PAIRS.find(p => p.correct === errorTemplate.correct_answer) || PHASE_5_SOUND_PAIRS[0]; return { type: 'sound_detective', ...pairData, options: [pairData.correct, pairData.incorrect].sort(()=>0.5-Math.random()) };
         case 9: const syllableData = PHASE_9_SYLLABLE_COUNT.find(p => p.syllables.toString() === errorTemplate.correct_answer) || PHASE_9_SYLLABLE_COUNT[0]; return { type: 'count_syllables', ...syllableData, correctAnswer: syllableData.syllables.toString(), options: generateOptions(syllableData.syllables.toString(), ['1','2','3','4'], 4) };
         case 10: const initialSyllableData = PHASE_10_INITIAL_SYLLABLE.find(p => p.correctAnswer === errorTemplate.correct_answer) || PHASE_10_INITIAL_SYLLABLE[0]; return { type: 'initial_syllable', ...initialSyllableData, options: generateOptions(initialSyllableData.correctAnswer, ['BA','CA','DA','FA','GA','LA','MA','NA','PA','RA','SA','TA','VA'], 4) };
+        case 4: const wordData = PHASE_4_WORDS_F.find(w => w.word === errorTemplate.correct_answer) || PHASE_4_WORDS_F[0]; return { type: 'f_word_search', ...wordData, correctAnswer: wordData.word, options: wordData.options };
         default: return null;
     }
 }
