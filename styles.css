@@ -1012,3 +1012,22 @@ html, body {
     font-size: 0.8rem;
     color: #666;
 }
+/* ================================================= */
+/* === MELHORIA: BARRA DE ROLAGEM PARA LISTAS GRANDES === */
+/* ================================================= */
+
+/* Barra de Rolagem para a Lista de Alunos no Modal "Gerenciar Turma" */
+.students-list {
+    max-height: 40vh; /* Define uma altura máxima (40% da altura da tela) */
+    overflow-y: auto;   /* Adiciona a barra de rolagem vertical APENAS se a lista for maior que a altura máxima */
+    padding-right: 10px;/* Um pequeno espaço para a barra de rolagem não cobrir o conteúdo */
+}
+
+/* Barra de Rolagem para a Lista de Relatórios Individuais */
+#individualReportsContainer {
+    max-height: 65vh; /* Uma altura máxima um pouco maior para a tela de relatórios */
+    overflow-y: auto;   /* Adiciona a barra de rolagem vertical quando necessário */
+    padding: 10px;      /* Um espaçamento interno para não colar nas bordas */
+    border-radius: 8px;
+    border: 1px solid #e9ecef; /* Uma borda sutil para delimitar a área de rolagem */
+}
