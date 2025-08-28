@@ -1078,3 +1078,24 @@ html, body {
         box-shadow: 0 0 0 0 rgba(46, 204, 113, 0);
     }
 }
+/* ================================================= */
+/* === ADIÇÃO FINAL: BARRA DE ROLAGEM PARA LISTAS DE ALUNOS === */
+/* ================================================= */
+
+/* Alvo: As listas de alunos (no modal "Gerenciar Turma" e na página "Relatórios") */
+.students-list,
+#individualReportsContainer {
+    
+    /* Define uma altura máxima. A lista não passará de 50% da altura da tela do dispositivo. */
+    max-height: 50vh; 
+    
+    /* ESSA É A LINHA MÁGICA: Adiciona a barra de rolagem no eixo Y (vertical) 
+       automaticamente APENAS se o conteúdo passar da altura máxima. */
+    overflow-y: auto;   
+    
+    /* Melhoras visuais para a área de rolagem ficar mais bonita */
+    padding: 15px;      
+    border-radius: 8px;
+    border: 1px solid #e0e0e0;
+    background-color: #fdfdff; /* Um fundo levemente diferente para destacar a área */
+}
