@@ -131,6 +131,7 @@ async function initApp() {
 }
 
 function setupAllEventListeners() {
+    // Anexa listeners estáticos que existem desde o início
     document.querySelectorAll('.user-type-btn').forEach(btn => btn.addEventListener('click', (e) => { const type = e.currentTarget.getAttribute('data-type'); if (type === 'teacher') showScreen('teacherLoginScreen'); else if (type === 'student') showScreen('studentLoginScreen'); }));
     document.querySelectorAll('.back-btn').forEach(btn => btn.addEventListener('click', (e) => { const targetScreen = e.currentTarget.getAttribute('data-target'); showScreen(targetScreen); }));
     document.getElementById('showRegisterBtn').addEventListener('click', () => showScreen('teacherRegisterScreen'));
@@ -166,6 +167,21 @@ function setupAllEventListeners() {
     document.querySelectorAll('.password-toggle').forEach(toggle => { toggle.addEventListener('click', () => { const passwordInput = toggle.previousElementSibling; const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password'; passwordInput.setAttribute('type', type); toggle.classList.toggle('fa-eye-slash'); }); });
     document.querySelectorAll('.sort-btn').forEach(btn => { btn.addEventListener('click', (e) => { const sortBy = e.currentTarget.dataset.sort; document.querySelectorAll('.sort-btn').forEach(b => b.classList.remove('active')); e.currentTarget.classList.add('active'); renderStudentProgress(sortBy); }); });
     document.getElementById('reportClassSelector').addEventListener('change', handleReportClassSelection);
+
+    // Anexa os listeners do painel do professor de forma delegada e robusta
+    const sidebar = document.getElementById('dashboardSidebar');
+    sidebar.addEventListener('click', (event) => {
+        const navLink = event.target.closest('.sidebar-nav a');
+        const logoutButton = event.target.closest('#logoutBtnSidebar');
+        
+        if (navLink) {
+            event.preventDefault();
+            handleSidebarClick(navLink);
+        }
+        if (logoutButton) {
+            logout();
+        }
+    });
 }
 
 
@@ -223,7 +239,7 @@ function handleExitGame() {
     if (confirm('Tem certeza que deseja sair? Seu progresso ficará salvo.')) { 
         if (studentChannel) {
             studentChannel.untrack();
-            studentChannel.unsubscribe();
+            supabaseClient.removeChannel(studentChannel);
             studentChannel = null;
         }
         sessionStorage.removeItem('currentUser'); 
@@ -233,20 +249,29 @@ function handleExitGame() {
 }
 
 
-// PARTE 6: DASHBOARD DO PROFESSOR (COM LÓGICA DE STATUS)
+// PARTE 6: DASHBOARD DO PROFESSOR (COM LÓGICA DE STATUS E CORREÇÃO DE BOTOÕES)
 async function showTeacherDashboard() {
     showScreen('teacherDashboard');
     await loadTeacherData();
     showDashboardView('viewTurmas');
-    document.querySelectorAll('.sidebar-nav a').forEach(link => {
-        link.removeEventListener('click', handleSidebarClick);
-        link.addEventListener('click', handleSidebarClick);
-    });
-    const logoutBtnSidebar = document.getElementById('logoutBtnSidebar');
-    logoutBtnSidebar.removeEventListener('click', logout);
-    logoutBtnSidebar.addEventListener('click', logout);
-
     connectTeacherToRealtime();
+}
+
+function handleSidebarClick(navLinkElement) {
+    const viewId = navLinkElement.dataset.view;
+    showDashboardView(viewId);
+}
+
+function showDashboardView(viewId) { 
+    document.querySelectorAll('.dashboard-view').forEach(view => { view.classList.remove('active'); }); 
+    const activeView = document.getElementById(viewId); 
+    if (activeView) { activeView.classList.add('active'); } 
+    document.querySelectorAll('.sidebar-nav a').forEach(link => { link.classList.remove('active'); if (link.dataset.view === viewId) { link.classList.add('active'); } }); 
+    const linkText = document.querySelector(`.sidebar-nav a[data-view="${viewId}"] span`).textContent; 
+    document.getElementById('dashboard-title').textContent = linkText; 
+    if (viewId === 'viewRelatorios') { 
+        populateReportClassSelector(); 
+    } 
 }
 
 function connectTeacherToRealtime() {
@@ -284,6 +309,16 @@ function connectTeacherToRealtime() {
         .subscribe();
 }
 
+async function loadTeacherData() { if (!currentUser) return; document.getElementById('teacherName').textContent = currentUser.user_metadata.full_name || 'Professor(a)'; const audioSettingsButton = document.getElementById('showAudioSettingsModalBtn'); if (currentUser.id === SUPER_ADMIN_TEACHER_ID) { audioSettingsButton.style.display = 'block'; } else { audioSettingsButton.style.display = 'none'; } await loadTeacherClasses(); }
+async function loadTeacherClasses() { const { data, error } = await supabaseClient.from('classes').select('*, students(count)').eq('teacher_id', currentUser.id); if (error) { console.error('Erro ao carregar turmas:', error); return; } renderClasses(data); }
+function renderClasses(classes) { const container = document.getElementById('classesList'); if (!classes || classes.length === 0) { container.innerHTML = '<p>Nenhuma turma criada ainda.</p>'; return; } container.innerHTML = classes.map(cls => { const studentCount = cls.students[0]?.count || 0; return ` <div class="class-card"> <h3>${cls.name}</h3> <span class="student-count">👥 ${studentCount} aluno(s)</span> <div class="class-card-actions"> <button class="btn primary" onclick="manageClass('${cls.id}', '${cls.name.replace(/'/g, "\\'")}')">Gerenciar</button> <button class="btn danger" onclick="handleDeleteClass('${cls.id}', '${cls.name.replace(/'/g, "\\'")}')" title="Excluir Turma"> <i class="fas fa-trash"></i> </button> </div> </div>`; }).join(''); }
+async function handleCreateClass(e) { e.preventDefault(); const name = document.getElementById('className').value; if (!name) return; const { error } = await supabaseClient.from('classes').insert([{ name, teacher_id: currentUser.id }]); if (error) { showFeedback(`Erro: ${error.message}`, 'error'); return; } closeModal('createClassModal'); await loadTeacherClasses(); showFeedback('Turma criada com sucesso!', 'success'); document.getElementById('createClassForm').reset(); }
+async function handleDeleteClass(classId, className) { if (!confirm(`ATENÇÃO! Deseja excluir a turma "${className}"?\nTODOS os alunos e progressos serão apagados.`)) return; const { error } = await supabaseClient.from('classes').delete().eq('id', classId); if (error) { showFeedback(`Erro: ${error.message}`, 'error'); } else { showFeedback(`Turma "${className}" excluída.`, 'success'); await loadTeacherClasses(); } }
+async function manageClass(classId, className) { currentClassId = classId; document.getElementById('manageClassTitle').textContent = `Gerenciar: ${className}`; const modal = document.getElementById('manageClassModal'); modal.querySelectorAll('.tab-btn').forEach(btn => { const tabId = btn.dataset.tab; if (!btn.getAttribute('data-listener')) { btn.setAttribute('data-listener', 'true'); btn.addEventListener('click', () => { if (tabId === 'studentsTab') loadClassStudents(); else if (tabId === 'studentProgressTab') loadStudentProgress(); }); } }); showTab(document.querySelector('#manageClassModal .tab-btn[data-tab="studentsTab"]')); await loadClassStudents(); showModal('manageClassModal'); }
+async function loadClassStudents() { const { data, error } = await supabaseClient.from('students').select('*').eq('class_id', currentClassId).order('name', { ascending: true }); if (error) { console.error('Erro ao carregar alunos:', error); document.getElementById('studentsList').innerHTML = '<p>Erro ao carregar.</p>'; return; } renderStudents(data); }
+function renderStudents(students) { const container = document.getElementById('studentsList'); if (!students || students.length === 0) { container.innerHTML = '<p>Nenhum aluno cadastrado.</p>'; return; } container.innerHTML = students.map(student => ` <div class="student-item"> <div class="student-info"> <h4>${student.name}</h4> <p>Usuário: ${student.username}</p> </div> <div class="student-actions"> <button onclick="handleShowOrResetPassword('${student.id}', '${student.name}')" class="btn small" title="Ver/Redefinir Senha"> <i class="fas fa-key"></i> </button> <button onclick="handleDeleteStudent('${student.id}', '${student.name}')" class="btn small danger" title="Excluir Aluno"> <i class="fas fa-trash"></i> </button> </div> </div>`).join(''); }
+async function loadStudentProgress() { const progressList = document.getElementById('studentProgressList'); progressList.innerHTML = '<p><i class="fas fa-spinner fa-spin"></i> Carregando progresso...</p>'; const { data: studentsData, error: studentsError } = await supabaseClient.from('students').select(`*`).eq('class_id', currentClassId); if (studentsError) { console.error("Erro ao buscar alunos:", studentsError); progressList.innerHTML = `<p style="color:red;">Erro ao carregar alunos: ${studentsError.message}</p>`; return; } if (!studentsData || studentsData.length === 0) { progressList.innerHTML = '<p>Nenhum aluno nesta turma para exibir o progresso.</p>'; return; } const studentIds = studentsData.map(s => s.id); const { data: progressData, error: progressError } = await supabaseClient.from('progress').select('*').in('student_id', studentIds); if (progressError) { console.error("Erro ao buscar progresso:", progressError); progressList.innerHTML = `<p style="color:red;">Erro ao carregar o progresso: ${progressError.message}</p>`; return; } const combinedData = studentsData.map(student => { const studentProgress = progressData.find(p => p.student_id === student.id); return { ...student, progress: studentProgress ? [studentProgress] : [] }; }); studentProgressData = combinedData; renderStudentProgress('last_played'); }
+
 function renderStudentProgress(sortBy) {
     const progressList = document.getElementById('studentProgressList');
     const currentSort = document.querySelector('.sort-btn.active')?.dataset.sort || 'last_played';
@@ -316,7 +351,7 @@ function renderStudentProgress(sortBy) {
             const lastDate = new Date(progressRecord.last_played);
             const now = new Date();
             const diffTime = Math.abs(now - lastDate);
-            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) -1;
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) - 1;
 
             if (diffDays <= 1) {
                 statusHTML = `<div class="status-indicator recent" title="Acessou hoje ou ontem"></div>`;
@@ -332,11 +367,15 @@ function renderStudentProgress(sortBy) {
         const assignedPhases = student.assigned_phases || [1];
         const currentPhase = progressRecord?.current_phase || 'N/J';
         const gameState = progressRecord?.game_state;
-        let score = 0, total = 10, accuracy = 0;
+        let score = 0, total = 0, accuracy = 0;
         if (gameState?.questions?.length > 0) {
             score = gameState.score ?? 0;
-            total = gameState.questions.length;
-            accuracy = Math.round((score / total) * 100);
+            if(gameState.questions[0]?.type === 'memory_game' && gameState.memoryGame) {
+                total = gameState.memoryGame.totalPairs;
+            } else {
+                total = gameState.questions.length;
+            }
+            accuracy = total > 0 ? Math.round((score / total) * 100) : 0;
         }
         let lastPlayedStr = progressRecord?.last_played ? new Date(progressRecord.last_played).toLocaleDateString('pt-BR') : 'Nunca jogou';
 
@@ -364,7 +403,7 @@ function renderStudentProgress(sortBy) {
                 <div class="student-info" style="flex-grow: 1;">
                     <h4>${statusHTML} ${student.name}</h4>
                     <p>Último Acesso: ${lastPlayedStr}</p>
-                    <p>Progresso na Fase ${currentPhase}: ${accuracy}% (${score}/${total})</p>
+                    <p>Progresso na Fase ${currentPhase}: ${accuracy}% (${score}/${total || '?'})</p>
                     <div class="student-progress-container">
                         <div class="student-progress-bar">
                             <div class="student-progress-fill" style="width: ${accuracy}%;"></div>
@@ -380,16 +419,6 @@ function renderStudentProgress(sortBy) {
     progressList.innerHTML = html || '<p>Nenhum aluno para exibir.</p>';
 }
 
-// (O resto das funções do dashboard, como loadTeacherData, manageClass, etc., permanecem as mesmas)
-async function loadTeacherData() { if (!currentUser) return; document.getElementById('teacherName').textContent = currentUser.user_metadata.full_name || 'Professor(a)'; const audioSettingsButton = document.getElementById('showAudioSettingsModalBtn'); if (currentUser.id === SUPER_ADMIN_TEACHER_ID) { audioSettingsButton.style.display = 'block'; } else { audioSettingsButton.style.display = 'none'; } await loadTeacherClasses(); }
-async function loadTeacherClasses() { const { data, error } = await supabaseClient.from('classes').select('*, students(count)').eq('teacher_id', currentUser.id); if (error) { console.error('Erro ao carregar turmas:', error); return; } renderClasses(data); }
-function renderClasses(classes) { const container = document.getElementById('classesList'); if (!classes || classes.length === 0) { container.innerHTML = '<p>Nenhuma turma criada ainda.</p>'; return; } container.innerHTML = classes.map(cls => { const studentCount = cls.students[0]?.count || 0; return ` <div class="class-card"> <h3>${cls.name}</h3> <span class="student-count">👥 ${studentCount} aluno(s)</span> <div class="class-card-actions"> <button class="btn primary" onclick="manageClass('${cls.id}', '${cls.name.replace(/'/g, "\\'")}')">Gerenciar</button> <button class="btn danger" onclick="handleDeleteClass('${cls.id}', '${cls.name.replace(/'/g, "\\'")}')" title="Excluir Turma"> <i class="fas fa-trash"></i> </button> </div> </div>`; }).join(''); }
-async function handleCreateClass(e) { e.preventDefault(); const name = document.getElementById('className').value; if (!name) return; const { error } = await supabaseClient.from('classes').insert([{ name, teacher_id: currentUser.id }]); if (error) { showFeedback(`Erro: ${error.message}`, 'error'); return; } closeModal('createClassModal'); await loadTeacherClasses(); showFeedback('Turma criada com sucesso!', 'success'); document.getElementById('createClassForm').reset(); }
-async function handleDeleteClass(classId, className) { if (!confirm(`ATENÇÃO! Deseja excluir a turma "${className}"?\nTODOS os alunos e progressos serão apagados.`)) return; const { error } = await supabaseClient.from('classes').delete().eq('id', classId); if (error) { showFeedback(`Erro: ${error.message}`, 'error'); } else { showFeedback(`Turma "${className}" excluída.`, 'success'); await loadTeacherClasses(); } }
-async function manageClass(classId, className) { currentClassId = classId; document.getElementById('manageClassTitle').textContent = `Gerenciar: ${className}`; const modal = document.getElementById('manageClassModal'); modal.querySelectorAll('.tab-btn').forEach(btn => { const tabId = btn.dataset.tab; if (!btn.getAttribute('data-listener')) { btn.setAttribute('data-listener', 'true'); btn.addEventListener('click', () => { if (tabId === 'studentsTab') loadClassStudents(); else if (tabId === 'studentProgressTab') loadStudentProgress(); }); } }); showTab(document.querySelector('#manageClassModal .tab-btn[data-tab="studentsTab"]')); await loadClassStudents(); showModal('manageClassModal'); }
-async function loadClassStudents() { const { data, error } = await supabaseClient.from('students').select('*').eq('class_id', currentClassId).order('name', { ascending: true }); if (error) { console.error('Erro ao carregar alunos:', error); document.getElementById('studentsList').innerHTML = '<p>Erro ao carregar.</p>'; return; } renderStudents(data); }
-function renderStudents(students) { const container = document.getElementById('studentsList'); if (!students || students.length === 0) { container.innerHTML = '<p>Nenhum aluno cadastrado.</p>'; return; } container.innerHTML = students.map(student => ` <div class="student-item"> <div class="student-info"> <h4>${student.name}</h4> <p>Usuário: ${student.username}</p> </div> <div class="student-actions"> <button onclick="handleShowOrResetPassword('${student.id}', '${student.name}')" class="btn small" title="Ver/Redefinir Senha"> <i class="fas fa-key"></i> </button> <button onclick="handleDeleteStudent('${student.id}', '${student.name}')" class="btn small danger" title="Excluir Aluno"> <i class="fas fa-trash"></i> </button> </div> </div>`).join(''); }
-async function loadStudentProgress() { const progressList = document.getElementById('studentProgressList'); progressList.innerHTML = '<p><i class="fas fa-spinner fa-spin"></i> Carregando progresso...</p>'; const { data: studentsData, error: studentsError } = await supabaseClient.from('students').select(`*`).eq('class_id', currentClassId); if (studentsError) { console.error("Erro ao buscar alunos:", studentsError); progressList.innerHTML = `<p style="color:red;">Erro ao carregar alunos: ${studentsError.message}</p>`; return; } if (!studentsData || studentsData.length === 0) { progressList.innerHTML = '<p>Nenhum aluno nesta turma para exibir o progresso.</p>'; return; } const studentIds = studentsData.map(s => s.id); const { data: progressData, error: progressError } = await supabaseClient.from('progress').select('*').in('student_id', studentIds); if (progressError) { console.error("Erro ao buscar progresso:", progressError); progressList.innerHTML = `<p style="color:red;">Erro ao carregar o progresso: ${progressError.message}</p>`; return; } const combinedData = studentsData.map(student => { const studentProgress = progressData.find(p => p.student_id === student.id); return { ...student, progress: studentProgress ? [studentProgress] : [] }; }); studentProgressData = combinedData; renderStudentProgress('last_played'); }
 async function assignPhases(studentId, changedElement) { const checkboxGroup = changedElement.closest('.phase-checkbox-grid'); const checkboxes = checkboxGroup.querySelectorAll('.phase-checkbox'); const newPhases = Array.from(checkboxes).filter(cb => cb.checked).map(cb => parseInt(cb.value)).sort((a, b) => a - b); if (newPhases.length === 0) { showFeedback("O aluno precisa ter pelo menos uma fase designada.", "error"); changedElement.checked = true; return; } const studentData = studentProgressData.find(s => s.id === studentId); if (!studentData) return; showFeedback(`Atualizando fases para ${studentData.name}...`, 'info'); try { const { error: assignError } = await supabaseClient.from('students').update({ assigned_phases: newPhases }).eq('id', studentId); if (assignError) throw assignError; const firstPhase = newPhases[0]; const newGameState = { currentPhase: firstPhase, score: 0, attempts: 3, questions: generateQuestions(firstPhase), currentQuestionIndex: 0, tutorialsShown: [], phaseCompleted: false }; const { error: progressError } = await supabaseClient.from('progress').upsert({ student_id: studentId, current_phase: firstPhase, game_state: newGameState, last_played: new Date().toISOString() }, { onConflict: 'student_id' }); if (progressError) throw progressError; showFeedback(`Fases de ${studentData.name} atualizadas!`, 'success'); await loadStudentProgress(); } catch (error) { console.error("Erro ao designar fases:", error); showFeedback(`Erro: ${error.message}`, 'error'); await loadStudentProgress(); } }
 async function handleCreateStudent(event) { event.preventDefault(); const username = document.getElementById('createStudentUsername').value.trim(); const password = document.getElementById('createStudentPassword').value; const submitButton = document.getElementById('createStudentSubmitBtn'); if (!username || !password) { return showFeedback("Preencha nome e senha.", "error"); } if (!currentClassId || !currentUser?.id) { return showFeedback("Erro de sessão.", "error"); } submitButton.disabled = true; submitButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Criando...'; try { const hashedPassword = await hashPassword(password); const { error } = await supabaseClient.from('students').insert([{ name: username, username: username, password: hashedPassword, class_id: currentClassId, teacher_id: currentUser.id }]); if (error) throw error; document.getElementById('newStudentUsername').textContent = username; document.getElementById('newStudentPassword').textContent = password; showModal('studentCreatedModal'); hideCreateStudentForm(); await loadClassStudents(); await loadStudentProgress(); } catch (error) { showFeedback(formatErrorMessage(error), 'error'); } finally { submitButton.disabled = false; submitButton.innerHTML = 'Criar Aluno'; } }
 async function handleDeleteStudent(studentId, studentName) { if (!confirm(`Tem certeza que deseja excluir "${studentName}"?`)) return; const { error } = await supabaseClient.from('students').delete().eq('id', studentId); if (error) { showFeedback(`Erro: ${error.message}`, 'error'); } else { showFeedback(`Aluno "${studentName}" excluído.`, 'success'); await loadClassStudents(); await loadStudentProgress(); } }
@@ -644,7 +673,7 @@ function showResultScreen(accuracy, passed) { showScreen('resultScreen'); docume
 async function nextPhase() { const assignedPhases = currentUser.assigned_phases || [1]; const currentPhaseIndex = assignedPhases.indexOf(gameState.currentPhase); const hasNextPhase = currentPhaseIndex !== -1 && currentPhaseIndex < assignedPhases.length - 1; if (hasNextPhase) { const nextPhaseNum = assignedPhases[currentPhaseIndex + 1]; gameState.currentPhase = nextPhaseNum; gameState.currentQuestionIndex = 0; gameState.score = 0; gameState.attempts = 3; gameState.questions = generateQuestions(gameState.currentPhase); gameState.phaseCompleted = false; await saveGameState(); showScreen('gameScreen'); startQuestion(); } else { showResultScreen(100, true); } }
 async function retryPhase() { gameState.currentQuestionIndex = 0; gameState.score = 0; gameState.attempts = 3; gameState.phaseCompleted = false; gameState.questions = generateQuestions(gameState.currentPhase); await saveGameState(); showScreen('gameScreen'); startQuestion(); }
 async function restartGame() { await showStudentGame(); }
-async function playCurrentAudio() { const q = gameState.questions[gameState.currentQuestionIndex]; if (q.type === 'vowel_sound' || q.type === 'f_sound') { const sound = q.type === 'vowel_sound' ? q.correctAnswer : 'f'; playTeacherAudio(sound, sound); } }
+async function playCurrentAudio() { const q = gameState.questions[gameState.currentQuestionIndex]; if (q.type === 'vowel_sound') { playTeacherAudio(q.correctAnswer, q.correctAnswer); } else if (q.type === 'f_sound') { const audio = new Audio("https://www.myinstants.com/media/sounds/ffff-sound-effect.mp3"); audio.play(); } }
 
 // PARTE 9: SÍNTESE DE VOZ E ÁUDIOS
 function initializeSpeech() { const checkVoices = (resolve) => { const voices = speechSynthesis.getVoices(); if (voices.length > 0) { selectedVoice = voices.find(v => v.lang === 'pt-BR'); if (!selectedVoice) selectedVoice = voices[0]; speechReady = true; resolve(); } }; return new Promise((resolve) => { if (speechSynthesis.getVoices().length > 0) { checkVoices(resolve); } else { speechSynthesis.onvoiceschanged = () => checkVoices(resolve); } }); }
