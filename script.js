@@ -1,8 +1,8 @@
 // =======================================================
-// JOGO DAS LETRAS - VERSÃO FINAL COM CORREÇÃO E FASE 1 MELHORADA
-// CORRIGE: Bug crítico "generateOptions is not defined" que ocorria ao designar fases.
-// INCLUI: Fase 1 refeita para abranger múltiplos sons de letras (consoantes).
-// INCLUI: Todas as funcionalidades anteriores (16 fases, IA, Status, Scrolls, etc).
+// JOGO DAS LETRAS - VERSÃO FINAL COM TODAS AS IMPLEMENTAÇÕES
+// INCLUI: Fase 1 refeita para abranger múltiplos sons de letras.
+// INCLUI: Fase 2 (Memória) adaptada para modo exploratório (1 ano) com coleta de dados.
+// INCLUI: Correções de bugs e funcionalidades anteriores (IA, Status, etc).
 // =======================================================
 
 
@@ -24,7 +24,7 @@ let studentChannel = null;
 
 // PARTE 2: CONTEÚDO DO JOGO (SEQUÊNCIA PEDAGÓGICA FINAL ALINHADA À IMAGEM)
 const PHASE_DESCRIPTIONS = {
-    1: "O Som das Letras", // <-- ALTERADO
+    1: "O Som das Letras",
     2: "Jogo da Memória: Maiúsculas e Minúsculas",
     3: "Formando Sílabas com F",
     4: "Caça-Palavras da Letra F",
@@ -42,9 +42,7 @@ const PHASE_DESCRIPTIONS = {
     16: "Completando com Sílabas Complexas"
 };
 
-// BANCO DE DADOS DAS FASES (EXPANDIDO PARA 10+ ITENS)
-
-// <-- NOVO BANCO DE DADOS PARA A FASE 1 (O Som das Letras)
+// BANCO DE DADOS DAS FASES
 const PHASE_1_LETTER_SOUNDS = [
     { letter: 'F', audioKey: 'F', description: 'de soprar uma vela (ffff...)?', optionsPool: 'AMOPV' },
     { letter: 'V', audioKey: 'V', description: 'de um motor vibrando (vvvv...)?', optionsPool: 'AMOPF' },
@@ -57,7 +55,6 @@ const PHASE_1_LETTER_SOUNDS = [
     { letter: 'D', audioKey: 'D', description: 'da batidinha da língua no dente, com voz (d, d, d)?', optionsPool: 'AFOVT' },
     { letter: 'L', audioKey: 'L', description: 'com a língua no céu da boca (llll...)?', optionsPool: 'ARFMN' }
 ];
-
 const PHASE_3_SYLLABLE_F = [
     { base: 'F', vowel: 'A', result: 'FA', image: '🔪', word: 'FACA' }, { base: 'F', vowel: 'E', result: 'FE', image: '🌱', word: 'FEIJÃO' },
     { base: 'F', vowel: 'I', result: 'FI', image: '🎀', word: 'FITA' }, { base: 'F', vowel: 'O', result: 'FO', image: '🔥', word: 'FOGO' },
@@ -157,7 +154,6 @@ async function verifyPassword(password, storedHash) { const newHash = await hash
 function generateRandomPassword() { const words = ['sol', 'lua', 'rio', 'mar', 'flor', 'gato', 'cao', 'pato', 'rei', 'luz']; const word = words[Math.floor(Math.random() * words.length)]; const number = Math.floor(100 + Math.random() * 900); return `${word}${number}`; }
 function formatErrorMessage(error) { if (!error || !error.message) { return 'Ocorreu um erro inesperado. Tente mais tarde.'; } const message = error.message.toLowerCase(); if (message.includes('duplicate key')) { return 'Este nome de usuário já existe. Escolha outro.'; } if (message.includes('invalid login credentials') || message.includes('usuário ou senha inválidos.')) { return 'Usuário ou senha inválidos.'; } console.error("Erro não tratado:", error); return 'Ocorreu um erro inesperado. Tente mais tarde.'; }
 
-// CORREÇÃO: Nome da função está correto agora.
 function _generateOptions(correctItem, sourceArray, count) {
     const options = new Set([correctItem]);
     const availableItems = [...sourceArray].filter(l => l !== correctItem);
@@ -508,7 +504,6 @@ function generateQuestions(phase) {
     const questionCount = 10;
     const shuffleAndTake = (arr, num) => [...arr].sort(() => 0.5 - Math.random()).slice(0, num);
 
-    // CORREÇÃO: O nome da função de gerar opções é _generateOptions
     const _generateOptions = (correctItem, sourceArray, count) => {
         const options = new Set([correctItem]);
         const availableItems = [...sourceArray].filter(l => l !== correctItem);
@@ -520,9 +515,9 @@ function generateQuestions(phase) {
     };
 
     switch (phase) {
-        case 1: // <-- LÓGICA DA FASE 1 TOTALMENTE MODIFICADA
+        case 1:
             questions = shuffleAndTake(PHASE_1_LETTER_SOUNDS, questionCount).map(item => ({
-                type: 'letter_sound', // Nome do tipo atualizado para ser mais genérico
+                type: 'letter_sound',
                 correctAnswer: item.letter,
                 audioKey: item.audioKey,
                 description: item.description,
@@ -583,6 +578,7 @@ async function startQuestion() {
     if (gameState.phaseCompleted || !gameState.questions || !gameState.questions[gameState.currentQuestionIndex]) { return endPhase(); }
     
     document.getElementById('nextQuestion').style.display = 'none';
+    document.getElementById('attempts').style.display = 'flex'; // Garante que tentativas sejam visíveis por padrão
     ['audioQuestionArea', 'imageQuestionArea', 'lettersGrid', 'memoryGameGrid', 'sentenceBuildArea'].forEach(id => document.getElementById(id).style.display = 'none');
     ['lettersGrid', 'memoryGameGrid', 'sentenceBuildArea'].forEach(id => document.getElementById(id).innerHTML = '');
     document.getElementById('wordDisplay').textContent = '';
@@ -591,7 +587,7 @@ async function startQuestion() {
     
     const q = gameState.questions[gameState.currentQuestionIndex];
     
-    const renderMap = { // <-- ALTERADO AQUI
+    const renderMap = {
         'letter_sound': renderPhase1UI_LetterSound, 'memory_game': renderPhase2UI_MemoryGame, 'form_f_syllable': renderPhase3UI_FormFSyllable, 
         'f_word_search': renderPhase4UI_FWordSearch, 'sound_detective': renderPhase5UI_SoundDetective, 'count_words': renderPhase6UI_WordCount,
         'build_sentence': renderPhase7UI_BuildSentence, 'vowel_sound': renderPhase8UI_VowelSound, 'count_syllables': renderPhase9UI_SyllableCount,
@@ -604,7 +600,6 @@ async function startQuestion() {
     updateUI(); 
 }
 
-// <-- FUNÇÃO DA FASE 1 RENOMEADA E ATUALIZADA
 function renderPhase1UI_LetterSound(q) {
     document.getElementById('audioQuestionArea').style.display = 'block';
     document.getElementById('lettersGrid').style.display = 'grid';
@@ -614,6 +609,7 @@ function renderPhase1UI_LetterSound(q) {
     setTimeout(playCurrentAudio, 500);
 }
 
+// --- FASE 2 (MEMÓRIA) ATUALIZADA PARA MODO EXPLORATÓRIO ---
 function renderPhase2UI_MemoryGame() {
     const memoryGrid = document.getElementById('memoryGameGrid');
     if (!memoryGrid) { console.error("Elemento memoryGameGrid não encontrado!"); return; }
@@ -623,7 +619,7 @@ function renderPhase2UI_MemoryGame() {
     document.getElementById('questionText').textContent = 'Encontre os pares de letras maiúsculas e minúsculas!';
     
     const shuffleAndTake = (arr, num) => [...arr].sort(() => 0.5 - Math.random()).slice(0, num);
-    const letters = shuffleAndTake(ALPHABET, 8);
+    const letters = shuffleAndTake(ALPHABET, 8); // 8 pares = 16 cartas
     const cards = [...letters, ...letters.map(l => l.toLowerCase())].sort(() => 0.5 - Math.random());
     
     memoryGrid.innerHTML = cards.map(letter => `
@@ -635,9 +631,18 @@ function renderPhase2UI_MemoryGame() {
         </div>
     `).join('');
 
-    gameState.score = 0;
-    gameState.memoryGame = { flippedCards: [], matchedPairs: 0, totalPairs: letters.length, canFlip: true };
+    gameState.score = 0; // O score contará os pares corretos
+    gameState.memoryGame = {
+        flippedCards: [],
+        matchedPairs: 0,
+        totalPairs: letters.length,
+        canFlip: true,
+        // --- NOVA LÓGICA DE COLETA DE DADOS ---
+        mistakesMade: 0, // Continuamos contando os erros para o relatório
+        startTime: Date.now() // Registra o momento exato que a fase começou
+    };
     
+    updateUI(); 
     memoryGrid.querySelectorAll('.memory-card').forEach(card => card.addEventListener('click', () => handleCardFlip(card)));
 }
 function renderPhase3UI_FormFSyllable(q) { document.getElementById('imageQuestionArea').style.display = 'block'; document.getElementById('lettersGrid').style.display = 'grid'; document.getElementById('imageEmoji').textContent = q.image; document.getElementById('wordDisplay').textContent = `${q.base} + ${q.vowel} = ?`; document.getElementById('questionText').textContent = `Qual sílaba formamos para a palavra ${q.word}?`; renderOptions(q.options); }
@@ -658,6 +663,7 @@ function renderPhase16UI_ComplexSyllable(q) { document.getElementById('imageQues
 function renderOptions(options) { const lettersGrid = document.getElementById('lettersGrid'); lettersGrid.style.display = 'grid'; lettersGrid.innerHTML = options.map(option => `<button class="letter-button">${option}</button>`).join(''); lettersGrid.querySelectorAll('.letter-button').forEach(btn => btn.addEventListener('click', (e) => selectAnswer(e.target.textContent))); }
 function renderWordOptions(options) { const lettersGrid = document.getElementById('lettersGrid'); lettersGrid.style.display = 'grid'; lettersGrid.innerHTML = options.map(option => `<button class="word-option-button">${option}</button>`).join(''); lettersGrid.querySelectorAll('.word-option-button').forEach(btn => { btn.addEventListener('click', () => selectWordForSentence(btn)); }); }
 
+// --- handleCardFlip ATUALIZADA PARA MODO EXPLORATÓRIO ---
 function handleCardFlip(card) {
     const { flippedCards, canFlip } = gameState.memoryGame;
     if (!canFlip || card.classList.contains('flipped')) return;
@@ -668,6 +674,8 @@ function handleCardFlip(card) {
     if (flippedCards.length === 2) {
         gameState.memoryGame.canFlip = false;
         const [card1, card2] = flippedCards;
+
+        // Se o par for CORRETO
         if (card1.dataset.letter === card2.dataset.letter) {
             setTimeout(() => {
                 card1.classList.add('matched');
@@ -677,28 +685,35 @@ function handleCardFlip(card) {
                 updateUI();
                 gameState.memoryGame.flippedCards = [];
                 gameState.memoryGame.canFlip = true;
+                
+                // Se encontrou o ÚLTIMO PAR
                 if (gameState.memoryGame.matchedPairs === gameState.memoryGame.totalPairs) {
+                    playTeacherAudio('feedback_correct', 'Excelente');
                     showFeedback('Excelente! Todos os pares encontrados!', 'success');
+                    
+                    // CALCULA E SALVA O TEMPO DE CONCLUSÃO
+                    const endTime = Date.now();
+                    const durationInSeconds = Math.round((endTime - gameState.memoryGame.startTime) / 1000);
+                    gameState.memoryGame.completionTime = durationInSeconds; // Salva o tempo no estado do jogo
+
                     document.getElementById('nextQuestion').style.display = 'block';
                 }
             }, 800);
-        } else {
-            gameState.attempts--;
-            updateUI();
-            if(gameState.attempts <= 0) {
-                 setTimeout(() => {
-                    showFeedback('Ops! Acabaram as tentativas.', 'error');
-                    endPhase();
-                 }, 1200);
-            } else {
-                setTimeout(() => {
-                    card1.classList.remove('flipped');
-                    card2.classList.remove('flipped');
-                    gameState.memoryGame.flippedCards = [];
-                    gameState.memoryGame.canFlip = true;
-                    showFeedback('Não é um par. Tente de novo!', 'error');
-                }, 1200);
-            }
+        } 
+        // Se o par for INCORRETO
+        else {
+            // LÓGICA DE ERRO SEM PUNIÇÃO
+            gameState.memoryGame.mistakesMade++; // Apenas incrementa os erros para o relatório
+            playTeacherAudio('feedback_incorrect', 'Tente de novo');
+            updateUI(); 
+
+            // Apenas desvira as cartas, sem risco de "game over"
+            setTimeout(() => {
+                card1.classList.remove('flipped');
+                card2.classList.remove('flipped');
+                gameState.memoryGame.flippedCards = [];
+                gameState.memoryGame.canFlip = true;
+            }, 1200);
         }
     }
 }
@@ -711,12 +726,22 @@ async function endPhase() {
         totalQuestions = gameState.memoryGame.totalPairs;
     }
     const accuracy = totalQuestions > 0 ? Math.round((gameState.score / totalQuestions) * 100) : 0;
+    const passed = accuracy >= 70;
     
     if (gameState.isCustomActivity) {
         await logCustomActivityCompletion(accuracy);
         await clearAssignedActivity();
     } else {
-        await logPhaseCompletionToHistory(accuracy);
+        // --- Adiciona os dados do jogo da memória para salvar no histórico ---
+        const q = gameState.questions[0];
+        let metadata = null;
+        if (q?.type === 'memory_game' && gameState.memoryGame) {
+            metadata = {
+                time_seconds: gameState.memoryGame.completionTime || 0,
+                mistakes: gameState.memoryGame.mistakesMade || 0
+            };
+        }
+        await logPhaseCompletionToHistory(accuracy, metadata); // Passa os metadados
     }
     
     showResultScreen(accuracy, passed);
@@ -726,13 +751,9 @@ function showResultScreen(accuracy, passed) { showScreen('resultScreen'); docume
 async function nextPhase() { const assignedPhases = currentUser.assigned_phases || [1]; const currentPhaseIndex = assignedPhases.indexOf(gameState.currentPhase); const hasNextPhase = currentPhaseIndex !== -1 && currentPhaseIndex < assignedPhases.length - 1; if (hasNextPhase) { const nextPhaseNum = assignedPhases[currentPhaseIndex + 1]; gameState.currentPhase = nextPhaseNum; gameState.currentQuestionIndex = 0; gameState.score = 0; gameState.attempts = 3; gameState.questions = generateQuestions(gameState.currentPhase); gameState.phaseCompleted = false; await saveGameState(); showScreen('gameScreen'); startQuestion(); } else { showResultScreen(100, true); } }
 async function retryPhase() { gameState.currentQuestionIndex = 0; gameState.score = 0; gameState.attempts = 3; gameState.phaseCompleted = false; gameState.questions = generateQuestions(gameState.currentPhase); await saveGameState(); showScreen('gameScreen'); startQuestion(); }
 async function restartGame() { await showStudentGame(); }
-
-// <-- FUNÇÃO playCurrentAudio ATUALIZADA
 async function playCurrentAudio() {
     const q = gameState.questions[gameState.currentQuestionIndex];
-    // Adicionamos o novo tipo 'letter_sound' e removemos o 'f_sound'
     if (q.type === 'vowel_sound' || q.type === 'letter_sound') {
-        // Usa a propriedade 'audioKey' que definimos no nosso banco de dados da Fase 1
         playTeacherAudio(q.audioKey, q.correctAnswer);
     }
 }
@@ -751,24 +772,48 @@ function hideCreateStudentForm() { document.getElementById('createStudentForm').
 function showAudioSettingsModal() { const letterSelect = document.getElementById('letterSelect'); if (letterSelect) { let optionsHtml = ''; optionsHtml += '<optgroup label="Instruções e Feedbacks">'; for (const key in CUSTOM_AUDIO_KEYS) { optionsHtml += `<option value="${key}">${CUSTOM_AUDIO_KEYS[key]}</option>`; } optionsHtml += '</optgroup>'; optionsHtml += '<optgroup label="Letras do Alfabeto">'; optionsHtml += ALPHABET.map(letter => `<option value="${letter}">Letra ${letter}</option>`).join(''); optionsHtml += '</optgroup>'; letterSelect.innerHTML = optionsHtml; } showModal('audioSettingsModal'); showTab(document.querySelector('#audioSettingsModal .tab-btn[data-tab="uploadFileTab"]')); }
 function showTab(clickedButton) { const parent = clickedButton.closest('.modal-content'); const tabId = clickedButton.getAttribute('data-tab'); parent.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active')); clickedButton.classList.add('active'); parent.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active')); parent.querySelector('#' + tabId).classList.add('active'); }
 function showFeedback(message, type = 'info') { const el = document.getElementById('globalFeedback'); if (!el) return; const textEl = el.querySelector('.feedback-text'); if (textEl) textEl.textContent = message; el.className = `feedback-toast show ${type}`; setTimeout(() => { el.className = el.className.replace('show', ''); }, 3000); }
+// --- updateUI ATUALIZADA PARA ESCONDER TENTATIVAS NA FASE 2 ---
 function updateUI() {
     const gameScreen = document.getElementById('gameScreen');
     if (gameScreen.classList.contains('active') && gameState.questions && gameState.questions.length > 0) {
         let total = gameState.questions.length;
-        if(gameState.questions[0]?.type === 'memory_game' && gameState.memoryGame) {
+        const attemptsEl = document.getElementById('attempts');
+        const q = gameState.questions[gameState.currentQuestionIndex];
+
+        // Lógica especial para a FASE 2 (JOGO DA MEMÓRIA)
+        if (q?.type === 'memory_game' && gameState.memoryGame) {
             total = gameState.memoryGame.totalPairs;
+            attemptsEl.style.display = 'none'; // Esconde o contador de tentativas/chances
+        } 
+        // Lógica para todas as outras fases
+        else {
+            attemptsEl.style.display = 'flex'; // Garante que o contador esteja visível
+            attemptsEl.textContent = `${gameState.attempts} tentativa(s)`;
         }
+        
         document.getElementById('score').textContent = gameState.score;
         document.getElementById('totalQuestions').textContent = total;
-        document.getElementById('attempts').textContent = `${gameState.attempts} tentativa(s)`;
         document.getElementById('currentPhase').textContent = gameState.isCustomActivity ? "Reforço" : gameState.currentPhase;
+        
         const progress = (gameState.currentQuestionIndex / gameState.questions.length) * 100;
         document.getElementById('progressFill').style.width = `${progress}%`;
     }
 }
 function hideTutorial() { document.getElementById('tutorialOverlay').classList.remove('show'); }
 async function logStudentError({ question, selectedAnswer }) { if (!currentUser || currentUser.type !== 'student') { return; } const errorData = { student_id: currentUser.id, teacher_id: currentUser.teacher_id, class_id: currentUser.class_id, phase: gameState.currentPhase, question_type: question.type, correct_answer: String(question.correctAnswer), selected_answer: String(selectedAnswer) }; const { error } = await supabaseClient.from('student_errors').insert([errorData]); if (error) { console.error('Falha ao registrar erro:', error); } }
-async function logPhaseCompletionToHistory(accuracy) { if (!currentUser || currentUser.type !== 'student') return; const { error } = await supabaseClient.from('phase_history').insert({ student_id: currentUser.id, phase: gameState.currentPhase, accuracy: accuracy }); if (error) console.error("Erro ao salvar histórico da fase:", error); }
+// --- logPhaseCompletionToHistory ATUALIZADA PARA ACEITAR METADADOS ---
+async function logPhaseCompletionToHistory(accuracy, metadata = null) {
+    if (!currentUser || currentUser.type !== 'student') return;
+    const { error } = await supabaseClient
+        .from('phase_history')
+        .insert({
+            student_id: currentUser.id,
+            phase: gameState.currentPhase,
+            accuracy: accuracy,
+            metadata: metadata // Salva os dados extras (tempo e erros da Fase 2)
+        });
+    if (error) console.error("Erro ao salvar histórico da fase:", error);
+}
 async function logCustomActivityCompletion(accuracy) {
     if (!currentUser || currentUser.type !== 'student') return;
     const activityData = {
@@ -783,6 +828,7 @@ async function logCustomActivityCompletion(accuracy) {
 }
 
 // PARTE 11: LÓGICA DE RELATÓRIOS E IA
+// (O restante do código permanece o mesmo a partir daqui)
 async function populateReportClassSelector() { const selector = document.getElementById('reportClassSelector'); selector.innerHTML = '<option value="">Carregando turmas...</option>'; document.getElementById('reportContentContainer').style.display = 'none'; const { data, error } = await supabaseClient.from('classes').select('id, name').eq('teacher_id', currentUser.id).order('name', { ascending: true }); if (error || !data) { selector.innerHTML = '<option value="">Erro ao carregar</option>'; return; } if (data.length === 0) { selector.innerHTML = '<option value="">Nenhuma turma encontrada</option>'; return; } selector.innerHTML = '<option value="">-- Selecione uma turma --</option>'; data.forEach(cls => { selector.innerHTML += `<option value="${cls.id}">${cls.name}</option>`; }); }
 function handleReportClassSelection(event) { const classId = event.target.value; const reportContainer = document.getElementById('reportContentContainer'); if (classId) { reportContainer.style.display = 'block'; loadAndDisplayClassReports(classId); } else { reportContainer.style.display = 'none'; reportContainer.innerHTML = ''; } }
 
