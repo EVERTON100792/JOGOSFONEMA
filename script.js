@@ -1,11 +1,7 @@
 // =======================================================
-// JOGO DAS LETRAS - VERSÃO FINAL COMPLETA E CORRIGIDA
-// Implementa:
-// - Currículo final de 16 fases com sequência pedagógica.
-// - Status de Aluno em Tempo Real (Online, Recente, Inativo).
-// - Lógica completa da IA e criação de reforço.
-// - Histórico de atividades de reforço para o professor.
-// - Correção de todos os bugs de layout e carregamento.
+// JOGO DAS LETRAS - VERSÃO FINAL CORRIGIDA
+// CORRIGE: Bug que impedia a Fase 1 de carregar, invertendo as fases e reformulando a lógica.
+// INCLUI: Todas as funcionalidades anteriores.
 // =======================================================
 
 
@@ -25,10 +21,10 @@ let teacherChannel = null;
 let onlineStudents = new Set();
 let studentChannel = null;
 
-// PARTE 2: CONTEÚDO DO JOGO (SEQUÊNCIA PEDAGÓGICA FINAL ALINHADA À IMAGEM)
+// PARTE 2: CONTEÚDO DO JOGO (SEQUÊNCIA PEDAGÓGICA FINAL COM FASES 1 E 2 INVERTIDAS)
 const PHASE_DESCRIPTIONS = {
-    1: "Jogo da Memória: Maiúsculas e Minúsculas",
-    2: "O Som da Letra F",
+    1: "O Som da Letra F",
+    2: "Jogo da Memória: Maiúsculas e Minúsculas",
     3: "Formando Sílabas com F",
     4: "Caça-Palavras da Letra F",
     5: "Pares Surdos/Sonoros",
@@ -117,11 +113,11 @@ const PHASE_13_INVERT_SYLLABLES = [
     { word: 'MAGO', image: '🧙‍♂️', inverted: 'GOMA', imageInverted: '🍬' }, { word: 'SECA', image: '🏜️', inverted: 'CASE', imageInverted: '💼' }
 ];
 const PHASE_14_RHYMES = [
-    { word: 'PÃO', image: '🍞', rhyme: 'MÃO', options: ['MÃO', 'PÉ', 'BICO'] }, { word: 'GATO', image: '🐈', rhyme: 'PATO', options: ['PATO', 'CÃO', 'BOLA'] },
-    { word: 'JANELA', image: '🖼️', rhyme: 'PANELA', options: ['PANELA', 'PORTA', 'FITA'] }, { word: 'ANEL', image: '💍', rhyme: 'PASTEL', options: ['PASTEL', 'DEDO', 'JOIA'] },
-    { word: 'FIVELA', image: '🪢', rhyme: 'CANELA', options: ['CANELA', 'NAVIO', 'CASA'] }, { word: 'CADEIRA', image: '🪑', rhyme: 'BANDEIRA', options: ['BANDEIRA', 'MESA', 'SOFÁ'] },
-    { word: 'MARTELO', image: '🔨', rhyme: 'CASTELO', options: ['CASTELO', 'PREGO', 'SERRA'] }, { word: 'SOLDADO', image: '🎖️', rhyme: 'ADOÇADO', options: ['ADOÇADO', 'GUERRA', 'PAZ'] },
-    { word: 'CEBOLA', image: '🧅', rhyme: 'ARGOLA', options: ['ARGOLA', 'ALHO', 'TOMATE'] }, { word: 'CENOURA', image: '🥕', rhyme: 'TESOURA', options: ['TESOURA', 'COELHO', 'TERRA'] }
+    { word: 'PÃO', image: '🍞', rhyme: 'MÃO' }, { word: 'GATO', image: '🐈', rhyme: 'PATO' },
+    { word: 'JANELA', image: '🖼️', rhyme: 'PANELA' }, { word: 'ANEL', image: '💍', rhyme: 'PASTEL' },
+    { word: 'FIVELA', image: '🪢', rhyme: 'CANELA' }, { word: 'CADEIRA', image: '🪑', rhyme: 'BANDEIRA' },
+    { word: 'MARTELO', image: '🔨', rhyme: 'CASTELO' }, { word: 'SOLDADO', image: '🎖️', rhyme: 'ADOÇADO' },
+    { word: 'CEBOLA', image: '🧅', rhyme: 'ARGOLA' }, { word: 'CENOURA', image: '🥕', rhyme: 'TESOURA' }
 ];
 const PHASE_15_PHONEME_COUNT = [
     { word: 'LUA', image: '🌙', sounds: 3 }, { word: 'SOL', image: '☀️', sounds: 3 },
@@ -471,12 +467,70 @@ function startTimer() { stopTimer(); let seconds = 0; const timerEl = document.g
 function stopTimer() { clearInterval(timerInterval); }
 
 
-// PARTE 8: LÓGICA DO JOGO
-async function showStudentGame() { await checkForCustomActivities(); await loadGameState(); const canResume = gameState.currentQuestionIndex > 0 && gameState.attempts > 0 && !gameState.phaseCompleted; document.getElementById('startButton').innerHTML = canResume ? '<i class="fas fa-play"></i> Continuar Aventura' : '<i class="fas fa-play"></i> Começar Aventura'; showScreen('startScreen'); }
-async function startGame() { gameState.isCustomActivity = false; await loadGameState(); if (gameState.phaseCompleted || gameState.attempts <= 0) { gameState.currentQuestionIndex = 0; gameState.score = 0; gameState.attempts = 3; gameState.phaseCompleted = false; gameState.questions = generateQuestions(gameState.currentPhase); } showScreen('gameScreen'); startQuestion(); connectStudentToRealtime(); }
-async function startCustomActivity() { if (!currentUser.assigned_activity) return; gameState.isCustomActivity = true; gameState.questions = currentUser.assigned_activity.questions; gameState.currentPhase = "Reforço"; gameState.currentQuestionIndex = 0; gameState.score = 0; gameState.attempts = 3; gameState.phaseCompleted = false; showScreen('gameScreen'); startQuestion(); connectStudentToRealtime(); }
-async function connectStudentToRealtime() { if (studentChannel) { await studentChannel.unsubscribe(); } const channelId = `teacher-room-${currentUser.teacher_id}`; studentChannel = supabaseClient.channel(channelId); studentChannel.subscribe(async (status) => { if (status === 'SUBSCRIBED') { await studentChannel.track({ student_id: currentUser.id, student_name: currentUser.name, online_at: new Date().toISOString(), }); } }); }
-window.addEventListener('beforeunload', () => { if (studentChannel) { studentChannel.untrack(); supabaseClient.removeChannel(studentChannel); } });
+// PARTE 8: LÓGICA DO JOGO (COM NOVA SEQUÊNCIA)
+async function showStudentGame() {
+    await checkForCustomActivities();
+    await loadGameState();
+    const canResume = gameState.currentQuestionIndex > 0 && gameState.attempts > 0 && !gameState.phaseCompleted;
+    document.getElementById('startButton').innerHTML = canResume ? '<i class="fas fa-play"></i> Continuar Aventura' : '<i class="fas fa-play"></i> Começar Aventura';
+    showScreen('startScreen');
+}
+
+async function startGame() {
+    gameState.isCustomActivity = false;
+    await loadGameState();
+    if (gameState.phaseCompleted || gameState.attempts <= 0) {
+        gameState.currentQuestionIndex = 0;
+        gameState.score = 0;
+        gameState.attempts = 3;
+        gameState.phaseCompleted = false;
+        gameState.questions = generateQuestions(gameState.currentPhase);
+    }
+    showScreen('gameScreen');
+    startQuestion();
+    connectStudentToRealtime();
+}
+
+async function startCustomActivity() {
+    if (!currentUser.assigned_activity) return;
+    gameState.isCustomActivity = true;
+    gameState.questions = currentUser.assigned_activity.questions;
+    gameState.currentPhase = "Reforço";
+    gameState.currentQuestionIndex = 0;
+    gameState.score = 0;
+    gameState.attempts = 3;
+    gameState.phaseCompleted = false;
+    
+    showScreen('gameScreen');
+    startQuestion();
+    connectStudentToRealtime();
+}
+
+async function connectStudentToRealtime() {
+    if (studentChannel) {
+        await studentChannel.unsubscribe();
+    }
+    const channelId = `teacher-room-${currentUser.teacher_id}`;
+    studentChannel = supabaseClient.channel(channelId);
+
+    studentChannel.subscribe(async (status) => {
+        if (status === 'SUBSCRIBED') {
+            await studentChannel.track({
+                student_id: currentUser.id,
+                student_name: currentUser.name,
+                online_at: new Date().toISOString(),
+            });
+        }
+    });
+}
+
+window.addEventListener('beforeunload', () => {
+    if (studentChannel) {
+        studentChannel.untrack();
+        supabaseClient.removeChannel(studentChannel);
+    }
+});
+
 async function loadGameState() { const { data: progressData, error } = await supabaseClient.from('progress').select('game_state, current_phase').eq('student_id', currentUser.id).single(); if (error && error.code !== 'PGRST116') { console.error("Erro ao carregar progresso:", error); } const assignedPhases = currentUser.assigned_phases && currentUser.assigned_phases.length > 0 ? currentUser.assigned_phases : [1]; const firstAssignedPhase = assignedPhases[0]; if (progressData?.game_state?.questions) { gameState = progressData.game_state; if (!assignedPhases.includes(gameState.currentPhase)) { gameState = { currentPhase: firstAssignedPhase, score: 0, attempts: 3, questions: generateQuestions(firstAssignedPhase), currentQuestionIndex: 0, teacherId: currentUser.teacher_id, tutorialsShown: [], phaseCompleted: false }; await saveGameState(); } if (!gameState.tutorialsShown) gameState.tutorialsShown = []; } else { gameState = { currentPhase: firstAssignedPhase, score: 0, attempts: 3, questions: generateQuestions(firstAssignedPhase), currentQuestionIndex: 0, teacherId: currentUser.teacher_id, tutorialsShown: [], phaseCompleted: false }; await saveGameState(); } }
 async function saveGameState() { if (!currentUser || currentUser.type !== 'student' || gameState.isCustomActivity) return; await supabaseClient.from('progress').upsert({ student_id: currentUser.id, current_phase: gameState.currentPhase, game_state: gameState, last_played: new Date().toISOString() }, { onConflict: 'student_id' }); }
 
@@ -487,10 +541,10 @@ function generateQuestions(phase) {
 
     switch (phase) {
         case 1: 
-            questions = [{ type: 'memory_game' }];
+            questions = Array.from({ length: questionCount }, () => ({ type: 'f_sound', correctAnswer: 'F', options: generateOptions('F', 'AMOPL', 4) }));
             break;
         case 2:
-            questions = Array.from({ length: questionCount }, () => ({ type: 'f_sound', correctAnswer: 'F', options: generateOptions('F', 'AMOPL', 4) }));
+            questions = [{ type: 'memory_game' }];
             break;
         case 3:
             questions = shuffleAndTake(PHASE_3_SYLLABLE_F, questionCount).map(item => ({ type: 'form_f_syllable', ...item, options: generateOptions(item.result, ['FA', 'FE', 'FI', 'FO', 'FU', 'VA', 'BO'], 4) }));
@@ -552,7 +606,7 @@ async function startQuestion() {
     const q = gameState.questions[gameState.currentQuestionIndex];
     
     const renderMap = {
-        'memory_game': renderPhase1UI_MemoryGame, 'f_sound': renderPhase2UI_FSound, 'form_f_syllable': renderPhase3UI_FormFSyllable, 
+        'f_sound': renderPhase1UI_FSound, 'memory_game': renderPhase2UI_MemoryGame, 'form_f_syllable': renderPhase3UI_FormFSyllable, 
         'f_word_search': renderPhase4UI_FWordSearch, 'sound_detective': renderPhase5UI_SoundDetective, 'count_words': renderPhase6UI_WordCount,
         'build_sentence': renderPhase7UI_BuildSentence, 'vowel_sound': renderPhase8UI_VowelSound, 'count_syllables': renderPhase9UI_SyllableCount,
         'initial_syllable': renderPhase10UI_InitialSyllable, 'f_position': renderPhase11UI_FPosition, 'word_transform': renderPhase12UI_WordTransform, 
@@ -561,11 +615,36 @@ async function startQuestion() {
     };
     renderMap[q.type]?.(q);
     
-    updateUI(); 
+    updateUI();
 }
 
-function renderPhase1UI_MemoryGame() { document.getElementById('questionText').textContent = 'Encontre os pares de letras maiúsculas e minúsculas!'; const memoryGrid = document.getElementById('memoryGameGrid'); memoryGrid.style.display = 'grid'; const letters = shuffleAndTake(ALPHABET, 8); const cards = [...letters, ...letters.map(l => l.toLowerCase())].sort(() => 0.5 - Math.random()); memoryGrid.innerHTML = cards.map(letter => `<div class="memory-card" data-letter="${letter.toLowerCase()}"><div class="card-inner"><div class="card-face card-front"></div><div class="card-face card-back">${letter}</div></div></div>`).join(''); gameState.memoryGame = { flippedCards: [], matchedPairs: 0, totalPairs: letters.length, canFlip: true }; memoryGrid.querySelectorAll('.memory-card').forEach(card => card.addEventListener('click', () => handleCardFlip(card))); }
-function renderPhase2UI_FSound(q) { document.getElementById('audioQuestionArea').style.display = 'block'; document.getElementById('lettersGrid').style.display = 'grid'; document.getElementById('questionText').textContent = 'Qual letra faz o som de /ffff/?'; document.getElementById('repeatAudio').style.display = 'inline-block'; renderOptions(q.options); setTimeout(playCurrentAudio, 500); }
+function renderPhase1UI_FSound(q) { document.getElementById('audioQuestionArea').style.display = 'block'; document.getElementById('lettersGrid').style.display = 'grid'; document.getElementById('questionText').textContent = 'Qual letra faz o som de /ffff/?'; document.getElementById('repeatAudio').style.display = 'inline-block'; renderOptions(q.options); setTimeout(playCurrentAudio, 500); }
+function renderPhase2UI_MemoryGame() {
+    const memoryGrid = document.getElementById('memoryGameGrid');
+    if (!memoryGrid) { console.error("Elemento memoryGameGrid não encontrado!"); return; }
+    memoryGrid.innerHTML = '';
+    memoryGrid.style.display = 'grid';
+
+    document.getElementById('questionText').textContent = 'Encontre os pares de letras maiúsculas e minúsculas!';
+    
+    const shuffleAndTake = (arr, num) => [...arr].sort(() => 0.5 - Math.random()).slice(0, num);
+    const letters = shuffleAndTake(ALPHABET, 8);
+    const cards = [...letters, ...letters.map(l => l.toLowerCase())].sort(() => 0.5 - Math.random());
+    
+    memoryGrid.innerHTML = cards.map(letter => `
+        <div class="memory-card" data-letter="${letter.toLowerCase()}">
+            <div class="card-inner">
+                <div class="card-face card-front"></div>
+                <div class="card-face card-back">${letter}</div>
+            </div>
+        </div>
+    `).join('');
+
+    gameState.score = 0;
+    gameState.memoryGame = { flippedCards: [], matchedPairs: 0, totalPairs: letters.length, canFlip: true };
+    
+    memoryGrid.querySelectorAll('.memory-card').forEach(card => card.addEventListener('click', () => handleCardFlip(card)));
+}
 function renderPhase3UI_FormFSyllable(q) { document.getElementById('imageQuestionArea').style.display = 'block'; document.getElementById('lettersGrid').style.display = 'grid'; document.getElementById('imageEmoji').textContent = q.image; document.getElementById('wordDisplay').textContent = `${q.base} + ${q.vowel} = ?`; document.getElementById('questionText').textContent = `Qual sílaba formamos para a palavra ${q.word}?`; renderOptions(q.options); }
 function renderPhase4UI_FWordSearch(q) { document.getElementById('imageQuestionArea').style.display = 'block'; document.getElementById('lettersGrid').style.display = 'grid'; document.getElementById('imageEmoji').textContent = q.image; document.getElementById('questionText').textContent = 'Qual é o nome desta figura?'; renderOptions(q.options); }
 function renderPhase5UI_SoundDetective(q) { document.getElementById('imageQuestionArea').style.display = 'block'; document.getElementById('lettersGrid').style.display = 'grid'; document.getElementById('imageEmoji').textContent = q.image; document.getElementById('questionText').textContent = 'Qual é o nome correto desta figura?'; renderOptions(q.options); }
@@ -757,7 +836,7 @@ async function loadAndDisplayClassReports(classId) {
 function renderClassHeatmap(errors, containerId) {
     const heatmapContainer = document.getElementById(containerId);
     if (!errors || errors.length === 0) { heatmapContainer.innerHTML = '<p>Nenhum erro registrado para esta turma. Ótimo trabalho! 🎉</p>'; return; }
-    // Implementação do heatmap aqui... (pode ser adicionada no futuro)
+    // Implementação do heatmap aqui...
 }
 function renderIndividualReports(students, allErrors, allActivities, containerId) {
     const container = document.getElementById(containerId);
