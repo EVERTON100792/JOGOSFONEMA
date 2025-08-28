@@ -1,7 +1,7 @@
 // =======================================================
 // JOGO DAS LETRAS - VERSÃO FINAL CORRIGIDA
-// CORRIGE: Bug que impedia a Fase 1 de carregar, invertendo as fases e reformulando a lógica.
-// INCLUI: Todas as funcionalidades anteriores.
+// CORRIGE: Botões de navegação do painel que não respondiam ao clique.
+// INCLUI: Todas as funcionalidades anteriores, incluindo scrolls e status de aluno.
 // =======================================================
 
 
@@ -21,10 +21,10 @@ let teacherChannel = null;
 let onlineStudents = new Set();
 let studentChannel = null;
 
-// PARTE 2: CONTEÚDO DO JOGO (SEQUÊNCIA PEDAGÓGICA FINAL COM FASES 1 E 2 INVERTIDAS)
+// PARTE 2: CONTEÚDO DO JOGO (SEQUÊNCIA PEDAGÓGICA FINAL ALINHADA À IMAGEM)
 const PHASE_DESCRIPTIONS = {
-    1: "O Som da Letra F",
-    2: "Jogo da Memória: Maiúsculas e Minúsculas",
+    1: "Jogo da Memória: Maiúsculas e Minúsculas",
+    2: "O Som da Letra F",
     3: "Formando Sílabas com F",
     4: "Caça-Palavras da Letra F",
     5: "Pares Surdos/Sonoros",
@@ -41,7 +41,7 @@ const PHASE_DESCRIPTIONS = {
     16: "Completando com Sílabas Complexas"
 };
 
-// BANCO DE DADOS DAS FASES (EXPANDIDO PARA 10+ ITENS)
+// BANCO DE DADOS DAS FASES
 const PHASE_3_SYLLABLE_F = [
     { base: 'F', vowel: 'A', result: 'FA', image: '🔪', word: 'FACA' }, { base: 'F', vowel: 'E', result: 'FE', image: '🌱', word: 'FEIJÃO' },
     { base: 'F', vowel: 'I', result: 'FI', image: '🎀', word: 'FITA' }, { base: 'F', vowel: 'O', result: 'FO', image: '🔥', word: 'FOGO' },
@@ -467,70 +467,12 @@ function startTimer() { stopTimer(); let seconds = 0; const timerEl = document.g
 function stopTimer() { clearInterval(timerInterval); }
 
 
-// PARTE 8: LÓGICA DO JOGO (COM NOVA SEQUÊNCIA)
-async function showStudentGame() {
-    await checkForCustomActivities();
-    await loadGameState();
-    const canResume = gameState.currentQuestionIndex > 0 && gameState.attempts > 0 && !gameState.phaseCompleted;
-    document.getElementById('startButton').innerHTML = canResume ? '<i class="fas fa-play"></i> Continuar Aventura' : '<i class="fas fa-play"></i> Começar Aventura';
-    showScreen('startScreen');
-}
-
-async function startGame() {
-    gameState.isCustomActivity = false;
-    await loadGameState();
-    if (gameState.phaseCompleted || gameState.attempts <= 0) {
-        gameState.currentQuestionIndex = 0;
-        gameState.score = 0;
-        gameState.attempts = 3;
-        gameState.phaseCompleted = false;
-        gameState.questions = generateQuestions(gameState.currentPhase);
-    }
-    showScreen('gameScreen');
-    startQuestion();
-    connectStudentToRealtime();
-}
-
-async function startCustomActivity() {
-    if (!currentUser.assigned_activity) return;
-    gameState.isCustomActivity = true;
-    gameState.questions = currentUser.assigned_activity.questions;
-    gameState.currentPhase = "Reforço";
-    gameState.currentQuestionIndex = 0;
-    gameState.score = 0;
-    gameState.attempts = 3;
-    gameState.phaseCompleted = false;
-    
-    showScreen('gameScreen');
-    startQuestion();
-    connectStudentToRealtime();
-}
-
-async function connectStudentToRealtime() {
-    if (studentChannel) {
-        await studentChannel.unsubscribe();
-    }
-    const channelId = `teacher-room-${currentUser.teacher_id}`;
-    studentChannel = supabaseClient.channel(channelId);
-
-    studentChannel.subscribe(async (status) => {
-        if (status === 'SUBSCRIBED') {
-            await studentChannel.track({
-                student_id: currentUser.id,
-                student_name: currentUser.name,
-                online_at: new Date().toISOString(),
-            });
-        }
-    });
-}
-
-window.addEventListener('beforeunload', () => {
-    if (studentChannel) {
-        studentChannel.untrack();
-        supabaseClient.removeChannel(studentChannel);
-    }
-});
-
+// PARTE 8: LÓGICA DO JOGO
+async function showStudentGame() { await checkForCustomActivities(); await loadGameState(); const canResume = gameState.currentQuestionIndex > 0 && gameState.attempts > 0 && !gameState.phaseCompleted; document.getElementById('startButton').innerHTML = canResume ? '<i class="fas fa-play"></i> Continuar Aventura' : '<i class="fas fa-play"></i> Começar Aventura'; showScreen('startScreen'); }
+async function startGame() { gameState.isCustomActivity = false; await loadGameState(); if (gameState.phaseCompleted || gameState.attempts <= 0) { gameState.currentQuestionIndex = 0; gameState.score = 0; gameState.attempts = 3; gameState.phaseCompleted = false; gameState.questions = generateQuestions(gameState.currentPhase); } showScreen('gameScreen'); startQuestion(); connectStudentToRealtime(); }
+async function startCustomActivity() { if (!currentUser.assigned_activity) return; gameState.isCustomActivity = true; gameState.questions = currentUser.assigned_activity.questions; gameState.currentPhase = "Reforço"; gameState.currentQuestionIndex = 0; gameState.score = 0; gameState.attempts = 3; gameState.phaseCompleted = false; showScreen('gameScreen'); startQuestion(); connectStudentToRealtime(); }
+async function connectStudentToRealtime() { if (studentChannel) { await studentChannel.unsubscribe(); } const channelId = `teacher-room-${currentUser.teacher_id}`; studentChannel = supabaseClient.channel(channelId); studentChannel.subscribe(async (status) => { if (status === 'SUBSCRIBED') { await studentChannel.track({ student_id: currentUser.id, student_name: currentUser.name, online_at: new Date().toISOString(), }); } }); }
+window.addEventListener('beforeunload', () => { if (studentChannel) { studentChannel.untrack(); supabaseClient.removeChannel(studentChannel); } });
 async function loadGameState() { const { data: progressData, error } = await supabaseClient.from('progress').select('game_state, current_phase').eq('student_id', currentUser.id).single(); if (error && error.code !== 'PGRST116') { console.error("Erro ao carregar progresso:", error); } const assignedPhases = currentUser.assigned_phases && currentUser.assigned_phases.length > 0 ? currentUser.assigned_phases : [1]; const firstAssignedPhase = assignedPhases[0]; if (progressData?.game_state?.questions) { gameState = progressData.game_state; if (!assignedPhases.includes(gameState.currentPhase)) { gameState = { currentPhase: firstAssignedPhase, score: 0, attempts: 3, questions: generateQuestions(firstAssignedPhase), currentQuestionIndex: 0, teacherId: currentUser.teacher_id, tutorialsShown: [], phaseCompleted: false }; await saveGameState(); } if (!gameState.tutorialsShown) gameState.tutorialsShown = []; } else { gameState = { currentPhase: firstAssignedPhase, score: 0, attempts: 3, questions: generateQuestions(firstAssignedPhase), currentQuestionIndex: 0, teacherId: currentUser.teacher_id, tutorialsShown: [], phaseCompleted: false }; await saveGameState(); } }
 async function saveGameState() { if (!currentUser || currentUser.type !== 'student' || gameState.isCustomActivity) return; await supabaseClient.from('progress').upsert({ student_id: currentUser.id, current_phase: gameState.currentPhase, game_state: gameState, last_played: new Date().toISOString() }, { onConflict: 'student_id' }); }
 
@@ -615,7 +557,7 @@ async function startQuestion() {
     };
     renderMap[q.type]?.(q);
     
-    updateUI();
+    updateUI(); 
 }
 
 function renderPhase1UI_FSound(q) { document.getElementById('audioQuestionArea').style.display = 'block'; document.getElementById('lettersGrid').style.display = 'grid'; document.getElementById('questionText').textContent = 'Qual letra faz o som de /ffff/?'; document.getElementById('repeatAudio').style.display = 'inline-block'; renderOptions(q.options); setTimeout(playCurrentAudio, 500); }
@@ -678,7 +620,7 @@ function handleCardFlip(card) {
                 card1.classList.add('matched');
                 card2.classList.add('matched');
                 gameState.memoryGame.matchedPairs++;
-                gameState.score++; // Incrementa o score para cada par
+                gameState.score++; 
                 updateUI();
                 gameState.memoryGame.flippedCards = [];
                 gameState.memoryGame.canFlip = true;
@@ -979,7 +921,7 @@ function generateSingleQuestionFromError(errorTemplate) {
     const phase = parseInt(errorTemplate.phase);
     switch(phase) {
         case 8: return { type: 'vowel_sound', correctAnswer: errorTemplate.correct_answer, options: generateOptions(errorTemplate.correct_answer, VOWELS, 4) };
-        case 14: const rhymeData = PHASE_14_RHYMES.find(r => r.rhyme === errorTemplate.correct_answer) || PHASE_14_RHYMES[0]; return { type: 'find_rhyme', ...rhymeData, correctAnswer: rhymeData.rhyme, options: rhymeData.options };
+        case 14: const rhymeData = PHASE_14_RHYMES.find(r => r.rhyme === errorTemplate.correct_answer) || PHASE_14_RHYMES[0]; return { type: 'find_rhyme', ...rhymeData, correctAnswer: rhymeData.rhyme, options: generateOptions(rhymeData.rhyme, PHASE_14_RHYMES.map(r => r.word), 3) };
         case 5: const pairData = PHASE_5_SOUND_PAIRS.find(p => p.correct === errorTemplate.correct_answer) || PHASE_5_SOUND_PAIRS[0]; return { type: 'sound_detective', ...pairData, options: [pairData.correct, pairData.incorrect].sort(()=>0.5-Math.random()) };
         case 9: const syllableData = PHASE_9_SYLLABLE_COUNT.find(p => p.syllables.toString() === errorTemplate.correct_answer) || PHASE_9_SYLLABLE_COUNT[0]; return { type: 'count_syllables', ...syllableData, correctAnswer: syllableData.syllables.toString(), options: generateOptions(syllableData.syllables.toString(), ['1','2','3','4'], 4) };
         case 10: const initialSyllableData = PHASE_10_INITIAL_SYLLABLE.find(p => p.correctAnswer === errorTemplate.correct_answer) || PHASE_10_INITIAL_SYLLABLE[0]; return { type: 'initial_syllable', ...initialSyllableData, options: generateOptions(initialSyllableData.correctAnswer, ['BA','CA','DA','FA','GA','LA','MA','NA','PA','RA','SA','TA','VA'], 4) };
