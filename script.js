@@ -6,6 +6,7 @@
 // - Lógica completa da IA e criação de reforço.
 // - Histórico de atividades de reforço para o professor.
 // - Correção de todos os bugs de layout e carregamento.
+// - MELHORIA: Títulos das fases no painel do professor.
 // =======================================================
 
 
@@ -263,9 +264,12 @@ function renderStudentProgress(sortBy = 'last_played') {
                 const phaseName = PHASE_DESCRIPTIONS[phaseNum] || `Fase ${phaseNum}`;
                 const isChecked = assignedPhases.includes(phaseNum);
                 phaseCheckboxesHTML += `
-                    <label class="phase-checkbox-label" title="${phaseName}"> 
+                    <label class="phase-checkbox-label" title="Fase ${phaseNum}: ${phaseName}"> 
                         <input type="checkbox" class="phase-checkbox" value="${phaseNum}" ${isChecked ? 'checked' : ''} onchange="assignPhases('${student.id}', this)"> 
-                        Fase ${phaseNum}
+                        <div class="phase-label-text">
+                            <span>Fase ${phaseNum}</span>
+                            <small>${phaseName}</small>
+                        </div>
                     </label>
                 `;
             });
@@ -356,52 +360,52 @@ function generateQuestions(phase) {
     const repeatAndTake = (arr, num) => { let repeated = []; while(repeated.length < num) { repeated.push(...arr); } return shuffleAndTake(repeated, num); };
 
     switch (phase) {
-        case 1: // Identificação de Vogais
+        case 1: 
             questions = Array.from({ length: questionCount }, () => { const vowel = VOWELS[Math.floor(Math.random() * VOWELS.length)]; return { type: 'vowel_sound', correctAnswer: vowel, options: generateOptions(vowel, VOWELS, 4) }; });
             break;
-        case 2: // Fábrica de Rimas
+        case 2:
              questions = repeatAndTake(PHASE_2_RHYMES, questionCount).map(item => ({ type: 'find_rhyme', ...item, correctAnswer: item.rhyme, options: item.options.sort(() => 0.5 - Math.random()) }));
             break;
-        case 3: // Jogo da Memória
+        case 3:
             questions = [{ type: 'memory_game' }];
             break;
-        case 4: // O Som da Letra F
+        case 4:
             questions = Array.from({ length: questionCount }, () => ({ type: 'f_sound', correctAnswer: 'F', options: generateOptions('F', 'AMOPL', 4) }));
             break;
-        case 5: // Formando Sílabas com F
+        case 5:
             questions = repeatAndTake(PHASE_5_SYLLABLE_F, questionCount).map(item => ({ type: 'form_f_syllable', ...item, options: generateOptions(item.result, ['FA', 'FE', 'FI', 'FO', 'FU', 'VA', 'BO'], 4) }));
             break;
-        case 6: // A Letra F no Início, Meio e Fim
+        case 6:
             questions = repeatAndTake(PHASE_6_F_POSITION, questionCount).map(item => ({ type: 'f_position', ...item, options: generateOptions(item.syllable, ['FA', 'FE', 'FI', 'FO', 'FU'], 4) }));
             break;
-        case 7: // Caça-Palavras da Letra F
+        case 7:
             questions = repeatAndTake(PHASE_7_WORDS_F, questionCount).map(item => ({ type: 'f_word_search', ...item, correctAnswer: item.word, options: item.options.sort(() => 0.5 - Math.random()) }));
             break;
-        case 8: // Caça-Sílaba Inicial
+        case 8:
             questions = repeatAndTake(PHASE_8_INITIAL_SYLLABLE, questionCount).map(item => ({ type: 'initial_syllable', ...item, options: item.options.sort(() => 0.5 - Math.random()) }));
             break;
-        case 9: // Contando Sílabas
+        case 9:
             questions = repeatAndTake(PHASE_9_SYLLABLE_COUNT, questionCount).map(item => ({ type: 'count_syllables', ...item, correctAnswer: item.syllables.toString(), options: generateOptions(item.syllables.toString(), ['1', '2', '3', '4', '5'], 4) }));
             break;
-        case 10: // Formando Novas Palavras
+        case 10:
             questions = shuffleAndTake(PHASE_10_WORD_TRANSFORM, questionCount).map(item => ({ type: 'word_transform', ...item, options: item.options.sort(() => 0.5 - Math.random()) }));
             break;
-        case 11: // Invertendo Sílabas
+        case 11:
              questions = shuffleAndTake(PHASE_11_INVERT_SYLLABLES, questionCount).map(item => ({ type: 'invert_syllables', ...item, correctAnswer: item.inverted, options: generateOptions(item.inverted, ['CAMA', 'BOLO', 'MALA', 'TOGA', 'SAPO'], 4) }));
              break;
-        case 12: // Pares Surdos/Sonoros
+        case 12:
             questions = shuffleAndTake(PHASE_12_SOUND_PAIRS, questionCount).map(item => ({ type: 'sound_detective', image: item.image, correctAnswer: item.correct, options: [item.correct, item.incorrect].sort(() => 0.5 - Math.random()) }));
             break;
-        case 13: // Completando com Sílabas Complexas
+        case 13:
             questions = repeatAndTake(PHASE_13_COMPLEX_SYLLABLES, questionCount).map(item => ({ type: 'complex_syllable', ...item, correctAnswer: item.syllable, options: generateOptions(item.syllable, ['BRA','LHA','NHO','VRO','CRE'], 4) }));
             break;
-        case 14: // Contando Palavras na Frase
+        case 14:
             questions = shuffleAndTake(PHASE_14_SENTENCES_COUNT, questionCount).map(item => ({ type: 'count_words', ...item, correctAnswer: item.words.toString(), options: generateOptions(item.words.toString(), ['2', '3', '4', '5'], 4) }));
             break;
-        case 15: // Montando Frases
+        case 15:
             questions = shuffleAndTake(PHASE_15_SENTENCES_BUILD, questionCount).map(item => ({ type: 'build_sentence', image: item.image, correctAnswer: item.answer, options: item.sentence.sort(() => 0.5 - Math.random()) }));
             break;
-        case 16: // Contando Sons (Fonemas)
+        case 16:
             questions = repeatAndTake(PHASE_16_PHONEME_COUNT, questionCount).map(item => ({ type: 'count_phonemes', ...item, correctAnswer: item.sounds.toString(), options: generateOptions(item.sounds.toString(), ['2','3','4','5'], 4) }));
             break;
     }
@@ -413,7 +417,6 @@ function generateOptions(correctItem, sourceArray, count) { const options = new 
 async function startQuestion() {
     if (gameState.phaseCompleted || !gameState.questions || gameState.currentQuestionIndex >= gameState.questions.length) { return endPhase(); }
     
-    // Reset UI
     document.getElementById('nextQuestion').style.display = 'none';
     ['audioQuestionArea', 'imageQuestionArea', 'lettersGrid', 'memoryGameGrid', 'sentenceBuildArea'].forEach(id => document.getElementById(id).style.display = 'none');
     ['lettersGrid', 'memoryGameGrid', 'sentenceBuildArea'].forEach(id => document.getElementById(id).innerHTML = '');
@@ -424,7 +427,6 @@ async function startQuestion() {
     updateUI();
     const q = gameState.questions[gameState.currentQuestionIndex];
     
-    // Mapa de Renderização com a nova ordem
     const renderMap = {
         'vowel_sound': renderPhase1UI, 'find_rhyme': renderPhase2UI_FindRhyme, 'memory_game': renderPhase3UI_MemoryGame,
         'f_sound': renderPhase4UI_FSound, 'form_f_syllable': renderPhase5UI_FormFSyllable, 'f_position': renderPhase6UI_FPosition,
@@ -439,7 +441,7 @@ async function startQuestion() {
 // RENDER FUNCTIONS PARA AS 16 FASES
 function renderPhase1UI(q) { document.getElementById('audioQuestionArea').style.display = 'block'; document.getElementById('lettersGrid').style.display = 'grid'; document.getElementById('questionText').textContent = 'Qual VOGAL faz este som?'; document.getElementById('repeatAudio').style.display = 'inline-block'; renderOptions(q.options); setTimeout(playCurrentAudio, 500); }
 function renderPhase2UI_FindRhyme(q) { document.getElementById('imageQuestionArea').style.display = 'block'; document.getElementById('lettersGrid').style.display = 'grid'; document.getElementById('imageEmoji').textContent = q.image; document.getElementById('wordDisplay').textContent = q.word; document.getElementById('questionText').textContent = `Qual palavra rima com ${q.word}?`; renderOptions(q.options); }
-function renderPhase3UI_MemoryGame(q) {
+function renderPhase3UI_MemoryGame() {
     document.getElementById('questionText').textContent = 'Encontre os pares de letras maiúsculas e minúsculas!';
     const memoryGrid = document.getElementById('memoryGameGrid');
     memoryGrid.style.display = 'grid';
@@ -491,7 +493,7 @@ function handleCardFlip(card) {
                 gameState.memoryGame.flippedCards = [];
                 gameState.memoryGame.canFlip = true;
                 if (gameState.memoryGame.matchedPairs === gameState.memoryGame.totalPairs) {
-                    gameState.score = gameState.memoryGame.totalPairs; // Score is the number of pairs
+                    gameState.score = gameState.memoryGame.totalPairs;
                     showFeedback('Excelente! Todos os pares encontrados!', 'success');
                     document.getElementById('nextQuestion').style.display = 'block';
                 }
