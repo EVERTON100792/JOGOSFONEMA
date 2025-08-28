@@ -82,10 +82,9 @@ const PHASE_7_SENTENCES_BUILD = [
     { sentence: ['NÓS', 'VAMOS', 'BRINCAR'], image: '🤹', answer: 'NÓS VAMOS BRINCAR' }, { sentence: ['O', 'CARRO', 'É', 'AZUL'], image: '🚗', answer: 'O CARRO É AZUL' }
 ];
 const PHASE_9_SYLLABLE_COUNT = [
-    { word: 'SOL', image: '☀️', syllables: 1 }, { word: 'PÃO', image: '🍞', syllables: 1 },
-    { word: 'BOLA', image: '⚽', syllables: 2 }, { word: 'CASA', image: '🏠', syllables: 2 },
-    { word: 'LUA', image: '🌙', syllables: 2 }, { word: 'SAPATO', image: '👟', syllables: 3 },
-    { word: 'JANELA', image: '🖼️', syllables: 3 }, { word: 'MACACO', image: '🐒', syllables: 3 },
+    { word: 'SOL', image: '☀️', syllables: 1 }, { word: 'PÃO', image: '🍞', syllables: 1 }, { word: 'FLOR', image: '🌸', syllables: 1 }, { word: 'MAR', image: '🌊', syllables: 1 },
+    { word: 'BOLA', image: '⚽', syllables: 2 }, { word: 'CASA', image: '🏠', syllables: 2 }, { word: 'LUA', image: '🌙', syllables: 2 }, { word: 'LIVRO', image: '📖', syllables: 2 },
+    { word: 'SAPATO', image: '👟', syllables: 3 }, { word: 'JANELA', image: '🖼️', syllables: 3 }, { word: 'MACACO', image: '🐒', syllables: 3 }, { word: 'CASTELO', image: '🏰', syllables: 3 },
     { word: 'BORBOLETA', image: '🦋', syllables: 4 }, { word: 'TELEFONE', image: '📞', syllables: 4 },
     { word: 'ABACAXI', image: '🍍', syllables: 4 }, { word: 'HIPOPÓTAMO', image: '🦛', syllables: 5 }
 ];
@@ -472,70 +471,12 @@ function startTimer() { stopTimer(); let seconds = 0; const timerEl = document.g
 function stopTimer() { clearInterval(timerInterval); }
 
 
-// PARTE 8: LÓGICA DO JOGO (COM NOVA SEQUÊNCIA)
-async function showStudentGame() {
-    await checkForCustomActivities();
-    await loadGameState();
-    const canResume = gameState.currentQuestionIndex > 0 && gameState.attempts > 0 && !gameState.phaseCompleted;
-    document.getElementById('startButton').innerHTML = canResume ? '<i class="fas fa-play"></i> Continuar Aventura' : '<i class="fas fa-play"></i> Começar Aventura';
-    showScreen('startScreen');
-}
-
-async function startGame() {
-    gameState.isCustomActivity = false;
-    await loadGameState();
-    if (gameState.phaseCompleted || gameState.attempts <= 0) {
-        gameState.currentQuestionIndex = 0;
-        gameState.score = 0;
-        gameState.attempts = 3;
-        gameState.phaseCompleted = false;
-        gameState.questions = generateQuestions(gameState.currentPhase);
-    }
-    showScreen('gameScreen');
-    startQuestion();
-    connectStudentToRealtime();
-}
-
-async function startCustomActivity() {
-    if (!currentUser.assigned_activity) return;
-    gameState.isCustomActivity = true;
-    gameState.questions = currentUser.assigned_activity.questions;
-    gameState.currentPhase = "Reforço";
-    gameState.currentQuestionIndex = 0;
-    gameState.score = 0;
-    gameState.attempts = 3;
-    gameState.phaseCompleted = false;
-    
-    showScreen('gameScreen');
-    startQuestion();
-    connectStudentToRealtime();
-}
-
-async function connectStudentToRealtime() {
-    if (studentChannel) {
-        await studentChannel.unsubscribe();
-    }
-    const channelId = `teacher-room-${currentUser.teacher_id}`;
-    studentChannel = supabaseClient.channel(channelId);
-
-    studentChannel.subscribe(async (status) => {
-        if (status === 'SUBSCRIBED') {
-            await studentChannel.track({
-                student_id: currentUser.id,
-                student_name: currentUser.name,
-                online_at: new Date().toISOString(),
-            });
-        }
-    });
-}
-
-window.addEventListener('beforeunload', () => {
-    if (studentChannel) {
-        studentChannel.untrack();
-        supabaseClient.removeChannel(studentChannel);
-    }
-});
-
+// PARTE 8: LÓGICA DO JOGO
+async function showStudentGame() { await checkForCustomActivities(); await loadGameState(); const canResume = gameState.currentQuestionIndex > 0 && gameState.attempts > 0 && !gameState.phaseCompleted; document.getElementById('startButton').innerHTML = canResume ? '<i class="fas fa-play"></i> Continuar Aventura' : '<i class="fas fa-play"></i> Começar Aventura'; showScreen('startScreen'); }
+async function startGame() { gameState.isCustomActivity = false; await loadGameState(); if (gameState.phaseCompleted || gameState.attempts <= 0) { gameState.currentQuestionIndex = 0; gameState.score = 0; gameState.attempts = 3; gameState.phaseCompleted = false; gameState.questions = generateQuestions(gameState.currentPhase); } showScreen('gameScreen'); startQuestion(); connectStudentToRealtime(); }
+async function startCustomActivity() { if (!currentUser.assigned_activity) return; gameState.isCustomActivity = true; gameState.questions = currentUser.assigned_activity.questions; gameState.currentPhase = "Reforço"; gameState.currentQuestionIndex = 0; gameState.score = 0; gameState.attempts = 3; gameState.phaseCompleted = false; showScreen('gameScreen'); startQuestion(); connectStudentToRealtime(); }
+async function connectStudentToRealtime() { if (studentChannel) { await studentChannel.unsubscribe(); } const channelId = `teacher-room-${currentUser.teacher_id}`; studentChannel = supabaseClient.channel(channelId); studentChannel.subscribe(async (status) => { if (status === 'SUBSCRIBED') { await studentChannel.track({ student_id: currentUser.id, student_name: currentUser.name, online_at: new Date().toISOString(), }); } }); }
+window.addEventListener('beforeunload', () => { if (studentChannel) { studentChannel.untrack(); supabaseClient.removeChannel(studentChannel); } });
 async function loadGameState() { const { data: progressData, error } = await supabaseClient.from('progress').select('game_state, current_phase').eq('student_id', currentUser.id).single(); if (error && error.code !== 'PGRST116') { console.error("Erro ao carregar progresso:", error); } const assignedPhases = currentUser.assigned_phases && currentUser.assigned_phases.length > 0 ? currentUser.assigned_phases : [1]; const firstAssignedPhase = assignedPhases[0]; if (progressData?.game_state?.questions) { gameState = progressData.game_state; if (!assignedPhases.includes(gameState.currentPhase)) { gameState = { currentPhase: firstAssignedPhase, score: 0, attempts: 3, questions: generateQuestions(firstAssignedPhase), currentQuestionIndex: 0, teacherId: currentUser.teacher_id, tutorialsShown: [], phaseCompleted: false }; await saveGameState(); } if (!gameState.tutorialsShown) gameState.tutorialsShown = []; } else { gameState = { currentPhase: firstAssignedPhase, score: 0, attempts: 3, questions: generateQuestions(firstAssignedPhase), currentQuestionIndex: 0, teacherId: currentUser.teacher_id, tutorialsShown: [], phaseCompleted: false }; await saveGameState(); } }
 async function saveGameState() { if (!currentUser || currentUser.type !== 'student' || gameState.isCustomActivity) return; await supabaseClient.from('progress').upsert({ student_id: currentUser.id, current_phase: gameState.currentPhase, game_state: gameState, last_played: new Date().toISOString() }, { onConflict: 'student_id' }); }
 
@@ -599,7 +540,7 @@ function generateQuestions(phase) {
 }
 
 async function startQuestion() {
-    if (gameState.phaseCompleted || !gameState.questions || gameState.currentQuestionIndex >= gameState.questions.length) { return endPhase(); }
+    if (gameState.phaseCompleted || !gameState.questions || !gameState.questions[gameState.currentQuestionIndex]) { return endPhase(); }
     
     document.getElementById('nextQuestion').style.display = 'none';
     ['audioQuestionArea', 'imageQuestionArea', 'lettersGrid', 'memoryGameGrid', 'sentenceBuildArea'].forEach(id => document.getElementById(id).style.display = 'none');
@@ -620,7 +561,7 @@ async function startQuestion() {
     };
     renderMap[q.type]?.(q);
     
-    updateUI(); // Chamado DEPOIS de renderizar, para corrigir bug do total de questões
+    updateUI(); 
 }
 
 function renderPhase1UI_MemoryGame() { document.getElementById('questionText').textContent = 'Encontre os pares de letras maiúsculas e minúsculas!'; const memoryGrid = document.getElementById('memoryGameGrid'); memoryGrid.style.display = 'grid'; const letters = shuffleAndTake(ALPHABET, 8); const cards = [...letters, ...letters.map(l => l.toLowerCase())].sort(() => 0.5 - Math.random()); memoryGrid.innerHTML = cards.map(letter => `<div class="memory-card" data-letter="${letter.toLowerCase()}"><div class="card-inner"><div class="card-face card-front"></div><div class="card-face card-back">${letter}</div></div></div>`).join(''); gameState.memoryGame = { flippedCards: [], matchedPairs: 0, totalPairs: letters.length, canFlip: true }; memoryGrid.querySelectorAll('.memory-card').forEach(card => card.addEventListener('click', () => handleCardFlip(card))); }
@@ -957,7 +898,6 @@ async function generateAndAssignActivity(studentId, studentName) {
 
 function generateSingleQuestionFromError(errorTemplate) {
     const phase = parseInt(errorTemplate.phase);
-    // Este switch está ajustado para a nova ordem de fases
     switch(phase) {
         case 8: return { type: 'vowel_sound', correctAnswer: errorTemplate.correct_answer, options: generateOptions(errorTemplate.correct_answer, VOWELS, 4) };
         case 14: const rhymeData = PHASE_14_RHYMES.find(r => r.rhyme === errorTemplate.correct_answer) || PHASE_14_RHYMES[0]; return { type: 'find_rhyme', ...rhymeData, correctAnswer: rhymeData.rhyme, options: rhymeData.options };
