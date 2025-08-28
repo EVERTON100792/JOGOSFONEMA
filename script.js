@@ -1,8 +1,11 @@
 // =======================================================
-// JOGO DAS LETRAS - VERSÃO FINAL COM CONTEÚDO EXPANDIDO
-// CORRIGE: Bug na atividade de reforço que não funcionava.
-// MELHORA: Expande o banco de dados de todas as fases para 10+ itens únicos.
-// MELHORA: Remove a repetição de perguntas dentro de uma mesma rodada.
+// JOGO DAS LETRAS - VERSÃO FINAL COMPLETA E CORRIGIDA
+// Implementa:
+// - Currículo final de 16 fases com sequência pedagógica.
+// - Status de Aluno em Tempo Real (Online, Recente, Inativo).
+// - Lógica completa da IA e criação de reforço.
+// - Histórico de atividades de reforço para o professor.
+// - Correção de todos os bugs de layout e carregamento.
 // =======================================================
 
 
@@ -47,7 +50,7 @@ const PHASE_3_SYLLABLE_F = [
     { base: 'F', vowel: 'A', result: 'FA', image: '🔪', word: 'FACA' }, { base: 'F', vowel: 'E', result: 'FE', image: '🌱', word: 'FEIJÃO' },
     { base: 'F', vowel: 'I', result: 'FI', image: '🎀', word: 'FITA' }, { base: 'F', vowel: 'O', result: 'FO', image: '🔥', word: 'FOGO' },
     { base: 'F', vowel: 'U', result: 'FU', image: '💨', word: 'FUMAÇA' }, { base: 'F', vowel: 'A', result: 'FA', image: '🧚‍♀️', word: 'FADA' },
-    { base: 'F', vowel: 'E', result: 'FE', image: '😀', word: 'FELIZ' }, { base: 'F', vowel: 'I', result: 'FI', image: ' figo', word: 'FIGO' },
+    { base: 'F', vowel: 'E', result: 'FE', image: '😀', word: 'FELIZ' }, { base: 'F', vowel: 'I', result: 'FI', image: 'Figo', word: 'FIGO' },
     { base: 'F', vowel: 'O', result: 'FO', image: '🦭', word: 'FOCA' }, { base: 'F', vowel: 'U', result: 'FU', image: '⚽', word: 'FUTEBOL' }
 ];
 const PHASE_4_WORDS_F = [
@@ -58,11 +61,11 @@ const PHASE_4_WORDS_F = [
     { word: 'FILA', image: '🧍🧍‍♀️🧍‍♂️', options: ['FILA', 'VILA', 'PILA'] }, { word: 'FAROL', image: '🚦', options: ['FAROL', 'CAROL', 'ROL'] }
 ];
 const PHASE_5_SOUND_PAIRS = [
-    { word: 'VACA', image: '🐄', correct: 'VACA', incorrect: 'FACA' }, { word: 'PATO', image: '🦆', correct: 'PATO', incorrect: 'BATO' },
-    { word: 'DADO', image: '🎲', correct: 'DADO', incorrect: 'TADO' }, { word: 'BOTE', image: '⛵', correct: 'BOTE', incorrect: 'POTE' },
-    { word: 'GOLA', image: '👕', correct: 'GOLA', incorrect: 'COLA' }, { word: 'ZELO', image: '😇', correct: 'ZELO', incorrect: 'SELO' },
-    { word: 'JOGO', image: '🎮', correct: 'JOGO', incorrect: 'XOGO' }, { word: 'CHAVE', image: '🔑', correct: 'CHAVE', incorrect: 'JAVE' },
-    { word: 'GALO', image: '🐓', correct: 'GALO', incorrect: 'CALO' }, { word: ' faca', image: '🔪', correct: 'FACA', incorrect: 'VACA' }
+    { correct: 'VACA', incorrect: 'FACA', image: '🐄' }, { correct: 'PATO', incorrect: 'BATO', image: '🦆' },
+    { correct: 'DADO', incorrect: 'TADO', image: '🎲' }, { correct: 'BOTE', incorrect: 'POTE', image: '⛵' },
+    { correct: 'GOLA', incorrect: 'COLA', image: '👕' }, { correct: 'ZELO', incorrect: 'SELO', image: '😇' },
+    { correct: 'JOGO', incorrect: 'XOGO', image: '🎮' }, { correct: 'CHAVE', incorrect: 'JAVE', image: '🔑' },
+    { correct: 'GALO', incorrect: 'CALO', image: '🐓' }, { correct: 'FACA', incorrect: 'VACA', image: '🔪' }
 ];
 const PHASE_6_SENTENCES_COUNT = [
     { sentence: 'A FADA VOOU', image: '🧚‍♀️', words: 3 }, { sentence: 'O GATO BEBE LEITE', image: '🐈', words: 4 },
@@ -81,30 +84,31 @@ const PHASE_7_SENTENCES_BUILD = [
 const PHASE_9_SYLLABLE_COUNT = [
     { word: 'SOL', image: '☀️', syllables: 1 }, { word: 'PÃO', image: '🍞', syllables: 1 },
     { word: 'BOLA', image: '⚽', syllables: 2 }, { word: 'CASA', image: '🏠', syllables: 2 },
-    { word: 'SAPATO', image: '👟', syllables: 3 }, { word: 'JANELA', image: '🖼️', syllables: 3 },
+    { word: 'LUA', image: '🌙', syllables: 2 }, { word: 'SAPATO', image: '👟', syllables: 3 },
+    { word: 'JANELA', image: '🖼️', syllables: 3 }, { word: 'MACACO', image: '🐒', syllables: 3 },
     { word: 'BORBOLETA', image: '🦋', syllables: 4 }, { word: 'TELEFONE', image: '📞', syllables: 4 },
     { word: 'ABACAXI', image: '🍍', syllables: 4 }, { word: 'HIPOPÓTAMO', image: '🦛', syllables: 5 }
 ];
 const PHASE_10_INITIAL_SYLLABLE = [
-    { word: 'BOLO', image: '🎂', correctAnswer: 'BO', options: ['BO', 'LA', 'CA'] }, { word: 'MACACO', image: '🐒', correctAnswer: 'MA', options: ['MA', 'CA', 'SA'] },
-    { word: 'SAPATO', image: '👟', correctAnswer: 'SA', options: ['SA', 'PA', 'TA'] }, { word: 'JANELA', image: '🖼️', correctAnswer: 'JA', options: ['JA', 'NE', 'LA'] },
-    { word: 'VACA', image: '🐄', correctAnswer: 'VA', options: ['VA', 'CA', 'FA'] }, { word: 'GATO', image: '🐈', correctAnswer: 'GA', options: ['GA', 'TO', 'JA'] },
-    { word: 'DADO', image: '🎲', correctAnswer: 'DA', options: ['DA', 'DO', 'TA'] }, { word: 'RATO', image: '🐀', correctAnswer: 'RA', options: ['RA', 'TO', 'CA'] },
-    { word: 'FOCA', image: '🦭', correctAnswer: 'FO', options: ['FO', 'CA', 'VO'] }, { word: 'LIVRO', image: '📖', correctAnswer: 'LI', options: ['LI', 'VRO', 'RI'] }
+    { word: 'BOLO', image: '🎂', correctAnswer: 'BO' }, { word: 'MACACO', image: '🐒', correctAnswer: 'MA' },
+    { word: 'SAPATO', image: '👟', correctAnswer: 'SA' }, { word: 'JANELA', image: '🖼️', correctAnswer: 'JA' },
+    { word: 'VACA', image: '🐄', correctAnswer: 'VA' }, { word: 'GATO', image: '🐈', correctAnswer: 'GA' },
+    { word: 'DADO', image: '🎲', correctAnswer: 'DA' }, { word: 'RATO', image: '🐀', correctAnswer: 'RA' },
+    { word: 'FOCA', image: '🦭', correctAnswer: 'FO' }, { word: 'LIVRO', image: '📖', correctAnswer: 'LI' }
 ];
 const PHASE_11_F_POSITION = [
     { word: 'FADA', image: '🧚‍♀️', syllable: 'FA', blanked: '__DA' }, { word: 'FIVELA', image: '🪢', syllable: 'FI', blanked: '__VELA' },
     { word: 'GARRAFA', image: '🍾', syllable: 'FA', blanked: 'GARRA__' }, { word: 'ALFINETE', image: '🧷', syllable: 'FI', blanked: 'AL__NETE' },
     { word: 'CAFÉ', image: '☕', syllable: 'FÉ', blanked: 'CA__' }, { word: 'GIRAFA', image: '🦒', syllable: 'FA', blanked: 'GIRA__' },
     { word: 'SOFÁ', image: '🛋️', syllable: 'FÁ', blanked: 'SO__' }, { word: 'BIFE', image: '🥩', syllable: 'FE', blanked: 'BI__' },
-    { word: 'FÓSFORO', image: ' Matches', syllable: 'FO', blanked: '__S__RO' }, { word: 'FOFOCA', image: '🤫', syllable: 'FO', blanked: '__FOCA' }
+    { word: 'FÓSFORO', image: 'Matches', syllable: 'FOS', blanked: '__FORO' }, { word: 'GOLFINHO', image: '🐬', syllable: 'FI', blanked: 'GOL__NHO' }
 ];
 const PHASE_12_WORD_TRANSFORM = [
-    { image: '👟', initialWord: 'SAPATO', toRemove: 'SA', correctAnswer: 'PATO' }, { image: '🧤', initialWord: 'LUVA', toRemove: 'L', correctAnswer: 'UVA' },
-    { image: '🦁', initialWord: 'CAMALEÃO', toRemove: 'CAMA', correctAnswer: 'LEÃO' }, { image: '🐔', initialWord: 'GALINHA', toRemove: 'GA', correctAnswer: 'LINHA' },
-    { image: '🎖️', initialWord: 'SOLDADO', toRemove: 'SOL', correctAnswer: 'DADO' }, { image: ' serpente', initialWord: 'SERPENTE', toRemove: 'SER', correctAnswer: 'PENTE' },
-    { image: ' Tucano', initialWord: 'TUCANO', toRemove: 'TU', correctAnswer: 'CANO' }, { image: ' Escada', initialWord: 'ESCADA', toRemove: 'ES', correctAnswer: 'CADA' },
-    { image: ' Repolho', initialWord: 'REPOLHO', toRemove: 'RE', correctAnswer: 'POLHO' }, { image: ' Mola', initialWord: 'SACOLA', toRemove: 'SA', correctAnswer: 'COLA' }
+    { initialWord: 'SAPATO', toRemove: 'SA', correctAnswer: 'PATO', image: '🦆' }, { initialWord: 'LUVA', toRemove: 'L', correctAnswer: 'UVA', image: '🍇' },
+    { initialWord: 'CAMALEÃO', toRemove: 'CAMA', correctAnswer: 'LEÃO', image: '🦁' }, { initialWord: 'GALINHA', toRemove: 'GA', correctAnswer: 'LINHA', image: '🧵' },
+    { initialWord: 'SOLDADO', toRemove: 'SOL', correctAnswer: 'DADO', image: '🎲' }, { initialWord: 'SERPENTE', toRemove: 'SER', correctAnswer: 'PENTE', image: 'comb' },
+    { initialWord: 'TUCANO', toRemove: 'TU', correctAnswer: 'CANO', image: 'pipe' }, { initialWord: 'ESCADA', toRemove: 'ES', correctAnswer: 'CADA', image: 'ladder' },
+    { initialWord: 'REPOLHO', toRemove: 'RE', correctAnswer: 'POLHO', image: 'cabbage' }, { initialWord: 'SACOLA', toRemove: 'SA', correctAnswer: 'COLA', image: 'glue' }
 ];
 const PHASE_13_INVERT_SYLLABLES = [
     { word: 'BOLO', image: '🎂', inverted: 'LOBO', imageInverted: '🐺' }, { word: 'MACA', image: '🍎', inverted: 'CAMA', imageInverted: '🛏️' },
@@ -114,11 +118,11 @@ const PHASE_13_INVERT_SYLLABLES = [
     { word: 'MAGO', image: '🧙‍♂️', inverted: 'GOMA', imageInverted: '🍬' }, { word: 'SECA', image: '🏜️', inverted: 'CASE', imageInverted: '💼' }
 ];
 const PHASE_14_RHYMES = [
-    { word: 'PÃO', image: '🍞', rhyme: 'MÃO' }, { word: 'GATO', image: '🐈', rhyme: 'PATO' },
-    { word: 'JANELA', image: '🖼️', rhyme: 'PANELA' }, { word: 'ANEL', image: '💍', rhyme: 'PASTEL' },
-    { word: 'FIVELA', image: '🪢', rhyme: 'CANELA' }, { word: 'CADEIRA', image: '🪑', rhyme: 'BANDEIRA' },
-    { word: 'MARTELO', image: '🔨', rhyme: 'CASTELO' }, { word: 'SOLDADO', image: '🎖️', rhyme: 'ADOÇADO' },
-    { word: 'CEBOLA', image: '🧅', rhyme: 'ARGOLA' }, { word: 'CENOURA', image: '🥕', rhyme: 'TESOURA' }
+    { word: 'PÃO', image: '🍞', rhyme: 'MÃO', options: ['MÃO', 'PÉ', 'BICO'] }, { word: 'GATO', image: '🐈', rhyme: 'PATO', options: ['PATO', 'CÃO', 'BOLA'] },
+    { word: 'JANELA', image: '🖼️', rhyme: 'PANELA', options: ['PANELA', 'PORTA', 'FITA'] }, { word: 'ANEL', image: '💍', rhyme: 'PASTEL', options: ['PASTEL', 'DEDO', 'JOIA'] },
+    { word: 'FIVELA', image: '🪢', rhyme: 'CANELA', options: ['CANELA', 'NAVIO', 'CASA'] }, { word: 'CADEIRA', image: '🪑', rhyme: 'BANDEIRA', options: ['BANDEIRA', 'MESA', 'SOFÁ'] },
+    { word: 'MARTELO', image: '🔨', rhyme: 'CASTELO', options: ['CASTELO', 'PREGO', 'SERRA'] }, { word: 'SOLDADO', image: '🎖️', rhyme: 'ADOÇADO', options: ['ADOÇADO', 'GUERRA', 'PAZ'] },
+    { word: 'CEBOLA', image: '🧅', rhyme: 'ARGOLA', options: ['ARGOLA', 'ALHO', 'TOMATE'] }, { word: 'CENOURA', image: '🥕', rhyme: 'TESOURA', options: ['TESOURA', 'COELHO', 'TERRA'] }
 ];
 const PHASE_15_PHONEME_COUNT = [
     { word: 'LUA', image: '🌙', sounds: 3 }, { word: 'SOL', image: '☀️', sounds: 3 },
@@ -468,12 +472,70 @@ function startTimer() { stopTimer(); let seconds = 0; const timerEl = document.g
 function stopTimer() { clearInterval(timerInterval); }
 
 
-// PARTE 8: LÓGICA DO JOGO
-async function showStudentGame() { await checkForCustomActivities(); await loadGameState(); const canResume = gameState.currentQuestionIndex > 0 && gameState.attempts > 0 && !gameState.phaseCompleted; document.getElementById('startButton').innerHTML = canResume ? '<i class="fas fa-play"></i> Continuar Aventura' : '<i class="fas fa-play"></i> Começar Aventura'; showScreen('startScreen'); }
-async function startGame() { gameState.isCustomActivity = false; await loadGameState(); if (gameState.phaseCompleted || gameState.attempts <= 0) { gameState.currentQuestionIndex = 0; gameState.score = 0; gameState.attempts = 3; gameState.phaseCompleted = false; gameState.questions = generateQuestions(gameState.currentPhase); } showScreen('gameScreen'); startQuestion(); connectStudentToRealtime(); }
-async function startCustomActivity() { if (!currentUser.assigned_activity) return; gameState.isCustomActivity = true; gameState.questions = currentUser.assigned_activity.questions; gameState.currentPhase = "Reforço"; gameState.currentQuestionIndex = 0; gameState.score = 0; gameState.attempts = 3; gameState.phaseCompleted = false; showScreen('gameScreen'); startQuestion(); connectStudentToRealtime(); }
-async function connectStudentToRealtime() { if (studentChannel) { await studentChannel.unsubscribe(); } const channelId = `teacher-room-${currentUser.teacher_id}`; studentChannel = supabaseClient.channel(channelId); studentChannel.subscribe(async (status) => { if (status === 'SUBSCRIBED') { await studentChannel.track({ student_id: currentUser.id, student_name: currentUser.name, online_at: new Date().toISOString(), }); } }); }
-window.addEventListener('beforeunload', () => { if (studentChannel) { studentChannel.untrack(); supabaseClient.removeChannel(studentChannel); } });
+// PARTE 8: LÓGICA DO JOGO (COM NOVA SEQUÊNCIA)
+async function showStudentGame() {
+    await checkForCustomActivities();
+    await loadGameState();
+    const canResume = gameState.currentQuestionIndex > 0 && gameState.attempts > 0 && !gameState.phaseCompleted;
+    document.getElementById('startButton').innerHTML = canResume ? '<i class="fas fa-play"></i> Continuar Aventura' : '<i class="fas fa-play"></i> Começar Aventura';
+    showScreen('startScreen');
+}
+
+async function startGame() {
+    gameState.isCustomActivity = false;
+    await loadGameState();
+    if (gameState.phaseCompleted || gameState.attempts <= 0) {
+        gameState.currentQuestionIndex = 0;
+        gameState.score = 0;
+        gameState.attempts = 3;
+        gameState.phaseCompleted = false;
+        gameState.questions = generateQuestions(gameState.currentPhase);
+    }
+    showScreen('gameScreen');
+    startQuestion();
+    connectStudentToRealtime();
+}
+
+async function startCustomActivity() {
+    if (!currentUser.assigned_activity) return;
+    gameState.isCustomActivity = true;
+    gameState.questions = currentUser.assigned_activity.questions;
+    gameState.currentPhase = "Reforço";
+    gameState.currentQuestionIndex = 0;
+    gameState.score = 0;
+    gameState.attempts = 3;
+    gameState.phaseCompleted = false;
+    
+    showScreen('gameScreen');
+    startQuestion();
+    connectStudentToRealtime();
+}
+
+async function connectStudentToRealtime() {
+    if (studentChannel) {
+        await studentChannel.unsubscribe();
+    }
+    const channelId = `teacher-room-${currentUser.teacher_id}`;
+    studentChannel = supabaseClient.channel(channelId);
+
+    studentChannel.subscribe(async (status) => {
+        if (status === 'SUBSCRIBED') {
+            await studentChannel.track({
+                student_id: currentUser.id,
+                student_name: currentUser.name,
+                online_at: new Date().toISOString(),
+            });
+        }
+    });
+}
+
+window.addEventListener('beforeunload', () => {
+    if (studentChannel) {
+        studentChannel.untrack();
+        supabaseClient.removeChannel(studentChannel);
+    }
+});
+
 async function loadGameState() { const { data: progressData, error } = await supabaseClient.from('progress').select('game_state, current_phase').eq('student_id', currentUser.id).single(); if (error && error.code !== 'PGRST116') { console.error("Erro ao carregar progresso:", error); } const assignedPhases = currentUser.assigned_phases && currentUser.assigned_phases.length > 0 ? currentUser.assigned_phases : [1]; const firstAssignedPhase = assignedPhases[0]; if (progressData?.game_state?.questions) { gameState = progressData.game_state; if (!assignedPhases.includes(gameState.currentPhase)) { gameState = { currentPhase: firstAssignedPhase, score: 0, attempts: 3, questions: generateQuestions(firstAssignedPhase), currentQuestionIndex: 0, teacherId: currentUser.teacher_id, tutorialsShown: [], phaseCompleted: false }; await saveGameState(); } if (!gameState.tutorialsShown) gameState.tutorialsShown = []; } else { gameState = { currentPhase: firstAssignedPhase, score: 0, attempts: 3, questions: generateQuestions(firstAssignedPhase), currentQuestionIndex: 0, teacherId: currentUser.teacher_id, tutorialsShown: [], phaseCompleted: false }; await saveGameState(); } }
 async function saveGameState() { if (!currentUser || currentUser.type !== 'student' || gameState.isCustomActivity) return; await supabaseClient.from('progress').upsert({ student_id: currentUser.id, current_phase: gameState.currentPhase, game_state: gameState, last_played: new Date().toISOString() }, { onConflict: 'student_id' }); }
 
@@ -481,7 +543,6 @@ function generateQuestions(phase) {
     let questions = [];
     const questionCount = 10;
     const shuffleAndTake = (arr, num) => [...arr].sort(() => 0.5 - Math.random()).slice(0, num);
-    const repeatAndTake = (arr, num) => { let repeated = []; while(repeated.length < num) { repeated.push(...arr); } return shuffleAndTake(repeated, num); };
 
     switch (phase) {
         case 1: 
@@ -491,10 +552,10 @@ function generateQuestions(phase) {
             questions = Array.from({ length: questionCount }, () => ({ type: 'f_sound', correctAnswer: 'F', options: generateOptions('F', 'AMOPL', 4) }));
             break;
         case 3:
-            questions = repeatAndTake(PHASE_3_SYLLABLE_F, questionCount).map(item => ({ type: 'form_f_syllable', ...item, options: generateOptions(item.result, ['FA', 'FE', 'FI', 'FO', 'FU', 'VA', 'BO'], 4) }));
+            questions = shuffleAndTake(PHASE_3_SYLLABLE_F, questionCount).map(item => ({ type: 'form_f_syllable', ...item, options: generateOptions(item.result, ['FA', 'FE', 'FI', 'FO', 'FU', 'VA', 'BO'], 4) }));
             break;
         case 4:
-            questions = repeatAndTake(PHASE_4_WORDS_F, questionCount).map(item => ({ type: 'f_word_search', ...item, correctAnswer: item.word, options: item.options.sort(() => 0.5 - Math.random()) }));
+            questions = shuffleAndTake(PHASE_4_WORDS_F, questionCount).map(item => ({ type: 'f_word_search', ...item, correctAnswer: item.word, options: item.options.sort(() => 0.5 - Math.random()) }));
             break;
         case 5:
             questions = shuffleAndTake(PHASE_5_SOUND_PAIRS, questionCount).map(item => ({ type: 'sound_detective', image: item.image, correctAnswer: item.correct, options: [item.correct, item.incorrect].sort(() => 0.5 - Math.random()) }));
@@ -510,13 +571,13 @@ function generateQuestions(phase) {
             questions = vowelSet.map(vowel => ({ type: 'vowel_sound', correctAnswer: vowel, options: generateOptions(vowel, VOWELS, 4) }));
             break;
         case 9:
-            questions = repeatAndTake(PHASE_9_SYLLABLE_COUNT, questionCount).map(item => ({ type: 'count_syllables', ...item, correctAnswer: item.syllables.toString(), options: generateOptions(item.syllables.toString(), ['1', '2', '3', '4', '5'], 4) }));
+            questions = shuffleAndTake(PHASE_9_SYLLABLE_COUNT, questionCount).map(item => ({ type: 'count_syllables', ...item, correctAnswer: item.syllables.toString(), options: generateOptions(item.syllables.toString(), ['1', '2', '3', '4', '5'], 4) }));
             break;
         case 10: 
-            questions = repeatAndTake(PHASE_10_INITIAL_SYLLABLE, questionCount).map(item => ({ type: 'initial_syllable', ...item, options: item.options.sort(() => 0.5 - Math.random()) }));
+            questions = shuffleAndTake(PHASE_10_INITIAL_SYLLABLE, questionCount).map(item => ({ type: 'initial_syllable', ...item, options: generateOptions(item.correctAnswer, ALPHABET.map(l=>l+'A').filter(s=>s!==item.correctAnswer), 3) }));
             break;
         case 11:
-            questions = repeatAndTake(PHASE_11_F_POSITION, questionCount).map(item => ({ type: 'f_position', ...item, options: generateOptions(item.syllable, ['FA', 'FE', 'FI', 'FO', 'FU'], 4) }));
+            questions = shuffleAndTake(PHASE_11_F_POSITION, questionCount).map(item => ({ type: 'f_position', ...item, options: generateOptions(item.syllable, ['FA', 'FE', 'FI', 'FO', 'FU'], 4) }));
             break;
         case 12: 
             questions = shuffleAndTake(PHASE_12_WORD_TRANSFORM, questionCount).map(item => ({ type: 'word_transform', ...item, correctAnswer: item.correctAnswer, options: generateOptions(item.correctAnswer, item.initialWord.split(''), 3) }));
@@ -525,13 +586,13 @@ function generateQuestions(phase) {
              questions = shuffleAndTake(PHASE_13_INVERT_SYLLABLES, questionCount).map(item => ({ type: 'invert_syllables', ...item, correctAnswer: item.inverted, options: generateOptions(item.inverted, PHASE_13_INVERT_SYLLABLES.map(i=>i.word), 4) }));
              break;
         case 14:
-             questions = shuffleAndTake(PHASE_14_RHYMES, questionCount).map(item => ({ type: 'find_rhyme', ...item, correctAnswer: item.rhyme, options: generateOptions(item.rhyme, PHASE_14_RHYMES.map(r=>r.word), 3) }));
+             questions = shuffleAndTake(PHASE_14_RHYMES, questionCount).map(item => ({ type: 'find_rhyme', ...item, correctAnswer: item.rhyme, options: item.options }));
             break;
         case 15:
-            questions = repeatAndTake(PHASE_15_PHONEME_COUNT, questionCount).map(item => ({ type: 'count_phonemes', ...item, correctAnswer: item.sounds.toString(), options: generateOptions(item.sounds.toString(), ['2','3','4','5'], 4) }));
+            questions = shuffleAndTake(PHASE_15_PHONEME_COUNT, questionCount).map(item => ({ type: 'count_phonemes', ...item, correctAnswer: item.sounds.toString(), options: generateOptions(item.sounds.toString(), ['2','3','4','5'], 4) }));
             break;
         case 16:
-            questions = repeatAndTake(PHASE_16_COMPLEX_SYLLABLES, questionCount).map(item => ({ type: 'complex_syllable', ...item, correctAnswer: item.syllable, options: generateOptions(item.syllable, ['BRA','LHA','NHO','VRO','CRE'], 4) }));
+            questions = shuffleAndTake(PHASE_16_COMPLEX_SYLLABLES, questionCount).map(item => ({ type: 'complex_syllable', ...item, correctAnswer: item.syllable, options: generateOptions(item.syllable, ['BRA','LHA','NHO','VRO','CRE'], 4) }));
             break;
     }
     return questions;
@@ -546,8 +607,7 @@ async function startQuestion() {
     document.getElementById('wordDisplay').textContent = '';
     document.getElementById('questionText').textContent = '';
     document.getElementById('repeatAudio').style.display = 'none';
-
-    updateUI();
+    
     const q = gameState.questions[gameState.currentQuestionIndex];
     
     const renderMap = {
@@ -559,6 +619,8 @@ async function startQuestion() {
         'complex_syllable': renderPhase16UI_ComplexSyllable
     };
     renderMap[q.type]?.(q);
+    
+    updateUI(); // Chamado DEPOIS de renderizar, para corrigir bug do total de questões
 }
 
 function renderPhase1UI_MemoryGame() { document.getElementById('questionText').textContent = 'Encontre os pares de letras maiúsculas e minúsculas!'; const memoryGrid = document.getElementById('memoryGameGrid'); memoryGrid.style.display = 'grid'; const letters = shuffleAndTake(ALPHABET, 8); const cards = [...letters, ...letters.map(l => l.toLowerCase())].sort(() => 0.5 - Math.random()); memoryGrid.innerHTML = cards.map(letter => `<div class="memory-card" data-letter="${letter.toLowerCase()}"><div class="card-inner"><div class="card-face card-front"></div><div class="card-face card-back">${letter}</div></div></div>`).join(''); gameState.memoryGame = { flippedCards: [], matchedPairs: 0, totalPairs: letters.length, canFlip: true }; memoryGrid.querySelectorAll('.memory-card').forEach(card => card.addEventListener('click', () => handleCardFlip(card))); }
@@ -596,10 +658,11 @@ function handleCardFlip(card) {
                 card1.classList.add('matched');
                 card2.classList.add('matched');
                 gameState.memoryGame.matchedPairs++;
+                gameState.score++; // Incrementa o score para cada par
+                updateUI();
                 gameState.memoryGame.flippedCards = [];
                 gameState.memoryGame.canFlip = true;
                 if (gameState.memoryGame.matchedPairs === gameState.memoryGame.totalPairs) {
-                    gameState.score = gameState.memoryGame.totalPairs;
                     showFeedback('Excelente! Todos os pares encontrados!', 'success');
                     document.getElementById('nextQuestion').style.display = 'block';
                 }
@@ -625,7 +688,7 @@ function handleCardFlip(card) {
     }
 }
 function selectWordForSentence(buttonElement) { buttonElement.disabled = true; buttonElement.classList.add('disabled'); const sentenceBuildArea = document.getElementById('sentenceBuildArea'); const wordSpan = document.createElement('span'); wordSpan.className = 'sentence-word'; wordSpan.textContent = buttonElement.textContent; sentenceBuildArea.appendChild(wordSpan); const allButtons = document.querySelectorAll('.word-option-button'); const allDisabled = Array.from(allButtons).every(btn => btn.disabled); if (allDisabled) { const constructedSentence = Array.from(sentenceBuildArea.children).map(span => span.textContent).join(' '); selectAnswer(constructedSentence); } }
-async function selectAnswer(selectedAnswer) { const q = gameState.questions[gameState.currentQuestionIndex]; if (!q || q.type === 'memory_game') return; document.querySelectorAll('.letter-button, .word-option-button').forEach(btn => btn.disabled = true); const isCorrect = selectedAnswer === q.correctAnswer; if (q.type === 'build_sentence') { const sentenceArea = document.getElementById('sentenceBuildArea'); sentenceArea.style.borderColor = isCorrect ? '#4ECDC4' : '#ff6b6b'; } else { document.querySelectorAll('.letter-button, .word-option-button').forEach(btn => { if (btn.textContent === q.correctAnswer) btn.classList.add('correct'); if (!isCorrect && btn.textContent === selectedAnswer) btn.classList.add('incorrect'); }); } if (isCorrect) { gameState.score++; showFeedback('Muito bem!', 'success'); playTeacherAudio('feedback_correct', 'Acertou'); } else { gameState.attempts--; logStudentError({ question: q, selectedAnswer: selectedAnswer }).catch(console.error); showFeedback(`Quase! A resposta correta era "${q.correctAnswer}"`, 'error'); playTeacherAudio('feedback_incorrect', 'Tente de novo'); } updateUI(); await saveGameState(); if (gameState.attempts <= 0) { setTimeout(endPhase, 2000); } else { document.getElementById('nextQuestion').style.display = 'block'; } }
+async function selectAnswer(selectedAnswer) { const q = gameState.questions[gameState.currentQuestionIndex]; if (!q || q.type === 'memory_game') return; document.querySelectorAll('.letter-button, .word-option-button').forEach(btn => btn.disabled = true); const isCorrect = String(selectedAnswer) === String(q.correctAnswer); if (q.type === 'build_sentence') { const sentenceArea = document.getElementById('sentenceBuildArea'); sentenceArea.style.borderColor = isCorrect ? '#4ECDC4' : '#ff6b6b'; } else { document.querySelectorAll('.letter-button, .word-option-button').forEach(btn => { if (btn.textContent === q.correctAnswer) btn.classList.add('correct'); if (!isCorrect && btn.textContent === selectedAnswer) btn.classList.add('incorrect'); }); } if (isCorrect) { gameState.score++; showFeedback('Muito bem!', 'success'); playTeacherAudio('feedback_correct', 'Acertou'); } else { gameState.attempts--; logStudentError({ question: q, selectedAnswer: selectedAnswer }).catch(console.error); showFeedback(`Quase! A resposta correta era "${q.correctAnswer}"`, 'error'); playTeacherAudio('feedback_incorrect', 'Tente de novo'); } updateUI(); await saveGameState(); if (gameState.attempts <= 0) { setTimeout(endPhase, 2000); } else { document.getElementById('nextQuestion').style.display = 'block'; } }
 function nextQuestion() { if (gameState.questions[0].type === 'memory_game') { return endPhase(); } gameState.currentQuestionIndex++; startQuestion(); }
 async function endPhase() {
     let totalQuestions = gameState.questions.length;
@@ -649,7 +712,7 @@ function showResultScreen(accuracy, passed) { showScreen('resultScreen'); docume
 async function nextPhase() { const assignedPhases = currentUser.assigned_phases || [1]; const currentPhaseIndex = assignedPhases.indexOf(gameState.currentPhase); const hasNextPhase = currentPhaseIndex !== -1 && currentPhaseIndex < assignedPhases.length - 1; if (hasNextPhase) { const nextPhaseNum = assignedPhases[currentPhaseIndex + 1]; gameState.currentPhase = nextPhaseNum; gameState.currentQuestionIndex = 0; gameState.score = 0; gameState.attempts = 3; gameState.questions = generateQuestions(gameState.currentPhase); gameState.phaseCompleted = false; await saveGameState(); showScreen('gameScreen'); startQuestion(); } else { showResultScreen(100, true); } }
 async function retryPhase() { gameState.currentQuestionIndex = 0; gameState.score = 0; gameState.attempts = 3; gameState.phaseCompleted = false; gameState.questions = generateQuestions(gameState.currentPhase); await saveGameState(); showScreen('gameScreen'); startQuestion(); }
 async function restartGame() { await showStudentGame(); }
-async function playCurrentAudio() { const q = gameState.questions[gameState.currentQuestionIndex]; if (q.type === 'vowel_sound') { playTeacherAudio(q.correctAnswer, q.correctAnswer); } else if (q.type === 'f_sound') { const audio = new Audio("https://www.myinstants.com/media/sounds/ffff-sound-effect.mp3"); audio.play(); } }
+async function playCurrentAudio() { const q = gameState.questions[gameState.currentQuestionIndex]; if (q.type === 'vowel_sound') { playTeacherAudio(q.correctAnswer, q.correctAnswer); } else if (q.type === 'f_sound') { playTeacherAudio('F', 'f'); } }
 
 // PARTE 9: SÍNTESE DE VOZ E ÁUDIOS
 function initializeSpeech() { const checkVoices = (resolve) => { const voices = speechSynthesis.getVoices(); if (voices.length > 0) { selectedVoice = voices.find(v => v.lang === 'pt-BR'); if (!selectedVoice) selectedVoice = voices[0]; speechReady = true; resolve(); } }; return new Promise((resolve) => { if (speechSynthesis.getVoices().length > 0) { checkVoices(resolve); } else { speechSynthesis.onvoiceschanged = () => checkVoices(resolve); } }); }
@@ -753,7 +816,7 @@ async function loadAndDisplayClassReports(classId) {
 function renderClassHeatmap(errors, containerId) {
     const heatmapContainer = document.getElementById(containerId);
     if (!errors || errors.length === 0) { heatmapContainer.innerHTML = '<p>Nenhum erro registrado para esta turma. Ótimo trabalho! 🎉</p>'; return; }
-    // Implementação do heatmap aqui...
+    // Implementação do heatmap aqui... (pode ser adicionada no futuro)
 }
 function renderIndividualReports(students, allErrors, allActivities, containerId) {
     const container = document.getElementById(containerId);
@@ -894,12 +957,13 @@ async function generateAndAssignActivity(studentId, studentName) {
 
 function generateSingleQuestionFromError(errorTemplate) {
     const phase = parseInt(errorTemplate.phase);
+    // Este switch está ajustado para a nova ordem de fases
     switch(phase) {
         case 8: return { type: 'vowel_sound', correctAnswer: errorTemplate.correct_answer, options: generateOptions(errorTemplate.correct_answer, VOWELS, 4) };
         case 14: const rhymeData = PHASE_14_RHYMES.find(r => r.rhyme === errorTemplate.correct_answer) || PHASE_14_RHYMES[0]; return { type: 'find_rhyme', ...rhymeData, correctAnswer: rhymeData.rhyme, options: rhymeData.options };
         case 5: const pairData = PHASE_5_SOUND_PAIRS.find(p => p.correct === errorTemplate.correct_answer) || PHASE_5_SOUND_PAIRS[0]; return { type: 'sound_detective', ...pairData, options: [pairData.correct, pairData.incorrect].sort(()=>0.5-Math.random()) };
         case 9: const syllableData = PHASE_9_SYLLABLE_COUNT.find(p => p.syllables.toString() === errorTemplate.correct_answer) || PHASE_9_SYLLABLE_COUNT[0]; return { type: 'count_syllables', ...syllableData, correctAnswer: syllableData.syllables.toString(), options: generateOptions(syllableData.syllables.toString(), ['1','2','3','4'], 4) };
-        case 10: const initialSyllableData = PHASE_10_INITIAL_SYLLABLE.find(p => p.correctAnswer === errorTemplate.correct_answer) || PHASE_10_INITIAL_SYLLABLE[0]; return { type: 'initial_syllable', ...initialSyllableData, options: initialSyllableData.options.sort(()=>0.5-Math.random()) };
+        case 10: const initialSyllableData = PHASE_10_INITIAL_SYLLABLE.find(p => p.correctAnswer === errorTemplate.correct_answer) || PHASE_10_INITIAL_SYLLABLE[0]; return { type: 'initial_syllable', ...initialSyllableData, options: generateOptions(initialSyllableData.correctAnswer, ['BA','CA','DA','FA','GA','LA','MA','NA','PA','RA','SA','TA','VA'], 4) };
         default: return null;
     }
 }
