@@ -1059,3 +1059,123 @@ html, body {
 #manageClassModal #studentsList::-webkit-scrollbar-thumb:hover {
     background: #a8a8a8;
 }
+/* =================================================== */
+/* ESTILOS PARA O MONITORAMENTO DE ALUNOS (STATUS)     */
+/* =================================================== */
+
+/* A bolinha base para o status */
+.status-indicator {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    display: inline-block;
+    margin-right: 10px;
+    flex-shrink: 0;
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+}
+
+/* Verde: Aluno Online Agora */
+.status-indicator.online {
+    background-color: #2ecc71; /* Verde vivo */
+    animation: pulse-green 1.5s infinite;
+}
+
+/* Amarelo: Aluno acessou hoje ou ontem */
+.status-indicator.recent {
+    background-color: #f1c40f; /* Amarelo */
+}
+
+/* Laranja: Aluno acessou na última semana */
+.status-indicator.week {
+    background-color: #e67e22; /* Laranja */
+}
+
+/* Vermelho: Aluno inativo há mais de 7 dias */
+.status-indicator.inactive {
+    background-color: #e74c3c; /* Vermelho */
+}
+
+/* Cinza: Aluno nunca jogou */
+.status-indicator.never {
+    background-color: #bdc3c7; /* Cinza */
+}
+
+/* Animação de pulso para o status "Online" */
+@keyframes pulse-green {
+    0% {
+        transform: scale(0.95);
+        box-shadow: 0 0 0 0 rgba(46, 204, 113, 0.7);
+    }
+    70% {
+        transform: scale(1);
+        box-shadow: 0 0 0 10px rgba(46, 204, 113, 0);
+    }
+    100% {
+        transform: scale(0.95);
+        box-shadow: 0 0 0 0 rgba(46, 204, 113, 0);
+    }
+}
+
+/* Melhorias no painel de progresso (Accordion) */
+.student-progress-accordion {
+    border: 1px solid #e0e0e0;
+    border-radius: 10px;
+    margin-bottom: 10px;
+    overflow: hidden;
+    transition: all 0.3s ease;
+}
+
+.student-progress-accordion.open {
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+}
+
+.accordion-header {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 15px;
+    background: #f8f9fa;
+    border: none;
+    cursor: pointer;
+    text-align: left;
+    gap: 15px;
+}
+
+.accordion-header .student-info h4 {
+    display: flex;
+    align-items: center;
+}
+
+.accordion-header .student-progress-container {
+    flex-grow: 1;
+}
+
+.accordion-header i.fa-chevron-down {
+    transition: transform 0.3s ease;
+}
+
+.student-progress-accordion.open .accordion-header i.fa-chevron-down {
+    transform: rotate(180deg);
+}
+
+.accordion-content {
+    padding: 20px;
+    background: #ffffff;
+    max-height: 0;
+    opacity: 0;
+    overflow: hidden;
+    transition: max-height 0.4s ease, opacity 0.4s ease, padding 0.4s ease;
+}
+
+.student-progress-accordion.open .accordion-content {
+    max-height: 1000px; /* Altura suficiente para o conteúdo */
+    opacity: 1;
+    border-top: 1px solid #e0e0e0;
+}
+
+.accordion-actions {
+    margin-top: 20px;
+    text-align: right;
+}
