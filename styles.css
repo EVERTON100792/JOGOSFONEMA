@@ -55,19 +55,8 @@ html, body {
 /* ================================== */
 /* === 3. TELAS INICIAIS E LOGIN === */
 /* ================================== */
-.game-title h1 {
-    font-size: 3.5rem;
-    color: #fff;
-    text-shadow: 3px 3px 6px rgba(0,0,0,0.3);
-    margin-bottom: 1rem;
-}
-
-.game-title p {
-    font-size: 1.5rem;
-    color: #f0f8ff;
-    margin-bottom: 2rem;
-}
-
+.game-title h1 { font-size: 3.5rem; color: #fff; text-shadow: 3px 3px 6px rgba(0,0,0,0.3); margin-bottom: 1rem; }
+.game-title p { font-size: 1.5rem; color: #f0f8ff; margin-bottom: 2rem; }
 .user-selection { text-align: center; margin: 40px 0; }
 .user-selection h2 { color: #fff; text-shadow: 1px 1px 3px rgba(0,0,0,0.2); margin-bottom: 30px; font-size: 1.8rem; }
 .user-types { display: flex; gap: 30px; justify-content: center; flex-wrap: wrap; }
@@ -215,6 +204,8 @@ html, body {
 .class-card-actions { display: flex; gap: 10px; }
 .class-card-actions .btn { border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-family: 'Comic Neue', cursive; font-size: 1rem; font-weight: bold; transition: all 0.2s ease; display: inline-flex; align-items: center; gap: 8px; }
 
+.student-item { background: #f8f9fa; padding: 15px; border-radius: 10px; border: 1px solid #E0E0E0; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }
+
 /* ================================== */
 /* === 8. MODAIS E COMPONENTES === */
 /* ================================== */
@@ -224,9 +215,41 @@ html, body {
 .modal.show .modal-content { transform: scale(1); }
 .modal-content.large { max-width: 800px; }
 .student-errors-details { margin-top: 15px; padding: 15px; background-color: #fff; border-radius: 8px; border: 1px solid #ddd; }
-
 .activity-history-list { list-style-type: none; padding-left: 0; margin: 0; }
 .activity-history-list li { display: flex; justify-content: space-between; align-items: center; padding: 8px; border-radius: 5px; background-color: #f8f9fa; margin-bottom: 5px; font-size: 0.95rem; }
+
+/* LAYOUT DOS CHECKBOXES DE FASES */
+.phase-checkbox-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+    gap: 10px;
+    margin-top: 5px;
+    background-color: #f8f9fa;
+    padding: 15px;
+    border-radius: 8px;
+    border: 1px solid #e0e0e0;
+}
+.phase-module-title {
+    grid-column: 1 / -1; /* Faz o título ocupar todas as colunas */
+    font-size: 0.9rem;
+    color: #764ba2;
+    margin: 10px 0 5px 0;
+    padding-bottom: 5px;
+    border-bottom: 2px solid #f0eaff;
+    text-align: left;
+}
+.phase-module-title:first-child { margin-top: 0; }
+.phase-checkbox-label {
+    font-size: 0.95rem;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+.phase-checkbox-label:hover { background-color: #f0eaff; }
 
 /* ================================================= */
 /* === 9. CORREÇÕES RESPONSIVAS (MOBILE) === */
@@ -244,10 +267,9 @@ html, body {
     .sidebar-nav a span { display: block; }
     .logout-btn-sidebar { background: none; border: none; color: #888; display: flex; flex-direction: column; align-items: center; font-size: 0.75rem; height: 60px; padding: 8px 5px; }
     
-    /* Adiciona espaço no final para o conteúdo não ficar atrás do menu */
     .dashboard-content-area {
         padding: 20px;
-        padding-bottom: 80px; 
+        padding-bottom: 80px; /* Adiciona espaço no final para o conteúdo não ficar atrás do menu */
     }
 }
 
