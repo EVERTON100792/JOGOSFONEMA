@@ -1031,3 +1031,50 @@ html, body {
     border-radius: 8px;
     border: 1px solid #e9ecef; /* Uma borda sutil para delimitar a área de rolagem */
 }
+/* ================================================= */
+/* === MELHORIA: STATUS DE ALUNO (CORES E ANIMAÇÃO) === */
+/* ================================================= */
+
+.status-indicator {
+    display: inline-block;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    margin-right: 8px;
+    vertical-align: middle;
+    border: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.status-indicator.online {
+    background-color: #2ecc71; /* Verde brilhante */
+    box-shadow: 0 0 8px #2ecc71;
+    animation: pulse-animation 1.5s infinite;
+}
+
+.status-indicator.recent {
+    background-color: #81c784; /* Verde mais suave */
+}
+
+.status-indicator.week {
+    background-color: #f1c40f; /* Amarelo */
+}
+
+.status-indicator.inactive {
+    background-color: #e74c3c; /* Vermelho */
+}
+
+.status-indicator.never {
+    background-color: #bdc3c7; /* Cinza */
+}
+
+@keyframes pulse-animation {
+    0% {
+        box-shadow: 0 0 0 0 rgba(46, 204, 113, 0.7);
+    }
+    70% {
+        box-shadow: 0 0 0 10px rgba(46, 204, 113, 0);
+    }
+    100% {
+        box-shadow: 0 0 0 0 rgba(46, 204, 113, 0);
+    }
+}
