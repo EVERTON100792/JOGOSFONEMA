@@ -986,3 +986,29 @@ html, body {
     margin-top: 4px;
     font-style: italic;
 }
+/* ================================================= */
+/* === MELHORIA VISUAL DOS CHECKBOXES DE FASES === */
+/* ================================================= */
+
+.phase-checkbox-label {
+    align-items: flex-start; /* Alinha o checkbox ao topo do texto */
+    text-align: left;
+    gap: 8px; /* Aumenta o espaço entre o checkbox e o texto */
+}
+
+.phase-label-text {
+    display: flex;
+    flex-direction: column; /* Coloca o título abaixo do número da fase */
+    line-height: 1.2;
+}
+
+.phase-label-text span {
+    font-weight: bold;
+    font-size: 0.95rem;
+    color: #333;
+}
+
+.phase-label-text small {
+    font-size: 0.8rem;
+    color: #666;
+}
