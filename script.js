@@ -2,7 +2,7 @@
 // JOGO DAS LETRAS - VERSÃO FINAL COM TODAS AS IMPLEMENTAÇÕES
 // INCLUI: Fase 1 refeita para abranger múltiplos sons de letras.
 // INCLUI: Fase 2 (Memória) adaptada para modo exploratório (1 ano) com coleta de dados.
-// INCLUI: Correções de bugs e funcionalidades anteriores (IA, Status, etc).
+// INCLUI: Correções de bugs e funcionalidades anteriores (IA, Status, Relatórios).
 // =======================================================
 
 
@@ -726,6 +726,7 @@ async function endPhase() {
         totalQuestions = gameState.memoryGame.totalPairs;
     }
     const accuracy = totalQuestions > 0 ? Math.round((gameState.score / totalQuestions) * 100) : 0;
+    const passed = accuracy >= 70;
     
     if (gameState.isCustomActivity) {
         await logCustomActivityCompletion(accuracy);
@@ -887,7 +888,6 @@ async function loadAndDisplayClassReports(classId) {
 /**
  * FUNÇÃO CORRIGIDA
  * Renderiza o mapa de calor de erros da turma.
- * A versão anterior estava vazia.
  */
 function renderClassHeatmap(errors, containerId) {
     const heatmapContainer = document.getElementById(containerId);
@@ -896,9 +896,8 @@ function renderClassHeatmap(errors, containerId) {
         return;
     }
 
-    // Filtra erros inválidos e conta a frequência
     const errorCounts = errors.reduce((acc, error) => {
-        if (error.correct_answer) { // Garante que a resposta não seja nula ou undefined
+        if (error.correct_answer) {
             const key = `Fase ${error.phase}: "${error.correct_answer}"`;
             acc[key] = (acc[key] || 0) + 1;
         }
@@ -914,9 +913,8 @@ function renderClassHeatmap(errors, containerId) {
     const maxErrors = sortedErrors[0][1];
 
     let heatmapHTML = sortedErrors.map(([error, count]) => {
-        // Define a "intensidade" da cor baseada na frequência
         const intensity = Math.max(0.1, count / maxErrors);
-        const color = `rgba(255, 107, 107, ${intensity})`; // Tom de vermelho
+        const color = `rgba(255, 107, 107, ${intensity})`;
         return `<span class="heatmap-item" style="background-color: ${color}; border: 1px solid rgba(255,0,0,0.2);" title="${count} erro(s)">
                     ${error}
                 </span>`;
@@ -948,7 +946,7 @@ function renderIndividualReports(students, allErrors, allActivities, containerId
     container.querySelectorAll('.student-report-item').forEach(item => {
         item.addEventListener('click', () => {
             const studentId = item.dataset.studentId;
-            const studentName = item.dataset.studentName; // Pegamos o nome aqui
+            const studentName = item.dataset.studentName;
             const detailsContainer = document.getElementById(`errors-for-${studentId}`);
             const isVisible = detailsContainer.style.display === 'block';
 
@@ -966,7 +964,6 @@ function renderIndividualReports(students, allErrors, allActivities, containerId
                 if (studentErrors.length === 0) {
                     reportHTML += '<p>Nenhum erro registrado. Ótimo trabalho! 🌟</p>';
                 } else {
-                    // CORREÇÃO: Filtra chaves 'undefined' ou nulas antes de contar
                     const errorCounts = studentErrors.reduce((acc, error) => {
                         if (error.correct_answer) {
                             acc[error.correct_answer] = (acc[error.correct_answer] || 0) + 1;
@@ -991,8 +988,7 @@ function renderIndividualReports(students, allErrors, allActivities, containerId
                         return `<li> <span>${date}</span> <strong>${act.score}/${act.total_questions} (${act.accuracy}%)</strong> ${status} </li>`;
                     }).join('')}</ul>`;
                 }
-
-                // CORREÇÃO: Adicionadas classes corretas aos botões e escapando o nome do aluno para evitar quebra com apóstrofos
+                
                 const safeStudentName = studentName.replace(/'/g, "\\'");
                 reportHTML += `<div class="student-details-actions">
                     <button class="modal-btn" onclick="showEvolutionChart('${studentId}', '${safeStudentName}')"><i class="fas fa-chart-line"></i> Ver Evolução</button>
@@ -1006,9 +1002,9 @@ function renderIndividualReports(students, allErrors, allActivities, containerId
 }
 
 /**
- * FUNÇÃO NOVA
- * Busca os dados de histórico de fases do aluno e exibe um gráfico
- * de linha com a evolução da sua precisão (%).
+ * VERSÃO FINAL E MELHORADA
+ * Busca os dados de histórico de fases do aluno e exibe um gráfico,
+ * com uma mensagem amigável caso não haja dados.
  */
 async function showEvolutionChart(studentId, studentName) {
     showFeedback(`Carregando evolução de ${studentName}...`, 'info');
@@ -1020,17 +1016,21 @@ async function showEvolutionChart(studentId, studentName) {
             .eq('student_id', studentId)
             .order('created_at', { ascending: true });
 
-        if (error) throw error;
+        // Se a consulta retornar um erro do Supabase, mostre o erro genérico.
+        if (error) {
+            throw error;
+        }
+
+        // Se a consulta funcionar, mas não retornar dados, mostre uma mensagem amigável.
         if (!data || data.length === 0) {
-            showFeedback(`${studentName} ainda não tem histórico para exibir.`, 'error');
-            return;
+            showFeedback(`${studentName} ainda não tem histórico de fases concluídas.`, 'info');
+            return; // Interrompe a execução aqui.
         }
 
         document.getElementById('chartModalTitle').textContent = `Evolução de ${studentName}`;
         
         const chartCanvas = document.getElementById('myChartCanvas');
         
-        // Destrói o gráfico anterior se ele existir
         if (currentEvolutionChart) {
             currentEvolutionChart.destroy();
         }
@@ -1077,14 +1077,17 @@ async function showEvolutionChart(studentId, studentName) {
         showModal('chartModal');
 
     } catch(err) {
+        // Este bloco agora só será ativado por erros reais do banco de dados (ex: RLS, etc.)
         console.error("Erro ao carregar gráfico de evolução:", err);
-        showFeedback(`Erro ao buscar dados de ${studentName}.`, 'error');
+        showFeedback(`Erro ao buscar dados de ${studentName}. Verifique o console.`, 'error');
     }
 }
 
+
 // =======================================================
-// FIM DAS FUNÇÕES CORRIGIDAS E ADICIONADAS
+// FIM DA SEÇÃO DE FUNÇÕES CORRIGIDAS
 // =======================================================
+
 
 async function handleGenerateLessonPlan(studentId, studentName) {
     const aiContainer = document.getElementById('aiTipsContent');
