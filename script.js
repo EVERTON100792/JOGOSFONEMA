@@ -242,6 +242,10 @@ function setupAllEventListeners() {
 async function checkSession() { const { data: { session } } = await supabaseClient.auth.getSession(); if (session && session.user) { currentUser = session.user; if (currentUser.user_metadata.role === 'teacher') { await showTeacherDashboard(); } else { await logout(); } } else { showScreen('userTypeScreen'); } }
 async function handleTeacherLogin(e) { e.preventDefault(); const button = e.target.querySelector('button[type="submit"]'); const originalText = button.innerHTML; button.disabled = true; button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Entrando...'; const email = document.getElementById('teacherEmail').value; const password = document.getElementById('teacherPassword').value; try { const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password }); if (error) throw error; currentUser = data.user; await showTeacherDashboard(); showFeedback('Login realizado com sucesso!', 'success'); } catch (error) { showFeedback(formatErrorMessage(error), 'error'); } finally { button.disabled = false; button.innerHTML = originalText; } }
 async function handleTeacherRegister(e) { e.preventDefault(); const button = e.target.querySelector('button[type="submit"]'); const originalText = button.innerHTML; button.disabled = true; button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Cadastrando...'; const name = document.getElementById('teacherRegName').value; const email = document.getElementById('teacherRegEmail').value; const password = document.getElementById('teacherRegPassword').value; try { const { data, error } = await supabaseClient.auth.signUp({ email, password, options: { data: { full_name: name, role: 'teacher' } } }); if (error) throw error; showFeedback('Cadastro realizado! Link de confirmação enviado para seu e-mail.', 'success'); showScreen('teacherLoginScreen'); } catch (error) { showFeedback(formatErrorMessage(error), 'error'); } finally { button.disabled = false; button.innerHTML = originalText; } }
+
+// =======================================================
+// INÍCIO DA FUNÇÃO CORRIGIDA
+// =======================================================
 async function handleStudentLogin(e) {
     e.preventDefault();
     const button = e.target.querySelector('button[type="submit"]');
@@ -267,16 +271,29 @@ async function handleStudentLogin(e) {
         }
 
         currentUser = { ...studentData, type: 'student' };
-        sessionStorage.setItem('currentUser', JSON.stringify(currentUser));
+        
+        // Bloco try/catch para isolar o erro de 'stringify' se houver dados corrompidos
+        try {
+            sessionStorage.setItem('currentUser', JSON.stringify(currentUser));
+        } catch (jsonError) {
+            console.error("ERRO CRÍTICO: Falha ao processar os dados do aluno.", jsonError);
+            throw new Error("Não foi possível carregar os dados do aluno. Contate o suporte.");
+        }
+
         await showStudentGame();
         showFeedback('Login realizado com sucesso!', 'success');
     } catch (error) {
         showFeedback(formatErrorMessage(error), 'error');
     } finally {
+        // Isso garante que o botão SEMPRE será reativado, mesmo se houver um erro.
         button.disabled = false;
         button.innerHTML = originalText;
     }
 }
+// =======================================================
+// FIM DA FUNÇÃO CORRIGIDA
+// =======================================================
+
 async function logout() { 
     if (teacherChannel) {
         supabaseClient.removeChannel(teacherChannel);
@@ -411,7 +428,6 @@ async function loadStudentProgress() {
     }
 }
 
-// SUBSTITUA SUA FUNÇÃO ANTIGA POR ESTA VERSÃO CORRIGIDA
 
 function renderStudentProgress(sortBy = 'name') {
     const container = document.getElementById('studentProgressList');
@@ -448,19 +464,11 @@ function renderStudentProgress(sortBy = 'name') {
         if (gameState?.questions?.length > 0) {
             score = gameState.score ?? 0;
             
-            // =======================================================
-            // INÍCIO DA CORREÇÃO DO ERRO 'totalPairs'
-            // =======================================================
             if (gameState.questions[0]?.type === 'memory_game') {
-                // Agora, verificamos se gameState.memoryGame existe antes de usá-lo.
-                // Se não existir, assumimos o total de 8 pares (padrão da Fase 2).
                 total = gameState.memoryGame?.totalPairs || 8; 
             } else {
                 total = gameState.questions.length;
             }
-            // =======================================================
-            // FIM DA CORREÇÃO
-            // =======================================================
 
             accuracy = total > 0 ? Math.round((score / total) * 100) : 0;
         }
@@ -516,14 +524,12 @@ function toggleAccordion(studentId) {
     const accordion = document.getElementById(`accordion-${studentId}`);
     const allAccordions = document.querySelectorAll('.student-progress-accordion');
     
-    // Fecha todos os outros para manter a interface limpa
     allAccordions.forEach(acc => {
         if (acc.id !== accordion.id) {
             acc.classList.remove('open');
         }
     });
 
-    // Abre ou fecha o clicado
     accordion.classList.toggle('open');
 }
 
@@ -546,17 +552,14 @@ async function assignPhases(studentId) {
     showFeedback(`Atualizando fases para ${student.name}...`, 'info');
 
     try {
-        // Apenas atualiza a lista de fases do aluno
         const { error: assignError } = await supabaseClient
             .from('students')
             .update({ assigned_phases: newPhases })
             .eq('id', studentId);
         if (assignError) throw assignError;
 
-        // Se o aluno já tiver um progresso salvo, verificamos se a fase atual dele ainda é válida.
         if (student.progress) {
             const currentPhaseIsValid = newPhases.includes(student.progress.current_phase);
-            // Se a fase atual não estiver mais na lista, resetamos para a primeira fase da nova lista.
             if (!currentPhaseIsValid) {
                 const firstPhase = newPhases[0];
                 const newGameState = { ...student.progress.game_state, currentPhase: firstPhase, score: 0, attempts: 3, currentQuestionIndex: 0, phaseCompleted: false, questions: generateQuestions(firstPhase) };
@@ -574,7 +577,7 @@ async function assignPhases(studentId) {
              showFeedback(`Fases de ${student.name} atualizadas com sucesso!`, 'success');
         }
 
-        await loadStudentProgress(); // Recarrega os dados para refletir as mudanças
+        await loadStudentProgress();
 
     } catch (error) {
         console.error("Erro ao designar fases:", error);
@@ -605,6 +608,9 @@ window.addEventListener('beforeunload', () => { if (studentChannel) { studentCha
 async function loadGameState() { const { data: progressData, error } = await supabaseClient.from('progress').select('game_state, current_phase').eq('student_id', currentUser.id).single(); if (error && error.code !== 'PGRST116') { console.error("Erro ao carregar progresso:", error); } const assignedPhases = currentUser.assigned_phases && currentUser.assigned_phases.length > 0 ? currentUser.assigned_phases : [1]; const firstAssignedPhase = assignedPhases[0]; if (progressData?.game_state?.questions) { gameState = progressData.game_state; if (!assignedPhases.includes(gameState.currentPhase)) { gameState = { currentPhase: firstAssignedPhase, score: 0, attempts: 3, questions: generateQuestions(firstAssignedPhase), currentQuestionIndex: 0, teacherId: currentUser.teacher_id, tutorialsShown: [], phaseCompleted: false }; await saveGameState(); } if (!gameState.tutorialsShown) gameState.tutorialsShown = []; } else { gameState = { currentPhase: firstAssignedPhase, score: 0, attempts: 3, questions: generateQuestions(firstAssignedPhase), currentQuestionIndex: 0, teacherId: currentUser.teacher_id, tutorialsShown: [], phaseCompleted: false }; await saveGameState(); } }
 async function saveGameState() { if (!currentUser || currentUser.type !== 'student' || gameState.isCustomActivity) return; await supabaseClient.from('progress').upsert({ student_id: currentUser.id, current_phase: gameState.currentPhase, game_state: gameState, last_played: new Date().toISOString() }, { onConflict: 'student_id' }); }
 
+// =======================================================
+// INÍCIO DA FUNÇÃO CORRIGIDA
+// =======================================================
 function generateQuestions(phase) {
     let questions = [];
     const questionCount = 10;
@@ -637,7 +643,8 @@ function generateQuestions(phase) {
             questions = shuffleAndTake(PHASE_3_SYLLABLE_F, questionCount).map(item => ({ type: 'form_f_syllable', ...item, options: _generateOptions(item.result, ['FA', 'FE', 'FI', 'FO', 'FU', 'VA', 'BO'], 4) }));
             break;
         case 4:
-            questions = shuffleAndTake(PHASE_4_WORDS_F, questionCount).map(item => ({ type: 'f_word_search', ...item, correctAnswer: item.word, options: item.options.sort(() => 0.5 - Math.random()) }));
+            // CORREÇÃO: Cria uma cópia com [...item.options] para não modificar o original
+            questions = shuffleAndTake(PHASE_4_WORDS_F, questionCount).map(item => ({ type: 'f_word_search', ...item, correctAnswer: item.word, options: [...item.options].sort(() => 0.5 - Math.random()) }));
             break;
         case 5:
             questions = shuffleAndTake(PHASE_5_SOUND_PAIRS, questionCount).map(item => ({ type: 'sound_detective', image: item.image, correctAnswer: item.correct, options: [item.correct, item.incorrect].sort(() => 0.5 - Math.random()) }));
@@ -646,7 +653,8 @@ function generateQuestions(phase) {
             questions = shuffleAndTake(PHASE_6_SENTENCES_COUNT, questionCount).map(item => ({ type: 'count_words', ...item, correctAnswer: item.words.toString(), options: _generateOptions(item.words.toString(), ['2', '3', '4', '5'], 4) }));
             break;
         case 7:
-            questions = shuffleAndTake(PHASE_7_SENTENCES_BUILD, questionCount).map(item => ({ type: 'build_sentence', image: item.image, correctAnswer: item.answer, options: item.sentence.sort(() => 0.5 - Math.random()) }));
+             // CORREÇÃO: Cria uma cópia com [...item.sentence] para não modificar o original
+            questions = shuffleAndTake(PHASE_7_SENTENCES_BUILD, questionCount).map(item => ({ type: 'build_sentence', image: item.image, correctAnswer: item.answer, options: [...item.sentence].sort(() => 0.5 - Math.random()) }));
             break;
         case 8: 
             const vowelSet = [...VOWELS, ...VOWELS].sort(() => 0.5 - Math.random());
@@ -668,7 +676,16 @@ function generateQuestions(phase) {
              questions = shuffleAndTake(PHASE_13_INVERT_SYLLABLES, questionCount).map(item => ({ type: 'invert_syllables', ...item, correctAnswer: item.inverted, options: _generateOptions(item.inverted, PHASE_13_INVERT_SYLLABLES.map(i=>i.word), 4) }));
              break;
         case 14:
-             questions = shuffleAndTake(PHASE_14_RHYMES, questionCount).map(item => ({ type: 'find_rhyme', ...item, correctAnswer: item.rhyme, options: item.options }));
+            // GRANDE CORREÇÃO AQUI: Gera as opções de rima em vez de tentar acessar um campo inexistente.
+            questions = shuffleAndTake(PHASE_14_RHYMES, questionCount).map(item => {
+                const rhymeOptionsSource = PHASE_14_RHYMES.map(r => r.rhyme).filter(r => r !== item.rhyme);
+                return { 
+                    type: 'find_rhyme', 
+                    ...item, 
+                    correctAnswer: item.rhyme, 
+                    options: _generateOptions(item.rhyme, rhymeOptionsSource, 4) 
+                };
+            });
             break;
         case 15:
             questions = shuffleAndTake(PHASE_15_PHONEME_COUNT, questionCount).map(item => ({ type: 'count_phonemes', ...item, correctAnswer: item.sounds.toString(), options: _generateOptions(item.sounds.toString(), ['2','3','4','5'], 4) }));
@@ -679,12 +696,15 @@ function generateQuestions(phase) {
     }
     return questions;
 }
+// =======================================================
+// FIM DA FUNÇÃO CORRIGIDA
+// =======================================================
 
 async function startQuestion() {
     if (gameState.phaseCompleted || !gameState.questions || !gameState.questions[gameState.currentQuestionIndex]) { return endPhase(); }
     
     document.getElementById('nextQuestion').style.display = 'none';
-    document.getElementById('attempts').style.display = 'flex'; // Garante que tentativas sejam visíveis por padrão
+    document.getElementById('attempts').style.display = 'flex';
     ['audioQuestionArea', 'imageQuestionArea', 'lettersGrid', 'memoryGameGrid', 'sentenceBuildArea'].forEach(id => document.getElementById(id).style.display = 'none');
     ['lettersGrid', 'memoryGameGrid', 'sentenceBuildArea'].forEach(id => document.getElementById(id).innerHTML = '');
     document.getElementById('wordDisplay').textContent = '';
@@ -715,7 +735,6 @@ function renderPhase1UI_LetterSound(q) {
     setTimeout(playCurrentAudio, 500);
 }
 
-// --- FASE 2 (MEMÓRIA) ATUALIZADA PARA MODO EXPLORATÓRIO ---
 function renderPhase2UI_MemoryGame() {
     const memoryGrid = document.getElementById('memoryGameGrid');
     if (!memoryGrid) { console.error("Elemento memoryGameGrid não encontrado!"); return; }
@@ -725,7 +744,7 @@ function renderPhase2UI_MemoryGame() {
     document.getElementById('questionText').textContent = 'Encontre os pares de letras maiúsculas e minúsculas!';
     
     const shuffleAndTake = (arr, num) => [...arr].sort(() => 0.5 - Math.random()).slice(0, num);
-    const letters = shuffleAndTake(ALPHABET, 8); // 8 pares = 16 cartas
+    const letters = shuffleAndTake(ALPHABET, 8);
     const cards = [...letters, ...letters.map(l => l.toLowerCase())].sort(() => 0.5 - Math.random());
     
     memoryGrid.innerHTML = cards.map(letter => `
@@ -737,15 +756,14 @@ function renderPhase2UI_MemoryGame() {
         </div>
     `).join('');
 
-    gameState.score = 0; // O score contará os pares corretos
+    gameState.score = 0;
     gameState.memoryGame = {
         flippedCards: [],
         matchedPairs: 0,
         totalPairs: letters.length,
         canFlip: true,
-        // --- NOVA LÓGICA DE COLETA DE DADOS ---
-        mistakesMade: 0, // Continuamos contando os erros para o relatório
-        startTime: Date.now() // Registra o momento exato que a fase começou
+        mistakesMade: 0,
+        startTime: Date.now()
     };
     
     updateUI(); 
@@ -769,7 +787,6 @@ function renderPhase16UI_ComplexSyllable(q) { document.getElementById('imageQues
 function renderOptions(options) { const lettersGrid = document.getElementById('lettersGrid'); lettersGrid.style.display = 'grid'; lettersGrid.innerHTML = options.map(option => `<button class="letter-button">${option}</button>`).join(''); lettersGrid.querySelectorAll('.letter-button').forEach(btn => btn.addEventListener('click', (e) => selectAnswer(e.target.textContent))); }
 function renderWordOptions(options) { const lettersGrid = document.getElementById('lettersGrid'); lettersGrid.style.display = 'grid'; lettersGrid.innerHTML = options.map(option => `<button class="word-option-button">${option}</button>`).join(''); lettersGrid.querySelectorAll('.word-option-button').forEach(btn => { btn.addEventListener('click', () => selectWordForSentence(btn)); }); }
 
-// --- handleCardFlip ATUALIZADA PARA MODO EXPLORATÓRIO ---
 function handleCardFlip(card) {
     const { flippedCards, canFlip } = gameState.memoryGame;
     if (!canFlip || card.classList.contains('flipped')) return;
@@ -781,7 +798,6 @@ function handleCardFlip(card) {
         gameState.memoryGame.canFlip = false;
         const [card1, card2] = flippedCards;
 
-        // Se o par for CORRETO
         if (card1.dataset.letter === card2.dataset.letter) {
             setTimeout(() => {
                 card1.classList.add('matched');
@@ -792,28 +808,23 @@ function handleCardFlip(card) {
                 gameState.memoryGame.flippedCards = [];
                 gameState.memoryGame.canFlip = true;
                 
-                // Se encontrou o ÚLTIMO PAR
                 if (gameState.memoryGame.matchedPairs === gameState.memoryGame.totalPairs) {
                     playTeacherAudio('feedback_correct', 'Excelente');
                     showFeedback('Excelente! Todos os pares encontrados!', 'success');
                     
-                    // CALCULA E SALVA O TEMPO DE CONCLUSÃO
                     const endTime = Date.now();
                     const durationInSeconds = Math.round((endTime - gameState.memoryGame.startTime) / 1000);
-                    gameState.memoryGame.completionTime = durationInSeconds; // Salva o tempo no estado do jogo
+                    gameState.memoryGame.completionTime = durationInSeconds;
 
                     document.getElementById('nextQuestion').style.display = 'block';
                 }
             }, 800);
         } 
-        // Se o par for INCORRETO
         else {
-            // LÓGICA DE ERRO SEM PUNIÇÃO
-            gameState.memoryGame.mistakesMade++; // Apenas incrementa os erros para o relatório
+            gameState.memoryGame.mistakesMade++;
             playTeacherAudio('feedback_incorrect', 'Tente de novo');
             updateUI(); 
 
-            // Apenas desvira as cartas, sem risco de "game over"
             setTimeout(() => {
                 card1.classList.remove('flipped');
                 card2.classList.remove('flipped');
@@ -832,12 +843,12 @@ async function endPhase() {
         totalQuestions = gameState.memoryGame.totalPairs;
     }
     const accuracy = totalQuestions > 0 ? Math.round((gameState.score / totalQuestions) * 100) : 0;
+    const passed = accuracy >= 70;
     
     if (gameState.isCustomActivity) {
         await logCustomActivityCompletion(accuracy);
         await clearAssignedActivity();
     } else {
-        // --- Adiciona os dados do jogo da memória para salvar no histórico ---
         const q = gameState.questions[0];
         let metadata = null;
         if (q?.type === 'memory_game' && gameState.memoryGame) {
@@ -846,7 +857,7 @@ async function endPhase() {
                 mistakes: gameState.memoryGame.mistakesMade || 0
             };
         }
-        await logPhaseCompletionToHistory(accuracy, metadata); // Passa os metadados
+        await logPhaseCompletionToHistory(accuracy, metadata);
     }
     
     showResultScreen(accuracy, passed);
@@ -1182,14 +1193,11 @@ async function generateAndAssignActivity(studentId, studentName) {
     }
 }
 
-// =======================================================
-// INÍCIO DA FUNÇÃO CORRIGIDA
-// =======================================================
+
 function generateSingleQuestionFromError(errorTemplate) {
     const phase = parseInt(errorTemplate.phase);
     const correctAnswer = errorTemplate.correct_answer;
 
-    // Função auxiliar para gerar opções aleatórias, igual à original
     const _generateOptions = (correctItem, sourceArray, count) => {
         const options = new Set([correctItem]);
         const availableItems = [...sourceArray].filter(l => l !== correctItem);
@@ -1200,7 +1208,6 @@ function generateSingleQuestionFromError(errorTemplate) {
         return Array.from(options).sort(() => 0.5 - Math.random());
     };
 
-    // A lógica 'switch' agora inclui TODAS as fases
     switch(phase) {
         case 1:
             const letterSoundData = PHASE_1_LETTER_SOUNDS.find(l => l.letter === correctAnswer);
@@ -1208,7 +1215,6 @@ function generateSingleQuestionFromError(errorTemplate) {
             return { type: 'letter_sound', ...letterSoundData, options: _generateOptions(correctAnswer, letterSoundData.optionsPool, 4) };
 
         case 2:
-            // Para o jogo da memória, o reforço é jogar novamente.
             return { type: 'memory_game' };
 
         case 3:
@@ -1218,7 +1224,7 @@ function generateSingleQuestionFromError(errorTemplate) {
         
         case 4:
             const wordData = PHASE_4_WORDS_F.find(w => w.word === correctAnswer) || PHASE_4_WORDS_F[0];
-            return { type: 'f_word_search', ...wordData, correctAnswer: wordData.word, options: wordData.options.sort(() => 0.5-Math.random()) };
+            return { type: 'f_word_search', ...wordData, correctAnswer: wordData.word, options: [...wordData.options].sort(() => 0.5-Math.random()) };
             
         case 5:
             const pairData = PHASE_5_SOUND_PAIRS.find(p => p.correct === correctAnswer) || PHASE_5_SOUND_PAIRS[0];
@@ -1232,7 +1238,7 @@ function generateSingleQuestionFromError(errorTemplate) {
         case 7:
              const sentenceBuildData = PHASE_7_SENTENCES_BUILD.find(s => s.answer === correctAnswer);
              if (!sentenceBuildData) return null;
-             return { type: 'build_sentence', image: sentenceBuildData.image, correctAnswer: sentenceBuildData.answer, options: sentenceBuildData.sentence.sort(() => 0.5 - Math.random()) };
+             return { type: 'build_sentence', image: sentenceBuildData.image, correctAnswer: sentenceBuildData.answer, options: [...sentenceBuildData.sentence].sort(() => 0.5 - Math.random()) };
 
         case 8:
             return { type: 'vowel_sound', correctAnswer: correctAnswer, options: _generateOptions(correctAnswer, VOWELS, 4) };
@@ -1279,13 +1285,9 @@ function generateSingleQuestionFromError(errorTemplate) {
             return { type: 'complex_syllable', ...complexData, correctAnswer: correctAnswer, options: _generateOptions(correctAnswer, ['BRA','LHA','NHO','VRO','CRE'], 4) };
         
         default:
-            // Caso alguma fase futura não seja implementada, evita que o sistema quebre.
             return null;
     }
 }
-// =======================================================
-// FIM DA FUNÇÃO CORRIGIDA
-// =======================================================
 
 async function checkForCustomActivities() {
     if (!currentUser || currentUser.type !== 'student') return;
