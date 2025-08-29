@@ -425,7 +425,10 @@ body {
     overflow-y: auto; /* Permite scroll apenas no conteúdo */
     min-height: 0;
     width: 100%;
-    padding: 1.5rem;
+    padding: 1rem; /* Reduzir padding */
+    display: flex;
+    flex-direction: column;
+    justify-content: center; /* Centraliza verticalmente */
 }
 
 /* Tela de Resultado */
@@ -622,12 +625,11 @@ body {
 /* --- CORREÇÃO PRINCIPAL: JOGO DA MEMÓRIA RESPONSIVO --- */
 .memory-grid {
     display: grid;
-    /* Cria colunas flexíveis que se ajustam ao tamanho da tela */
-    grid-template-columns: repeat(auto-fit, minmax(60px, 1fr));
-    gap: 10px;
-    width: 100%;
-    max-width: 500px; /* Limita a largura máxima em telas grandes */
-    margin: 20px auto;
+    grid-template-columns: repeat(4, 1fr); /* Força 4 colunas */
+    gap: 2vw; /* Espaçamento responsivo */
+    width: 90vw; /* Ocupa 90% da largura da tela */
+    max-width: 400px; /* Limita a largura máxima em telas grandes */
+    margin: 15px auto;
     perspective: 1000px;
 }
 
