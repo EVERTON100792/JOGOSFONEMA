@@ -243,9 +243,6 @@ async function checkSession() { const { data: { session } } = await supabaseClie
 async function handleTeacherLogin(e) { e.preventDefault(); const button = e.target.querySelector('button[type="submit"]'); const originalText = button.innerHTML; button.disabled = true; button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Entrando...'; const email = document.getElementById('teacherEmail').value; const password = document.getElementById('teacherPassword').value; try { const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password }); if (error) throw error; currentUser = data.user; await showTeacherDashboard(); showFeedback('Login realizado com sucesso!', 'success'); } catch (error) { showFeedback(formatErrorMessage(error), 'error'); } finally { button.disabled = false; button.innerHTML = originalText; } }
 async function handleTeacherRegister(e) { e.preventDefault(); const button = e.target.querySelector('button[type="submit"]'); const originalText = button.innerHTML; button.disabled = true; button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Cadastrando...'; const name = document.getElementById('teacherRegName').value; const email = document.getElementById('teacherRegEmail').value; const password = document.getElementById('teacherRegPassword').value; try { const { data, error } = await supabaseClient.auth.signUp({ email, password, options: { data: { full_name: name, role: 'teacher' } } }); if (error) throw error; showFeedback('Cadastro realizado! Link de confirmação enviado para seu e-mail.', 'success'); showScreen('teacherLoginScreen'); } catch (error) { showFeedback(formatErrorMessage(error), 'error'); } finally { button.disabled = false; button.innerHTML = originalText; } }
 
-// =======================================================
-// INÍCIO DA FUNÇÃO CORRIGIDA
-// =======================================================
 async function handleStudentLogin(e) {
     e.preventDefault();
     const button = e.target.querySelector('button[type="submit"]');
@@ -290,9 +287,6 @@ async function handleStudentLogin(e) {
         button.innerHTML = originalText;
     }
 }
-// =======================================================
-// FIM DA FUNÇÃO CORRIGIDA
-// =======================================================
 
 async function logout() { 
     if (teacherChannel) {
@@ -428,7 +422,9 @@ async function loadStudentProgress() {
     }
 }
 
-
+// =======================================================
+// INÍCIO DA FUNÇÃO CORRIGIDA
+// =======================================================
 function renderStudentProgress(sortBy = 'name') {
     const container = document.getElementById('studentProgressList');
     document.querySelector('.sort-btn.active')?.classList.remove('active');
@@ -469,7 +465,6 @@ function renderStudentProgress(sortBy = 'name') {
             } else {
                 total = gameState.questions.length;
             }
-
             accuracy = total > 0 ? Math.round((score / total) * 100) : 0;
         }
         const lastPlayedStr = progress?.last_played ? new Date(progress.last_played).toLocaleDateString('pt-BR') : 'Nunca';
@@ -488,7 +483,7 @@ function renderStudentProgress(sortBy = 'name') {
                 const isChecked = assignedPhases.includes(phaseNum);
                 return `<label class="phase-checkbox-label" title="${phaseName}">
                             <input type="checkbox" class="phase-checkbox" value="${phaseNum}" ${isChecked ? 'checked' : ''}>
-                            <span>Fase ${phaseNum}</span>
+                            <span><strong>Fase ${phaseNum}:</strong> ${phaseName}</span>
                         </label>`;
             }).join('');
         }
@@ -519,6 +514,9 @@ function renderStudentProgress(sortBy = 'name') {
             </div>`;
     }).join('');
 }
+// =======================================================
+// FIM DA FUNÇÃO CORRIGIDA
+// =======================================================
 
 function toggleAccordion(studentId) {
     const accordion = document.getElementById(`accordion-${studentId}`);
@@ -533,6 +531,9 @@ function toggleAccordion(studentId) {
     accordion.classList.toggle('open');
 }
 
+// =======================================================
+// INÍCIO DA FUNÇÃO CORRIGIDA
+// =======================================================
 async function assignPhases(studentId) {
     const accordion = document.getElementById(`accordion-${studentId}`);
     const checkboxes = accordion.querySelectorAll('.phase-checkbox');
@@ -552,38 +553,61 @@ async function assignPhases(studentId) {
     showFeedback(`Atualizando fases para ${student.name}...`, 'info');
 
     try {
+        // 1. Atualiza a lista de fases do aluno no banco de dados.
         const { error: assignError } = await supabaseClient
             .from('students')
             .update({ assigned_phases: newPhases })
             .eq('id', studentId);
         if (assignError) throw assignError;
 
+        // 2. LÓGICA CORRIGIDA: Verifica se o progresso do aluno precisa ser reiniciado.
+        const firstNewPhase = newPhases[0];
+        let progressNeedsReset = false;
+
         if (student.progress) {
-            const currentPhaseIsValid = newPhases.includes(student.progress.current_phase);
-            if (!currentPhaseIsValid) {
-                const firstPhase = newPhases[0];
-                const newGameState = { ...student.progress.game_state, currentPhase: firstPhase, score: 0, attempts: 3, currentQuestionIndex: 0, phaseCompleted: false, questions: generateQuestions(firstPhase) };
-                
-                const { error: progressError } = await supabaseClient
-                    .from('progress')
-                    .update({ current_phase: firstPhase, game_state: newGameState })
-                    .eq('student_id', studentId);
-                if (progressError) throw progressError;
-                showFeedback(`Fases atualizadas! O progresso de ${student.name} foi reiniciado para a fase ${firstPhase}.`, 'success');
-            } else {
-                showFeedback(`Fases de ${student.name} atualizadas com sucesso!`, 'success');
+            // O progresso precisa ser reiniciado se a fase atual do aluno:
+            // a) Não está mais na nova lista de fases designadas.
+            // b) OU é diferente da primeira fase da nova lista (permitindo que o professor force o recomeço).
+            if (!newPhases.includes(student.progress.current_phase) || student.progress.current_phase !== firstNewPhase) {
+                progressNeedsReset = true;
             }
+        }
+        
+        if (progressNeedsReset) {
+            // Cria um novo estado de jogo, zerado, para a primeira fase da lista.
+            const newGameState = { 
+                ...student.progress.game_state, 
+                currentPhase: firstNewPhase, 
+                score: 0, 
+                attempts: 3, 
+                currentQuestionIndex: 0, 
+                phaseCompleted: false, 
+                questions: generateQuestions(firstNewPhase) 
+            };
+            
+            // Atualiza a tabela de progresso com os dados zerados.
+            const { error: progressError } = await supabaseClient
+                .from('progress')
+                .update({ current_phase: firstNewPhase, game_state: newGameState })
+                .eq('student_id', studentId);
+
+            if (progressError) throw progressError;
+            showFeedback(`Fases atualizadas! O progresso de ${student.name} foi reiniciado para a Fase ${firstNewPhase}.`, 'success');
         } else {
-             showFeedback(`Fases de ${student.name} atualizadas com sucesso!`, 'success');
+            showFeedback(`Fases de ${student.name} atualizadas com sucesso!`, 'success');
         }
 
-        await loadStudentProgress();
+        await loadStudentProgress(); // Recarrega os dados para refletir as mudanças
 
     } catch (error) {
         console.error("Erro ao designar fases:", error);
         showFeedback(`Erro ao atualizar: ${error.message}`, 'error');
     }
 }
+// =======================================================
+// FIM DA FUNÇÃO CORRIGIDA
+// =======================================================
+
 async function handleCreateStudent(event) { event.preventDefault(); const username = document.getElementById('createStudentUsername').value.trim(); const password = document.getElementById('createStudentPassword').value; const submitButton = document.getElementById('createStudentSubmitBtn'); if (!username || !password) { return showFeedback("Preencha nome e senha.", "error"); } if (!currentClassId || !currentUser?.id) { return showFeedback("Erro de sessão.", "error"); } submitButton.disabled = true; submitButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Criando...'; try { const hashedPassword = await hashPassword(password); const { error } = await supabaseClient.from('students').insert([{ name: username, username: username, password: hashedPassword, class_id: currentClassId, teacher_id: currentUser.id }]); if (error) throw error; document.getElementById('newStudentUsername').textContent = username; document.getElementById('newStudentPassword').textContent = password; showModal('studentCreatedModal'); hideCreateStudentForm(); await loadClassStudents(); await loadStudentProgress(); } catch (error) { showFeedback(formatErrorMessage(error), 'error'); } finally { submitButton.disabled = false; submitButton.innerHTML = 'Criar Aluno'; } }
 async function handleDeleteStudent(studentId, studentName) { if (!confirm(`Tem certeza que deseja excluir "${studentName}"?`)) return; const { error } = await supabaseClient.from('students').delete().eq('id', studentId); if (error) { showFeedback(`Erro: ${error.message}`, 'error'); } else { showFeedback(`Aluno "${studentName}" excluído.`, 'success'); await loadClassStudents(); await loadStudentProgress(); } }
 async function handleShowOrResetPassword(studentId, studentName) { showFeedback(`Redefinindo senha para ${studentName}...`, 'info'); const newPassword = generateRandomPassword(); try { const hashedPassword = await hashPassword(newPassword); const { error } = await supabaseClient.from('students').update({ password: hashedPassword }).eq('id', studentId); if (error) throw error; document.getElementById('resetStudentName').textContent = studentName; document.getElementById('resetStudentPassword').textContent = newPassword; showModal('resetPasswordModal'); } catch (error) { showFeedback(`Erro ao tentar alterar a senha: ${error.message}`, 'error'); } }
@@ -608,9 +632,6 @@ window.addEventListener('beforeunload', () => { if (studentChannel) { studentCha
 async function loadGameState() { const { data: progressData, error } = await supabaseClient.from('progress').select('game_state, current_phase').eq('student_id', currentUser.id).single(); if (error && error.code !== 'PGRST116') { console.error("Erro ao carregar progresso:", error); } const assignedPhases = currentUser.assigned_phases && currentUser.assigned_phases.length > 0 ? currentUser.assigned_phases : [1]; const firstAssignedPhase = assignedPhases[0]; if (progressData?.game_state?.questions) { gameState = progressData.game_state; if (!assignedPhases.includes(gameState.currentPhase)) { gameState = { currentPhase: firstAssignedPhase, score: 0, attempts: 3, questions: generateQuestions(firstAssignedPhase), currentQuestionIndex: 0, teacherId: currentUser.teacher_id, tutorialsShown: [], phaseCompleted: false }; await saveGameState(); } if (!gameState.tutorialsShown) gameState.tutorialsShown = []; } else { gameState = { currentPhase: firstAssignedPhase, score: 0, attempts: 3, questions: generateQuestions(firstAssignedPhase), currentQuestionIndex: 0, teacherId: currentUser.teacher_id, tutorialsShown: [], phaseCompleted: false }; await saveGameState(); } }
 async function saveGameState() { if (!currentUser || currentUser.type !== 'student' || gameState.isCustomActivity) return; await supabaseClient.from('progress').upsert({ student_id: currentUser.id, current_phase: gameState.currentPhase, game_state: gameState, last_played: new Date().toISOString() }, { onConflict: 'student_id' }); }
 
-// =======================================================
-// INÍCIO DA FUNÇÃO CORRIGIDA
-// =======================================================
 function generateQuestions(phase) {
     let questions = [];
     const questionCount = 10;
@@ -643,7 +664,6 @@ function generateQuestions(phase) {
             questions = shuffleAndTake(PHASE_3_SYLLABLE_F, questionCount).map(item => ({ type: 'form_f_syllable', ...item, options: _generateOptions(item.result, ['FA', 'FE', 'FI', 'FO', 'FU', 'VA', 'BO'], 4) }));
             break;
         case 4:
-            // CORREÇÃO: Cria uma cópia com [...item.options] para não modificar o original
             questions = shuffleAndTake(PHASE_4_WORDS_F, questionCount).map(item => ({ type: 'f_word_search', ...item, correctAnswer: item.word, options: [...item.options].sort(() => 0.5 - Math.random()) }));
             break;
         case 5:
@@ -653,7 +673,6 @@ function generateQuestions(phase) {
             questions = shuffleAndTake(PHASE_6_SENTENCES_COUNT, questionCount).map(item => ({ type: 'count_words', ...item, correctAnswer: item.words.toString(), options: _generateOptions(item.words.toString(), ['2', '3', '4', '5'], 4) }));
             break;
         case 7:
-             // CORREÇÃO: Cria uma cópia com [...item.sentence] para não modificar o original
             questions = shuffleAndTake(PHASE_7_SENTENCES_BUILD, questionCount).map(item => ({ type: 'build_sentence', image: item.image, correctAnswer: item.answer, options: [...item.sentence].sort(() => 0.5 - Math.random()) }));
             break;
         case 8: 
@@ -676,7 +695,6 @@ function generateQuestions(phase) {
              questions = shuffleAndTake(PHASE_13_INVERT_SYLLABLES, questionCount).map(item => ({ type: 'invert_syllables', ...item, correctAnswer: item.inverted, options: _generateOptions(item.inverted, PHASE_13_INVERT_SYLLABLES.map(i=>i.word), 4) }));
              break;
         case 14:
-            // GRANDE CORREÇÃO AQUI: Gera as opções de rima em vez de tentar acessar um campo inexistente.
             questions = shuffleAndTake(PHASE_14_RHYMES, questionCount).map(item => {
                 const rhymeOptionsSource = PHASE_14_RHYMES.map(r => r.rhyme).filter(r => r !== item.rhyme);
                 return { 
@@ -696,9 +714,6 @@ function generateQuestions(phase) {
     }
     return questions;
 }
-// =======================================================
-// FIM DA FUNÇÃO CORRIGIDA
-// =======================================================
 
 async function startQuestion() {
     if (gameState.phaseCompleted || !gameState.questions || !gameState.questions[gameState.currentQuestionIndex]) { return endPhase(); }
