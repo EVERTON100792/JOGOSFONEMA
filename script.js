@@ -512,33 +512,6 @@ function renderStudentProgress(sortBy = 'name') {
     }).join('');
 }
 
-        return `
-            <div class="student-progress-accordion" id="accordion-${student.id}">
-                <button class="accordion-header" onclick="toggleAccordion('${student.id}')">
-                    <div class="student-info">
-                        <h4>${statusHTML} ${student.name}</h4>
-                        <p>Último Acesso: ${lastPlayedStr} | Fase Atual: <strong>${currentPhase}</strong></p>
-                    </div>
-                    <div class="student-progress-container">
-                        <div class="student-progress-bar" title="Progresso na fase ${currentPhase}: ${accuracy}%">
-                            <div class="student-progress-fill" style="width: ${accuracy}%;"></div>
-                        </div>
-                    </div>
-                    <i class="fas fa-chevron-down"></i>
-                </button>
-                <div class="accordion-content">
-                    <h5><i class="fas fa-tasks"></i> Designar Fases</h5>
-                    <div class="phase-checkbox-grid">${phaseCheckboxesHTML}</div>
-                    <div class="accordion-actions">
-                        <button class="btn primary" onclick="assignPhases('${student.id}')">
-                            <i class="fas fa-save"></i> Salvar Fases
-                        </button>
-                    </div>
-                </div>
-            </div>`;
-    }).join('');
-}
-
 function toggleAccordion(studentId) {
     const accordion = document.getElementById(`accordion-${studentId}`);
     const allAccordions = document.querySelectorAll('.student-progress-accordion');
