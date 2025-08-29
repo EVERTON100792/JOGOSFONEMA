@@ -573,9 +573,6 @@ body {
     display: flex; 
     flex-direction: column; 
     gap: 15px; 
-    max-height: 40vh;
-    overflow-y: auto;
-    padding-right: 10px;
 }
 .student-item { background: #f8f9fa; padding: 15px; border-radius: 10px; border: 1px solid #E0E0E0; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }
 .student-info h4 { margin: 0 0 5px 0; color: #2C3E50; }
