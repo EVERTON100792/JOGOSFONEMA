@@ -411,6 +411,8 @@ async function loadStudentProgress() {
     }
 }
 
+// SUBSTITUA SUA FUNÇÃO ANTIGA POR ESTA VERSÃO CORRIGIDA
+
 function renderStudentProgress(sortBy = 'name') {
     const container = document.getElementById('studentProgressList');
     document.querySelector('.sort-btn.active')?.classList.remove('active');
@@ -434,7 +436,7 @@ function renderStudentProgress(sortBy = 'name') {
             statusHTML = `<div class="status-indicator online" title="Online Agora"></div>`;
         } else if (progress?.last_played) {
             const lastDate = new Date(progress.last_played);
-            const diffDays = Math.ceil(Math.abs(new Date() - lastDate) / (1000 * 60 * 60 * 24)) -1;
+            const diffDays = Math.ceil(Math.abs(new Date() - lastDate) / (1000 * 60 * 60 * 24)) - 1;
             if (diffDays <= 1) statusHTML = `<div class="status-indicator recent" title="Acessou hoje ou ontem"></div>`;
             else if (diffDays <= 7) statusHTML = `<div class="status-indicator week" title="Inativo há ${diffDays} dias"></div>`;
             else statusHTML = `<div class="status-indicator inactive" title="Inativo há mais de 7 dias"></div>`;
@@ -445,7 +447,21 @@ function renderStudentProgress(sortBy = 'name') {
         let score = 0, total = 0, accuracy = 0;
         if (gameState?.questions?.length > 0) {
             score = gameState.score ?? 0;
-            total = gameState.questions[0]?.type === 'memory_game' ? gameState.memoryGame.totalPairs : gameState.questions.length;
+            
+            // =======================================================
+            // INÍCIO DA CORREÇÃO DO ERRO 'totalPairs'
+            // =======================================================
+            if (gameState.questions[0]?.type === 'memory_game') {
+                // Agora, verificamos se gameState.memoryGame existe antes de usá-lo.
+                // Se não existir, assumimos o total de 8 pares (padrão da Fase 2).
+                total = gameState.memoryGame?.totalPairs || 8; 
+            } else {
+                total = gameState.questions.length;
+            }
+            // =======================================================
+            // FIM DA CORREÇÃO
+            // =======================================================
+
             accuracy = total > 0 ? Math.round((score / total) * 100) : 0;
         }
         const lastPlayedStr = progress?.last_played ? new Date(progress.last_played).toLocaleDateString('pt-BR') : 'Nunca';
@@ -468,6 +484,33 @@ function renderStudentProgress(sortBy = 'name') {
                         </label>`;
             }).join('');
         }
+
+        return `
+            <div class="student-progress-accordion" id="accordion-${student.id}">
+                <button class="accordion-header" onclick="toggleAccordion('${student.id}')">
+                    <div class="student-info">
+                        <h4>${statusHTML} ${student.name}</h4>
+                        <p>Último Acesso: ${lastPlayedStr} | Fase Atual: <strong>${currentPhase}</strong></p>
+                    </div>
+                    <div class="student-progress-container">
+                        <div class="student-progress-bar" title="Progresso na fase ${currentPhase}: ${accuracy}%">
+                            <div class="student-progress-fill" style="width: ${accuracy}%;"></div>
+                        </div>
+                    </div>
+                    <i class="fas fa-chevron-down"></i>
+                </button>
+                <div class="accordion-content">
+                    <h5><i class="fas fa-tasks"></i> Designar Fases</h5>
+                    <div class="phase-checkbox-grid">${phaseCheckboxesHTML}</div>
+                    <div class="accordion-actions">
+                        <button class="btn primary" onclick="assignPhases('${student.id}')">
+                            <i class="fas fa-save"></i> Salvar Fases
+                        </button>
+                    </div>
+                </div>
+            </div>`;
+    }).join('');
+}
 
         return `
             <div class="student-progress-accordion" id="accordion-${student.id}">
