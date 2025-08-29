@@ -1183,6 +1183,36 @@ body {
 /* CORREÇÃO: BARRA DE ROLAGEM PARA A LISTA DE FASES     */
 /* =================================================== */
 
+/* Estilo para o botão Salvar Fases */
+.accordion-actions .btn.primary {
+    background: linear-gradient(45deg, #764ba2, #667eea);
+    color: white;
+    border: none;
+    padding: 12px 25px;
+    border-radius: 50px;
+    font-size: 1rem;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+}
+
+.accordion-actions .btn.primary:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 25px rgba(118, 75, 162, 0.4);
+}
+
+.accordion-actions .btn.primary i {
+    margin-right: 8px;
+    transition: transform 0.3s ease;
+}
+
+.accordion-actions .btn.primary:hover i {
+    transform: rotate(-15deg);
+}
+
+/* Fim do estilo para o botão Salvar Fases */
+
 .phase-checkbox-grid {
     /* Detalhes visuais para separar a área de rolagem. */
     background-color: #fafafa;
