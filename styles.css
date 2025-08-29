@@ -1271,7 +1271,47 @@ body {
     color: #764ba2;
 }
 
-/* Fim das animações */
+/* === AJUSTES FINOS PARA A FASE 2 (JOGO DA MEMÓRIA) EM TELAS PEQUENAS === */
+
+@media (max-width: 480px) and (max-height: 700px) {
+    #gameScreen .game-content {
+        padding: 1rem 0.5rem; /* Reduz o padding */
+        display: flex;
+        flex-direction: column;
+        justify-content: space-around; /* Distribui o espaço */
+    }
+
+    .mascot-helper .mascot {
+        font-size: 2rem; /* Diminui o robô */
+        margin-bottom: 0.5rem;
+    }
+
+    .speech-bubble {
+        padding: 0.5rem 0.8rem;
+    }
+
+    .speech-bubble p {
+        font-size: 0.9rem;
+    }
+
+    .question-text h3 {
+        font-size: 1rem;
+        margin: 0.5rem 0;
+    }
+
+    .memory-grid {
+        /* Ajusta a grade para caber na tela */
+        grid-template-columns: repeat(4, 1fr); /* Força 4 colunas */
+        gap: 5px;
+        padding: 5px;
+        max-width: 100%;
+        margin: 10px auto;
+    }
+
+    .card-face {
+        font-size: 1.5rem; /* Diminui a fonte dentro dos cartões */
+    }
+}
 
 .phase-checkbox-grid {
     /* Detalhes visuais para separar a área de rolagem. */
