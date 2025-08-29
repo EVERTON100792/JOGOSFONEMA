@@ -661,7 +661,7 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: clamp(1.8rem, 10vw, 2.5rem); /* Fonte do cartão responsiva */
+    font-size: clamp(1rem, 10vw, 2rem); /* Fonte do cartão mais responsiva */
     font-weight: bold;
 }
 
