@@ -184,7 +184,6 @@ async function initApp() {
 }
 
 function setupAllEventListeners() {
-    // Anexa listeners estáticos que existem desde o início
     document.querySelectorAll('.user-type-btn').forEach(btn => btn.addEventListener('click', (e) => { const type = e.currentTarget.getAttribute('data-type'); if (type === 'teacher') showScreen('teacherLoginScreen'); else if (type === 'student') showScreen('studentLoginScreen'); }));
     document.querySelectorAll('.back-btn').forEach(btn => btn.addEventListener('click', (e) => { const targetScreen = e.currentTarget.getAttribute('data-target'); showScreen(targetScreen); }));
     document.getElementById('showRegisterBtn').addEventListener('click', () => showScreen('teacherRegisterScreen'));
@@ -221,7 +220,6 @@ function setupAllEventListeners() {
     document.querySelectorAll('.sort-btn').forEach(btn => { btn.addEventListener('click', (e) => { const sortBy = e.currentTarget.dataset.sort; document.querySelectorAll('.sort-btn').forEach(b => b.classList.remove('active')); e.currentTarget.classList.add('active'); renderStudentProgress(sortBy); }); });
     document.getElementById('reportClassSelector').addEventListener('change', handleReportClassSelection);
 
-    // Anexa os listeners do painel do professor de forma delegada e robusta
     const sidebar = document.getElementById('dashboardSidebar');
     sidebar.addEventListener('click', (event) => {
         const navLink = event.target.closest('.sidebar-nav a');
@@ -269,7 +267,6 @@ async function handleStudentLogin(e) {
 
         currentUser = { ...studentData, type: 'student' };
         
-        // Bloco try/catch para isolar o erro de 'stringify' se houver dados corrompidos
         try {
             sessionStorage.setItem('currentUser', JSON.stringify(currentUser));
         } catch (jsonError) {
@@ -282,7 +279,6 @@ async function handleStudentLogin(e) {
     } catch (error) {
         showFeedback(formatErrorMessage(error), 'error');
     } finally {
-        // Isso garante que o botão SEMPRE será reativado, mesmo se houver um erro.
         button.disabled = false;
         button.innerHTML = originalText;
     }
@@ -313,9 +309,7 @@ function handleExitGame() {
 }
 
 
-// =======================================================
-// PARTE 6: DASHBOARD DO PROFESSOR - SEÇÃO REFEITA E CORRIGIDA
-// =======================================================
+// PARTE 6: DASHBOARD DO PROFESSOR
 async function showTeacherDashboard() {
     showScreen('teacherDashboard');
     await loadTeacherData();
@@ -385,7 +379,6 @@ async function manageClass(classId, className) { currentClassId = classId; docum
 async function loadClassStudents() { const { data, error } = await supabaseClient.from('students').select('*').eq('class_id', currentClassId).order('name', { ascending: true }); if (error) { console.error('Erro ao carregar alunos:', error); document.getElementById('studentsList').innerHTML = '<p>Erro ao carregar.</p>'; return; } renderStudents(data); }
 function renderStudents(students) { const container = document.getElementById('studentsList'); if (!students || students.length === 0) { container.innerHTML = '<p>Nenhum aluno cadastrado.</p>'; return; } container.innerHTML = students.map(student => ` <div class="student-item"> <div class="student-info"> <h4>${student.name}</h4> <p>Usuário: ${student.username}</p> </div> <div class="student-actions"> <button onclick="handleShowOrResetPassword('${student.id}', '${student.name}')" class="btn small" title="Ver/Redefinir Senha"> <i class="fas fa-key"></i> </button> <button onclick="handleDeleteStudent('${student.id}', '${student.name}')" class="btn small danger" title="Excluir Aluno"> <i class="fas fa-trash"></i> </button> </div> </div>`).join(''); }
 
-// NOVA LÓGICA DE PROGRESSO E DESIGNAÇÃO
 async function loadStudentProgress() {
     const progressList = document.getElementById('studentProgressList');
     progressList.innerHTML = '<p><i class="fas fa-spinner fa-spin"></i> Carregando progresso dos alunos...</p>';
@@ -422,9 +415,6 @@ async function loadStudentProgress() {
     }
 }
 
-// =======================================================
-// INÍCIO DA FUNÇÃO CORRIGIDA
-// =======================================================
 function renderStudentProgress(sortBy = 'name') {
     const container = document.getElementById('studentProgressList');
     document.querySelector('.sort-btn.active')?.classList.remove('active');
@@ -514,9 +504,6 @@ function renderStudentProgress(sortBy = 'name') {
             </div>`;
     }).join('');
 }
-// =======================================================
-// FIM DA FUNÇÃO CORRIGIDA
-// =======================================================
 
 function toggleAccordion(studentId) {
     const accordion = document.getElementById(`accordion-${studentId}`);
@@ -531,9 +518,6 @@ function toggleAccordion(studentId) {
     accordion.classList.toggle('open');
 }
 
-// =======================================================
-// INÍCIO DA FUNÇÃO CORRIGIDA
-// =======================================================
 async function assignPhases(studentId) {
     const accordion = document.getElementById(`accordion-${studentId}`);
     const checkboxes = accordion.querySelectorAll('.phase-checkbox');
@@ -553,28 +537,22 @@ async function assignPhases(studentId) {
     showFeedback(`Atualizando fases para ${student.name}...`, 'info');
 
     try {
-        // 1. Atualiza a lista de fases do aluno no banco de dados.
         const { error: assignError } = await supabaseClient
             .from('students')
             .update({ assigned_phases: newPhases })
             .eq('id', studentId);
         if (assignError) throw assignError;
 
-        // 2. LÓGICA CORRIGIDA: Verifica se o progresso do aluno precisa ser reiniciado.
         const firstNewPhase = newPhases[0];
         let progressNeedsReset = false;
 
         if (student.progress) {
-            // O progresso precisa ser reiniciado se a fase atual do aluno:
-            // a) Não está mais na nova lista de fases designadas.
-            // b) OU é diferente da primeira fase da nova lista (permitindo que o professor force o recomeço).
             if (!newPhases.includes(student.progress.current_phase) || student.progress.current_phase !== firstNewPhase) {
                 progressNeedsReset = true;
             }
         }
         
         if (progressNeedsReset) {
-            // Cria um novo estado de jogo, zerado, para a primeira fase da lista.
             const newGameState = { 
                 ...student.progress.game_state, 
                 currentPhase: firstNewPhase, 
@@ -585,7 +563,6 @@ async function assignPhases(studentId) {
                 questions: generateQuestions(firstNewPhase) 
             };
             
-            // Atualiza a tabela de progresso com os dados zerados.
             const { error: progressError } = await supabaseClient
                 .from('progress')
                 .update({ current_phase: firstNewPhase, game_state: newGameState })
@@ -597,16 +574,13 @@ async function assignPhases(studentId) {
             showFeedback(`Fases de ${student.name} atualizadas com sucesso!`, 'success');
         }
 
-        await loadStudentProgress(); // Recarrega os dados para refletir as mudanças
+        await loadStudentProgress();
 
     } catch (error) {
         console.error("Erro ao designar fases:", error);
         showFeedback(`Erro ao atualizar: ${error.message}`, 'error');
     }
 }
-// =======================================================
-// FIM DA FUNÇÃO CORRIGIDA
-// =======================================================
 
 async function handleCreateStudent(event) { event.preventDefault(); const username = document.getElementById('createStudentUsername').value.trim(); const password = document.getElementById('createStudentPassword').value; const submitButton = document.getElementById('createStudentSubmitBtn'); if (!username || !password) { return showFeedback("Preencha nome e senha.", "error"); } if (!currentClassId || !currentUser?.id) { return showFeedback("Erro de sessão.", "error"); } submitButton.disabled = true; submitButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Criando...'; try { const hashedPassword = await hashPassword(password); const { error } = await supabaseClient.from('students').insert([{ name: username, username: username, password: hashedPassword, class_id: currentClassId, teacher_id: currentUser.id }]); if (error) throw error; document.getElementById('newStudentUsername').textContent = username; document.getElementById('newStudentPassword').textContent = password; showModal('studentCreatedModal'); hideCreateStudentForm(); await loadClassStudents(); await loadStudentProgress(); } catch (error) { showFeedback(formatErrorMessage(error), 'error'); } finally { submitButton.disabled = false; submitButton.innerHTML = 'Criar Aluno'; } }
 async function handleDeleteStudent(studentId, studentName) { if (!confirm(`Tem certeza que deseja excluir "${studentName}"?`)) return; const { error } = await supabaseClient.from('students').delete().eq('id', studentId); if (error) { showFeedback(`Erro: ${error.message}`, 'error'); } else { showFeedback(`Aluno "${studentName}" excluído.`, 'success'); await loadClassStudents(); await loadStudentProgress(); } }
@@ -661,7 +635,12 @@ function generateQuestions(phase) {
             questions = [{ type: 'memory_game' }];
             break;
         case 3:
-            questions = shuffleAndTake(PHASE_3_SYLLABLE_F, questionCount).map(item => ({ type: 'form_f_syllable', ...item, options: _generateOptions(item.result, ['FA', 'FE', 'FI', 'FO', 'FU', 'VA', 'BO'], 4) }));
+            questions = shuffleAndTake(PHASE_3_SYLLABLE_F, questionCount).map(item => ({ 
+                type: 'form_f_syllable', 
+                ...item, 
+                correctAnswer: item.result, 
+                options: _generateOptions(item.result, ['FA', 'FE', 'FI', 'FO', 'FU', 'VA', 'BO'], 4) 
+            }));
             break;
         case 4:
             questions = shuffleAndTake(PHASE_4_WORDS_F, questionCount).map(item => ({ type: 'f_word_search', ...item, correctAnswer: item.word, options: [...item.options].sort(() => 0.5 - Math.random()) }));
@@ -686,7 +665,12 @@ function generateQuestions(phase) {
             questions = shuffleAndTake(PHASE_10_INITIAL_SYLLABLE, questionCount).map(item => ({ type: 'initial_syllable', ...item, options: _generateOptions(item.correctAnswer, ['BA','CA','DA','FA','GA','LA','MA','NA','PA','RA','SA','TA','VA'], 3) }));
             break;
         case 11:
-            questions = shuffleAndTake(PHASE_11_F_POSITION, questionCount).map(item => ({ type: 'f_position', ...item, options: _generateOptions(item.syllable, ['FA', 'FE', 'FI', 'FO', 'FU'], 4) }));
+            questions = shuffleAndTake(PHASE_11_F_POSITION, questionCount).map(item => ({ 
+                type: 'f_position', 
+                ...item, 
+                correctAnswer: item.syllable, 
+                options: _generateOptions(item.syllable, ['FA', 'FE', 'FI', 'FO', 'FU'], 4) 
+            }));
             break;
         case 12: 
             questions = shuffleAndTake(PHASE_12_WORD_TRANSFORM, questionCount).map(item => ({ type: 'word_transform', ...item, correctAnswer: item.correctAnswer, options: _generateOptions(item.correctAnswer, item.initialWord.split(''), 3) }));
@@ -718,7 +702,6 @@ function generateQuestions(phase) {
 async function startQuestion() {
     if (gameState.phaseCompleted || !gameState.questions || !gameState.questions[gameState.currentQuestionIndex]) { return endPhase(); }
     
-    document.getElementById('nextQuestion').style.display = 'none';
     document.getElementById('attempts').style.display = 'flex';
     ['audioQuestionArea', 'imageQuestionArea', 'lettersGrid', 'memoryGameGrid', 'sentenceBuildArea'].forEach(id => document.getElementById(id).style.display = 'none');
     ['lettersGrid', 'memoryGameGrid', 'sentenceBuildArea'].forEach(id => document.getElementById(id).innerHTML = '');
@@ -741,49 +724,8 @@ async function startQuestion() {
     updateUI(); 
 }
 
-function renderPhase1UI_LetterSound(q) {
-    document.getElementById('audioQuestionArea').style.display = 'block';
-    document.getElementById('lettersGrid').style.display = 'grid';
-    document.getElementById('questionText').textContent = `Qual letra faz o som ${q.description}`;
-    document.getElementById('repeatAudio').style.display = 'inline-block';
-    renderOptions(q.options);
-    setTimeout(playCurrentAudio, 500);
-}
-
-function renderPhase2UI_MemoryGame() {
-    const memoryGrid = document.getElementById('memoryGameGrid');
-    if (!memoryGrid) { console.error("Elemento memoryGameGrid não encontrado!"); return; }
-    memoryGrid.innerHTML = '';
-    memoryGrid.style.display = 'grid';
-
-    document.getElementById('questionText').textContent = 'Encontre os pares de letras maiúsculas e minúsculas!';
-    
-    const shuffleAndTake = (arr, num) => [...arr].sort(() => 0.5 - Math.random()).slice(0, num);
-    const letters = shuffleAndTake(ALPHABET, 8);
-    const cards = [...letters, ...letters.map(l => l.toLowerCase())].sort(() => 0.5 - Math.random());
-    
-    memoryGrid.innerHTML = cards.map(letter => `
-        <div class="memory-card" data-letter="${letter.toLowerCase()}">
-            <div class="card-inner">
-                <div class="card-face card-front"></div>
-                <div class="card-face card-back">${letter}</div>
-            </div>
-        </div>
-    `).join('');
-
-    gameState.score = 0;
-    gameState.memoryGame = {
-        flippedCards: [],
-        matchedPairs: 0,
-        totalPairs: letters.length,
-        canFlip: true,
-        mistakesMade: 0,
-        startTime: Date.now()
-    };
-    
-    updateUI(); 
-    memoryGrid.querySelectorAll('.memory-card').forEach(card => card.addEventListener('click', () => handleCardFlip(card)));
-}
+function renderPhase1UI_LetterSound(q) { document.getElementById('audioQuestionArea').style.display = 'block'; document.getElementById('lettersGrid').style.display = 'grid'; document.getElementById('questionText').textContent = `Qual letra faz o som ${q.description}`; document.getElementById('repeatAudio').style.display = 'inline-block'; renderOptions(q.options); setTimeout(playCurrentAudio, 500); }
+function renderPhase2UI_MemoryGame() { const memoryGrid = document.getElementById('memoryGameGrid'); if (!memoryGrid) { console.error("Elemento memoryGameGrid não encontrado!"); return; } memoryGrid.innerHTML = ''; memoryGrid.style.display = 'grid'; document.getElementById('questionText').textContent = 'Encontre os pares de letras maiúsculas e minúsculas!'; const shuffleAndTake = (arr, num) => [...arr].sort(() => 0.5 - Math.random()).slice(0, num); const letters = shuffleAndTake(ALPHABET, 8); const cards = [...letters, ...letters.map(l => l.toLowerCase())].sort(() => 0.5 - Math.random()); memoryGrid.innerHTML = cards.map(letter => ` <div class="memory-card" data-letter="${letter.toLowerCase()}"> <div class="card-inner"> <div class="card-face card-front"></div> <div class="card-face card-back">${letter}</div> </div> </div> `).join(''); gameState.score = 0; gameState.memoryGame = { flippedCards: [], matchedPairs: 0, totalPairs: letters.length, canFlip: true, mistakesMade: 0, startTime: Date.now() }; updateUI(); memoryGrid.querySelectorAll('.memory-card').forEach(card => card.addEventListener('click', () => handleCardFlip(card))); }
 function renderPhase3UI_FormFSyllable(q) { document.getElementById('imageQuestionArea').style.display = 'block'; document.getElementById('lettersGrid').style.display = 'grid'; document.getElementById('imageEmoji').textContent = q.image; document.getElementById('wordDisplay').textContent = `${q.base} + ${q.vowel} = ?`; document.getElementById('questionText').textContent = `Qual sílaba formamos para a palavra ${q.word}?`; renderOptions(q.options); }
 function renderPhase4UI_FWordSearch(q) { document.getElementById('imageQuestionArea').style.display = 'block'; document.getElementById('lettersGrid').style.display = 'grid'; document.getElementById('imageEmoji').textContent = q.image; document.getElementById('questionText').textContent = 'Qual é o nome desta figura?'; renderOptions(q.options); }
 function renderPhase5UI_SoundDetective(q) { document.getElementById('imageQuestionArea').style.display = 'block'; document.getElementById('lettersGrid').style.display = 'grid'; document.getElementById('imageEmoji').textContent = q.image; document.getElementById('questionText').textContent = 'Qual é o nome correto desta figura?'; renderOptions(q.options); }
@@ -802,81 +744,52 @@ function renderPhase16UI_ComplexSyllable(q) { document.getElementById('imageQues
 function renderOptions(options) { const lettersGrid = document.getElementById('lettersGrid'); lettersGrid.style.display = 'grid'; lettersGrid.innerHTML = options.map(option => `<button class="letter-button">${option}</button>`).join(''); lettersGrid.querySelectorAll('.letter-button').forEach(btn => btn.addEventListener('click', (e) => selectAnswer(e.target.textContent))); }
 function renderWordOptions(options) { const lettersGrid = document.getElementById('lettersGrid'); lettersGrid.style.display = 'grid'; lettersGrid.innerHTML = options.map(option => `<button class="word-option-button">${option}</button>`).join(''); lettersGrid.querySelectorAll('.word-option-button').forEach(btn => { btn.addEventListener('click', () => selectWordForSentence(btn)); }); }
 
-function handleCardFlip(card) {
-    const { flippedCards, canFlip } = gameState.memoryGame;
-    if (!canFlip || card.classList.contains('flipped')) return;
-
-    card.classList.add('flipped');
-    flippedCards.push(card);
-
-    if (flippedCards.length === 2) {
-        gameState.memoryGame.canFlip = false;
-        const [card1, card2] = flippedCards;
-
-        if (card1.dataset.letter === card2.dataset.letter) {
-            setTimeout(() => {
-                card1.classList.add('matched');
-                card2.classList.add('matched');
-                gameState.memoryGame.matchedPairs++;
-                gameState.score++; 
-                updateUI();
-                gameState.memoryGame.flippedCards = [];
-                gameState.memoryGame.canFlip = true;
-                
-                if (gameState.memoryGame.matchedPairs === gameState.memoryGame.totalPairs) {
-                    playTeacherAudio('feedback_correct', 'Excelente');
-                    showFeedback('Excelente! Todos os pares encontrados!', 'success');
-                    
-                    const endTime = Date.now();
-                    const durationInSeconds = Math.round((endTime - gameState.memoryGame.startTime) / 1000);
-                    gameState.memoryGame.completionTime = durationInSeconds;
-
-                    document.getElementById('nextQuestion').style.display = 'block';
-                }
-            }, 800);
-        } 
-        else {
-            gameState.memoryGame.mistakesMade++;
-            playTeacherAudio('feedback_incorrect', 'Tente de novo');
-            updateUI(); 
-
-            setTimeout(() => {
-                card1.classList.remove('flipped');
-                card2.classList.remove('flipped');
-                gameState.memoryGame.flippedCards = [];
-                gameState.memoryGame.canFlip = true;
-            }, 1200);
-        }
-    }
-}
+function handleCardFlip(card) { const { flippedCards, canFlip } = gameState.memoryGame; if (!canFlip || card.classList.contains('flipped')) return; card.classList.add('flipped'); flippedCards.push(card); if (flippedCards.length === 2) { gameState.memoryGame.canFlip = false; const [card1, card2] = flippedCards; if (card1.dataset.letter === card2.dataset.letter) { setTimeout(() => { card1.classList.add('matched'); card2.classList.add('matched'); gameState.memoryGame.matchedPairs++; gameState.score++; updateUI(); gameState.memoryGame.flippedCards = []; gameState.memoryGame.canFlip = true; if (gameState.memoryGame.matchedPairs === gameState.memoryGame.totalPairs) { playTeacherAudio('feedback_correct', 'Excelente'); showFeedback('Excelente! Todos os pares encontrados!', 'success'); const endTime = Date.now(); const durationInSeconds = Math.round((endTime - gameState.memoryGame.startTime) / 1000); gameState.memoryGame.completionTime = durationInSeconds; document.getElementById('nextQuestion').style.display = 'block'; } }, 800); } else { gameState.memoryGame.mistakesMade++; playTeacherAudio('feedback_incorrect', 'Tente de novo'); updateUI(); setTimeout(() => { card1.classList.remove('flipped'); card2.classList.remove('flipped'); gameState.memoryGame.flippedCards = []; gameState.memoryGame.canFlip = true; }, 1200); } } }
 function selectWordForSentence(buttonElement) { buttonElement.disabled = true; buttonElement.classList.add('disabled'); const sentenceBuildArea = document.getElementById('sentenceBuildArea'); const wordSpan = document.createElement('span'); wordSpan.className = 'sentence-word'; wordSpan.textContent = buttonElement.textContent; sentenceBuildArea.appendChild(wordSpan); const allButtons = document.querySelectorAll('.word-option-button'); const allDisabled = Array.from(allButtons).every(btn => btn.disabled); if (allDisabled) { const constructedSentence = Array.from(sentenceBuildArea.children).map(span => span.textContent).join(' '); selectAnswer(constructedSentence); } }
-async function selectAnswer(selectedAnswer) { const q = gameState.questions[gameState.currentQuestionIndex]; if (!q || q.type === 'memory_game') return; document.querySelectorAll('.letter-button, .word-option-button').forEach(btn => btn.disabled = true); const isCorrect = String(selectedAnswer) === String(q.correctAnswer); if (q.type === 'build_sentence') { const sentenceArea = document.getElementById('sentenceBuildArea'); sentenceArea.style.borderColor = isCorrect ? '#4ECDC4' : '#ff6b6b'; } else { document.querySelectorAll('.letter-button, .word-option-button').forEach(btn => { if (btn.textContent === q.correctAnswer) btn.classList.add('correct'); if (!isCorrect && btn.textContent === selectedAnswer) btn.classList.add('incorrect'); }); } if (isCorrect) { gameState.score++; showFeedback('Muito bem!', 'success'); playTeacherAudio('feedback_correct', 'Acertou'); } else { gameState.attempts--; logStudentError({ question: q, selectedAnswer: selectedAnswer }).catch(console.error); showFeedback(`Quase! A resposta correta era "${q.correctAnswer}"`, 'error'); playTeacherAudio('feedback_incorrect', 'Tente de novo'); } updateUI(); await saveGameState(); if (gameState.attempts <= 0) { setTimeout(endPhase, 2000); } else { document.getElementById('nextQuestion').style.display = 'block'; } }
-function nextQuestion() { if (gameState.questions[0].type === 'memory_game') { return endPhase(); } gameState.currentQuestionIndex++; startQuestion(); }
-async function endPhase() {
-    let totalQuestions = gameState.questions.length;
-    if (gameState.questions[0]?.type === 'memory_game' && gameState.memoryGame) {
-        totalQuestions = gameState.memoryGame.totalPairs;
-    }
-    const accuracy = totalQuestions > 0 ? Math.round((gameState.score / totalQuestions) * 100) : 0;
-    const passed = accuracy >= 70;
-    
-    if (gameState.isCustomActivity) {
-        await logCustomActivityCompletion(accuracy);
-        await clearAssignedActivity();
+
+async function selectAnswer(selectedAnswer) {
+    const q = gameState.questions[gameState.currentQuestionIndex];
+    if (!q || q.type === 'memory_game') return;
+
+    document.querySelectorAll('.letter-button, .word-option-button').forEach(btn => btn.disabled = true);
+
+    const isCorrect = String(selectedAnswer) === String(q.correctAnswer);
+
+    if (q.type === 'build_sentence') {
+        const sentenceArea = document.getElementById('sentenceBuildArea');
+        sentenceArea.style.borderColor = isCorrect ? '#4ECDC4' : '#ff6b6b';
     } else {
-        const q = gameState.questions[0];
-        let metadata = null;
-        if (q?.type === 'memory_game' && gameState.memoryGame) {
-            metadata = {
-                time_seconds: gameState.memoryGame.completionTime || 0,
-                mistakes: gameState.memoryGame.mistakesMade || 0
-            };
-        }
-        await logPhaseCompletionToHistory(accuracy, metadata);
+        document.querySelectorAll('.letter-button, .word-option-button').forEach(btn => {
+            if (btn.textContent === q.correctAnswer) btn.classList.add('correct');
+            if (!isCorrect && btn.textContent === selectedAnswer) btn.classList.add('incorrect');
+        });
     }
-    
-    showResultScreen(accuracy, passed);
+
+    if (isCorrect) {
+        gameState.score++;
+        showFeedback('Muito bem!', 'success');
+        playTeacherAudio('feedback_correct', 'Acertou');
+        setTimeout(nextQuestion, 1500); 
+    } else {
+        gameState.attempts--;
+        logStudentError({ question: q, selectedAnswer: selectedAnswer }).catch(console.error);
+        showFeedback(`Quase! A resposta correta era "${q.correctAnswer}"`, 'error');
+        playTeacherAudio('feedback_incorrect', 'Tente de novo');
+        setTimeout(() => {
+            if (gameState.attempts <= 0) {
+                endPhase();
+            } else {
+                nextQuestion();
+            }
+        }, 2000);
+    }
+
+    updateUI();
+    await saveGameState();
 }
+
+function nextQuestion() { if (gameState.questions[0].type === 'memory_game') { return endPhase(); } gameState.currentQuestionIndex++; startQuestion(); }
+async function endPhase() { let totalQuestions = gameState.questions.length; if (gameState.questions[0]?.type === 'memory_game' && gameState.memoryGame) { totalQuestions = gameState.memoryGame.totalPairs; } const accuracy = totalQuestions > 0 ? Math.round((gameState.score / totalQuestions) * 100) : 0; const passed = accuracy >= 70; if (gameState.isCustomActivity) { await logCustomActivityCompletion(accuracy); await clearAssignedActivity(); } else { const q = gameState.questions[0]; let metadata = null; if (q?.type === 'memory_game' && gameState.memoryGame) { metadata = { time_seconds: gameState.memoryGame.completionTime || 0, mistakes: gameState.memoryGame.mistakesMade || 0 }; } await logPhaseCompletionToHistory(accuracy, metadata); } showResultScreen(accuracy, passed); }
 async function clearAssignedActivity() { await supabaseClient.from('students').update({ assigned_activity: null }).eq('id', currentUser.id); currentUser.assigned_activity = null; sessionStorage.setItem('currentUser', JSON.stringify(currentUser)); }
 function showResultScreen(accuracy, passed) { showScreen('resultScreen'); document.getElementById('finalScore').textContent = gameState.score; document.getElementById('accuracy').textContent = accuracy; const continueBtn = document.getElementById('continueButton'); const retryBtn = document.getElementById('retryButton'); const restartBtn = document.getElementById('restartButton'); if (gameState.isCustomActivity) { document.getElementById('resultTitle').textContent = 'Atividade de Reforço Concluída!'; document.getElementById('resultMessage').innerHTML = `Você acertou ${accuracy}% das questões. Continue praticando!`; continueBtn.style.display = 'none'; retryBtn.style.display = 'none'; restartBtn.innerHTML = '<i class="fas fa-home"></i> Voltar ao Início'; return; } const assignedPhases = currentUser.assigned_phases || [1]; const currentPhaseIndex = assignedPhases.indexOf(gameState.currentPhase); const hasNextPhase = currentPhaseIndex !== -1 && currentPhaseIndex < assignedPhases.length - 1; if (passed) { document.getElementById('resultTitle').textContent = 'Parabéns!'; retryBtn.style.display = 'none'; gameState.phaseCompleted = true; saveGameState(); if (hasNextPhase) { document.getElementById('resultMessage').innerHTML = 'Você completou a fase! 🏆<br>Clique para ir para a próxima!'; continueBtn.style.display = 'inline-block'; restartBtn.innerHTML = '<i class="fas fa-home"></i> Voltar ao Início'; } else { document.getElementById('resultMessage').innerHTML = 'Você completou TODAS as suas fases! 🥳<br>Fale com seu professor para designar mais fases!'; } } else { document.getElementById('resultTitle').textContent = 'Não desanime!'; document.getElementById('resultMessage').textContent = 'Você precisa acertar mais. Tente novamente!'; continueBtn.style.display = 'none'; retryBtn.style.display = 'inline-block'; restartBtn.innerHTML = '<i class="fas fa-home"></i> Voltar ao Início'; gameState.phaseCompleted = false; saveGameState(); } }
 async function nextPhase() { const assignedPhases = currentUser.assigned_phases || [1]; const currentPhaseIndex = assignedPhases.indexOf(gameState.currentPhase); const hasNextPhase = currentPhaseIndex !== -1 && currentPhaseIndex < assignedPhases.length - 1; if (hasNextPhase) { const nextPhaseNum = assignedPhases[currentPhaseIndex + 1]; gameState.currentPhase = nextPhaseNum; gameState.currentQuestionIndex = 0; gameState.score = 0; gameState.attempts = 3; gameState.questions = generateQuestions(gameState.currentPhase); gameState.phaseCompleted = false; await saveGameState(); showScreen('gameScreen'); startQuestion(); } else { showResultScreen(100, true); } }
