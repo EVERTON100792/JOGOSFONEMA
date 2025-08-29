@@ -1,1223 +1,1194 @@
-/* Reset e Configurações Básicas */
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-    -webkit-tap-highlight-color: transparent; /* Remove o destaque azul ao tocar em botões no mobile */
-}
-
-body {
-    font-family: 'Comic Neue', cursive;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    min-height: 100dvh; /* Usa a altura dinâmica da viewport */
-    overflow-x: hidden;
-    overscroll-behavior-y: contain;
-}
-
-html, body {
-    height: 100%;
-    width: 100%;
-}
-
-/* Telas */
-.screen {
-    display: none;
-    min-height: 100dvh;
-    padding: 20px;
-    opacity: 0;
-    visibility: hidden;
-    transition: opacity 0.5s ease, visibility 0.5s;
-    position: absolute;
-    width: 100%;
-    top: 0;
-    left: 0;
-    overflow-y: auto;
-}
-
-.screen.active {
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    opacity: 1;
-    visibility: visible;
-    position: relative;
-    min-height: 100dvh;
-}
-
-.container {
-    max-width: 1200px;
-    width: 100%;
-    text-align: center;
-    padding: 0 15px;
-}
-
-/* Tela de Início */
-.game-title h1 {
-    font-size: clamp(2.5rem, 8vw, 3.5rem); /* Fonte responsiva */
-    color: #fff;
-    text-shadow: 3px 3px 6px rgba(0,0,0,0.3);
-    margin-bottom: 1rem;
-    animation: titleGlow 2s ease-in-out infinite alternate;
-}
-
-.game-title p {
-    font-size: clamp(1.1rem, 4vw, 1.5rem); /* Fonte responsiva */
-    color: #f0f8ff;
-    margin-bottom: 2rem;
-}
-
-@keyframes titleGlow {
-    from { text-shadow: 3px 3px 6px rgba(0,0,0,0.3); }
-    to { text-shadow: 3px 3px 15px rgba(255,255,255,0.5); }
-}
-
-/* Mascote */
-.character-mascot {
-    margin: 2rem 0;
-    position: relative;
-}
-
-.mascot {
-    font-size: clamp(4rem, 15vw, 5rem); /* Mascote responsivo */
-    color: #ff6b6b;
-    margin-bottom: 1rem;
-    display: inline-block;
-    filter: drop-shadow(3px 3px 6px rgba(0,0,0,0.3));
-}
-
-.bounce {
-    animation: bounce 2s infinite;
-}
-
-.pulse {
-    animation: pulse 1.5s infinite;
-}
-
-@keyframes bounce {
-    0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
-    40% { transform: translateY(-20px); }
-    60% { transform: translateY(-10px); }
-}
-
-@keyframes pulse {
-    0% { transform: scale(1); }
-    50% { transform: scale(1.1); }
-    100% { transform: scale(1); }
-}
-
-.speech-bubble {
-    background: #fff;
-    border-radius: 20px;
-    padding: 1rem 1.5rem;
-    position: relative;
-    display: inline-block;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-    max-width: 90%;
-    width: 300px;
-    margin: 0 auto;
-}
-
-.speech-bubble::before {
-    content: '';
-    position: absolute;
-    top: -10px;
-    left: 50%;
-    transform: translateX(-50%);
-    border-left: 10px solid transparent;
-    border-right: 10px solid transparent;
-    border-bottom: 10px solid #fff;
-}
-
-.speech-bubble p {
-    color: #333;
-    font-weight: bold;
-    font-size: 1.1rem;
-    margin: 0;
-}
-
-/* Botões */
-.start-button, .result-button, .control-button {
-    background: linear-gradient(45deg, #ff6b6b, #ffa500);
-    color: white;
-    border: none;
-    padding: 1rem 2rem;
-    font-size: 1.3rem;
-    font-weight: bold;
-    border-radius: 50px;
-    cursor: pointer;
-    box-shadow: 0 6px 20px rgba(0,0,0,0.2);
-    transition: all 0.3s ease;
-    margin: 0.5rem;
-    font-family: 'Comic Neue', cursive;
-}
-
-.start-button:hover, .result-button:hover, .control-button:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 10px 25px rgba(0,0,0,0.3);
-}
-
-.result-button.success {
-    background: linear-gradient(45deg, #4ecdc4, #44a08d);
-}
-
-.result-button.retry {
-    background: linear-gradient(45deg, #ffa726, #fb8c00);
-}
-
-/* Cabeçalho do Jogo */
-.game-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    background: rgba(255,255,255,0.15);
-    padding: 1rem 1.5rem;
-    border-radius: 20px;
-    margin-bottom: 1rem;
-    backdrop-filter: blur(10px);
-    width: 100%;
-}
-
-.phase-info h2 {
-    color: #fff;
-    font-size: 1.5rem;
-    margin-bottom: 0.5rem;
-    white-space: nowrap;
-}
-
-.progress-bar {
-    width: 100%;
-    max-width: 200px;
-    height: 10px;
-    background: rgba(255,255,255,0.3);
-    border-radius: 5px;
-    overflow: hidden;
-}
-
-.progress-fill {
-    height: 100%;
-    background: linear-gradient(90deg, #4ecdc4, #44a08d);
-    width: 0%;
-    transition: width 0.5s ease;
-}
-
-.score-info {
-    text-align: right;
-}
-
-.score, .attempts {
-    color: #fff;
-    font-size: 1.2rem;
-    margin: 0.2rem 0;
-    display: flex;
-    align-items: center;
-    justify-content: flex-end;
-}
-
-.score i, .attempts i {
-    margin-right: 0.5rem;
-    color: #ffa500;
-}
-
-.exit-button {
-    background-color: rgba(255, 255, 255, 0.2);
-    border: 1px solid rgba(255, 255, 255, 0.5);
-    color: white;
-    padding: 10px 15px;
-    border-radius: 10px;
-    cursor: pointer;
-    font-family: 'Comic Neue', cursive;
-    font-size: 1rem;
-    font-weight: bold;
-    transition: all 0.3s ease;
-}
-
-.exit-button:hover {
-    background-color: rgba(255, 82, 82, 0.8);
-    border-color: rgba(255, 255, 255, 0.8);
-}
-
-
-/* Conteúdo do Jogo */
-.game-content {
-    background: rgba(255,255,255,0.95);
-    border-radius: 30px;
-    padding: 2rem;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-    max-width: 800px;
-    margin: 0 auto;
-    width: 100%;
-}
-
-.question-area {
-    text-align: center;
-    margin-bottom: 2rem;
-}
-
-.mascot-helper {
-    margin-bottom: 1rem;
-}
-
-.mascot-helper .mascot {
-    font-size: clamp(2.5rem, 10vw, 3rem);
-    color: #ff6b6b;
-    margin-bottom: 1rem;
-}
-
-.audio-section {
-    margin: 1rem 0;
-    position: relative;
-}
-
-.audio-button {
-    background: linear-gradient(45deg, #4ecdc4, #44a08d);
-    color: white;
-    border: none;
-    padding: 1.5rem 2rem;
-    font-size: 1.2rem;
-    font-weight: bold;
-    border-radius: 50%;
-    cursor: pointer;
-    box-shadow: 0 6px 20px rgba(0,0,0,0.2);
-    transition: all 0.3s ease;
-    width: 120px;
-    height: 120px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    margin: 0 auto;
-}
-
-.audio-button:hover {
-    transform: scale(1.1);
-    box-shadow: 0 10px 25px rgba(0,0,0,0.3);
-}
-
-.audio-button i {
-    font-size: 2rem;
-    margin-bottom: 0.5rem;
-}
-
-.audio-button span {
-    font-size: 0.9rem;
-}
-
-#imageQuestionArea {
-    margin: 1rem 0;
-}
-
-.image-display {
-    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-    border-radius: 25px;
-    padding: 1rem;
-    margin: 0 auto 1rem auto;
-    max-width: 250px;
-    box-shadow: 0 8px 25px rgba(0,0,0,0.15);
-}
-
-.image-emoji {
-    font-size: clamp(4rem, 18vw, 5rem);
-    display: block;
-    text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
-}
-
-.word-display {
-    font-size: clamp(1.8rem, 7vw, 2.5rem);
-    font-weight: bold;
-    color: #2c3e50;
-    letter-spacing: 5px;
-    margin: 1rem 0;
-    word-break: break-all;
-}
-
-.question-text h3 {
-    color: #333;
-    font-size: clamp(1.2rem, 5vw, 1.5rem);
-    margin: 1rem 0;
-}
-
-.letters-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
-    gap: 1rem;
-    margin: 2rem 0;
-    max-width: 600px;
-    margin-left: auto;
-    margin-right: auto;
-}
-
-.letter-button {
-    background: linear-gradient(45deg, #667eea, #764ba2);
-    color: white;
-    border: none;
-    padding: 1.5rem;
-    font-size: 2.5rem;
-    font-weight: bold;
-    border-radius: 20px;
-    cursor: pointer;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-    transition: all 0.3s ease;
-    aspect-ratio: 1;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.letter-button:hover:not(:disabled) {
-    transform: translateY(-5px) scale(1.05);
-    box-shadow: 0 8px 25px rgba(0,0,0,0.3);
-}
-
-.letter-button.disabled {
-    background: #ced4da !important;
-    cursor: not-allowed;
-    transform: none !important;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.2) !important;
-}
-
-.letter-button.correct {
-    background: linear-gradient(45deg, #4ecdc4, #44a08d);
-    animation: correctPulse 0.6s ease;
-}
-
-.letter-button.incorrect {
-    background: linear-gradient(45deg, #ff6b6b, #ee5a24);
-    animation: shake 0.6s ease;
-}
-
-@keyframes correctPulse {
-    0% { transform: scale(1); }
-    50% { transform: scale(1.2); }
-    100% { transform: scale(1); }
-}
-
-@keyframes shake {
-    0%, 100% { transform: translateX(0); }
-    25% { transform: translateX(-10px); }
-    75% { transform: translateX(10px); }
-}
-
-.game-controls {
-    text-align: center;
-    margin-top: 2rem;
-}
-
-/* === TELA DE JOGO ESTRUTURA E SCROLL === */
-#gameScreen.active {
-    display: flex;
-    flex-direction: column;
-    height: 100dvh;
-    width: 100vw;
-    padding: 15px;
-    box-sizing: border-box;
-    justify-content: flex-start;
-    overflow: hidden;
-}
-#gameScreen .game-header {
-    flex-shrink: 0;
-    width: 100%;
-    margin-bottom: 15px;
-}
-#gameScreen .game-content {
-    flex-grow: 1;
-    overflow-y: auto; /* Permite scroll apenas no conteúdo */
-    min-height: 0;
-    width: 100%;
-    padding: 1.5rem;
-}
-
-/* Tela de Resultado */
-.result-content {
-    background: rgba(255,255,255,0.95);
-    border-radius: 30px;
-    padding: clamp(1.5rem, 5vw, 3rem);
-    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-    max-width: 600px;
-    margin: 0 auto;
-    width: 100%;
-}
-
-.result-icon {
-    font-size: 4rem;
-    margin-bottom: 1rem;
-    color: #ffa500;
-    animation: bounce 2s infinite;
-}
-
-#resultTitle {
-    font-size: 2.5rem;
-    color: #333;
-    margin-bottom: 1.5rem;
-}
-
-.result-stats {
-    display: flex;
-    justify-content: space-around;
-    margin: 2rem 0;
-    padding: 1rem;
-    background: rgba(102, 126, 234, 0.1);
-    border-radius: 15px;
-}
-
-.stat {
-    text-align: center;
-    color: #333;
-    font-size: 1.1rem;
-    font-weight: bold;
-}
-
-.stat i {
-    color: #ffa500;
-    margin-right: 0.5rem;
-    font-size: 1.3rem;
-}
-
-.result-message {
-    font-size: 1.3rem;
-    color: #666;
-    margin: 1.5rem 0;
-    font-weight: bold;
-}
-
-.result-actions {
-    margin-top: 2rem;
-}
-
-
-/* Feedback Global */
-#globalFeedback {
-    position: fixed;
-    bottom: 20px;
-    left: 50%;
-    transform: translate(-50%, 100px);
-    padding: 15px 25px;
-    border-radius: 50px;
-    color: white;
-    font-weight: bold;
-    box-shadow: 0 5px 15px rgba(0,0,0,0.2);
-    z-index: 2000;
-    opacity: 0;
-    visibility: hidden;
-    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-    width: max-content;
-    max-width: 90%;
-}
-
-#globalFeedback.show {
-    opacity: 1;
-    visibility: visible;
-    transform: translate(-50%, 0);
-}
-
-#globalFeedback.success { background-color: #4ecdc4; }
-#globalFeedback.error { background-color: #ff6b6b; }
-#globalFeedback.info { background-color: #667eea; }
-#globalFeedback .feedback-content { display: flex; align-items: center; gap: 10px; }
-
-
-/* === SELEÇÃO DE USUÁRIO === */
-.user-selection { text-align: center; margin: 40px 0; }
-.user-selection h2 { color: #fff; text-shadow: 1px 1px 3px rgba(0,0,0,0.2); margin-bottom: 30px; font-size: 1.8rem; }
-.user-types { display: flex; gap: 30px; justify-content: center; flex-wrap: wrap; }
-.user-type-btn { background: rgba(255, 255, 255, 0.2); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.3); border-radius: 20px; padding: 40px 30px; color: white; font-family: inherit; cursor: pointer; transition: all 0.3s ease; display: flex; flex-direction: column; align-items: center; gap: 15px; min-width: 200px; text-decoration: none; }
-.user-type-btn:hover { transform: translateY(-5px); background: rgba(255, 255, 255, 0.3); box-shadow: 0 10px 30px rgba(0,0,0,0.2); }
-.user-type-btn i { font-size: 3rem; }
-.user-type-btn span { font-size: 1.4rem; font-weight: bold; }
-.user-type-btn small { font-size: 1rem; opacity: 0.9; }
-
-/* === LOGIN E REGISTRO === */
-.login-container { max-width: 400px; margin: 0 auto; background: white; padding: 40px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
-.login-container h2 { text-align: center; color: #2C3E50; margin-bottom: 30px; font-size: 1.8rem; }
-.login-container h2 i { margin-right: 10px; color: #4ECDC4; }
-.login-form { display: flex; flex-direction: column; gap: 20px; }
-.form-group { display: flex; flex-direction: column; text-align: left; gap: 8px; }
-.form-group label { font-weight: bold; color: #2C3E50; font-size: 1rem; }
-.form-group input, .form-group select { padding: 15px; border: 2px solid #E0E0E0; border-radius: 10px; font-size: 1rem; font-family: inherit; transition: border-color 0.3s ease; }
-.form-group input:focus, .form-group select:focus { outline: none; border-color: #4ECDC4; }
-.password-group { position: relative; }
-.generate-password-btn { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #aaa; transition: color 0.3s; }
-.generate-password-btn:hover { color: #764ba2; }
-.login-btn, .modal-btn.primary, .create-btn { background: linear-gradient(145deg, #4ECDC4, #45B7B8); color: white; border: none; padding: 15px; border-radius: 10px; font-size: 1.1rem; font-weight: bold; cursor: pointer; transition: all 0.3s ease; margin-top: 10px; }
-.login-btn:hover, .modal-btn.primary:hover, .create-btn:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(0,0,0,0.2); }
-.login-btn:disabled { background: #ccc; cursor: not-allowed; }
-.register-btn { background: transparent; color: #4ECDC4; border: 2px solid #4ECDC4; padding: 12px; border-radius: 10px; font-size: 1rem; cursor: pointer; transition: all 0.3s ease; }
-.register-btn:hover { background: #4ECDC4; color: white; }
-.back-btn { background: #E0E0E0; color: #555; border: none; padding: 10px 20px; border-radius: 10px; cursor: pointer; margin-top: 20px; transition: all 0.3s ease; }
-.back-btn:hover { background: #D0D0D0; }
-
-/* === MODAIS === */
-.modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: center; opacity: 0; visibility: hidden; transition: opacity 0.4s ease, visibility 0.4s; }
-.modal.show { display: flex; opacity: 1; visibility: visible; }
-.modal-content { background: white; padding: 30px; border-radius: 15px; max-width: 500px; width: 90%; max-height: 90vh; overflow-y: auto; transform: scale(0.95); transition: transform 0.4s ease; }
-.modal.show .modal-content { transform: scale(1); }
-.modal-content.large { max-width: 800px; }
-.modal-content h3 { color: #2C3E50; margin: 0 0 25px 0; font-size: 1.6rem; }
-.modal-actions { display: flex; gap: 15px; justify-content: flex-end; margin-top: 25px; }
-.modal-btn { padding: 12px 25px; border: 2px solid #E0E0E0; background: transparent; color: #555; border-radius: 8px; cursor: pointer; font-size: 1rem; font-weight: bold; transition: all 0.3s ease; }
-.modal-btn.primary { background: #4ECDC4; border-color: #4ECDC4; color: white; }
-.modal-btn:hover { transform: translateY(-1px); }
-.modal-tabs { display: flex; border-bottom: 2px solid #E0E0E0; margin-bottom: 25px; }
-.tab-btn { background: none; border: none; padding: 15px 25px; cursor: pointer; font-size: 1rem; color: #666; border-bottom: 3px solid transparent; transition: all 0.3s ease; }
-.tab-btn.active, .tab-btn:hover { color: #4ECDC4; border-bottom-color: #4ECDC4; }
-.tab-content { display: none; }
-.tab-content.active { display: block; }
-.create-form { background: #F8F9FA; padding: 20px; border-radius: 10px; margin: 20px 0; }
-.form-row { display: grid; grid-template-columns: 1fr; gap: 15px; align-items: end; }
-.form-actions { display: flex; gap: 10px; margin-top: 15px; }
-
-/* LISTA DE ALUNOS E PROGRESSO - COM ROLAGEM */
-.section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-wrap: wrap; gap: 10px; }
-.students-list { 
-    display: flex; 
-    flex-direction: column; 
-    gap: 15px; 
-    max-height: 40vh;
-    overflow-y: auto;
-    padding-right: 10px;
-}
-.student-item { background: #f8f9fa; padding: 15px; border-radius: 10px; border: 1px solid #E0E0E0; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }
-.student-info h4 { margin: 0 0 5px 0; color: #2C3E50; }
-.student-info p { margin: 0; color: #666; font-size: 0.9rem; }
-.status-indicator { font-size: 0.8rem; display: inline-flex; align-items: center; gap: 5px; }
-.status-indicator.active { color: #27ae60; }
-.status-indicator.inactive { color: #c0392b; }
-.sort-buttons { display: flex; align-items: center; gap: 8px; }
-.sort-buttons span { font-size: 0.9rem; color: #555; }
-.student-progress-container { width: 100%; margin-top: 8px; }
-.student-progress-bar { width: 100%; height: 10px; background-color: #e0e0e0; border-radius: 5px; overflow: hidden; }
-.student-progress-fill { height: 100%; background-color: #4ECDC4; width: 0%; transition: width 0.5s ease; }
-
-/* UPLOAD DE ÁUDIO E GRAVAÇÃO */
-.upload-instructions, .record-section { background: #f8f9fa; padding: 20px; border-radius: 10px; margin-bottom: 20px; }
-.upload-instructions strong { color: #764ba2; }
-.upload-area { margin: 20px 0; }
-.upload-label { display: block; padding: 2rem; border: 3px dashed #ddd; border-radius: 15px; background: #fafafa; color: #888; text-align: center; cursor: pointer; transition: all 0.3s ease; }
-.upload-label:hover { border-color: #764ba2; color: #764ba2; }
-.upload-label i { font-size: 2rem; display: block; margin-bottom: 1rem; }
-#audioUpload { display: none; }
-.record-controls, .audio-playback { display: flex; align-items: center; gap: 15px; margin: 20px 0; }
-.record-btn, .stop-btn { background: #ff6b6b; color: white; border: none; border-radius: 50%; width: 50px; height: 50px; font-size: 1.2rem; cursor: pointer; transition: background 0.3s; }
-.stop-btn { background: #555; }
-.record-btn:disabled, .stop-btn:disabled { background: #ccc; cursor: not-allowed; }
-#audioPlayback { width: 100%; }
-
-/* TUTORIAL */
-.tutorial-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 5000; justify-content: center; align-items: center; opacity: 0; transition: opacity 0.4s ease; }
-.tutorial-overlay.show { display: flex; opacity: 1; }
-
-.credentials-box { background-color: #f8f9fa; border: 1px solid #e0e0e0; border-radius: 8px; padding: 20px; margin: 20px 0; text-align: left; font-size: 1.1rem; }
-.credentials-box p { margin-bottom: 10px; }
-.student-actions { display: flex; flex-direction: column; align-items: flex-start; gap: 5px; }
-.select-label { font-size: 0.8em; color: #555; font-weight: bold; }
-.phase-select { padding: 8px; border-radius: 8px; border: 2px solid #ddd; background-color: white; font-family: 'Comic Neue', cursive; font-size: 1rem; cursor: pointer; transition: all 0.2s ease; }
-.phase-select:hover { border-color: #764ba2; }
-.phase-select:focus { outline: none; border-color: #764ba2; box-shadow: 0 0 5px rgba(118, 75, 162, 0.5); }
-.password-wrapper { position: relative; display: flex; align-items: center; }
-.password-wrapper input { width: 100%; padding-right: 45px; }
-.password-toggle { position: absolute; right: 15px; cursor: pointer; color: #aaa; transition: color 0.2s ease; }
-.password-toggle:hover { color: #333; }
-.fa-spinner { animation: spin 1s linear infinite; }
-@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-
-
-/* --- CORREÇÃO PRINCIPAL: JOGO DA MEMÓRIA RESPONSIVO --- */
-.memory-grid {
-    display: grid;
-    /* Cria colunas flexíveis que se ajustam ao tamanho da tela */
-    grid-template-columns: repeat(auto-fit, minmax(60px, 1fr));
-    gap: 10px;
-    width: 100%;
-    max-width: 500px; /* Limita a largura máxima em telas grandes */
-    margin: 20px auto;
-    perspective: 1000px;
-}
-
-.memory-card {
-    background-color: transparent;
-    width: 100%; /* Ocupa o espaço da coluna da grade */
-    aspect-ratio: 1 / 1; /* Mantém o cartão quadrado */
-    cursor: pointer;
-}
-
-.card-inner {
-    position: relative;
-    width: 100%;
-    height: 100%;
-    transition: transform 0.6s;
-    transform-style: preserve-3d;
-}
-.memory-card.flipped .card-inner {
-    transform: rotateY(180deg);
-}
-
-.card-face {
-    position: absolute;
-    width: 100%;
-    height: 100%;
-    -webkit-backface-visibility: hidden;
-    backface-visibility: hidden;
-    border-radius: 10px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: clamp(1.8rem, 10vw, 2.5rem); /* Fonte do cartão responsiva */
-    font-weight: bold;
-}
-
-.card-front {
-    background: linear-gradient(135deg, #667eea, #764ba2);
-    color: white;
-}
-.card-front::before {
-    content: '?';
-}
-
-.card-back {
-    background-color: #4ECDC4;
-    color: white;
-    transform: rotateY(180deg);
-}
-.memory-card.matched .card-inner {
-    transform: scale(0.95);
-    opacity: 0.7;
-}
-.memory-card.matched .card-back {
-    background-color: #27ae60;
-}
-/* --- FIM DA CORREÇÃO --- */
-
-/* === INÍCIO DO BLOCO CORRIGIDO PARA RELATÓRIOS E GRÁFICOS === */
-.report-section { 
-    margin-bottom: 30px; 
-    padding-bottom: 20px; 
-    border-bottom: 1px solid #eee; 
-}
-.report-section:last-child { 
-    border-bottom: none; 
-    padding-bottom: 0; 
-}
-.report-section h4 { 
-    color: #2C3E50; 
-    margin-bottom: 8px; 
-    font-size: 1.3rem; 
-    display: flex; 
-    align-items: center; 
-    gap: 10px; 
-}
-.report-section p { 
-    color: #666; 
-    font-size: 0.95rem; 
-    margin-bottom: 20px; 
-}
-
-/* Contêiner para a lista de relatórios individuais de alunos */
-.individual-reports-container {
-    display: flex;
-    flex-direction: column;
-    gap: 15px;
-    max-height: 75vh;
-    overflow-y: auto;
-    padding: 5px 10px 5px 5px;
-}
-.student-report-item { 
-    cursor: pointer; 
-    transition: background-color 0.2s ease; 
-}
-.student-report-item:hover { 
-    background-color: #f0eaff; 
-}
-.student-errors-details { 
-    margin-top: 15px; 
-    padding: 15px; 
-    background-color: #fff; 
-    border-radius: 8px; 
-    border: 1px solid #ddd; 
-}
-.student-errors-details ul { 
-    list-style-type: none; 
-    padding-left: 0; 
-    max-height: 200px;
-    overflow-y: auto;
-    padding-right: 8px;
-}
-.student-errors-details li { 
-    padding: 8px 0; 
-    display: flex; 
-    justify-content: space-between; 
-    font-size: 1rem;
-    border-bottom: 1px solid #f0f0f0; 
-}
-.student-errors-details li:last-child { 
-    border-bottom: none; 
-}
-.student-errors-details .error-item { 
-    font-size: 1rem; 
-    color: #333; 
-    display: flex; 
-    flex-direction: column; 
-}
-.student-errors-details .error-item small { 
-    font-size: 0.85rem; 
-    color: #777; 
-    margin-top: 4px; 
-    font-style: italic; 
-}
-.student-errors-details .error-count { 
-    font-size: 1rem; 
-    font-weight: bold; 
-    color: #ff6b6b; 
-    background-color: #ff6b6b1a; 
-    padding: 5px 10px; 
-    border-radius: 20px; 
-    white-space: nowrap; 
-}
-
-/* NOVA ESTRUTURA PARA O MAPA DE CALOR */
-.all-phases-scroll-container {
-    max-height: 65vh;
-    overflow-y: auto;
-    padding: 15px;
-    background-color: #fdfcff;
-    border-radius: 8px;
-    border: 1px solid #e0d8f0;
-}
-
-.phase-group {
-    background-color: #f7f5ff;
-    border-left: 5px solid #764ba2;
-    border-radius: 10px;
-    padding: 20px;
-    width: 100%;
-    margin-bottom: 15px;
-}
-.all-phases-scroll-container .phase-group:last-child {
-    margin-bottom: 0;
-}
-
-.phase-group h3 {
-    color: #764ba2;
-    margin-top: 0;
-    margin-bottom: 15px;
-    border-bottom: 2px solid #e0d8f0;
-    padding-bottom: 10px;
-    font-size: 1.4rem;
-}
-
-.heatmap-item {
-    background-color: #fff;
-    border: 1px solid #e0e0e0;
-    border-radius: 8px;
-    padding: 8px 12px;
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    box-shadow: none;
-    margin-bottom: 8px;
-}
-.heatmap-item:last-child {
-    margin-bottom: 0;
-}
-.heatmap-item .item-label {
-    font-size: 1.2rem;
-    font-weight: bold;
-    color: #764ba2;
-    min-width: 35px;
-    text-align: center;
-}
-.heatmap-item .item-details {
-    display: flex;
-    flex-direction: column;
-    flex-grow: 1;
-}
-.heatmap-item .item-count {
-    font-size: 0.9rem;
-    color: #333;
-    font-weight: bold;
-}
-.heatmap-item .item-bar-container {
-    width: 100%;
-    height: 8px;
-    background-color: #e0e0e0;
-    border-radius: 4px;
-    margin-top: 4px;
-}
-.heatmap-item .item-bar {
-    height: 100%;
-    background: linear-gradient(90deg, #ffc0cb, #ff6b6b);
-    border-radius: 4px;
-}
-
-.view-chart-btn { 
-    margin-left: auto; 
-    background-color: #f0eaff; 
-    color: #764ba2; 
-    font-weight: bold; 
-    border: 1px solid #dcd1ed; 
-}
-.view-chart-btn:hover { 
-    background-color: #764ba2; 
-    color: white; 
-}
-.chart-container { 
-    position: relative; 
-    width: 100%; 
-    max-height: 450px; 
-    padding: 1rem; 
-    background-color: #fafafa; 
-    border-radius: 8px; 
-    overflow-x: auto; 
-}
-/* === FIM DO BLOCO CORRIGIDO PARA RELATÓRIOS E GRÁFICOS === */
-
-
-/* === DASHBOARD COM SIDEBAR === */
-#teacherDashboard .dashboard-container { display: flex; width: 100%; height: 100vh; max-width: 100%; padding: 0; margin: 0; background-color: #f4f7fc; }
-.sidebar { width: 260px; background: #ffffff; border-right: 1px solid #e0e0e0; display: flex; flex-direction: column; padding: 20px 0; transition: width 0.3s ease; flex-shrink: 0; }
-.sidebar-header { padding: 0 25px 20px 25px; border-bottom: 1px solid #f0f0f0; }
-.sidebar-header h3 { color: #2c3e50; font-size: 1.5rem; }
-.sidebar-nav { flex-grow: 1; margin-top: 20px; }
-.sidebar-nav a { display: flex; align-items: center; padding: 15px 25px; color: #555; text-decoration: none; font-size: 1.1rem; font-weight: bold; margin: 5px 10px; border-radius: 8px; transition: background-color 0.2s ease, color 0.2s ease; }
-.sidebar-nav a:hover { background-color: #f0eaff; color: #764ba2; }
-.sidebar-nav a.active { background: linear-gradient(90deg, #667eea, #764ba2); color: white; box-shadow: 0 4px 15px rgba(118, 75, 162, 0.3); }
-.sidebar-nav a i { width: 30px; text-align: center; margin-right: 15px; font-size: 1.2rem; }
-.sidebar-footer { padding: 20px 25px 0 25px; border-top: 1px solid #f0f0f0; }
-.logout-btn-sidebar { width: 100%; background: #f8f9fa; border: 1px solid #ddd; color: #c0392b; padding: 12px; border-radius: 8px; cursor: pointer; font-size: 1.1rem; font-weight: bold; transition: all 0.2s ease; }
-.logout-btn-sidebar:hover { background: #c0392b; color: white; border-color: #c0392b; }
-.main-content { flex-grow: 1; padding: 0; overflow-y: auto; display: flex; flex-direction: column; }
-#teacherDashboard .dashboard-header { background: #ffffff; padding: 20px 40px; border-bottom: 1px solid #e0e0e0; display: flex; justify-content: space-between; align-items: center; color: #2c3e50; border-radius: 0; margin: 0; width: auto; flex-shrink: 0; }
-#teacherDashboard .dashboard-header h1 { font-size: 1.8rem; color: #333; }
-#teacherDashboard .teacher-info span { color: #333; font-size: 1.1rem; }
-.dashboard-content-area { padding: 40px; flex-grow: 1; }
-.dashboard-view { display: none; }
-.dashboard-view.active { display: block; }
-.view-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; padding-bottom: 15px; border-bottom: 1px solid #eee; }
-.view-header p { font-size: 1.1rem; color: #666; margin: 0; }
-#teacherDashboard .logout-btn { display: none; }
-
-/* === ASSISTENTE DE IA === */
-.ai-button-container { text-align: right; margin-top: 20px; }
-.ai-btn { background: linear-gradient(135deg, #667eea, #764ba2); color: white; font-weight: bold; gap: 8px !important; }
-.ai-btn:hover { transform: scale(1.05); }
-.ai-tips-container { background-color: #f8f9fa; border-radius: 8px; padding: 25px; margin-top: 15px; text-align: left; line-height: 1.6; }
-.ai-tips-container h2 { font-size: 1.3rem; color: #2c3e50; border-bottom: 2px solid #e0e0e0; padding-bottom: 10px; margin-bottom: 15px; }
-.ai-tips-container h3 { font-size: 1.1rem; color: #764ba2; border-bottom: none; padding-bottom: 5px; margin-top: 15px; margin-bottom: 10px; display: flex; align-items: center; gap: 10px; }
-.ai-tips-container h3:first-child { margin-top: 0; }
-.ai-tips-container p { margin-bottom: 10px; }
-.ai-tips-container .lesson-step { margin-bottom: 12px; line-height: 1.7; padding-left: 10px; border-left: 3px solid #4ecdc4; }
-.ai-tips-container .lesson-step strong { color: #2c3e50; }
-.loading-ai { text-align: center; padding: 40px; font-size: 1.2rem; color: #555; }
-.loading-ai i { margin-right: 10px; }
-.ai-tips-container .error { color: #c0392b; font-weight: bold; }
-
-/* === CARDS E BOTÕES DA TURMA === */
-.classes-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-    gap: 20px;
-}
-.class-card { background-color: #ffffff; border-radius: 15px; padding: 20px 25px; box-shadow: 0 6px 20px rgba(0,0,0,0.08); border: 1px solid #e0e0e0; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px; }
-.class-card h3 { margin: 0; font-size: 1.5rem; color: #2c3e50; flex-grow: 1; }
-.class-card .student-count { font-size: 1rem; color: #666; background-color: #f4f7fc; padding: 5px 12px; border-radius: 20px; font-weight: bold; }
-.class-card-actions { display: flex; gap: 10px; }
-.class-card-actions .btn { border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-family: 'Comic Neue', cursive; font-size: 1rem; font-weight: bold; transition: all 0.2s ease; display: inline-flex; align-items: center; gap: 8px; }
-.class-card-actions .btn:hover { transform: translateY(-2px); box-shadow: 0 4px 10px rgba(0,0,0,0.15); }
-.class-card-actions .btn.primary { background: linear-gradient(145deg, #f0eaff, #dcd1ed); color: #764ba2; }
-.class-card-actions .btn.primary:hover { background: #764ba2; color: white; }
-.class-card-actions .btn.danger { background-color: #ffebee; color: #c0392b; padding: 10px; font-size: 1.1rem; }
-.class-card-actions .btn.danger:hover { background-color: #c0392b; color: white; }
-
-
-/* === ÍCONES E BOTÕES NO MODAL === */
-.student-actions .btn.small { background-color: transparent; border: none; color: #888; font-size: 1.2rem; padding: 8px 12px; border-radius: 50%; cursor: pointer; transition: all 0.2s ease; width: 40px; height: 40px; }
-.student-actions .btn.small:hover { background-color: #f0f0f0; color: #333; }
-.student-actions .btn.small.danger:hover { background-color: #ffebee; color: #c0392b; }
-.sort-btn { background-color: #f0f0f0; border: 1px solid #ddd; color: #555; padding: 8px 15px; border-radius: 20px; font-family: 'Comic Neue', cursive; font-size: 0.9rem; font-weight: bold; cursor: pointer; transition: all 0.2s ease; display: inline-flex; align-items: center; gap: 6px; }
-.sort-btn:hover:not(.active) { background-color: #e0e0e0; border-color: #ccc; }
-.sort-btn.active { background-color: #764ba2; color: white; border-color: #764ba2; box-shadow: 0 2px 8px rgba(118, 75, 162, 0.3); }
-.form-actions .btn { padding: 10px 20px; border-radius: 8px; font-family: 'Comic Neue', cursive; font-size: 1rem; font-weight: bold; cursor: pointer; transition: all 0.2s ease; border: 2px solid #ddd; background-color: #f8f9fa; color: #555; }
-.form-actions .btn:hover { transform: translateY(-2px); box-shadow: 0 3px 8px rgba(0,0,0,0.1); border-color: #ccc; background-color: #fff; }
-.form-actions .btn.primary { background: linear-gradient(145deg, #4ECDC4, #45B7B8); border-color: #4ECDC4; color: white; }
-.form-actions .btn.primary:hover { box-shadow: 0 5px 15px rgba(78, 205, 196, 0.4); }
-.password-group input { padding-right: 45px !important;  }
-.generate-password-btn:hover { color: #764ba2; transform: translateY(-50%) scale(1.2); }
-.phase-checkbox-group { display: flex; flex-direction: column; gap: 5px; align-items: flex-start; }
-.phase-checkbox-label { display: flex; align-items: center; gap: 8px; font-size: 0.9rem; color: #333; cursor: pointer; padding: 4px 8px; border-radius: 5px; transition: background-color 0.2s ease; }
-.phase-checkbox-label:hover { background-color: #f0eaff; }
-.phase-checkbox { width: 18px; height: 18px; cursor: pointer; flex-shrink: 0; }
-
-/* === ESTILOS PARA AS NOVAS FASES === */
-.sentence-build-area { background-color: #e9ecef; border: 2px dashed #adb5bd; border-radius: 10px; padding: 15px; min-height: 60px; margin: 1.5rem auto; display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: center; transition: all 0.3s ease; }
-.sentence-word { background-color: #fff; color: #495057; padding: 8px 15px; border-radius: 8px; font-size: 1.4rem; font-weight: bold; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-.word-option-button { background: linear-gradient(45deg, #5c6bc0, #3f51b5); color: white; border: none; padding: 1rem; font-size: 1.5rem; font-weight: bold; border-radius: 15px; cursor: pointer; box-shadow: 0 4px 15px rgba(0,0,0,0.15); transition: all 0.3s ease; }
-.word-option-button:hover:not(:disabled) { transform: translateY(-4px); box-shadow: 0 8px 20px rgba(0,0,0,0.2); }
-.word-option-button.disabled, .word-option-button.incorrect { background: #ced4da; cursor: not-allowed; opacity: 0.6; }
-.word-option-button.incorrect { background: linear-gradient(45deg, #ff6b6b, #ee5a24); opacity: 1; }
-
-.sound-detective-button {
-    background: linear-gradient(45deg, #4ecdc4, #44a08d);
-    color: white;
-    border: none;
-    padding: 1.5rem;
-    font-size: 1.2rem;
-    font-weight: bold;
-    border-radius: 20px;
-    cursor: pointer;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-    transition: all 0.3s ease;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 10px;
-}
-.sound-detective-button:hover:not(:disabled) {
-    transform: translateY(-5px) scale(1.05);
-}
-
-.heatmap-selections {
-    font-size: 0.8rem;
-    color: #b33939; /* Um tom de vermelho para indicar erro */
-    margin-top: 4px;
-    font-style: italic;
-}
-
-
-/* === MEDIA QUERIES - AJUSTES FINOS PARA RESPONSIVIDADE === */
-@media (max-width: 768px) {
-    #teacherDashboard .dashboard-container { padding-bottom: 80px; }
-    .sidebar { position: fixed; bottom: 0; left: 0; width: 100%; height: auto; background: #ffffff; flex-direction: row; box-shadow: 0 -2px 10px rgba(0,0,0,0.1); padding: 5px 0; border-right: none; z-index: 1000; }
-    .sidebar-header { display: none; }
-    .sidebar-nav { margin-top: 0; display: flex; flex-grow: 1; justify-content: space-around; align-items: center; }
-    .sidebar-footer { padding: 0; border-top: none; margin-right: 10px; }
-    .sidebar-nav a { flex-direction: column; justify-content: center; padding: 8px 5px; margin: 0; height: 60px; flex-grow: 1; font-size: 0.75rem; color: #888; font-weight: normal; }
-    .sidebar-nav a.active { color: #764ba2; background: none; box-shadow: none; }
-    .sidebar-nav a:hover { background-color: #f5f5f5; color: #764ba2; }
-    .sidebar-nav a i { margin-right: 0; margin-bottom: 5px; font-size: 1.5rem; }
-    .sidebar-nav a span { display: block; }
-    .logout-btn-sidebar { background: none; border: none; color: #888; display: flex; flex-direction: column; align-items: center; font-size: 0.75rem; height: 60px; padding: 8px 5px; }
-    .logout-btn-sidebar i { font-size: 1.5rem; margin-bottom: 5px; }
-    .logout-btn-sidebar:hover { color: #c0392b; }
-    #teacherDashboard .dashboard-container { flex-direction: column; height: auto; min-height: 100vh; }
-    .main-content { overflow-y: visible; }
-    body { overflow-y: auto; }
-    #teacherDashboard .dashboard-header { padding: 15px 20px; }
-    #teacherDashboard .dashboard-header h1 { font-size: 1.4rem; }
-    .dashboard-content-area { padding: 20px; }
-    .view-header { flex-direction: column; gap: 15px; align-items: flex-start; }
-    .modal-content.large { width: 95%; max-height: 85vh; }
+// =======================================================
+// JOGO DAS LETRAS - VERSÃO FINAL COM TODAS AS IMPLEMENTAÇÕES
+// INCLUI: Correções no painel de progresso, designação de fases e salvamento de dados (RLS).
+// =======================================================
+
+
+// PARTE 1: CONFIGURAÇÃO INICIAL E SUPABASE
+const { createClient } = supabase;
+const supabaseUrl = 'https://nxpwxbxhucliudnutyqd.supabase.co';
+const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im54cHd4YnhodWNsaXVkbnV0eXFkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU0ODU4NjcsImV4cCI6MjA3MTA2MTg2N30.m1KbiyPe_K9CK2nBhsxo97A5rai2GtnyVPnpff5isNg';
+const supabaseClient = createClient(supabaseUrl, supabaseKey);
+const SUPER_ADMIN_TEACHER_ID = 'd88211f7-9f98-47b8-8e57-54bf767f42d6';
+let currentUser = null, currentClassId = null, studentProgressData = [], currentChart = null, currentEvolutionChart = null;
+const ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split(''), VOWELS = 'AEIOU'.split('');
+const CUSTOM_AUDIO_KEYS = {'instruction_1': 'Instrução - Fase 1', 'instruction_2': 'Instrução - Fase 2', 'instruction_3': 'Instrução - Fase 3', 'feedback_correct': 'Feedback - Acerto', 'feedback_incorrect': 'Feedback - Erro'};
+let gameState = {}, mediaRecorder, audioChunks = [], timerInterval, speechReady = false, selectedVoice = null;
+
+// VARIÁVEIS PARA O STATUS EM TEMPO REAL
+let teacherChannel = null;
+let onlineStudents = new Set();
+let studentChannel = null;
+
+// PARTE 2: CONTEÚDO DO JOGO (SEQUÊNCIA PEDAGÓGICA FINAL ALINHADA À IMAGEM)
+const PHASE_DESCRIPTIONS = {
+    1: "O Som das Letras",
+    2: "Jogo da Memória: Maiúsculas e Minúsculas",
+    3: "Formando Sílabas com F",
+    4: "Caça-Palavras da Letra F",
+    5: "Pares Surdos/Sonoros",
+    6: "Contando Palavras na Frase",
+    7: "Montando Frases",
+    8: "Identificação de Vogais",
+    9: "Contando Sílabas",
+    10: "Caça-Sílaba Inicial",
+    11: "A Letra F no Início, Meio e Fim",
+    12: "Formando Novas Palavras",
+    13: "Invertendo Sílabas",
+    14: "Fábrica de Rimas",
+    15: "Contando Sons (Fonemas)",
+    16: "Completando com Sílabas Complexas"
+};
+
+// BANCO DE DADOS DAS FASES
+const PHASE_1_LETTER_SOUNDS = [
+    { letter: 'F', audioKey: 'F', description: 'de soprar uma vela (ffff...)?', optionsPool: 'AMOPV' },
+    { letter: 'V', audioKey: 'V', description: 'de um motor vibrando (vvvv...)?', optionsPool: 'AMOPF' },
+    { letter: 'S', audioKey: 'S', description: 'da cobrinha (ssss...)?', optionsPool: 'AMOPZ' },
+    { letter: 'Z', audioKey: 'Z', description: 'da abelhinha (zzzz...)?', optionsPool: 'AMOPS' },
+    { letter: 'M', audioKey: 'M', description: 'de quando a comida está gostosa (mmmm...)?', optionsPool: 'AOPNS' },
+    { letter: 'P', audioKey: 'P', description: 'de uma pequena explosão, sem voz (p, p, p)?', optionsPool: 'AFOVB' },
+    { letter: 'B', audioKey: 'B', description: 'de uma pequena explosão, com voz (b, b, b)?', optionsPool: 'AFOVP' },
+    { letter: 'T', audioKey: 'T', description: 'da batidinha da língua no dente, sem voz (t, t, t)?', optionsPool: 'AFOVD' },
+    { letter: 'D', audioKey: 'D', description: 'da batidinha da língua no dente, com voz (d, d, d)?', optionsPool: 'AFOVT' },
+    { letter: 'L', audioKey: 'L', description: 'com a língua no céu da boca (llll...)?', optionsPool: 'ARFMN' }
+];
+const PHASE_3_SYLLABLE_F = [
+    { base: 'F', vowel: 'A', result: 'FA', image: '🔪', word: 'FACA' }, { base: 'F', vowel: 'E', result: 'FE', image: '🌱', word: 'FEIJÃO' },
+    { base: 'F', vowel: 'I', result: 'FI', image: '🎀', word: 'FITA' }, { base: 'F', vowel: 'O', result: 'FO', image: '🔥', word: 'FOGO' },
+    { base: 'F', vowel: 'U', result: 'FU', image: '💨', word: 'FUMAÇA' }, { base: 'F', vowel: 'A', result: 'FA', image: '🧚‍♀️', word: 'FADA' },
+    { base: 'F', vowel: 'E', result: 'FE', image: '😀', word: 'FELIZ' }, { base: 'F', vowel: 'I', result: 'FI', image: 'Figo', word: 'FIGO' },
+    { base: 'F', vowel: 'O', result: 'FO', image: '🦭', word: 'FOCA' }, { base: 'F', vowel: 'U', result: 'FU', image: '⚽', word: 'FUTEBOL' }
+];
+const PHASE_4_WORDS_F = [
+    { word: 'FOTO', image: '📷', options: ['FOTO', 'VOTO', 'POTE'] }, { word: 'FIO', image: '🧵', options: ['FIO', 'VIO', 'RIO'] },
+    { word: 'FACA', image: '🔪', options: ['FACA', 'VACA', 'PACA'] }, { word: 'FOCA', image: '🦭', options: ['FOCA', 'POCA', 'VOCA'] },
+    { word: 'FADA', image: '🧚‍♀️', options: ['FADA', 'VADA', 'NADA'] }, { word: 'FOGO', image: '🔥', options: ['FOGO', 'POGO', 'JOGO'] },
+    { word: 'FITA', image: '🎀', options: ['FITA', 'VITA', 'BITA'] }, { word: 'FESTA', image: '🎉', options: ['FESTA', 'RESTA', 'TESTA'] },
+    { word: 'FILA', image: '🧍🧍‍♀️🧍‍♂️', options: ['FILA', 'VILA', 'PILA'] }, { word: 'FAROL', image: '🚦', options: ['FAROL', 'CAROL', 'ROL'] }
+];
+const PHASE_5_SOUND_PAIRS = [
+    { correct: 'VACA', incorrect: 'FACA', image: '🐄' }, { correct: 'PATO', incorrect: 'BATO', image: '🦆' },
+    { correct: 'DADO', incorrect: 'TADO', image: '🎲' }, { correct: 'BOTE', incorrect: 'POTE', image: '⛵' },
+    { correct: 'GOLA', incorrect: 'COLA', image: '👕' }, { correct: 'ZELO', incorrect: 'SELO', image: '😇' },
+    { correct: 'JOGO', incorrect: 'XOGO', image: '🎮' }, { correct: 'CHAVE', incorrect: 'JAVE', image: '🔑' },
+    { correct: 'GALO', incorrect: 'CALO', image: '🐓' }, { correct: 'FACA', incorrect: 'VACA', image: '🔪' }
+];
+const PHASE_6_SENTENCES_COUNT = [
+    { sentence: 'A FADA VOOU', image: '🧚‍♀️', words: 3 }, { sentence: 'O GATO BEBE LEITE', image: '🐈', words: 4 },
+    { sentence: 'O SOL É AMARELO', image: '☀️', words: 4 }, { sentence: 'EU GOSTO DE BOLO', image: '🎂', words: 4 },
+    { sentence: 'A BOLA É REDONDA', image: '⚽', words: 4 }, { sentence: 'O CACHORRO LATE ALTO', image: '🐕', words: 4 },
+    { sentence: 'A LUA BRILHA NO CÉU', image: '🌙', words: 5 }, { sentence: 'A FLOR É CHEIROSA', image: '🌸', words: 4 },
+    { sentence: 'O SAPO PULA NO LAGO', image: '🐸', words: 5 }, { sentence: 'O PEIXE VIVE NA ÁGUA', image: '🐠', words: 5 }
+];
+const PHASE_7_SENTENCES_BUILD = [
+    { sentence: ['O', 'FOGO', 'QUEIMA'], image: '🔥', answer: 'O FOGO QUEIMA' }, { sentence: ['A', 'BOLA', 'É', 'REDONDA'], image: '⚽', answer: 'A BOLA É REDONDA' },
+    { sentence: ['EU', 'AMO', 'LER'], image: '📚', answer: 'EU AMO LER' }, { sentence: ['O', 'PEIXE', 'NADA'], image: '🐠', answer: 'O PEIXE NADA' },
+    { sentence: ['O', 'SOL', 'É', 'QUENTE'], image: '☀️', answer: 'O SOL É QUENTE' }, { sentence: ['A', 'CASA', 'É', 'GRANDE'], image: '🏠', answer: 'A CASA É GRANDE' },
+    { sentence: ['O', 'GATO', 'DORME'], image: '😴', answer: 'O GATO DORME' }, { sentence: ['A', 'FLOR', 'É', 'BONITA'], image: '🌻', answer: 'A FLOR É BONITA' },
+    { sentence: ['NÓS', 'VAMOS', 'BRINCAR'], image: '🤹', answer: 'NÓS VAMOS BRINCAR' }, { sentence: ['O', 'CARRO', 'É', 'AZUL'], image: '🚗', answer: 'O CARRO É AZUL' }
+];
+const PHASE_9_SYLLABLE_COUNT = [
+    { word: 'SOL', image: '☀️', syllables: 1 }, { word: 'PÃO', image: '🍞', syllables: 1 }, { word: 'FLOR', image: '🌸', syllables: 1 }, { word: 'MAR', image: '🌊', syllables: 1 },
+    { word: 'BOLA', image: '⚽', syllables: 2 }, { word: 'CASA', image: '🏠', syllables: 2 }, { word: 'LUA', image: '🌙', syllables: 2 }, { word: 'LIVRO', image: '📖', syllables: 2 },
+    { word: 'SAPATO', image: '👟', syllables: 3 }, { word: 'JANELA', image: '🖼️', syllables: 3 }, { word: 'MACACO', image: '🐒', syllables: 3 }, { word: 'CASTELO', image: '🏰', syllables: 3 },
+    { word: 'BORBOLETA', image: '🦋', syllables: 4 }, { word: 'TELEFONE', image: '📞', syllables: 4 },
+    { word: 'ABACAXI', image: '🍍', syllables: 4 }, { word: 'HIPOPÓTAMO', image: '🦛', syllables: 5 }
+];
+const PHASE_10_INITIAL_SYLLABLE = [
+    { word: 'BOLO', image: '🎂', correctAnswer: 'BO' }, { word: 'MACACO', image: '🐒', correctAnswer: 'MA' },
+    { word: 'SAPATO', image: '👟', correctAnswer: 'SA' }, { word: 'JANELA', image: '🖼️', correctAnswer: 'JA' },
+    { word: 'VACA', image: '🐄', correctAnswer: 'VA' }, { word: 'GATO', image: '🐈', correctAnswer: 'GA' },
+    { word: 'DADO', image: '🎲', correctAnswer: 'DA' }, { word: 'RATO', image: '🐀', correctAnswer: 'RA' },
+    { word: 'FOCA', image: '🦭', correctAnswer: 'FO' }, { word: 'LIVRO', image: '📖', correctAnswer: 'LI' }
+];
+const PHASE_11_F_POSITION = [
+    { word: 'FADA', image: '🧚‍♀️', syllable: 'FA', blanked: '__DA' }, { word: 'FIVELA', image: '🪢', syllable: 'FI', blanked: '__VELA' },
+    { word: 'GARRAFA', image: '🍾', syllable: 'FA', blanked: 'GARRA__' }, { word: 'ALFINETE', image: '🧷', syllable: 'FI', blanked: 'AL__NETE' },
+    { word: 'CAFÉ', image: '☕', syllable: 'FÉ', blanked: 'CA__' }, { word: 'GIRAFA', image: '🦒', syllable: 'FA', blanked: 'GIRA__' },
+    { word: 'SOFÁ', image: '🛋️', syllable: 'FÁ', blanked: 'SO__' }, { word: 'BIFE', image: '🥩', syllable: 'FE', blanked: 'BI__' },
+    { word: 'FÓSFORO', image: 'Matches', syllable: 'FOS', blanked: '__FORO' }, { word: 'GOLFINHO', image: '🐬', syllable: 'FI', blanked: 'GOL__NHO' }
+];
+const PHASE_12_WORD_TRANSFORM = [
+    { initialWord: 'SAPATO', toRemove: 'SA', correctAnswer: 'PATO', image: '🦆' }, { initialWord: 'LUVA', toRemove: 'L', correctAnswer: 'UVA', image: '🍇' },
+    { initialWord: 'CAMALEÃO', toRemove: 'CAMA', correctAnswer: 'LEÃO', image: '🦁' }, { initialWord: 'GALINHA', toRemove: 'GA', correctAnswer: 'LINHA', image: '🧵' },
+    { initialWord: 'SOLDADO', toRemove: 'SOL', correctAnswer: 'DADO', image: '🎲' }, { initialWord: 'SERPENTE', toRemove: 'SER', correctAnswer: 'PENTE', image: 'comb' },
+    { initialWord: 'TUCANO', toRemove: 'TU', correctAnswer: 'CANO', image: 'pipe' }, { initialWord: 'ESCADA', toRemove: 'ES', correctAnswer: 'CADA', image: 'ladder' },
+    { initialWord: 'REPOLHO', toRemove: 'RE', correctAnswer: 'POLHO', image: 'cabbage' }, { initialWord: 'SACOLA', toRemove: 'SA', correctAnswer: 'COLA', image: 'glue' }
+];
+const PHASE_13_INVERT_SYLLABLES = [
+    { word: 'BOLO', image: '🎂', inverted: 'LOBO', imageInverted: '🐺' }, { word: 'MACA', image: '🍎', inverted: 'CAMA', imageInverted: '🛏️' },
+    { word: 'GATO', image: '🐈', inverted: 'TOGA', imageInverted: '🎓' }, { word: 'LAMA', image: '💩', inverted: 'MALA', imageInverted: '👜' },
+    { word: 'TOPA', image: '🤝', inverted: 'PATO', imageInverted: '🦆' }, { word: 'CASA', image: '🏠', inverted: 'SACA', imageInverted: '💰' },
+    { word: 'LICA', image: '👱‍♀️', inverted: 'CALI', imageInverted: '🌆' }, { word: 'DICA', image: '💡', inverted: 'CADI', imageInverted: '🛒' },
+    { word: 'MAGO', image: '🧙‍♂️', inverted: 'GOMA', imageInverted: '🍬' }, { word: 'SECA', image: '🏜️', inverted: 'CASE', imageInverted: '💼' }
+];
+const PHASE_14_RHYMES = [
+    { word: 'PÃO', image: '🍞', rhyme: 'MÃO' }, { word: 'GATO', image: '🐈', rhyme: 'PATO' },
+    { word: 'JANELA', image: '🖼️', rhyme: 'PANELA' }, { word: 'ANEL', image: '💍', rhyme: 'PASTEL' },
+    { word: 'FIVELA', image: '🪢', rhyme: 'CANELA' }, { word: 'CADEIRA', image: '🪑', rhyme: 'BANDEIRA' },
+    { word: 'MARTELO', image: '🔨', rhyme: 'CASTELO' }, { word: 'SOLDADO', image: '🎖️', rhyme: 'ADOÇADO' },
+    { word: 'CEBOLA', image: '🧅', rhyme: 'ARGOLA' }, { word: 'CENOURA', image: '🥕', rhyme: 'TESOURA' }
+];
+const PHASE_15_PHONEME_COUNT = [
+    { word: 'LUA', image: '🌙', sounds: 3 }, { word: 'SOL', image: '☀️', sounds: 3 },
+    { word: 'PÉ', image: '🦶', sounds: 2 }, { word: 'BOLA', image: '⚽', sounds: 4 },
+    { word: 'FACA', image: '🔪', sounds: 4 }, { word: 'REI', image: '👑', sounds: 3 },
+    { word: 'UVA', image: '🍇', sounds: 3 }, { word: 'CASA', image: '🏠', sounds: 4 },
+    { word: 'RUA', image: '🛣️', sounds: 3 }, { word: 'DEDO', image: '☝️', sounds: 4 }
+];
+const PHASE_16_COMPLEX_SYLLABLES = [
+    { word: 'LIVRO', image: '📖', syllable: 'VRO', blanked: 'LI__' }, { word: 'BRUXA', image: '🧙‍♀️', syllable: 'BRU', blanked: '__XA' },
+    { word: 'PALHAÇO', image: '🤡', syllable: 'LHA', blanked: 'PA__ÇO' }, { word: 'NINHO', image: '둥지', syllable: 'NHO', blanked: 'NI__' },
+    { word: 'DRAGÃO', image: '🐲', syllable: 'DRA', blanked: '__GÃO' }, { word: 'FLOR', image: '🌸', syllable: 'FLOR', blanked: '__' },
+    { word: 'PRATO', image: '🍽️', syllable: 'PRA', blanked: '__TO' }, { word: 'CHAVE', image: '🔑', syllable: 'CHA', blanked: '__VE' },
+    { word: 'GLOBO', image: '🌍', syllable: 'GLO', blanked: '__BO' }, { word: 'TREM', image: '🚂', syllable: 'TREM', blanked: '__' }
+];
+
+
+// PARTE 3: FUNÇÕES UTILITÁRIAS
+async function hashPassword(password) { const encoder = new TextEncoder(); const data = encoder.encode(password); const hashBuffer = await window.crypto.subtle.digest('SHA-256', data); const hashArray = Array.from(new Uint8Array(hashBuffer)); return hashArray.map(b => b.toString(16).padStart(2, '0')).join(''); }
+async function verifyPassword(password, storedHash) { const newHash = await hashPassword(password); return newHash === storedHash; }
+function generateRandomPassword() { const words = ['sol', 'lua', 'rio', 'mar', 'flor', 'gato', 'cao', 'pato', 'rei', 'luz']; const word = words[Math.floor(Math.random() * words.length)]; const number = Math.floor(100 + Math.random() * 900); return `${word}${number}`; }
+function formatErrorMessage(error) { if (!error || !error.message) { return 'Ocorreu um erro inesperado. Tente mais tarde.'; } const message = error.message.toLowerCase(); if (message.includes('duplicate key')) { return 'Este nome de usuário já existe. Escolha outro.'; } if (message.includes('invalid login credentials') || message.includes('usuário ou senha inválidos.')) { return 'Usuário ou senha inválidos.'; } console.error("Erro não tratado:", error); return 'Ocorreu um erro inesperado. Tente mais tarde.'; }
+
+function _generateOptions(correctItem, sourceArray, count) {
+    const options = new Set([correctItem]);
+    const availableItems = [...sourceArray].filter(l => l !== correctItem);
+    while (options.size < count && availableItems.length > 0) {
+        const randomIndex = Math.floor(Math.random() * availableItems.length);
+        options.add(availableItems.splice(randomIndex, 1)[0]);
+    }
+    return Array.from(options).sort(() => 0.5 - Math.random());
+}
+
+
+// PARTE 4: LÓGICA PRINCIPAL E EVENTOS
+document.addEventListener('DOMContentLoaded', initApp);
+
+async function initApp() {
+    if (!window.supabase) {
+        alert("ERRO CRÍTICO: Supabase não carregou.");
+        return;
+    }
+    initializeSpeech();
+    setupAllEventListeners();
+    const studentSession = sessionStorage.getItem('currentUser');
     
-    /* AJUSTES RESPONSIVOS NO JOGO */
-    .game-header { flex-direction: column; gap: 1rem; align-items: stretch; padding: 1rem; }
-    .progress-bar { max-width: none; }
-    .letters-grid { grid-template-columns: repeat(auto-fit, minmax(80px, 1fr)); }
-    .audio-button { width: 100px; height: 100px; }
-    .result-stats { flex-direction: column; gap: 1rem; }
+    if (studentSession) {
+        currentUser = JSON.parse(studentSession);
+        await showStudentGame();
+    } else {
+        await checkSession();
+    }
 }
 
-@media (max-width: 480px) {
-    .screen { padding: 10px; }
-    .game-content { padding: 1.5rem 1rem; border-radius: 20px; }
-    .speech-bubble { padding: 0.8rem 1rem; }
-    .letters-grid { gap: 0.5rem; }
-    .letter-button { font-size: 1.8rem; border-radius: 15px; }
-    .memory-grid { gap: 8px; } /* Espaçamento menor para telas bem pequenas */
-    .class-card { flex-direction: column; align-items: flex-start; }
-    .class-card h3 { margin-bottom: 10px; }
-}
-/* --- CORREÇÃO: Barra de Rolagem na Lista de Alunos do Modal --- */
+function setupAllEventListeners() {
+    // Anexa listeners estáticos que existem desde o início
+    document.querySelectorAll('.user-type-btn').forEach(btn => btn.addEventListener('click', (e) => { const type = e.currentTarget.getAttribute('data-type'); if (type === 'teacher') showScreen('teacherLoginScreen'); else if (type === 'student') showScreen('studentLoginScreen'); }));
+    document.querySelectorAll('.back-btn').forEach(btn => btn.addEventListener('click', (e) => { const targetScreen = e.currentTarget.getAttribute('data-target'); showScreen(targetScreen); }));
+    document.getElementById('showRegisterBtn').addEventListener('click', () => showScreen('teacherRegisterScreen'));
+    document.getElementById('showLoginBtn').addEventListener('click', () => showScreen('teacherLoginScreen'));
+    document.getElementById('teacherLoginForm')?.addEventListener('submit', handleTeacherLogin);
+    document.getElementById('teacherRegisterForm')?.addEventListener('submit', handleTeacherRegister);
+    document.getElementById('studentLoginForm')?.addEventListener('submit', handleStudentLogin);
+    document.getElementById('showCreateClassModalBtn').addEventListener('click', () => showModal('createClassModal'));
+    document.getElementById('showAudioSettingsModalBtn').addEventListener('click', showAudioSettingsModal);
+    document.getElementById('createClassForm')?.addEventListener('submit', handleCreateClass);
+    document.getElementById('showCreateStudentFormBtn').addEventListener('click', showCreateStudentForm);
+    document.getElementById('hideCreateStudentFormBtn').addEventListener('click', hideCreateStudentForm);
+    document.getElementById('createStudentSubmitBtn')?.addEventListener('click', handleCreateStudent);
+    document.getElementById('generatePasswordBtn').addEventListener('click', () => { document.getElementById('createStudentPassword').value = generateRandomPassword(); });
+    document.getElementById('startButton')?.addEventListener('click', startGame);
+    document.getElementById('startCustomActivityBtn')?.addEventListener('click', startCustomActivity);
+    document.getElementById('playAudioButton')?.addEventListener('click', playCurrentAudio);
+    document.getElementById('repeatAudio')?.addEventListener('click', playCurrentAudio);
+    document.getElementById('nextQuestion')?.addEventListener('click', nextQuestion);
+    document.getElementById('continueButton')?.addEventListener('click', nextPhase);
+    document.getElementById('retryButton')?.addEventListener('click', retryPhase);
+    document.getElementById('restartButton')?.addEventListener('click', restartGame);
+    document.getElementById('exitGameButton')?.addEventListener('click', handleExitGame);
+    document.querySelectorAll('[data-close]').forEach(btn => { btn.addEventListener('click', () => closeModal(btn.getAttribute('data-close'))); });
+    document.querySelectorAll('#manageClassModal .tab-btn').forEach(btn => { btn.addEventListener('click', (e) => showTab(e.currentTarget)); });
+    document.getElementById('uploadAudioBtn')?.addEventListener('click', handleAudioUpload);
+    document.getElementById('recordBtn')?.addEventListener('click', startRecording);
+    document.getElementById('stopBtn')?.addEventListener('click', stopRecording);
+    document.getElementById('saveRecordingBtn')?.addEventListener('click', saveRecording);
+    document.getElementById('closeTutorialBtn')?.addEventListener('click', hideTutorial);
+    document.getElementById('copyCredentialsBtn')?.addEventListener('click', handleCopyCredentials);
+    document.getElementById('copyResetPasswordBtn')?.addEventListener('click', handleCopyResetPassword);
+    document.querySelectorAll('.password-toggle').forEach(toggle => { toggle.addEventListener('click', () => { const passwordInput = toggle.previousElementSibling; const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password'; passwordInput.setAttribute('type', type); toggle.classList.toggle('fa-eye-slash'); }); });
+    document.querySelectorAll('.sort-btn').forEach(btn => { btn.addEventListener('click', (e) => { const sortBy = e.currentTarget.dataset.sort; document.querySelectorAll('.sort-btn').forEach(b => b.classList.remove('active')); e.currentTarget.classList.add('active'); renderStudentProgress(sortBy); }); });
+    document.getElementById('reportClassSelector').addEventListener('change', handleReportClassSelection);
 
-/*
-  Este seletor garante que o estilo seja aplicado APENAS na lista de alunos
-  (#studentsList) que está dentro do modal de gerenciar turma (#manageClassModal).
-*/
-#manageClassModal #studentsList {
-    max-height: 40vh;   /* Define uma altura máxima (ex: 40% da altura da tela) */
-    overflow-y: auto;   /* Adiciona a barra de rolagem vertical APENAS se necessário */
-    padding-right: 10px;/* Cria um espaço para a barra de rolagem não cobrir o conteúdo */
+    // Anexa os listeners do painel do professor de forma delegada e robusta
+    const sidebar = document.getElementById('dashboardSidebar');
+    sidebar.addEventListener('click', (event) => {
+        const navLink = event.target.closest('.sidebar-nav a');
+        const logoutButton = event.target.closest('#logoutBtnSidebar');
+        
+        if (navLink) {
+            event.preventDefault();
+            handleSidebarClick(navLink);
+        }
+        if (logoutButton) {
+            logout();
+        }
+    });
+}
+
+
+// PARTE 5: AUTENTICAÇÃO E SESSÃO
+async function checkSession() { const { data: { session } } = await supabaseClient.auth.getSession(); if (session && session.user) { currentUser = session.user; if (currentUser.user_metadata.role === 'teacher') { await showTeacherDashboard(); } else { await logout(); } } else { showScreen('userTypeScreen'); } }
+async function handleTeacherLogin(e) { e.preventDefault(); const button = e.target.querySelector('button[type="submit"]'); const originalText = button.innerHTML; button.disabled = true; button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Entrando...'; const email = document.getElementById('teacherEmail').value; const password = document.getElementById('teacherPassword').value; try { const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password }); if (error) throw error; currentUser = data.user; await showTeacherDashboard(); showFeedback('Login realizado com sucesso!', 'success'); } catch (error) { showFeedback(formatErrorMessage(error), 'error'); } finally { button.disabled = false; button.innerHTML = originalText; } }
+async function handleTeacherRegister(e) { e.preventDefault(); const button = e.target.querySelector('button[type="submit"]'); const originalText = button.innerHTML; button.disabled = true; button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Cadastrando...'; const name = document.getElementById('teacherRegName').value; const email = document.getElementById('teacherRegEmail').value; const password = document.getElementById('teacherRegPassword').value; try { const { data, error } = await supabaseClient.auth.signUp({ email, password, options: { data: { full_name: name, role: 'teacher' } } }); if (error) throw error; showFeedback('Cadastro realizado! Link de confirmação enviado para seu e-mail.', 'success'); showScreen('teacherLoginScreen'); } catch (error) { showFeedback(formatErrorMessage(error), 'error'); } finally { button.disabled = false; button.innerHTML = originalText; } }
+async function handleStudentLogin(e) {
+    e.preventDefault();
+    const button = e.target.querySelector('button[type="submit"]');
+    const originalText = button.innerHTML;
+    button.disabled = true;
+    button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Entrando...';
+    const username = document.getElementById('studentUsername').value.trim();
+    const password = document.getElementById('studentPassword').value.trim();
+    try {
+        const { data: studentData, error } = await supabaseClient
+            .from('students')
+            .select('*, assigned_phases, assigned_activity')
+            .ilike('username', username)
+            .single();
+        
+        if (error) {
+            throw new Error('Usuário ou senha inválidos.');
+        }
+
+        const match = await verifyPassword(password, studentData.password);
+        if (!match) {
+            throw new Error('Usuário ou senha inválidos.');
+        }
+
+        currentUser = { ...studentData, type: 'student' };
+        sessionStorage.setItem('currentUser', JSON.stringify(currentUser));
+        await showStudentGame();
+        showFeedback('Login realizado com sucesso!', 'success');
+    } catch (error) {
+        showFeedback(formatErrorMessage(error), 'error');
+    } finally {
+        button.disabled = false;
+        button.innerHTML = originalText;
+    }
+}
+async function logout() { 
+    if (teacherChannel) {
+        supabaseClient.removeChannel(teacherChannel);
+        teacherChannel = null;
+    }
+    await supabaseClient.auth.signOut(); 
+    currentUser = null; 
+    currentClassId = null; 
+    sessionStorage.removeItem('currentUser'); 
+    showScreen('userTypeScreen'); 
+}
+function handleExitGame() { 
+    if (confirm('Tem certeza que deseja sair? Seu progresso ficará salvo.')) { 
+        if (studentChannel) {
+            studentChannel.untrack();
+            supabaseClient.removeChannel(studentChannel);
+            studentChannel = null;
+        }
+        sessionStorage.removeItem('currentUser'); 
+        currentUser = null; 
+        showScreen('userTypeScreen'); 
+    } 
+}
+
+
+// =======================================================
+// PARTE 6: DASHBOARD DO PROFESSOR - SEÇÃO REFEITA E CORRIGIDA
+// =======================================================
+async function showTeacherDashboard() {
+    showScreen('teacherDashboard');
+    await loadTeacherData();
+    showDashboardView('viewTurmas');
+    connectTeacherToRealtime();
+}
+
+function handleSidebarClick(navLinkElement) {
+    const viewId = navLinkElement.dataset.view;
+    showDashboardView(viewId);
+}
+
+function showDashboardView(viewId) { 
+    document.querySelectorAll('.dashboard-view').forEach(view => { view.classList.remove('active'); }); 
+    const activeView = document.getElementById(viewId); 
+    if (activeView) { activeView.classList.add('active'); } 
+    document.querySelectorAll('.sidebar-nav a').forEach(link => { link.classList.remove('active'); if (link.dataset.view === viewId) { link.classList.add('active'); } }); 
+    const linkText = document.querySelector(`.sidebar-nav a[data-view="${viewId}"] span`).textContent; 
+    document.getElementById('dashboard-title').textContent = linkText; 
+    if (viewId === 'viewRelatorios') { 
+        populateReportClassSelector(); 
+    } 
+}
+
+function connectTeacherToRealtime() {
+    if (teacherChannel) {
+        supabaseClient.removeChannel(teacherChannel);
+    }
+    const channelId = `teacher-room-${currentUser.id}`;
+    teacherChannel = supabaseClient.channel(channelId, {
+        config: {
+            presence: {
+                key: currentUser.email,
+            },
+        },
+    });
+
+    const updateOnlineStatus = () => {
+        const presenceState = teacherChannel.presenceState();
+        onlineStudents.clear();
+        for (const id in presenceState) {
+            presenceState[id].forEach(presence => {
+                if (presence.student_id) {
+                    onlineStudents.add(presence.student_id);
+                }
+            });
+        }
+        const progressList = document.getElementById('studentProgressList');
+        if (progressList && progressList.offsetParent !== null) {
+            renderStudentProgress();
+        }
+    };
+
+    teacherChannel
+        .on('presence', { event: 'sync' }, updateOnlineStatus)
+        .on('presence', { event: 'join' }, updateOnlineStatus)
+        .on('presence', { event: 'leave' }, updateOnlineStatus)
+        .subscribe();
+}
+
+async function loadTeacherData() { if (!currentUser) return; document.getElementById('teacherName').textContent = currentUser.user_metadata.full_name || 'Professor(a)'; const audioSettingsButton = document.getElementById('showAudioSettingsModalBtn'); if (currentUser.id === SUPER_ADMIN_TEACHER_ID) { audioSettingsButton.style.display = 'block'; } else { audioSettingsButton.style.display = 'none'; } await loadTeacherClasses(); }
+async function loadTeacherClasses() { const { data, error } = await supabaseClient.from('classes').select('*, students(count)').eq('teacher_id', currentUser.id); if (error) { console.error('Erro ao carregar turmas:', error); return; } renderClasses(data); }
+function renderClasses(classes) { const container = document.getElementById('classesList'); if (!classes || classes.length === 0) { container.innerHTML = '<p>Nenhuma turma criada ainda.</p>'; return; } container.innerHTML = classes.map(cls => { const studentCount = cls.students[0]?.count || 0; return ` <div class="class-card"> <h3>${cls.name}</h3> <span class="student-count">👥 ${studentCount} aluno(s)</span> <div class="class-card-actions"> <button class="btn primary" onclick="manageClass('${cls.id}', '${cls.name.replace(/'/g, "\\'")}')">Gerenciar</button> <button class="btn danger" onclick="handleDeleteClass('${cls.id}', '${cls.name.replace(/'/g, "\\'")}')" title="Excluir Turma"> <i class="fas fa-trash"></i> </button> </div> </div>`; }).join(''); }
+async function handleCreateClass(e) { e.preventDefault(); const name = document.getElementById('className').value; if (!name) return; const { error } = await supabaseClient.from('classes').insert([{ name, teacher_id: currentUser.id }]); if (error) { showFeedback(`Erro: ${error.message}`, 'error'); return; } closeModal('createClassModal'); await loadTeacherClasses(); showFeedback('Turma criada com sucesso!', 'success'); document.getElementById('createClassForm').reset(); }
+async function handleDeleteClass(classId, className) { if (!confirm(`ATENÇÃO! Deseja excluir a turma "${className}"?\nTODOS os alunos e progressos serão apagados.`)) return; const { error } = await supabaseClient.from('classes').delete().eq('id', classId); if (error) { showFeedback(`Erro: ${error.message}`, 'error'); } else { showFeedback(`Turma "${className}" excluída.`, 'success'); await loadTeacherClasses(); } }
+async function manageClass(classId, className) { currentClassId = classId; document.getElementById('manageClassTitle').textContent = `Gerenciar: ${className}`; const modal = document.getElementById('manageClassModal'); modal.querySelectorAll('.tab-btn').forEach(btn => { const tabId = btn.dataset.tab; if (!btn.getAttribute('data-listener')) { btn.setAttribute('data-listener', 'true'); btn.addEventListener('click', () => { if (tabId === 'studentsTab') loadClassStudents(); else if (tabId === 'studentProgressTab') loadStudentProgress(); }); } }); showTab(document.querySelector('#manageClassModal .tab-btn[data-tab="studentsTab"]')); await loadClassStudents(); showModal('manageClassModal'); }
+async function loadClassStudents() { const { data, error } = await supabaseClient.from('students').select('*').eq('class_id', currentClassId).order('name', { ascending: true }); if (error) { console.error('Erro ao carregar alunos:', error); document.getElementById('studentsList').innerHTML = '<p>Erro ao carregar.</p>'; return; } renderStudents(data); }
+function renderStudents(students) { const container = document.getElementById('studentsList'); if (!students || students.length === 0) { container.innerHTML = '<p>Nenhum aluno cadastrado.</p>'; return; } container.innerHTML = students.map(student => ` <div class="student-item"> <div class="student-info"> <h4>${student.name}</h4> <p>Usuário: ${student.username}</p> </div> <div class="student-actions"> <button onclick="handleShowOrResetPassword('${student.id}', '${student.name}')" class="btn small" title="Ver/Redefinir Senha"> <i class="fas fa-key"></i> </button> <button onclick="handleDeleteStudent('${student.id}', '${student.name}')" class="btn small danger" title="Excluir Aluno"> <i class="fas fa-trash"></i> </button> </div> </div>`).join(''); }
+
+// NOVA LÓGICA DE PROGRESSO E DESIGNAÇÃO
+async function loadStudentProgress() {
+    const progressList = document.getElementById('studentProgressList');
+    progressList.innerHTML = '<p><i class="fas fa-spinner fa-spin"></i> Carregando progresso dos alunos...</p>';
+    try {
+        const { data: studentsData, error: studentsError } = await supabaseClient
+            .from('students')
+            .select(`id, name, assigned_phases`)
+            .eq('class_id', currentClassId);
+
+        if (studentsError) throw studentsError;
+        if (!studentsData || studentsData.length === 0) {
+            progressList.innerHTML = '<p>Nenhum aluno nesta turma para exibir o progresso.</p>';
+            return;
+        }
+
+        const studentIds = studentsData.map(s => s.id);
+        const { data: progressData, error: progressError } = await supabaseClient
+            .from('progress')
+            .select('*')
+            .in('student_id', studentIds);
+
+        if (progressError) throw progressError;
+
+        const combinedData = studentsData.map(student => {
+            const progress = progressData.find(p => p.student_id === student.id);
+            return { ...student, progress };
+        });
+
+        studentProgressData = combinedData;
+        renderStudentProgress('name');
+    } catch (error) {
+        console.error("Erro ao carregar progresso:", error);
+        progressList.innerHTML = `<p style="color:red;">Erro ao carregar o progresso: ${error.message}</p>`;
+    }
+}
+
+function renderStudentProgress(sortBy = 'name') {
+    const container = document.getElementById('studentProgressList');
+    document.querySelector('.sort-btn.active')?.classList.remove('active');
+    document.querySelector(`.sort-btn[data-sort="${sortBy}"]`)?.classList.add('active');
+
+    const sortedData = [...studentProgressData].sort((a, b) => {
+        if (sortBy === 'name') return a.name.localeCompare(b.name);
+        const dateA = a.progress?.last_played ? new Date(a.progress.last_played) : new Date(0);
+        const dateB = b.progress?.last_played ? new Date(b.progress.last_played) : new Date(0);
+        return dateB - dateA;
+    });
+    
+    container.innerHTML = sortedData.map(student => {
+        const progress = student.progress;
+        const assignedPhases = student.assigned_phases || [1];
+        const currentPhase = progress?.current_phase || 'N/J';
+        const gameState = progress?.game_state;
+
+        let statusHTML = '';
+        if (onlineStudents.has(student.id)) {
+            statusHTML = `<div class="status-indicator online" title="Online Agora"></div>`;
+        } else if (progress?.last_played) {
+            const lastDate = new Date(progress.last_played);
+            const diffDays = Math.ceil(Math.abs(new Date() - lastDate) / (1000 * 60 * 60 * 24)) -1;
+            if (diffDays <= 1) statusHTML = `<div class="status-indicator recent" title="Acessou hoje ou ontem"></div>`;
+            else if (diffDays <= 7) statusHTML = `<div class="status-indicator week" title="Inativo há ${diffDays} dias"></div>`;
+            else statusHTML = `<div class="status-indicator inactive" title="Inativo há mais de 7 dias"></div>`;
+        } else {
+            statusHTML = `<div class="status-indicator never" title="Nunca jogou"></div>`;
+        }
+        
+        let score = 0, total = 0, accuracy = 0;
+        if (gameState?.questions?.length > 0) {
+            score = gameState.score ?? 0;
+            total = gameState.questions[0]?.type === 'memory_game' ? gameState.memoryGame.totalPairs : gameState.questions.length;
+            accuracy = total > 0 ? Math.round((score / total) * 100) : 0;
+        }
+        const lastPlayedStr = progress?.last_played ? new Date(progress.last_played).toLocaleDateString('pt-BR') : 'Nunca';
+
+        const phaseModules = {
+            "Módulo 1: Conhecendo o Alfabeto": [1, 2, 3, 4, 5],
+            "Módulo 2: Palavras e Frases": [6, 7, 8],
+            "Módulo 3: Dominando as Sílabas": [9, 10, 11, 12, 13, 14],
+            "Módulo 4: Consciência dos Sons": [15, 16]
+        };
+        let phaseCheckboxesHTML = '';
+        for (const moduleName in phaseModules) {
+            phaseCheckboxesHTML += `<h4 class="phase-module-title">${moduleName}</h4>`;
+            phaseCheckboxesHTML += phaseModules[moduleName].map(phaseNum => {
+                const phaseName = PHASE_DESCRIPTIONS[phaseNum] || `Fase ${phaseNum}`;
+                const isChecked = assignedPhases.includes(phaseNum);
+                return `<label class="phase-checkbox-label" title="${phaseName}">
+                            <input type="checkbox" class="phase-checkbox" value="${phaseNum}" ${isChecked ? 'checked' : ''}>
+                            <span>Fase ${phaseNum}</span>
+                        </label>`;
+            }).join('');
+        }
+
+        return `
+            <div class="student-progress-accordion" id="accordion-${student.id}">
+                <button class="accordion-header" onclick="toggleAccordion('${student.id}')">
+                    <div class="student-info">
+                        <h4>${statusHTML} ${student.name}</h4>
+                        <p>Último Acesso: ${lastPlayedStr} | Fase Atual: <strong>${currentPhase}</strong></p>
+                    </div>
+                    <div class="student-progress-container">
+                        <div class="student-progress-bar" title="Progresso na fase ${currentPhase}: ${accuracy}%">
+                            <div class="student-progress-fill" style="width: ${accuracy}%;"></div>
+                        </div>
+                    </div>
+                    <i class="fas fa-chevron-down"></i>
+                </button>
+                <div class="accordion-content">
+                    <h5><i class="fas fa-tasks"></i> Designar Fases</h5>
+                    <div class="phase-checkbox-grid">${phaseCheckboxesHTML}</div>
+                    <div class="accordion-actions">
+                        <button class="btn primary" onclick="assignPhases('${student.id}')">
+                            <i class="fas fa-save"></i> Salvar Fases
+                        </button>
+                    </div>
+                </div>
+            </div>`;
+    }).join('');
+}
+
+function toggleAccordion(studentId) {
+    const accordion = document.getElementById(`accordion-${studentId}`);
+    const allAccordions = document.querySelectorAll('.student-progress-accordion');
+    
+    // Fecha todos os outros para manter a interface limpa
+    allAccordions.forEach(acc => {
+        if (acc.id !== accordion.id) {
+            acc.classList.remove('open');
+        }
+    });
+
+    // Abre ou fecha o clicado
+    accordion.classList.toggle('open');
+}
+
+async function assignPhases(studentId) {
+    const accordion = document.getElementById(`accordion-${studentId}`);
+    const checkboxes = accordion.querySelectorAll('.phase-checkbox');
+    const student = studentProgressData.find(s => s.id === studentId);
+    if (!student) return;
+
+    const newPhases = Array.from(checkboxes)
+        .filter(cb => cb.checked)
+        .map(cb => parseInt(cb.value))
+        .sort((a, b) => a - b);
+
+    if (newPhases.length === 0) {
+        showFeedback("O aluno precisa ter pelo menos uma fase designada.", "error");
+        return;
+    }
+
+    showFeedback(`Atualizando fases para ${student.name}...`, 'info');
+
+    try {
+        // Apenas atualiza a lista de fases do aluno
+        const { error: assignError } = await supabaseClient
+            .from('students')
+            .update({ assigned_phases: newPhases })
+            .eq('id', studentId);
+        if (assignError) throw assignError;
+
+        // Se o aluno já tiver um progresso salvo, verificamos se a fase atual dele ainda é válida.
+        if (student.progress) {
+            const currentPhaseIsValid = newPhases.includes(student.progress.current_phase);
+            // Se a fase atual não estiver mais na lista, resetamos para a primeira fase da nova lista.
+            if (!currentPhaseIsValid) {
+                const firstPhase = newPhases[0];
+                const newGameState = { ...student.progress.game_state, currentPhase: firstPhase, score: 0, attempts: 3, currentQuestionIndex: 0, phaseCompleted: false, questions: generateQuestions(firstPhase) };
+                
+                const { error: progressError } = await supabaseClient
+                    .from('progress')
+                    .update({ current_phase: firstPhase, game_state: newGameState })
+                    .eq('student_id', studentId);
+                if (progressError) throw progressError;
+                showFeedback(`Fases atualizadas! O progresso de ${student.name} foi reiniciado para a fase ${firstPhase}.`, 'success');
+            } else {
+                showFeedback(`Fases de ${student.name} atualizadas com sucesso!`, 'success');
+            }
+        } else {
+             showFeedback(`Fases de ${student.name} atualizadas com sucesso!`, 'success');
+        }
+
+        await loadStudentProgress(); // Recarrega os dados para refletir as mudanças
+
+    } catch (error) {
+        console.error("Erro ao designar fases:", error);
+        showFeedback(`Erro ao atualizar: ${error.message}`, 'error');
+    }
+}
+async function handleCreateStudent(event) { event.preventDefault(); const username = document.getElementById('createStudentUsername').value.trim(); const password = document.getElementById('createStudentPassword').value; const submitButton = document.getElementById('createStudentSubmitBtn'); if (!username || !password) { return showFeedback("Preencha nome e senha.", "error"); } if (!currentClassId || !currentUser?.id) { return showFeedback("Erro de sessão.", "error"); } submitButton.disabled = true; submitButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Criando...'; try { const hashedPassword = await hashPassword(password); const { error } = await supabaseClient.from('students').insert([{ name: username, username: username, password: hashedPassword, class_id: currentClassId, teacher_id: currentUser.id }]); if (error) throw error; document.getElementById('newStudentUsername').textContent = username; document.getElementById('newStudentPassword').textContent = password; showModal('studentCreatedModal'); hideCreateStudentForm(); await loadClassStudents(); await loadStudentProgress(); } catch (error) { showFeedback(formatErrorMessage(error), 'error'); } finally { submitButton.disabled = false; submitButton.innerHTML = 'Criar Aluno'; } }
+async function handleDeleteStudent(studentId, studentName) { if (!confirm(`Tem certeza que deseja excluir "${studentName}"?`)) return; const { error } = await supabaseClient.from('students').delete().eq('id', studentId); if (error) { showFeedback(`Erro: ${error.message}`, 'error'); } else { showFeedback(`Aluno "${studentName}" excluído.`, 'success'); await loadClassStudents(); await loadStudentProgress(); } }
+async function handleShowOrResetPassword(studentId, studentName) { showFeedback(`Redefinindo senha para ${studentName}...`, 'info'); const newPassword = generateRandomPassword(); try { const hashedPassword = await hashPassword(newPassword); const { error } = await supabaseClient.from('students').update({ password: hashedPassword }).eq('id', studentId); if (error) throw error; document.getElementById('resetStudentName').textContent = studentName; document.getElementById('resetStudentPassword').textContent = newPassword; showModal('resetPasswordModal'); } catch (error) { showFeedback(`Erro ao tentar alterar a senha: ${error.message}`, 'error'); } }
+function handleCopyCredentials() { const username = document.getElementById('newStudentUsername').textContent; const password = document.getElementById('newStudentPassword').textContent; const textToCopy = `Usuário: ${username}\nSenha: ${password}`; navigator.clipboard.writeText(textToCopy).then(() => { showFeedback('Copiado!', 'success'); }).catch(() => { showFeedback('Erro ao copiar.', 'error'); }); }
+function handleCopyResetPassword() { const password = document.getElementById('resetStudentPassword').textContent; navigator.clipboard.writeText(password).then(() => { showFeedback('Nova senha copiada!', 'success'); }).catch(() => { showFeedback('Erro ao copiar a senha.', 'error'); }); }
+
+// PARTE 7: ÁUDIO
+async function handleAudioUpload() { const files = document.getElementById('audioUpload').files; if (files.length === 0) return; const uploadStatus = document.getElementById('uploadStatus'); uploadStatus.innerHTML = `<p><i class="fas fa-spinner fa-spin"></i> Enviando...</p>`; let successCount = 0, errorCount = 0; for (const file of files) { const fileName = file.name.split('.').slice(0, -1).join('.').toUpperCase(); const filePath = `${currentUser.id}/${fileName}.${file.name.split('.').pop()}`; try { const { error } = await supabaseClient.storage.from('audio_uploads').upload(filePath, file, { upsert: true }); if (error) throw error; successCount++; } catch (error) { console.error(`Erro no upload:`, error); errorCount++; } } uploadStatus.innerHTML = `<p style="color: green;">${successCount} enviados!</p>`; if (errorCount > 0) { uploadStatus.innerHTML += `<p style="color: red;">Falha em ${errorCount}.</p>`; } }
+async function startRecording() { const recordBtn = document.getElementById('recordBtn'), stopBtn = document.getElementById('stopBtn'), statusEl = document.getElementById('recordStatus'); recordBtn.disabled = true; statusEl.textContent = 'Pedindo permissão...'; try { const stream = await navigator.mediaDevices.getUserMedia({ audio: true }); audioChunks = []; mediaRecorder = new MediaRecorder(stream, { mimeType: 'audio/webm' }); mediaRecorder.addEventListener('dataavailable', e => audioChunks.push(e.data)); mediaRecorder.addEventListener('stop', () => { const audioBlob = new Blob(audioChunks, { type: 'audio/webm' }); const audioUrl = URL.createObjectURL(audioBlob); document.getElementById('audioPlayback').src = audioUrl; document.getElementById('saveRecordingBtn').disabled = false; stream.getTracks().forEach(track => track.stop()); }); mediaRecorder.start(); statusEl.textContent = 'Gravando...'; stopBtn.disabled = false; startTimer(); } catch (err) { console.error("Erro ao gravar:", err); alert("Não foi possível gravar. Verifique as permissões."); statusEl.textContent = 'Falha.'; recordBtn.disabled = false; } }
+function stopRecording() { if (mediaRecorder?.state === 'recording') { mediaRecorder.stop(); stopTimer(); document.getElementById('recordBtn').disabled = false; document.getElementById('stopBtn').disabled = true; document.getElementById('recordStatus').textContent = 'Parado.'; } }
+async function saveRecording() { if (audioChunks.length === 0) return; const saveButton = document.getElementById('saveRecordingBtn'); saveButton.disabled = true; saveButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i>'; const selectedItem = document.getElementById('letterSelect').value; const audioBlob = new Blob(audioChunks, { type: 'audio/webm' }); const fileName = `${selectedItem}.webm`; const filePath = `${currentUser.id}/${fileName}`; try { const { error } = await supabaseClient.storage.from('audio_uploads').upload(filePath, audioBlob, { upsert: true }); if (error) throw error; showFeedback(`Áudio para "${selectedItem}" salvo!`, 'success'); audioChunks = []; document.getElementById('audioPlayback').src = ''; } catch (error) { showFeedback(`Erro: ${error.message}`, 'error'); } finally { saveButton.disabled = false; saveButton.innerHTML = '<i class="fas fa-save"></i> Salvar'; } }
+function startTimer() { stopTimer(); let seconds = 0; const timerEl = document.getElementById('recordTimer'); timerEl.textContent = '00:00'; timerInterval = setInterval(() => { seconds++; const mins = Math.floor(seconds / 60).toString().padStart(2, '0'); const secs = (seconds % 60).toString().padStart(2, '0'); timerEl.textContent = `${mins}:${secs}`; }, 1000); }
+function stopTimer() { clearInterval(timerInterval); }
+
+
+// PARTE 8: LÓGICA DO JOGO
+async function showStudentGame() { await checkForCustomActivities(); await loadGameState(); const canResume = gameState.currentQuestionIndex > 0 && gameState.attempts > 0 && !gameState.phaseCompleted; document.getElementById('startButton').innerHTML = canResume ? '<i class="fas fa-play"></i> Continuar Aventura' : '<i class="fas fa-play"></i> Começar Aventura'; showScreen('startScreen'); }
+async function startGame() { gameState.isCustomActivity = false; await loadGameState(); if (gameState.phaseCompleted || gameState.attempts <= 0) { gameState.currentQuestionIndex = 0; gameState.score = 0; gameState.attempts = 3; gameState.phaseCompleted = false; gameState.questions = generateQuestions(gameState.currentPhase); } showScreen('gameScreen'); startQuestion(); connectStudentToRealtime(); }
+async function startCustomActivity() { if (!currentUser.assigned_activity) return; gameState.isCustomActivity = true; gameState.questions = currentUser.assigned_activity.questions; gameState.currentPhase = "Reforço"; gameState.currentQuestionIndex = 0; gameState.score = 0; gameState.attempts = 3; gameState.phaseCompleted = false; showScreen('gameScreen'); startQuestion(); connectStudentToRealtime(); }
+async function connectStudentToRealtime() { if (studentChannel) { await studentChannel.unsubscribe(); } const channelId = `teacher-room-${currentUser.teacher_id}`; studentChannel = supabaseClient.channel(channelId); studentChannel.subscribe(async (status) => { if (status === 'SUBSCRIBED') { await studentChannel.track({ student_id: currentUser.id, student_name: currentUser.name, online_at: new Date().toISOString(), }); } }); }
+window.addEventListener('beforeunload', () => { if (studentChannel) { studentChannel.untrack(); supabaseClient.removeChannel(studentChannel); } });
+async function loadGameState() { const { data: progressData, error } = await supabaseClient.from('progress').select('game_state, current_phase').eq('student_id', currentUser.id).single(); if (error && error.code !== 'PGRST116') { console.error("Erro ao carregar progresso:", error); } const assignedPhases = currentUser.assigned_phases && currentUser.assigned_phases.length > 0 ? currentUser.assigned_phases : [1]; const firstAssignedPhase = assignedPhases[0]; if (progressData?.game_state?.questions) { gameState = progressData.game_state; if (!assignedPhases.includes(gameState.currentPhase)) { gameState = { currentPhase: firstAssignedPhase, score: 0, attempts: 3, questions: generateQuestions(firstAssignedPhase), currentQuestionIndex: 0, teacherId: currentUser.teacher_id, tutorialsShown: [], phaseCompleted: false }; await saveGameState(); } if (!gameState.tutorialsShown) gameState.tutorialsShown = []; } else { gameState = { currentPhase: firstAssignedPhase, score: 0, attempts: 3, questions: generateQuestions(firstAssignedPhase), currentQuestionIndex: 0, teacherId: currentUser.teacher_id, tutorialsShown: [], phaseCompleted: false }; await saveGameState(); } }
+async function saveGameState() { if (!currentUser || currentUser.type !== 'student' || gameState.isCustomActivity) return; await supabaseClient.from('progress').upsert({ student_id: currentUser.id, current_phase: gameState.currentPhase, game_state: gameState, last_played: new Date().toISOString() }, { onConflict: 'student_id' }); }
+
+function generateQuestions(phase) {
+    let questions = [];
+    const questionCount = 10;
+    const shuffleAndTake = (arr, num) => [...arr].sort(() => 0.5 - Math.random()).slice(0, num);
+
+    const _generateOptions = (correctItem, sourceArray, count) => {
+        const options = new Set([correctItem]);
+        const availableItems = [...sourceArray].filter(l => l !== correctItem);
+        while (options.size < count && availableItems.length > 0) {
+            const randomIndex = Math.floor(Math.random() * availableItems.length);
+            options.add(availableItems.splice(randomIndex, 1)[0]);
+        }
+        return Array.from(options).sort(() => 0.5 - Math.random());
+    };
+
+    switch (phase) {
+        case 1:
+            questions = shuffleAndTake(PHASE_1_LETTER_SOUNDS, questionCount).map(item => ({
+                type: 'letter_sound',
+                correctAnswer: item.letter,
+                audioKey: item.audioKey,
+                description: item.description,
+                options: _generateOptions(item.letter, item.optionsPool, 4)
+            }));
+            break;
+        case 2:
+            questions = [{ type: 'memory_game' }];
+            break;
+        case 3:
+            questions = shuffleAndTake(PHASE_3_SYLLABLE_F, questionCount).map(item => ({ type: 'form_f_syllable', ...item, options: _generateOptions(item.result, ['FA', 'FE', 'FI', 'FO', 'FU', 'VA', 'BO'], 4) }));
+            break;
+        case 4:
+            questions = shuffleAndTake(PHASE_4_WORDS_F, questionCount).map(item => ({ type: 'f_word_search', ...item, correctAnswer: item.word, options: item.options.sort(() => 0.5 - Math.random()) }));
+            break;
+        case 5:
+            questions = shuffleAndTake(PHASE_5_SOUND_PAIRS, questionCount).map(item => ({ type: 'sound_detective', image: item.image, correctAnswer: item.correct, options: [item.correct, item.incorrect].sort(() => 0.5 - Math.random()) }));
+            break;
+        case 6: 
+            questions = shuffleAndTake(PHASE_6_SENTENCES_COUNT, questionCount).map(item => ({ type: 'count_words', ...item, correctAnswer: item.words.toString(), options: _generateOptions(item.words.toString(), ['2', '3', '4', '5'], 4) }));
+            break;
+        case 7:
+            questions = shuffleAndTake(PHASE_7_SENTENCES_BUILD, questionCount).map(item => ({ type: 'build_sentence', image: item.image, correctAnswer: item.answer, options: item.sentence.sort(() => 0.5 - Math.random()) }));
+            break;
+        case 8: 
+            const vowelSet = [...VOWELS, ...VOWELS].sort(() => 0.5 - Math.random());
+            questions = vowelSet.map(vowel => ({ type: 'vowel_sound', correctAnswer: vowel, options: _generateOptions(vowel, VOWELS, 4) }));
+            break;
+        case 9:
+            questions = shuffleAndTake(PHASE_9_SYLLABLE_COUNT, questionCount).map(item => ({ type: 'count_syllables', ...item, correctAnswer: item.syllables.toString(), options: _generateOptions(item.syllables.toString(), ['1', '2', '3', '4', '5'], 4) }));
+            break;
+        case 10: 
+            questions = shuffleAndTake(PHASE_10_INITIAL_SYLLABLE, questionCount).map(item => ({ type: 'initial_syllable', ...item, options: _generateOptions(item.correctAnswer, ['BA','CA','DA','FA','GA','LA','MA','NA','PA','RA','SA','TA','VA'], 3) }));
+            break;
+        case 11:
+            questions = shuffleAndTake(PHASE_11_F_POSITION, questionCount).map(item => ({ type: 'f_position', ...item, options: _generateOptions(item.syllable, ['FA', 'FE', 'FI', 'FO', 'FU'], 4) }));
+            break;
+        case 12: 
+            questions = shuffleAndTake(PHASE_12_WORD_TRANSFORM, questionCount).map(item => ({ type: 'word_transform', ...item, correctAnswer: item.correctAnswer, options: _generateOptions(item.correctAnswer, item.initialWord.split(''), 3) }));
+            break;
+        case 13:
+             questions = shuffleAndTake(PHASE_13_INVERT_SYLLABLES, questionCount).map(item => ({ type: 'invert_syllables', ...item, correctAnswer: item.inverted, options: _generateOptions(item.inverted, PHASE_13_INVERT_SYLLABLES.map(i=>i.word), 4) }));
+             break;
+        case 14:
+             questions = shuffleAndTake(PHASE_14_RHYMES, questionCount).map(item => ({ type: 'find_rhyme', ...item, correctAnswer: item.rhyme, options: item.options }));
+            break;
+        case 15:
+            questions = shuffleAndTake(PHASE_15_PHONEME_COUNT, questionCount).map(item => ({ type: 'count_phonemes', ...item, correctAnswer: item.sounds.toString(), options: _generateOptions(item.sounds.toString(), ['2','3','4','5'], 4) }));
+            break;
+        case 16:
+            questions = shuffleAndTake(PHASE_16_COMPLEX_SYLLABLES, questionCount).map(item => ({ type: 'complex_syllable', ...item, correctAnswer: item.syllable, options: _generateOptions(item.syllable, ['BRA','LHA','NHO','VRO','CRE'], 4) }));
+            break;
+    }
+    return questions;
+}
+
+async function startQuestion() {
+    if (gameState.phaseCompleted || !gameState.questions || !gameState.questions[gameState.currentQuestionIndex]) { return endPhase(); }
     
-    /* Mantém o layout que você já tinha para a lista */
-    display: flex;
-    flex-direction: column;
-    gap: 15px;
+    document.getElementById('nextQuestion').style.display = 'none';
+    document.getElementById('attempts').style.display = 'flex'; // Garante que tentativas sejam visíveis por padrão
+    ['audioQuestionArea', 'imageQuestionArea', 'lettersGrid', 'memoryGameGrid', 'sentenceBuildArea'].forEach(id => document.getElementById(id).style.display = 'none');
+    ['lettersGrid', 'memoryGameGrid', 'sentenceBuildArea'].forEach(id => document.getElementById(id).innerHTML = '');
+    document.getElementById('wordDisplay').textContent = '';
+    document.getElementById('questionText').textContent = '';
+    document.getElementById('repeatAudio').style.display = 'none';
+    
+    const q = gameState.questions[gameState.currentQuestionIndex];
+    
+    const renderMap = {
+        'letter_sound': renderPhase1UI_LetterSound, 'memory_game': renderPhase2UI_MemoryGame, 'form_f_syllable': renderPhase3UI_FormFSyllable, 
+        'f_word_search': renderPhase4UI_FWordSearch, 'sound_detective': renderPhase5UI_SoundDetective, 'count_words': renderPhase6UI_WordCount,
+        'build_sentence': renderPhase7UI_BuildSentence, 'vowel_sound': renderPhase8UI_VowelSound, 'count_syllables': renderPhase9UI_SyllableCount,
+        'initial_syllable': renderPhase10UI_InitialSyllable, 'f_position': renderPhase11UI_FPosition, 'word_transform': renderPhase12UI_WordTransform, 
+        'invert_syllables': renderPhase13UI_InvertSyllables, 'find_rhyme': renderPhase14UI_FindRhyme, 'count_phonemes': renderPhase15UI_PhonemeCount,
+        'complex_syllable': renderPhase16UI_ComplexSyllable
+    };
+    renderMap[q.type]?.(q);
+    
+    updateUI(); 
 }
 
-/* Ajuste fino para a aparência da barra de rolagem (opcional, mas recomendado) */
-#manageClassModal #studentsList::-webkit-scrollbar {
-    width: 8px;
+function renderPhase1UI_LetterSound(q) {
+    document.getElementById('audioQuestionArea').style.display = 'block';
+    document.getElementById('lettersGrid').style.display = 'grid';
+    document.getElementById('questionText').textContent = `Qual letra faz o som ${q.description}`;
+    document.getElementById('repeatAudio').style.display = 'inline-block';
+    renderOptions(q.options);
+    setTimeout(playCurrentAudio, 500);
 }
 
-#manageClassModal #studentsList::-webkit-scrollbar-track {
-    background: #f1f1f1;
-    border-radius: 10px;
-}
+// --- FASE 2 (MEMÓRIA) ATUALIZADA PARA MODO EXPLORATÓRIO ---
+function renderPhase2UI_MemoryGame() {
+    const memoryGrid = document.getElementById('memoryGameGrid');
+    if (!memoryGrid) { console.error("Elemento memoryGameGrid não encontrado!"); return; }
+    memoryGrid.innerHTML = '';
+    memoryGrid.style.display = 'grid';
 
-#manageClassModal #studentsList::-webkit-scrollbar-thumb {
-    background: #c5c5c5;
-    border-radius: 10px;
-}
+    document.getElementById('questionText').textContent = 'Encontre os pares de letras maiúsculas e minúsculas!';
+    
+    const shuffleAndTake = (arr, num) => [...arr].sort(() => 0.5 - Math.random()).slice(0, num);
+    const letters = shuffleAndTake(ALPHABET, 8); // 8 pares = 16 cartas
+    const cards = [...letters, ...letters.map(l => l.toLowerCase())].sort(() => 0.5 - Math.random());
+    
+    memoryGrid.innerHTML = cards.map(letter => `
+        <div class="memory-card" data-letter="${letter.toLowerCase()}">
+            <div class="card-inner">
+                <div class="card-face card-front"></div>
+                <div class="card-face card-back">${letter}</div>
+            </div>
+        </div>
+    `).join('');
 
-#manageClassModal #studentsList::-webkit-scrollbar-thumb:hover {
-    background: #a8a8a8;
+    gameState.score = 0; // O score contará os pares corretos
+    gameState.memoryGame = {
+        flippedCards: [],
+        matchedPairs: 0,
+        totalPairs: letters.length,
+        canFlip: true,
+        // --- NOVA LÓGICA DE COLETA DE DADOS ---
+        mistakesMade: 0, // Continuamos contando os erros para o relatório
+        startTime: Date.now() // Registra o momento exato que a fase começou
+    };
+    
+    updateUI(); 
+    memoryGrid.querySelectorAll('.memory-card').forEach(card => card.addEventListener('click', () => handleCardFlip(card)));
 }
-/* =================================================== */
-/* ESTILOS PARA O MONITORAMENTO DE ALUNOS (STATUS)     */
-/* =================================================== */
+function renderPhase3UI_FormFSyllable(q) { document.getElementById('imageQuestionArea').style.display = 'block'; document.getElementById('lettersGrid').style.display = 'grid'; document.getElementById('imageEmoji').textContent = q.image; document.getElementById('wordDisplay').textContent = `${q.base} + ${q.vowel} = ?`; document.getElementById('questionText').textContent = `Qual sílaba formamos para a palavra ${q.word}?`; renderOptions(q.options); }
+function renderPhase4UI_FWordSearch(q) { document.getElementById('imageQuestionArea').style.display = 'block'; document.getElementById('lettersGrid').style.display = 'grid'; document.getElementById('imageEmoji').textContent = q.image; document.getElementById('questionText').textContent = 'Qual é o nome desta figura?'; renderOptions(q.options); }
+function renderPhase5UI_SoundDetective(q) { document.getElementById('imageQuestionArea').style.display = 'block'; document.getElementById('lettersGrid').style.display = 'grid'; document.getElementById('imageEmoji').textContent = q.image; document.getElementById('questionText').textContent = 'Qual é o nome correto desta figura?'; renderOptions(q.options); }
+function renderPhase6UI_WordCount(q) { document.getElementById('imageQuestionArea').style.display = 'block'; document.getElementById('lettersGrid').style.display = 'grid'; document.getElementById('imageEmoji').textContent = q.image; document.getElementById('wordDisplay').textContent = q.sentence; document.getElementById('questionText').textContent = 'Quantas palavras tem nesta frase?'; renderOptions(q.options); }
+function renderPhase7UI_BuildSentence(q) { document.getElementById('imageQuestionArea').style.display = 'block'; document.getElementById('lettersGrid').style.display = 'grid'; document.getElementById('sentenceBuildArea').style.display = 'flex'; document.getElementById('imageEmoji').textContent = q.image; document.getElementById('questionText').textContent = 'Clique nas palavras para formar a frase correta.'; renderWordOptions(q.options); }
+function renderPhase8UI_VowelSound(q) { document.getElementById('audioQuestionArea').style.display = 'block'; document.getElementById('lettersGrid').style.display = 'grid'; document.getElementById('questionText').textContent = 'Qual VOGAL faz este som?'; document.getElementById('repeatAudio').style.display = 'inline-block'; renderOptions(q.options); setTimeout(playCurrentAudio, 500); }
+function renderPhase9UI_SyllableCount(q) { document.getElementById('imageQuestionArea').style.display = 'block'; document.getElementById('lettersGrid').style.display = 'grid'; document.getElementById('imageEmoji').textContent = q.image; document.getElementById('wordDisplay').textContent = q.word; document.getElementById('questionText').textContent = 'Quantas sílabas (pedaços) tem esta palavra?'; renderOptions(q.options); }
+function renderPhase10UI_InitialSyllable(q) { document.getElementById('imageQuestionArea').style.display = 'block'; document.getElementById('lettersGrid').style.display = 'grid'; document.getElementById('imageEmoji').textContent = q.image; document.getElementById('wordDisplay').textContent = `__${q.word.substring(q.correctAnswer.length)}`; document.getElementById('questionText').textContent = 'Qual sílaba começa esta palavra?'; renderOptions(q.options); }
+function renderPhase11UI_FPosition(q) { document.getElementById('imageQuestionArea').style.display = 'block'; document.getElementById('lettersGrid').style.display = 'grid'; document.getElementById('imageEmoji').textContent = q.image; document.getElementById('wordDisplay').textContent = q.blanked; document.getElementById('questionText').textContent = 'Qual sílaba completa a palavra?'; renderOptions(q.options); }
+function renderPhase12UI_WordTransform(q) { document.getElementById('imageQuestionArea').style.display = 'block'; document.getElementById('lettersGrid').style.display = 'grid'; document.getElementById('imageEmoji').textContent = q.image; document.getElementById('wordDisplay').textContent = q.initialWord; document.getElementById('questionText').textContent = `Se tirarmos "${q.toRemove}", qual palavra formamos?`; renderOptions(q.options); }
+function renderPhase13UI_InvertSyllables(q) { document.getElementById('imageQuestionArea').style.display = 'block'; document.getElementById('lettersGrid').style.display = 'grid'; document.getElementById('imageEmoji').textContent = q.imageInverted; document.getElementById('wordDisplay').textContent = q.word; document.getElementById('questionText').textContent = `Se invertermos as sílabas de ${q.word}, qual palavra formamos?`; renderOptions(q.options); }
+function renderPhase14UI_FindRhyme(q) { document.getElementById('imageQuestionArea').style.display = 'block'; document.getElementById('lettersGrid').style.display = 'grid'; document.getElementById('imageEmoji').textContent = q.image; document.getElementById('wordDisplay').textContent = q.word; document.getElementById('questionText').textContent = `Qual palavra rima com ${q.word}?`; renderOptions(q.options); }
+function renderPhase15UI_PhonemeCount(q) { document.getElementById('imageQuestionArea').style.display = 'block'; document.getElementById('lettersGrid').style.display = 'grid'; document.getElementById('imageEmoji').textContent = q.image; document.getElementById('wordDisplay').textContent = q.word; document.getElementById('questionText').textContent = 'Quantos SONS (não letras) você ouve nesta palavra?'; renderOptions(q.options); }
+function renderPhase16UI_ComplexSyllable(q) { document.getElementById('imageQuestionArea').style.display = 'block'; document.getElementById('lettersGrid').style.display = 'grid'; document.getElementById('imageEmoji').textContent = q.image; document.getElementById('wordDisplay').textContent = q.blanked; document.getElementById('questionText').textContent = 'Qual sílaba complexa completa a palavra?'; renderOptions(q.options); }
 
-/* A bolinha base para o status */
-.status-indicator {
-    width: 12px;
-    height: 12px;
-    border-radius: 50%;
-    display: inline-block;
-    margin-right: 10px;
-    flex-shrink: 0;
-    border: 1px solid rgba(0, 0, 0, 0.1);
-    box-shadow: 0 1px 2px rgba(0,0,0,0.1);
-}
+function renderOptions(options) { const lettersGrid = document.getElementById('lettersGrid'); lettersGrid.style.display = 'grid'; lettersGrid.innerHTML = options.map(option => `<button class="letter-button">${option}</button>`).join(''); lettersGrid.querySelectorAll('.letter-button').forEach(btn => btn.addEventListener('click', (e) => selectAnswer(e.target.textContent))); }
+function renderWordOptions(options) { const lettersGrid = document.getElementById('lettersGrid'); lettersGrid.style.display = 'grid'; lettersGrid.innerHTML = options.map(option => `<button class="word-option-button">${option}</button>`).join(''); lettersGrid.querySelectorAll('.word-option-button').forEach(btn => { btn.addEventListener('click', () => selectWordForSentence(btn)); }); }
 
-/* Verde: Aluno Online Agora */
-.status-indicator.online {
-    background-color: #2ecc71; /* Verde vivo */
-    animation: pulse-green 1.5s infinite;
-}
+// --- handleCardFlip ATUALIZADA PARA MODO EXPLORATÓRIO ---
+function handleCardFlip(card) {
+    const { flippedCards, canFlip } = gameState.memoryGame;
+    if (!canFlip || card.classList.contains('flipped')) return;
 
-/* Amarelo: Aluno acessou hoje ou ontem */
-.status-indicator.recent {
-    background-color: #f1c40f; /* Amarelo */
-}
+    card.classList.add('flipped');
+    flippedCards.push(card);
 
-/* Laranja: Aluno acessou na última semana */
-.status-indicator.week {
-    background-color: #e67e22; /* Laranja */
-}
+    if (flippedCards.length === 2) {
+        gameState.memoryGame.canFlip = false;
+        const [card1, card2] = flippedCards;
 
-/* Vermelho: Aluno inativo há mais de 7 dias */
-.status-indicator.inactive {
-    background-color: #e74c3c; /* Vermelho */
-}
+        // Se o par for CORRETO
+        if (card1.dataset.letter === card2.dataset.letter) {
+            setTimeout(() => {
+                card1.classList.add('matched');
+                card2.classList.add('matched');
+                gameState.memoryGame.matchedPairs++;
+                gameState.score++; 
+                updateUI();
+                gameState.memoryGame.flippedCards = [];
+                gameState.memoryGame.canFlip = true;
+                
+                // Se encontrou o ÚLTIMO PAR
+                if (gameState.memoryGame.matchedPairs === gameState.memoryGame.totalPairs) {
+                    playTeacherAudio('feedback_correct', 'Excelente');
+                    showFeedback('Excelente! Todos os pares encontrados!', 'success');
+                    
+                    // CALCULA E SALVA O TEMPO DE CONCLUSÃO
+                    const endTime = Date.now();
+                    const durationInSeconds = Math.round((endTime - gameState.memoryGame.startTime) / 1000);
+                    gameState.memoryGame.completionTime = durationInSeconds; // Salva o tempo no estado do jogo
 
-/* Cinza: Aluno nunca jogou */
-.status-indicator.never {
-    background-color: #bdc3c7; /* Cinza */
-}
+                    document.getElementById('nextQuestion').style.display = 'block';
+                }
+            }, 800);
+        } 
+        // Se o par for INCORRETO
+        else {
+            // LÓGICA DE ERRO SEM PUNIÇÃO
+            gameState.memoryGame.mistakesMade++; // Apenas incrementa os erros para o relatório
+            playTeacherAudio('feedback_incorrect', 'Tente de novo');
+            updateUI(); 
 
-/* Animação de pulso para o status "Online" */
-@keyframes pulse-green {
-    0% {
-        transform: scale(0.95);
-        box-shadow: 0 0 0 0 rgba(46, 204, 113, 0.7);
+            // Apenas desvira as cartas, sem risco de "game over"
+            setTimeout(() => {
+                card1.classList.remove('flipped');
+                card2.classList.remove('flipped');
+                gameState.memoryGame.flippedCards = [];
+                gameState.memoryGame.canFlip = true;
+            }, 1200);
+        }
     }
-    70% {
-        transform: scale(1);
-        box-shadow: 0 0 0 10px rgba(46, 204, 113, 0);
+}
+function selectWordForSentence(buttonElement) { buttonElement.disabled = true; buttonElement.classList.add('disabled'); const sentenceBuildArea = document.getElementById('sentenceBuildArea'); const wordSpan = document.createElement('span'); wordSpan.className = 'sentence-word'; wordSpan.textContent = buttonElement.textContent; sentenceBuildArea.appendChild(wordSpan); const allButtons = document.querySelectorAll('.word-option-button'); const allDisabled = Array.from(allButtons).every(btn => btn.disabled); if (allDisabled) { const constructedSentence = Array.from(sentenceBuildArea.children).map(span => span.textContent).join(' '); selectAnswer(constructedSentence); } }
+async function selectAnswer(selectedAnswer) { const q = gameState.questions[gameState.currentQuestionIndex]; if (!q || q.type === 'memory_game') return; document.querySelectorAll('.letter-button, .word-option-button').forEach(btn => btn.disabled = true); const isCorrect = String(selectedAnswer) === String(q.correctAnswer); if (q.type === 'build_sentence') { const sentenceArea = document.getElementById('sentenceBuildArea'); sentenceArea.style.borderColor = isCorrect ? '#4ECDC4' : '#ff6b6b'; } else { document.querySelectorAll('.letter-button, .word-option-button').forEach(btn => { if (btn.textContent === q.correctAnswer) btn.classList.add('correct'); if (!isCorrect && btn.textContent === selectedAnswer) btn.classList.add('incorrect'); }); } if (isCorrect) { gameState.score++; showFeedback('Muito bem!', 'success'); playTeacherAudio('feedback_correct', 'Acertou'); } else { gameState.attempts--; logStudentError({ question: q, selectedAnswer: selectedAnswer }).catch(console.error); showFeedback(`Quase! A resposta correta era "${q.correctAnswer}"`, 'error'); playTeacherAudio('feedback_incorrect', 'Tente de novo'); } updateUI(); await saveGameState(); if (gameState.attempts <= 0) { setTimeout(endPhase, 2000); } else { document.getElementById('nextQuestion').style.display = 'block'; } }
+function nextQuestion() { if (gameState.questions[0].type === 'memory_game') { return endPhase(); } gameState.currentQuestionIndex++; startQuestion(); }
+async function endPhase() {
+    let totalQuestions = gameState.questions.length;
+    if (gameState.questions[0]?.type === 'memory_game' && gameState.memoryGame) {
+        totalQuestions = gameState.memoryGame.totalPairs;
     }
-    100% {
-        transform: scale(0.95);
-        box-shadow: 0 0 0 0 rgba(46, 204, 113, 0);
+    const accuracy = totalQuestions > 0 ? Math.round((gameState.score / totalQuestions) * 100) : 0;
+    const passed = accuracy >= 70;
+    
+    if (gameState.isCustomActivity) {
+        await logCustomActivityCompletion(accuracy);
+        await clearAssignedActivity();
+    } else {
+        // --- Adiciona os dados do jogo da memória para salvar no histórico ---
+        const q = gameState.questions[0];
+        let metadata = null;
+        if (q?.type === 'memory_game' && gameState.memoryGame) {
+            metadata = {
+                time_seconds: gameState.memoryGame.completionTime || 0,
+                mistakes: gameState.memoryGame.mistakesMade || 0
+            };
+        }
+        await logPhaseCompletionToHistory(accuracy, metadata); // Passa os metadados
+    }
+    
+    showResultScreen(accuracy, passed);
+}
+async function clearAssignedActivity() { await supabaseClient.from('students').update({ assigned_activity: null }).eq('id', currentUser.id); currentUser.assigned_activity = null; sessionStorage.setItem('currentUser', JSON.stringify(currentUser)); }
+function showResultScreen(accuracy, passed) { showScreen('resultScreen'); document.getElementById('finalScore').textContent = gameState.score; document.getElementById('accuracy').textContent = accuracy; const continueBtn = document.getElementById('continueButton'); const retryBtn = document.getElementById('retryButton'); const restartBtn = document.getElementById('restartButton'); if (gameState.isCustomActivity) { document.getElementById('resultTitle').textContent = 'Atividade de Reforço Concluída!'; document.getElementById('resultMessage').innerHTML = `Você acertou ${accuracy}% das questões. Continue praticando!`; continueBtn.style.display = 'none'; retryBtn.style.display = 'none'; restartBtn.innerHTML = '<i class="fas fa-home"></i> Voltar ao Início'; return; } const assignedPhases = currentUser.assigned_phases || [1]; const currentPhaseIndex = assignedPhases.indexOf(gameState.currentPhase); const hasNextPhase = currentPhaseIndex !== -1 && currentPhaseIndex < assignedPhases.length - 1; if (passed) { document.getElementById('resultTitle').textContent = 'Parabéns!'; retryBtn.style.display = 'none'; gameState.phaseCompleted = true; saveGameState(); if (hasNextPhase) { document.getElementById('resultMessage').innerHTML = 'Você completou a fase! 🏆<br>Clique para ir para a próxima!'; continueBtn.style.display = 'inline-block'; restartBtn.innerHTML = '<i class="fas fa-home"></i> Voltar ao Início'; } else { document.getElementById('resultMessage').innerHTML = 'Você completou TODAS as suas fases! 🥳<br>Fale com seu professor para designar mais fases!'; } } else { document.getElementById('resultTitle').textContent = 'Não desanime!'; document.getElementById('resultMessage').textContent = 'Você precisa acertar mais. Tente novamente!'; continueBtn.style.display = 'none'; retryBtn.style.display = 'inline-block'; restartBtn.innerHTML = '<i class="fas fa-home"></i> Voltar ao Início'; gameState.phaseCompleted = false; saveGameState(); } }
+async function nextPhase() { const assignedPhases = currentUser.assigned_phases || [1]; const currentPhaseIndex = assignedPhases.indexOf(gameState.currentPhase); const hasNextPhase = currentPhaseIndex !== -1 && currentPhaseIndex < assignedPhases.length - 1; if (hasNextPhase) { const nextPhaseNum = assignedPhases[currentPhaseIndex + 1]; gameState.currentPhase = nextPhaseNum; gameState.currentQuestionIndex = 0; gameState.score = 0; gameState.attempts = 3; gameState.questions = generateQuestions(gameState.currentPhase); gameState.phaseCompleted = false; await saveGameState(); showScreen('gameScreen'); startQuestion(); } else { showResultScreen(100, true); } }
+async function retryPhase() { gameState.currentQuestionIndex = 0; gameState.score = 0; gameState.attempts = 3; gameState.phaseCompleted = false; gameState.questions = generateQuestions(gameState.currentPhase); await saveGameState(); showScreen('gameScreen'); startQuestion(); }
+async function restartGame() { await showStudentGame(); }
+async function playCurrentAudio() {
+    const q = gameState.questions[gameState.currentQuestionIndex];
+    if (q.type === 'vowel_sound' || q.type === 'letter_sound') {
+        playTeacherAudio(q.audioKey, q.correctAnswer);
     }
 }
 
-/* Melhorias no painel de progresso (Accordion) */
-.student-progress-accordion {
-    border: 1px solid #e0e0e0;
-    border-radius: 10px;
-    margin-bottom: 10px;
-    overflow: hidden;
-    transition: all 0.3s ease;
+// PARTE 9: SÍNTESE DE VOZ E ÁUDIOS
+function initializeSpeech() { const checkVoices = (resolve) => { const voices = speechSynthesis.getVoices(); if (voices.length > 0) { selectedVoice = voices.find(v => v.lang === 'pt-BR'); if (!selectedVoice) selectedVoice = voices[0]; speechReady = true; resolve(); } }; return new Promise((resolve) => { if (speechSynthesis.getVoices().length > 0) { checkVoices(resolve); } else { speechSynthesis.onvoiceschanged = () => checkVoices(resolve); } }); }
+function speak(text, onEndCallback) { if (!window.speechSynthesis) return; if (!speechReady) { initializeSpeech().then(() => speak(text, onEndCallback)); return; } speechSynthesis.cancel(); const utterance = new SpeechSynthesisUtterance(text); utterance.lang = 'pt-BR'; if(selectedVoice) utterance.voice = selectedVoice; if (onEndCallback) utterance.onend = onEndCallback; speechSynthesis.speak(utterance); }
+async function playTeacherAudio(key, fallbackText, onEndCallback) { const teacherId = SUPER_ADMIN_TEACHER_ID; if (!teacherId) { speak(fallbackText, onEndCallback); return; } try { const { data } = await supabaseClient.storage.from('audio_uploads').list(teacherId, { search: `${key}.` }); if (data && data.length > 0) { const audioFileName = data[0].name; const { data: { publicUrl } } = supabaseClient.storage.from('audio_uploads').getPublicUrl(`${teacherId}/${audioFileName}`); const audio = new Audio(publicUrl); audio.onerror = () => speak(fallbackText, onEndCallback); if (onEndCallback) audio.onended = onEndCallback; audio.play(); } else { speak(fallbackText, onEndCallback); } } catch (error) { console.error(`[Áudio] Erro ao buscar áudio:`, error); speak(fallbackText, onEndCallback); } }
+
+// PARTE 10: FUNÇÕES GERAIS DE UI E LOGS
+function showScreen(screenId) { document.querySelectorAll('.screen').forEach(s => s.classList.remove('active')); document.getElementById(screenId)?.classList.add('active'); }
+function showModal(modalId) { document.getElementById(modalId)?.classList.add('show'); }
+function closeModal(modalId) { document.getElementById(modalId)?.classList.remove('show'); }
+function showCreateStudentForm() { document.getElementById('createStudentForm').style.display = 'block'; }
+function hideCreateStudentForm() { document.getElementById('createStudentForm').style.display = 'none'; document.getElementById('createStudentFormElement').reset(); }
+function showAudioSettingsModal() { const letterSelect = document.getElementById('letterSelect'); if (letterSelect) { let optionsHtml = ''; optionsHtml += '<optgroup label="Instruções e Feedbacks">'; for (const key in CUSTOM_AUDIO_KEYS) { optionsHtml += `<option value="${key}">${CUSTOM_AUDIO_KEYS[key]}</option>`; } optionsHtml += '</optgroup>'; optionsHtml += '<optgroup label="Letras do Alfabeto">'; optionsHtml += ALPHABET.map(letter => `<option value="${letter}">Letra ${letter}</option>`).join(''); optionsHtml += '</optgroup>'; letterSelect.innerHTML = optionsHtml; } showModal('audioSettingsModal'); showTab(document.querySelector('#audioSettingsModal .tab-btn[data-tab="uploadFileTab"]')); }
+function showTab(clickedButton) { const parent = clickedButton.closest('.modal-content'); const tabId = clickedButton.getAttribute('data-tab'); parent.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active')); clickedButton.classList.add('active'); parent.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active')); parent.querySelector('#' + tabId).classList.add('active'); }
+function showFeedback(message, type = 'info') { const el = document.getElementById('globalFeedback'); if (!el) return; const textEl = el.querySelector('.feedback-text'); if (textEl) textEl.textContent = message; el.className = `feedback-toast show ${type}`; setTimeout(() => { el.className = el.className.replace('show', ''); }, 3000); }
+function updateUI() {
+    const gameScreen = document.getElementById('gameScreen');
+    if (gameScreen.classList.contains('active') && gameState.questions && gameState.questions.length > 0) {
+        let total = gameState.questions.length;
+        const attemptsEl = document.getElementById('attempts');
+        const q = gameState.questions[gameState.currentQuestionIndex];
+
+        if (q?.type === 'memory_game' && gameState.memoryGame) {
+            total = gameState.memoryGame.totalPairs;
+            attemptsEl.style.display = 'none';
+        } else {
+            attemptsEl.style.display = 'flex';
+            attemptsEl.textContent = `${gameState.attempts} tentativa(s)`;
+        }
+        
+        document.getElementById('score').textContent = gameState.score;
+        document.getElementById('totalQuestions').textContent = total;
+        document.getElementById('currentPhase').textContent = gameState.isCustomActivity ? "Reforço" : gameState.currentPhase;
+        
+        const progress = (gameState.currentQuestionIndex / gameState.questions.length) * 100;
+        document.getElementById('progressFill').style.width = `${progress}%`;
+    }
+}
+function hideTutorial() { document.getElementById('tutorialOverlay').classList.remove('show'); }
+async function logStudentError({ question, selectedAnswer }) { if (!currentUser || currentUser.type !== 'student') { return; } const errorData = { student_id: currentUser.id, teacher_id: currentUser.teacher_id, class_id: currentUser.class_id, phase: gameState.currentPhase, question_type: question.type, correct_answer: String(question.correctAnswer), selected_answer: String(selectedAnswer) }; const { error } = await supabaseClient.from('student_errors').insert([errorData]); if (error) { console.error('Falha ao registrar erro:', error); } }
+async function logPhaseCompletionToHistory(accuracy, metadata = null) {
+    if (!currentUser || currentUser.type !== 'student') return;
+    const { error } = await supabaseClient
+        .from('phase_history')
+        .insert({
+            student_id: currentUser.id,
+            phase: gameState.currentPhase,
+            accuracy: accuracy,
+            metadata: metadata
+        });
+    if (error) console.error("Erro ao salvar histórico da fase:", error);
+}
+async function logCustomActivityCompletion(accuracy) {
+    if (!currentUser || currentUser.type !== 'student') return;
+    const activityData = {
+        student_id: currentUser.id,
+        teacher_id: currentUser.teacher_id,
+        score: gameState.score,
+        total_questions: gameState.questions[0]?.type === 'memory_game' ? gameState.memoryGame.totalPairs : gameState.questions.length,
+        accuracy: accuracy,
+    };
+    const { error } = await supabaseClient.from('activity_history').insert([activityData]);
+    if (error) console.error("Erro ao salvar histórico da atividade de reforço:", error);
 }
 
-.student-progress-accordion.open {
-    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+// PARTE 11: LÓGICA DE RELATÓRIOS E IA
+async function populateReportClassSelector() { const selector = document.getElementById('reportClassSelector'); selector.innerHTML = '<option value="">Carregando turmas...</option>'; document.getElementById('reportContentContainer').style.display = 'none'; const { data, error } = await supabaseClient.from('classes').select('id, name').eq('teacher_id', currentUser.id).order('name', { ascending: true }); if (error || !data) { selector.innerHTML = '<option value="">Erro ao carregar</option>'; return; } if (data.length === 0) { selector.innerHTML = '<option value="">Nenhuma turma encontrada</option>'; return; } selector.innerHTML = '<option value="">-- Selecione uma turma --</option>'; data.forEach(cls => { selector.innerHTML += `<option value="${cls.id}">${cls.name}</option>`; }); }
+function handleReportClassSelection(event) { const classId = event.target.value; const reportContainer = document.getElementById('reportContentContainer'); if (classId) { reportContainer.style.display = 'block'; loadAndDisplayClassReports(classId); } else { reportContainer.style.display = 'none'; reportContainer.innerHTML = ''; } }
+
+async function loadAndDisplayClassReports(classId) {
+    const reportContainer = document.getElementById('reportContentContainer');
+    reportContainer.innerHTML = '<p><i class="fas fa-spinner fa-spin"></i> Carregando relatórios...</p>';
+
+    try {
+        const { data: students, error: studentsError } = await supabaseClient.from('students').select('id, name').eq('class_id', classId).order('name', { ascending: true });
+        if (studentsError) throw studentsError;
+        if (!students || students.length === 0) {
+            reportContainer.innerHTML = `<div class="report-section"><p>Esta turma ainda não tem alunos cadastrados.</p></div>`;
+            return;
+        }
+
+        const studentIds = students.map(s => s.id);
+        const [errorsRes, activitiesRes] = await Promise.all([
+            supabaseClient.from('student_errors').select('*').eq('class_id', classId),
+            supabaseClient.from('activity_history').select('*').in('student_id', studentIds)
+        ]);
+
+        if (errorsRes.error || activitiesRes.error) throw errorsRes.error || activitiesRes.error;
+
+        reportContainer.innerHTML = `
+            <div class="report-section">
+                <h4><i class="fas fa-fire"></i> Mapa de Calor da Turma</h4>
+                <p>Os itens que a turma mais errou.</p>
+                <div id="classHeatmapContainer"></div>
+            </div>
+            <div class="report-section">
+                <h4><i class="fas fa-user-graduate"></i> Relatório Individual</h4>
+                <p>Clique em um aluno para ver seus erros e histórico de reforço.</p>
+                <div id="individualReportsContainer"></div>
+            </div>`;
+        
+        renderClassHeatmap(errorsRes.data, 'classHeatmapContainer');
+        renderIndividualReports(students, errorsRes.data, activitiesRes.data, 'individualReportsContainer');
+
+    } catch (error) {
+        console.error("Erro detalhado ao carregar dados da turma:", error);
+        reportContainer.innerHTML = '<p style="color: red; font-weight: bold;">Erro ao carregar dados da turma. Verifique a consola para mais detalhes.</p>';
+    }
 }
 
-.accordion-header {
-    width: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 15px;
-    background: #f8f9fa;
-    border: none;
-    cursor: pointer;
-    text-align: left;
-    gap: 15px;
+function renderClassHeatmap(errors, containerId) {
+    const heatmapContainer = document.getElementById(containerId);
+    if (!errors || errors.length === 0) {
+        heatmapContainer.innerHTML = '<p>Nenhum erro registrado para esta turma. Ótimo trabalho! 🎉</p>';
+        return;
+    }
+    const errorCounts = errors.reduce((acc, error) => {
+        if (error.correct_answer) {
+            const key = `Fase ${error.phase}: "${error.correct_answer}"`;
+            acc[key] = (acc[key] || 0) + 1;
+        }
+        return acc;
+    }, {});
+    if (Object.keys(errorCounts).length === 0) {
+        heatmapContainer.innerHTML = '<p>Nenhum erro válido registrado para esta turma.</p>';
+        return;
+    }
+    const sortedErrors = Object.entries(errorCounts).sort(([, a], [, b]) => b - a);
+    const maxErrors = sortedErrors[0][1];
+    let heatmapHTML = sortedErrors.map(([error, count]) => {
+        const intensity = Math.max(0.1, count / maxErrors);
+        const color = `rgba(255, 107, 107, ${intensity})`;
+        return `<span class="heatmap-item" style="background-color: ${color};" title="${count} erro(s)">${error}</span>`;
+    }).join('');
+    heatmapContainer.innerHTML = heatmapHTML;
 }
 
-.accordion-header .student-info h4 {
-    display: flex;
-    align-items: center;
+function renderIndividualReports(students, allErrors, allActivities, containerId) {
+    const container = document.getElementById(containerId);
+    if (!students || students.length === 0) { container.innerHTML = '<p>Nenhum aluno na turma.</p>'; return; }
+    
+    container.innerHTML = students.map(student => `
+        <div class="student-item student-report-item" data-student-id="${student.id}" data-student-name="${student.name}">
+            <div class="student-info"><h4>${student.name}</h4></div> <i class="fas fa-chevron-down"></i>
+        </div>
+        <div class="student-errors-details" id="errors-for-${student.id}" style="display: none;"></div>`
+    ).join('');
+    
+    container.querySelectorAll('.student-report-item').forEach(item => {
+        item.addEventListener('click', () => {
+            const studentId = item.dataset.studentId;
+            const studentName = item.dataset.studentName;
+            const detailsContainer = document.getElementById(`errors-for-${studentId}`);
+            const isVisible = detailsContainer.style.display === 'block';
+
+            container.querySelectorAll('.student-errors-details').forEach(d => d.style.display = 'none');
+            container.querySelectorAll('.student-report-item i').forEach(i => i.className = 'fas fa-chevron-down');
+
+            if (!isVisible) {
+                detailsContainer.style.display = 'block';
+                item.querySelector('i').className = 'fas fa-chevron-up';
+
+                const studentErrors = allErrors.filter(e => e.student_id === studentId);
+                const studentActivities = allActivities.filter(a => a.student_id === studentId).sort((a,b) => new Date(b.created_at) - new Date(a.created_at));
+
+                let reportHTML = '<h5>Principais Dificuldades</h5>';
+                if (studentErrors.length > 0) {
+                    const errorCounts = studentErrors.reduce((acc, error) => {
+                        if (error.correct_answer) { acc[error.correct_answer] = (acc[error.correct_answer] || 0) + 1; }
+                        return acc;
+                    }, {});
+                    if (Object.keys(errorCounts).length > 0) {
+                       reportHTML += `<ul>${Object.entries(errorCounts).sort((a,b) => b[1]-a[1]).slice(0,5).map(([key, val]) => `<li>Erro em "${key}" (${val}x)</li>`).join('')}</ul>`;
+                    } else { reportHTML += '<p>Nenhum erro válido para exibir.</p>'; }
+                } else { reportHTML += '<p>Nenhum erro registrado. Ótimo trabalho! 🌟</p>'; }
+
+                reportHTML += '<h5 style="margin-top: 20px;"><i class="fas fa-star-of-life"></i> Histórico de Atividades de Reforço</h5>';
+                if (studentActivities.length > 0) {
+                    reportHTML += `<ul class="activity-history-list">${studentActivities.map(act => `<li> <span>${new Date(act.created_at).toLocaleDateString('pt-BR')}</span> <strong>${act.score}/${act.total_questions} (${act.accuracy}%)</strong> ${act.accuracy >= 70 ? '✅' : '⚠️'} </li>`).join('')}</ul>`;
+                } else { reportHTML += '<p>Nenhuma atividade de reforço concluída.</p>'; }
+
+                const safeStudentName = studentName.replace(/'/g, "\\'");
+                reportHTML += `<div class="student-details-actions">
+                    <button class="modal-btn" onclick="showEvolutionChart('${studentId}', '${safeStudentName}')"><i class="fas fa-chart-line"></i> Ver Evolução</button>
+                    <button class="modal-btn" onclick="generateAndAssignActivity('${studentId}', '${safeStudentName}')"><i class="fas fa-magic"></i> Criar Atividade</button>
+                    <button class="modal-btn primary" onclick="handleGenerateLessonPlan('${studentId}', '${safeStudentName}')"><i class="fas fa-rocket"></i> Analisar com IA</button>
+                </div>`;
+                detailsContainer.innerHTML = reportHTML;
+            }
+        });
+    });
 }
 
-.accordion-header .student-progress-container {
-    flex-grow: 1;
+async function showEvolutionChart(studentId, studentName) {
+    showFeedback(`Carregando evolução de ${studentName}...`, 'info');
+    try {
+        const { data, error } = await supabaseClient.from('phase_history').select('phase, accuracy, created_at').eq('student_id', studentId).order('created_at', { ascending: true });
+        if (error) throw error;
+        if (!data || data.length === 0) {
+            showFeedback(`${studentName} ainda não tem histórico de fases concluídas.`, 'info');
+            return;
+        }
+
+        document.getElementById('chartModalTitle').textContent = `Evolução de ${studentName}`;
+        const chartCanvas = document.getElementById('myChartCanvas');
+        if (currentEvolutionChart) currentEvolutionChart.destroy();
+
+        currentEvolutionChart = new Chart(chartCanvas, {
+            type: 'line',
+            data: {
+                labels: data.map(item => `Fase ${item.phase} (${new Date(item.created_at).toLocaleDateString('pt-BR')})`),
+                datasets: [{
+                    label: 'Precisão (%)',
+                    data: data.map(item => item.accuracy),
+                    fill: true,
+                    backgroundColor: 'rgba(118, 75, 162, 0.2)',
+                    borderColor: '#764ba2',
+                    tension: 0.1
+                }]
+            },
+            options: {
+                responsive: true,
+                scales: { y: { beginAtZero: true, max: 100, title: { display: true, text: 'Percentual de Acerto' } } },
+                plugins: { tooltip: { callbacks: { label: ctx => `Acertos: ${ctx.raw}%` } } }
+            }
+        });
+        showModal('chartModal');
+    } catch(err) {
+        console.error("Erro ao carregar gráfico de evolução:", err);
+        showFeedback(`Erro ao buscar dados de ${studentName}. Verifique o console.`, 'error');
+    }
 }
 
-.accordion-header i.fa-chevron-down {
-    transition: transform 0.3s ease;
+async function handleGenerateLessonPlan(studentId, studentName) {
+    const aiContainer = document.getElementById('aiTipsContent');
+    document.getElementById('aiTipsTitle').innerHTML = `<i class="fas fa-rocket" style="color: #764ba2;"></i> Assistente Pedagógico para <span style="color: #2c3e50;">${studentName}</span>`;
+    aiContainer.innerHTML = '<div class="loading-ai"><i class="fas fa-spinner fa-spin"></i> Analisando e gerando plano de aula...</div>';
+    showModal('aiTipsModal');
+    
+    const apiKey = "SUA_CHAVE_API_DO_GOOGLE_GEMINI_AQUI"; 
+    
+    if (!apiKey || apiKey === "SUA_CHAVE_API_DO_GOOGLE_GEMINI_AQUI") {
+        aiContainer.innerHTML = `<p class="error"><strong>Erro de Configuração:</strong> A chave de API do Gemini não foi inserida no arquivo script.js.</p>`;
+        return; 
+    }
+
+    try {
+        const { data: studentErrors, error } = await supabaseClient.from('student_errors').select('*').eq('student_id', studentId).limit(20);
+        if (error || !studentErrors || studentErrors.length === 0) {
+            aiContainer.innerHTML = '<p>Este aluno não possui erros registrados para análise.</p>';
+            return;
+        }
+
+        const errorSummary = studentErrors.map(e => `Na fase '${PHASE_DESCRIPTIONS[e.phase]}', a resposta correta era '${e.correct_answer}' e o aluno escolheu '${e.selected_answer}'.`).join('\n');
+        
+        const prompt = `Você é um especialista em pedagogia da alfabetização no Brasil. Um professor precisa de um relatório e uma atividade para o aluno ${studentName}, que apresentou as seguintes dificuldades: ${errorSummary}. Crie uma resposta em duas partes. A resposta DEVE seguir EXATAMENTE esta estrutura de Markdown: ## 🔍 Análise Pedagógica (Faça um parágrafo curto e claro resumindo a principal dificuldade do aluno com base nos erros. Ex: "A análise indica uma dificuldade recorrente na distinção de fonemas surdos e sonoros, especificamente com os pares P/B e F/V.") ## 💡 Sugestão de Atividade Prática (Mini Plano de Aula) ### 🎯 Foco da Atividade: (Descreva em uma frase o ponto a ser trabalhado). ### ✂️ Materiais Necessários: (Liste 2 ou 3 itens simples de sala de aula). ### 👣 Passo a Passo (10-15 min): (Crie 3 passos curtos e práticos. Comece cada passo com "1.", "2.", etc.).`;
+
+        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${apiKey}`;
+        const response = await fetch(apiUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ contents: [{ role: "user", parts: [{ text: prompt }] }] })
+        });
+
+        if (!response.ok) throw new Error('Erro na API do Gemini');
+        
+        const result = await response.json();
+
+        if (result.candidates?.[0].content?.parts?.[0]) {
+            let text = result.candidates[0].content.parts[0].text;
+            text = text.replace(/## (.*)/g, '<h2>$1</h2>').replace(/### (.*)/g, '<h3>$1</h3>').replace(/\n(\d)\. (.*)/g, '<p class="lesson-step"><strong>Passo $1:</strong> $2</p>').replace(/\n/g, '<br>');
+            aiContainer.innerHTML = text;
+        } else {
+            throw new Error("Resposta da IA em formato inesperado.");
+        }
+    } catch (err) {
+        console.error("Falha ao gerar o plano de aula com a IA:", err);
+        aiContainer.innerHTML = `<p class="error"><strong>Desculpe, ocorreu um erro ao gerar a atividade.</strong></p>`;
+    }
+}
+async function generateAndAssignActivity(studentId, studentName) {
+    showFeedback(`Gerando atividade de reforço para ${studentName}...`, 'info');
+    const { data: studentErrors, error } = await supabaseClient.from('student_errors').select('*').eq('student_id', studentId).order('created_at', { ascending: false }).limit(20);
+    
+    if (error || !studentErrors || studentErrors.length < 1) { 
+        showFeedback(`O aluno ${studentName} não tem erros recentes para gerar uma atividade.`, 'error');
+        return;
+    }
+
+    const errorCounts = studentErrors.reduce((acc, err) => { const key = `${err.phase}|${err.correct_answer}`; if (!acc[key]) { acc[key] = { count: 0, questionTemplate: err }; } acc[key].count++; return acc; }, {});
+    const topErrors = Object.values(errorCounts).sort((a, b) => b.count - a.count);
+
+    let customQuestions = [];
+    const questionCount = 10;
+    
+    let safeguard = 0;
+    while (customQuestions.length < questionCount && topErrors.length > 0 && safeguard < 50) {
+        const randomErrorTemplate = topErrors[Math.floor(Math.random() * topErrors.length)].questionTemplate;
+        const newQuestion = generateSingleQuestionFromError(randomErrorTemplate);
+        if (newQuestion) {
+            customQuestions.push(newQuestion);
+        }
+        safeguard++;
+    }
+    
+    if (customQuestions.length < 1) { 
+        showFeedback(`Não foi possível gerar uma atividade (erros de fases muito complexas).`, 'error');
+        return;
+    }
+
+    const activity = { questions: customQuestions.sort(() => 0.5 - Math.random()) };
+    const { error: updateError } = await supabaseClient.from('students').update({ assigned_activity: activity }).eq('id', studentId);
+        
+    if (updateError) {
+        showFeedback(`Erro ao designar atividade: ${updateError.message}`, 'error');
+    } else {
+        showFeedback(`Atividade de reforço enviada para ${studentName}!`, 'success');
+    }
 }
 
-.student-progress-accordion.open .accordion-header i.fa-chevron-down {
-    transform: rotate(180deg);
+function generateSingleQuestionFromError(errorTemplate) {
+    const phase = parseInt(errorTemplate.phase);
+    const correctAnswer = errorTemplate.correct_answer;
+    const _generateOptions = (correctItem, sourceArray, count) => { const options = new Set([correctItem]); const availableItems = [...sourceArray].filter(l => l !== correctItem); while (options.size < count && availableItems.length > 0) { const randomIndex = Math.floor(Math.random() * availableItems.length); options.add(availableItems.splice(randomIndex, 1)[0]); } return Array.from(options).sort(() => 0.5 - Math.random()); };
+
+    switch(phase) {
+        case 8: return { type: 'vowel_sound', correctAnswer: correctAnswer, options: _generateOptions(correctAnswer, VOWELS, 4) };
+        case 14: const rhymeData = PHASE_14_RHYMES.find(r => r.rhyme === correctAnswer) || PHASE_14_RHYMES[0]; return { type: 'find_rhyme', ...rhymeData, correctAnswer: rhymeData.rhyme, options: rhymeData.options.sort(()=>0.5-Math.random()) };
+        case 5: const pairData = PHASE_5_SOUND_PAIRS.find(p => p.correct === correctAnswer) || PHASE_5_SOUND_PAIRS[0]; return { type: 'sound_detective', ...pairData, options: [pairData.correct, pairData.incorrect].sort(()=>0.5-Math.random()) };
+        case 9: const syllableData = PHASE_9_SYLLABLE_COUNT.find(p => p.syllables.toString() === correctAnswer) || PHASE_9_SYLLABLE_COUNT[0]; return { type: 'count_syllables', ...syllableData, correctAnswer: syllableData.syllables.toString(), options: _generateOptions(syllableData.syllables.toString(), ['1','2','3','4'], 4) };
+        case 10: const initialSyllableData = PHASE_10_INITIAL_SYLLABLE.find(p => p.correctAnswer === correctAnswer) || PHASE_10_INITIAL_SYLLABLE[0]; return { type: 'initial_syllable', ...initialSyllableData, options: _generateOptions(initialSyllableData.correctAnswer, ['BA','CA','DA','FA','GA','LA','MA','NA','PA','RA','SA','TA','VA'], 4) };
+        case 4: const wordData = PHASE_4_WORDS_F.find(w => w.word === correctAnswer) || PHASE_4_WORDS_F[0]; return { type: 'f_word_search', ...wordData, correctAnswer: wordData.word, options: wordData.options };
+        default: return null;
+    }
 }
 
-.accordion-content {
-    padding: 20px;
-    background: #ffffff;
-    max-height: 0;
-    opacity: 0;
-    overflow: hidden;
-    transition: max-height 0.4s ease, opacity 0.4s ease, padding 0.4s ease;
-}
-
-.student-progress-accordion.open .accordion-content {
-    max-height: 1000px; /* Altura suficiente para o conteúdo */
-    opacity: 1;
-    border-top: 1px solid #e0e0e0;
-}
-
-.accordion-actions {
-    margin-top: 20px;
-    text-align: right;
-}
-/* =================================================== */
-/* CORREÇÃO: BARRA DE ROLAGEM PARA A LISTA DE FASES    */
-/* =================================================== */
-
-.phase-checkbox-grid {
-    /* Define uma altura máxima para a área das fases.
-       '40vh' significa 40% da altura da tela do dispositivo. */
-    max-height: 40vh;
-
-    /* Adiciona a barra de rolagem vertical APENAS se a lista
-       de módulos for maior que a altura máxima definida. */
-    overflow-y: auto;
-
-    /* Um preenchimento interno para a barra não ficar colada no texto. */
-    padding: 15px;
-
-    /* Um detalhe visual para separar a área de rolagem. */
-    background-color: #fafafa;
-    border: 1px solid #e9e9e9;
-    border-radius: 8px;
-}
-/* =================================================== */
-/* CORREÇÃO: BARRA DE ROLAGEM PARA A LISTA DE FASES    */
-/* =================================================== */
-
-.phase-checkbox-grid {
-    /* Define uma altura máxima para a área das fases.
-       '40vh' significa 40% da altura da tela do dispositivo. */
-    max-height: 40vh;
-
-    /* Adiciona a barra de rolagem vertical APENAS se a lista
-       de módulos for maior que a altura máxima definida. */
-    overflow-y: auto;
-
-    /* Um preenchimento interno para a barra não ficar colada no texto. */
-    padding: 15px;
-
-    /* Um detalhe visual para separar a área de rolagem. */
-    background-color: #fafafa;
-    border: 1px solid #e9e9e9;
-    border-radius: 8px;
+async function checkForCustomActivities() {
+    if (!currentUser || currentUser.type !== 'student') return;
+    const { data, error } = await supabaseClient.from('students').select('assigned_activity').eq('id', currentUser.id).single();
+    if (error) { console.error("Erro ao checar atividades:", error); return; }
+    currentUser.assigned_activity = data.assigned_activity;
+    sessionStorage.setItem('currentUser', JSON.stringify(currentUser));
+    const customActivityBtn = document.getElementById('startCustomActivityBtn');
+    if (currentUser.assigned_activity && currentUser.assigned_activity.questions) { customActivityBtn.style.display = 'inline-block'; } else { customActivityBtn.style.display = 'none'; }
 }
