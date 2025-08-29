@@ -3,20 +3,21 @@
     margin: 0;
     padding: 0;
     box-sizing: border-box;
-    -webkit-tap-highlight-color: transparent;
+    -webkit-tap-highlight-color: transparent; /* Remove o destaque azul ao tocar em botões no mobile */
 }
 
 html, body {
-    height: 100%;
-    width: 100%;
+    height: 100%; /* Garante que HTML e Body ocupem a altura total */
+    width: 100%;  /* Garante que HTML e Body ocupem a largura total */
+    min-height: 100dvh; /* Usa a altura dinâmica da viewport */
 }
 
 body {
     font-family: 'Comic Neue', cursive;
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    min-height: 100dvh;
     overflow-x: hidden;
     overscroll-behavior-y: contain;
+    color: #333; /* Cor padrão de texto mais escura para melhor contraste */
 }
 
 /* Telas */
@@ -54,7 +55,7 @@ body {
 
 /* Tela de Início */
 .game-title h1 {
-    font-size: clamp(2.5rem, 8vw, 3.5rem);
+    font-size: clamp(2.5rem, 8vw, 3.5rem); /* Fonte responsiva */
     color: #fff;
     text-shadow: 3px 3px 6px rgba(0,0,0,0.3);
     margin-bottom: 1rem;
@@ -62,7 +63,7 @@ body {
 }
 
 .game-title p {
-    font-size: clamp(1.1rem, 4vw, 1.5rem);
+    font-size: clamp(1.1rem, 4vw, 1.5rem); /* Fonte responsiva */
     color: #f0f8ff;
     margin-bottom: 2rem;
 }
@@ -79,7 +80,7 @@ body {
 }
 
 .mascot {
-    font-size: clamp(4rem, 15vw, 5rem);
+    font-size: clamp(4rem, 15vw, 5rem); /* Mascote responsivo */
     color: #ff6b6b;
     margin-bottom: 1rem;
     display: inline-block;
@@ -421,7 +422,7 @@ body {
 }
 #gameScreen .game-content {
     flex-grow: 1;
-    overflow-y: auto;
+    overflow-y: auto; /* Permite scroll apenas no conteúdo */
     min-height: 0;
     width: 100%;
     padding: 1.5rem;
@@ -549,13 +550,11 @@ body {
 /* === MODAIS === */
 .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: center; opacity: 0; visibility: hidden; transition: opacity 0.4s ease, visibility 0.4s; }
 .modal.show { display: flex; opacity: 1; visibility: visible; }
-.modal-content { background: white; padding: 30px; border-radius: 15px; max-width: 500px; width: 90%; max-height: 90vh; overflow: hidden; /* MUDANÇA AQUI */ display: flex; flex-direction: column; transform: scale(0.95); transition: transform 0.4s ease; }
+.modal-content { background: white; padding: 30px; border-radius: 15px; max-width: 500px; width: 90%; max-height: 90vh; overflow-y: auto; transform: scale(0.95); transition: transform 0.4s ease; }
 .modal.show .modal-content { transform: scale(1); }
 .modal-content.large { max-width: 800px; }
-.modal-content > h3 { flex-shrink: 0; }
-.modal-content > .modal-tabs { flex-shrink: 0; }
-.modal-content > .tab-content { flex-grow: 1; overflow-y: auto; } /* Permite que o conteúdo da aba role */
-.modal-actions { flex-shrink: 0; }
+.modal-content h3 { color: #2C3E50; margin: 0 0 25px 0; font-size: 1.6rem; }
+.modal-actions { display: flex; gap: 15px; justify-content: flex-end; margin-top: 25px; }
 .modal-btn { padding: 12px 25px; border: 2px solid #E0E0E0; background: transparent; color: #555; border-radius: 8px; cursor: pointer; font-size: 1rem; font-weight: bold; transition: all 0.3s ease; }
 .modal-btn.primary { background: #4ECDC4; border-color: #4ECDC4; color: white; }
 .modal-btn:hover { transform: translateY(-1px); }
@@ -570,30 +569,25 @@ body {
 
 /* LISTA DE ALUNOS E PROGRESSO - COM ROLAGEM */
 .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-wrap: wrap; gap: 10px; }
+.students-list { 
+    display: flex; 
+    flex-direction: column; 
+    gap: 15px; 
+    max-height: 40vh;
+    overflow-y: auto;
+    padding-right: 10px;
+}
 .student-item { background: #f8f9fa; padding: 15px; border-radius: 10px; border: 1px solid #E0E0E0; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }
 .student-info h4 { margin: 0 0 5px 0; color: #2C3E50; }
 .student-info p { margin: 0; color: #666; font-size: 0.9rem; }
+.status-indicator { font-size: 0.8rem; display: inline-flex; align-items: center; gap: 5px; }
+.status-indicator.active { color: #27ae60; }
+.status-indicator.inactive { color: #c0392b; }
 .sort-buttons { display: flex; align-items: center; gap: 8px; }
 .sort-buttons span { font-size: 0.9rem; color: #555; }
 .student-progress-container { width: 100%; margin-top: 8px; }
 .student-progress-bar { width: 100%; height: 10px; background-color: #e0e0e0; border-radius: 5px; overflow: hidden; }
 .student-progress-fill { height: 100%; background-color: #4ECDC4; width: 0%; transition: width 0.5s ease; }
-
-/* --- Barra de Rolagem na Lista de Alunos do Modal --- */
-#manageClassModal #studentsList {
-    max-height: 50vh;
-    overflow-y: auto;
-    padding-right: 10px;
-    display: flex;
-    flex-direction: column;
-    gap: 15px;
-}
-
-#manageClassModal #studentsList::-webkit-scrollbar { width: 8px; }
-#manageClassModal #studentsList::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 10px; }
-#manageClassModal #studentsList::-webkit-scrollbar-thumb { background: #c5c5c5; border-radius: 10px; }
-#manageClassModal #studentsList::-webkit-scrollbar-thumb:hover { background: #a8a8a8; }
-
 
 /* UPLOAD DE ÁUDIO E GRAVAÇÃO */
 .upload-instructions, .record-section { background: #f8f9fa; padding: 20px; border-radius: 10px; margin-bottom: 20px; }
@@ -628,21 +622,22 @@ body {
 @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
 
 
-/* --- JOGO DA MEMÓRIA --- */
+/* --- CORREÇÃO PRINCIPAL: JOGO DA MEMÓRIA RESPONSIVO --- */
 .memory-grid {
     display: grid;
+    /* Cria colunas flexíveis que se ajustam ao tamanho da tela */
     grid-template-columns: repeat(auto-fit, minmax(60px, 1fr));
     gap: 10px;
     width: 100%;
-    max-width: 500px;
+    max-width: 500px; /* Limita a largura máxima em telas grandes */
     margin: 20px auto;
     perspective: 1000px;
 }
 
 .memory-card {
     background-color: transparent;
-    width: 100%;
-    aspect-ratio: 1 / 1;
+    width: 100%; /* Ocupa o espaço da coluna da grade */
+    aspect-ratio: 1 / 1; /* Mantém o cartão quadrado */
     cursor: pointer;
 }
 
@@ -667,7 +662,7 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: clamp(1.8rem, 10vw, 2.5rem);
+    font-size: clamp(1.8rem, 10vw, 2.5rem); /* Fonte do cartão responsiva */
     font-weight: bold;
 }
 
@@ -691,8 +686,193 @@ body {
 .memory-card.matched .card-back {
     background-color: #27ae60;
 }
+/* --- FIM DA CORREÇÃO --- */
 
-/* === DASHBOARD === */
+/* === INÍCIO DO BLOCO CORRIGIDO PARA RELATÓRIOS E GRÁFICOS === */
+.report-section { 
+    margin-bottom: 30px; 
+    padding-bottom: 20px; 
+    border-bottom: 1px solid #eee; 
+}
+.report-section:last-child { 
+    border-bottom: none; 
+    padding-bottom: 0; 
+}
+.report-section h4 { 
+    color: #2C3E50; 
+    margin-bottom: 8px; 
+    font-size: 1.3rem; 
+    display: flex; 
+    align-items: center; 
+    gap: 10px; 
+}
+.report-section p { 
+    color: #666; 
+    font-size: 0.95rem; 
+    margin-bottom: 20px; 
+}
+
+/* Contêiner para a lista de relatórios individuais de alunos */
+.individual-reports-container {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    max-height: 75vh;
+    overflow-y: auto;
+    padding: 5px 10px 5px 5px;
+}
+.student-report-item { 
+    cursor: pointer; 
+    transition: background-color 0.2s ease; 
+}
+.student-report-item:hover { 
+    background-color: #f0eaff; 
+}
+.student-errors-details { 
+    margin-top: 15px; 
+    padding: 15px; 
+    background-color: #fff; 
+    border-radius: 8px; 
+    border: 1px solid #ddd; 
+}
+.student-errors-details ul { 
+    list-style-type: none; 
+    padding-left: 0; 
+    max-height: 200px;
+    overflow-y: auto;
+    padding-right: 8px;
+}
+.student-errors-details li { 
+    padding: 8px 0; 
+    display: flex; 
+    justify-content: space-between; 
+    font-size: 1rem;
+    border-bottom: 1px solid #f0f0f0; 
+}
+.student-errors-details li:last-child { 
+    border-bottom: none; 
+}
+.student-errors-details .error-item { 
+    font-size: 1rem; 
+    color: #333; 
+    display: flex; 
+    flex-direction: column; 
+}
+.student-errors-details .error-item small { 
+    font-size: 0.85rem; 
+    color: #777; 
+    margin-top: 4px; 
+    font-style: italic; 
+}
+.student-errors-details .error-count { 
+    font-size: 1rem; 
+    font-weight: bold; 
+    color: #ff6b6b; 
+    background-color: #ff6b6b1a; 
+    padding: 5px 10px; 
+    border-radius: 20px; 
+    white-space: nowrap; 
+}
+
+/* NOVA ESTRUTURA PARA O MAPA DE CALOR */
+.all-phases-scroll-container {
+    max-height: 65vh;
+    overflow-y: auto;
+    padding: 15px;
+    background-color: #fdfcff;
+    border-radius: 8px;
+    border: 1px solid #e0d8f0;
+}
+
+.phase-group {
+    background-color: #f7f5ff;
+    border-left: 5px solid #764ba2;
+    border-radius: 10px;
+    padding: 20px;
+    width: 100%;
+    margin-bottom: 15px;
+}
+.all-phases-scroll-container .phase-group:last-child {
+    margin-bottom: 0;
+}
+
+.phase-group h3 {
+    color: #764ba2;
+    margin-top: 0;
+    margin-bottom: 15px;
+    border-bottom: 2px solid #e0d8f0;
+    padding-bottom: 10px;
+    font-size: 1.4rem;
+}
+
+.heatmap-item {
+    background-color: #fff;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    padding: 8px 12px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    box-shadow: none;
+    margin-bottom: 8px;
+}
+.heatmap-item:last-child {
+    margin-bottom: 0;
+}
+.heatmap-item .item-label {
+    font-size: 1.2rem;
+    font-weight: bold;
+    color: #764ba2;
+    min-width: 35px;
+    text-align: center;
+}
+.heatmap-item .item-details {
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
+}
+.heatmap-item .item-count {
+    font-size: 0.9rem;
+    color: #333;
+    font-weight: bold;
+}
+.heatmap-item .item-bar-container {
+    width: 100%;
+    height: 8px;
+    background-color: #e0e0e0;
+    border-radius: 4px;
+    margin-top: 4px;
+}
+.heatmap-item .item-bar {
+    height: 100%;
+    background: linear-gradient(90deg, #ffc0cb, #ff6b6b);
+    border-radius: 4px;
+}
+
+.view-chart-btn { 
+    margin-left: auto; 
+    background-color: #f0eaff; 
+    color: #764ba2; 
+    font-weight: bold; 
+    border: 1px solid #dcd1ed; 
+}
+.view-chart-btn:hover { 
+    background-color: #764ba2; 
+    color: white; 
+}
+.chart-container { 
+    position: relative; 
+    width: 100%; 
+    max-height: 450px; 
+    padding: 1rem; 
+    background-color: #fafafa; 
+    border-radius: 8px; 
+    overflow-x: auto; 
+}
+/* === FIM DO BLOCO CORRIGIDO PARA RELATÓRIOS E GRÁFICOS === */
+
+
+/* === DASHBOARD COM SIDEBAR === */
 #teacherDashboard .dashboard-container { display: flex; width: 100%; height: 100vh; max-width: 100%; padding: 0; margin: 0; background-color: #f4f7fc; }
 .sidebar { width: 260px; background: #ffffff; border-right: 1px solid #e0e0e0; display: flex; flex-direction: column; padding: 20px 0; transition: width 0.3s ease; flex-shrink: 0; }
 .sidebar-header { padding: 0 25px 20px 25px; border-bottom: 1px solid #f0f0f0; }
@@ -702,7 +882,7 @@ body {
 .sidebar-nav a:hover { background-color: #f0eaff; color: #764ba2; }
 .sidebar-nav a.active { background: linear-gradient(90deg, #667eea, #764ba2); color: white; box-shadow: 0 4px 15px rgba(118, 75, 162, 0.3); }
 .sidebar-nav a i { width: 30px; text-align: center; margin-right: 15px; font-size: 1.2rem; }
-.sidebar-nav a span { display: block; }
+.sidebar-nav a span { display: block; } /* Garante que o texto do link seja visível */
 .sidebar-footer { padding: 20px 25px 0 25px; border-top: 1px solid #f0f0f0; }
 .logout-btn-sidebar { width: 100%; background: #f8f9fa; border: 1px solid #ddd; color: #c0392b; padding: 12px; border-radius: 8px; cursor: pointer; font-size: 1.1rem; font-weight: bold; transition: all 0.2s ease; }
 .logout-btn-sidebar:hover { background: #c0392b; color: white; border-color: #c0392b; }
@@ -718,12 +898,16 @@ body {
 #teacherDashboard .logout-btn { display: none; }
 
 /* === ASSISTENTE DE IA === */
+.ai-button-container { text-align: right; margin-top: 20px; }
 .ai-btn { background: linear-gradient(135deg, #667eea, #764ba2); color: white; font-weight: bold; gap: 8px !important; }
 .ai-btn:hover { transform: scale(1.05); }
 .ai-tips-container { background-color: #f8f9fa; border-radius: 8px; padding: 25px; margin-top: 15px; text-align: left; line-height: 1.6; }
 .ai-tips-container h2 { font-size: 1.3rem; color: #2c3e50; border-bottom: 2px solid #e0e0e0; padding-bottom: 10px; margin-bottom: 15px; }
 .ai-tips-container h3 { font-size: 1.1rem; color: #764ba2; border-bottom: none; padding-bottom: 5px; margin-top: 15px; margin-bottom: 10px; display: flex; align-items: center; gap: 10px; }
 .ai-tips-container h3:first-child { margin-top: 0; }
+.ai-tips-container p { margin-bottom: 10px; }
+.ai-tips-container .lesson-step { margin-bottom: 12px; line-height: 1.7; padding-left: 10px; border-left: 3px solid #4ecdc4; }
+.ai-tips-container .lesson-step strong { color: #2c3e50; }
 .loading-ai { text-align: center; padding: 40px; font-size: 1.2rem; color: #555; }
 .loading-ai i { margin-right: 10px; }
 .ai-tips-container .error { color: #c0392b; font-weight: bold; }
@@ -745,130 +929,59 @@ body {
 .class-card-actions .btn.danger { background-color: #ffebee; color: #c0392b; padding: 10px; font-size: 1.1rem; }
 .class-card-actions .btn.danger:hover { background-color: #c0392b; color: white; }
 
+
+/* === ÍCONES E BOTÕES NO MODAL === */
+.student-actions .btn.small { background-color: transparent; border: none; color: #888; font-size: 1.2rem; padding: 8px 12px; border-radius: 50%; cursor: pointer; transition: all 0.2s ease; width: 40px; height: 40px; }
+.student-actions .btn.small:hover { background-color: #f0f0f0; color: #333; }
+.student-actions .btn.small.danger:hover { background-color: #ffebee; color: #c0392b; }
+.sort-btn { background-color: #f0f0f0; border: 1px solid #ddd; color: #555; padding: 8px 15px; border-radius: 20px; font-family: 'Comic Neue', cursive; font-size: 0.9rem; font-weight: bold; cursor: pointer; transition: all 0.2s ease; display: inline-flex; align-items: center; gap: 6px; }
+.sort-btn:hover:not(.active) { background-color: #e0e0e0; border-color: #ccc; }
+.sort-btn.active { background-color: #764ba2; color: white; border-color: #764ba2; box-shadow: 0 2px 8px rgba(118, 75, 162, 0.3); }
+.form-actions .btn { padding: 10px 20px; border-radius: 8px; font-family: 'Comic Neue', cursive; font-size: 1rem; font-weight: bold; cursor: pointer; transition: all 0.2s ease; border: 2px solid #ddd; background-color: #f8f9fa; color: #555; }
+.form-actions .btn:hover { transform: translateY(-2px); box-shadow: 0 3px 8px rgba(0,0,0,0.1); border-color: #ccc; background-color: #fff; }
+.form-actions .btn.primary { background: linear-gradient(145deg, #4ECDC4, #45B7B8); border-color: #4ECDC4; color: white; }
+.form-actions .btn.primary:hover { box-shadow: 0 5px 15px rgba(78, 205, 196, 0.4); }
+.password-group input { padding-right: 45px !important; }
+.generate-password-btn:hover { color: #764ba2; transform: translateY(-50%) scale(1.2); }
+.phase-checkbox-group { display: flex; flex-direction: column; gap: 5px; align-items: flex-start; }
 .phase-checkbox-label { display: flex; align-items: center; gap: 8px; font-size: 0.9rem; color: #333; cursor: pointer; padding: 4px 8px; border-radius: 5px; transition: background-color 0.2s ease; }
 .phase-checkbox-label:hover { background-color: #f0eaff; }
 .phase-checkbox { width: 18px; height: 18px; cursor: pointer; flex-shrink: 0; }
 
-.heatmap-item .item-details { display: flex; flex-direction: column; flex-grow: 1; }
-.heatmap-item .item-count { font-size: 0.9rem; color: #333; font-weight: bold; }
-.heatmap-item .item-bar-container { width: 100%; height: 8px; background-color: #e0e0e0; border-radius: 4px; margin-top: 4px; }
-.heatmap-item .item-bar { height: 100%; background: linear-gradient(90deg, #ffc0cb, #ff6b6b); border-radius: 4px; }
+/* === ESTILOS PARA AS NOVAS FASES === */
+.sentence-build-area { background-color: #e9ecef; border: 2px dashed #adb5bd; border-radius: 10px; padding: 15px; min-height: 60px; margin: 1.5rem auto; display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: center; transition: all 0.3s ease; }
+.sentence-word { background-color: #fff; color: #495057; padding: 8px 15px; border-radius: 8px; font-size: 1.4rem; font-weight: bold; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+.word-option-button { background: linear-gradient(45deg, #5c6bc0, #3f51b5); color: white; border: none; padding: 1rem; font-size: 1.5rem; font-weight: bold; border-radius: 15px; cursor: pointer; box-shadow: 0 4px 15px rgba(0,0,0,0.15); transition: all 0.3s ease; }
+.word-option-button:hover:not(:disabled) { transform: translateY(-4px); box-shadow: 0 8px 20px rgba(0,0,0,0.2); }
+.word-option-button.disabled, .word-option-button.incorrect { background: #ced4da; cursor: not-allowed; opacity: 0.6; }
+.word-option-button.incorrect { background: linear-gradient(45deg, #ff6b6b, #ee5a24); opacity: 1; }
 
-/* ================================================================= */
-/* CORREÇÃO FINAL: PAINEL DE PROGRESSO (ACCORDION) COM ROLAGEM       */
-/* ================================================================= */
-
-/* Monitoramento de Alunos (Status) */
-.status-indicator {
-    width: 12px;
-    height: 12px;
-    border-radius: 50%;
-    display: inline-block;
-    margin-right: 10px;
-    flex-shrink: 0;
-    border: 1px solid rgba(0, 0, 0, 0.1);
-}
-.status-indicator.online { background-color: #2ecc71; animation: pulse-green 1.5s infinite; }
-.status-indicator.recent { background-color: #f1c40f; }
-.status-indicator.week { background-color: #e67e22; }
-.status-indicator.inactive { background-color: #e74c3c; }
-.status-indicator.never { background-color: #bdc3c7; }
-
-@keyframes pulse-green {
-    0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(46, 204, 113, 0.7); }
-    70% { transform: scale(1); box-shadow: 0 0 0 10px rgba(46, 204, 113, 0); }
-    100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(46, 204, 113, 0); }
-}
-
-/* Estrutura do Acordeão */
-.student-progress-accordion {
-    border: 1px solid #e0e0e0;
-    border-radius: 10px;
-    margin-bottom: 10px;
-    overflow: hidden;
-    transition: all 0.3s ease;
-}
-.student-progress-accordion.open {
-    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
-}
-.accordion-header {
-    width: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 15px;
-    background: #f8f9fa;
+.sound-detective-button {
+    background: linear-gradient(45deg, #4ecdc4, #44a08d);
+    color: white;
     border: none;
+    padding: 1.5rem;
+    font-size: 1.2rem;
+    font-weight: bold;
+    border-radius: 20px;
     cursor: pointer;
-    text-align: left;
-    gap: 15px;
-}
-.accordion-header .student-info h4 {
+    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    transition: all 0.3s ease;
     display: flex;
     align-items: center;
+    justify-content: center;
+    gap: 10px;
 }
-.accordion-header .student-progress-container {
-    flex-grow: 1;
-}
-.accordion-header i.fa-chevron-down {
-    transition: transform 0.3s ease;
-}
-.student-progress-accordion.open .accordion-header i.fa-chevron-down {
-    transform: rotate(180deg);
+.sound-detective-button:hover:not(:disabled) {
+    transform: translateY(-5px) scale(1.05);
 }
 
-/* Conteúdo do Acordeão (Área que abre) */
-.accordion-content {
-    background: #ffffff;
-    max-height: 0;
-    opacity: 0;
-    overflow: hidden;
-    transition: max-height 0.4s ease-out, opacity 0.4s ease-out, padding 0.4s ease-out;
-    padding: 0 20px; /* Padding vertical será controlado na animação */
-    display: flex;
-    flex-direction: column;
+.heatmap-selections {
+    font-size: 0.8rem;
+    color: #b33939; /* Um tom de vermelho para indicar erro */
+    margin-top: 4px;
+    font-style: italic;
 }
-.student-progress-accordion.open .accordion-content {
-    max-height: 70vh; /* Altura máxima = 70% da tela */
-    opacity: 1;
-    border-top: 1px solid #e0e0e0;
-    padding: 20px 20px;
-}
-
-/* Lista de Fases com Rolagem */
-.phase-checkbox-grid {
-    overflow-y: auto;  /* A barra de rolagem vertical fica AQUI */
-    flex-grow: 1;      /* Permite que esta área cresça e ocupe o espaço */
-    padding: 15px;
-    background-color: #fafafa;
-    border: 1px solid #e9e9e9;
-    border-radius: 8px;
-}
-
-.phase-module-title {
-    font-size: 1rem;
-    color: #764ba2;
-    margin-top: 15px;
-    margin-bottom: 8px;
-    padding-bottom: 5px;
-    border-bottom: 1px solid #eee;
-}
-.phase-module-title:first-child {
-    margin-top: 0;
-}
-
-/* Ações dentro do Acordeão (Botão Salvar) */
-.accordion-actions {
-    margin-top: auto;   /* Empurra o botão para o final do painel */
-    padding-top: 20px;  /* Espaço acima do botão */
-    text-align: right;
-    flex-shrink: 0;     /* Impede que o botão encolha */
-}
-
-
-/* ================================================================= */
-/* FIM DA CORREÇÃO                                                   */
-/* ================================================================= */
 
 
 /* === MEDIA QUERIES - AJUSTES FINOS PARA RESPONSIVIDADE === */
@@ -882,11 +995,13 @@ body {
     .sidebar-nav a.active { color: #764ba2; background: none; box-shadow: none; }
     .sidebar-nav a:hover { background-color: #f5f5f5; color: #764ba2; }
     .sidebar-nav a i { margin-right: 0; margin-bottom: 5px; font-size: 1.5rem; }
+    .sidebar-nav a span { display: block; }
     .logout-btn-sidebar { background: none; border: none; color: #888; display: flex; flex-direction: column; align-items: center; font-size: 0.75rem; height: 60px; padding: 8px 5px; }
     .logout-btn-sidebar i { font-size: 1.5rem; margin-bottom: 5px; }
     .logout-btn-sidebar:hover { color: #c0392b; }
     #teacherDashboard .dashboard-container { flex-direction: column; height: auto; min-height: 100vh; }
     .main-content { overflow-y: visible; }
+    body { overflow-y: auto; }
     #teacherDashboard .dashboard-header { padding: 15px 20px; }
     #teacherDashboard .dashboard-header h1 { font-size: 1.4rem; }
     .dashboard-content-area { padding: 20px; }
@@ -910,4 +1025,201 @@ body {
     .memory-grid { gap: 8px; } /* Espaçamento menor para telas bem pequenas */
     .class-card { flex-direction: column; align-items: flex-start; }
     .class-card h3 { margin-bottom: 10px; }
+}
+/* --- CORREÇÃO: Barra de Rolagem na Lista de Alunos do Modal --- */
+
+/*
+  Este seletor garante que o estilo seja aplicado APENAS na lista de alunos
+  (#studentsList) que está dentro do modal de gerenciar turma (#manageClassModal).
+*/
+#manageClassModal #studentsList {
+    max-height: 40vh;   /* Define uma altura máxima (ex: 40% da altura da tela) */
+    overflow-y: auto;   /* Adiciona a barra de rolagem vertical APENAS se necessário */
+    padding-right: 10px;/* Cria um espaço para a barra de rolagem não cobrir o conteúdo */
+    
+    /* Mantém o layout que você já tinha para a lista */
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+/* Ajuste fino para a aparência da barra de rolagem (opcional, mas recomendado) */
+#manageClassModal #studentsList::-webkit-scrollbar {
+    width: 8px;
+}
+
+#manageClassModal #studentsList::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 10px;
+}
+
+#manageClassModal #studentsList::-webkit-scrollbar-thumb {
+    background: #c5c5c5;
+    border-radius: 10px;
+}
+
+#manageClassModal #studentsList::-webkit-scrollbar-thumb:hover {
+    background: #a8a8a8;
+}
+/* =================================================== */
+/* ESTILOS PARA O MONITORAMENTO DE ALUNOS (STATUS)     */
+/* =================================================== */
+
+/* A bolinha base para o status */
+.status-indicator {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    display: inline-block;
+    margin-right: 10px;
+    flex-shrink: 0;
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+}
+
+/* Verde: Aluno Online Agora */
+.status-indicator.online {
+    background-color: #2ecc71; /* Verde vivo */
+    animation: pulse-green 1.5s infinite;
+}
+
+/* Amarelo: Aluno acessou hoje ou ontem */
+.status-indicator.recent {
+    background-color: #f1c40f; /* Amarelo */
+}
+
+/* Laranja: Aluno acessou na última semana */
+.status-indicator.week {
+    background-color: #e67e22; /* Laranja */
+}
+
+/* Vermelho: Aluno inativo há mais de 7 dias */
+.status-indicator.inactive {
+    background-color: #e74c3c; /* Vermelho */
+}
+
+/* Cinza: Aluno nunca jogou */
+.status-indicator.never {
+    background-color: #bdc3c7; /* Cinza */
+}
+
+/* Animação de pulso para o status "Online" */
+@keyframes pulse-green {
+    0% {
+        transform: scale(0.95);
+        box-shadow: 0 0 0 0 rgba(46, 204, 113, 0.7);
+    }
+    70% {
+        transform: scale(1);
+        box-shadow: 0 0 0 10px rgba(46, 204, 113, 0);
+    }
+    100% {
+        transform: scale(0.95);
+        box-shadow: 0 0 0 0 rgba(46, 204, 113, 0);
+    }
+}
+
+/* Melhorias no painel de progresso (Accordion) */
+.student-progress-accordion {
+    border: 1px solid #e0e0e0;
+    border-radius: 10px;
+    margin-bottom: 10px;
+    overflow: hidden;
+    transition: all 0.3s ease;
+}
+
+.student-progress-accordion.open {
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+}
+
+.accordion-header {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 15px;
+    background: #f8f9fa;
+    border: none;
+    cursor: pointer;
+    text-align: left;
+    gap: 15px;
+}
+
+.accordion-header .student-info h4 {
+    display: flex;
+    align-items: center;
+}
+
+.accordion-header .student-progress-container {
+    flex-grow: 1;
+}
+
+.accordion-header i.fa-chevron-down {
+    transition: transform 0.3s ease;
+}
+
+.student-progress-accordion.open .accordion-header i.fa-chevron-down {
+    transform: rotate(180deg);
+}
+
+.accordion-content {
+    padding: 20px;
+    background: #ffffff;
+    max-height: 0;
+    opacity: 0;
+    overflow: hidden;
+    transition: max-height 0.4s ease, opacity 0.4s ease, padding 0.4s ease;
+}
+
+.student-progress-accordion.open .accordion-content {
+    max-height: 1000px; /* Altura suficiente para o conteúdo */
+    opacity: 1;
+    border-top: 1px solid #e0e0e0;
+}
+
+.accordion-actions {
+    margin-top: 20px;
+    text-align: right;
+}
+/* =================================================== */
+/* CORREÇÃO: BARRA DE ROLAGEM PARA A LISTA DE FASES     */
+/* =================================================== */
+
+.phase-checkbox-grid {
+    /* Define uma altura máxima para a área das fases.
+       '40vh' significa 40% da altura da tela do dispositivo. */
+    max-height: 40vh;
+
+    /* Adiciona a barra de rolagem vertical APENAS se a lista
+       de módulos for maior que a altura máxima definida. */
+    overflow-y: auto;
+
+    /* Um preenchimento interno para a barra não ficar colada no texto. */
+    padding: 15px;
+
+    /* Um detalhe visual para separar a área de rolagem. */
+    background-color: #fafafa;
+    border: 1px solid #e9e9e9;
+    border-radius: 8px;
+}
+/* =================================================== */
+/* CORREÇÃO: BARRA DE ROLAGEM PARA A LISTA DE FASES     */
+/* =================================================== */
+
+.phase-checkbox-grid {
+    /* Define uma altura máxima para a área das fases.
+       '40vh' significa 40% da altura da tela do dispositivo. */
+    max-height: 40vh;
+
+    /* Adiciona a barra de rolagem vertical APENAS se a lista
+       de módulos for maior que a altura máxima definida. */
+    overflow-y: auto;
+
+    /* Um preenchimento interno para a barra não ficar colada no texto. */
+    padding: 15px;
+
+    /* Um detalhe visual para separar a área de rolagem. */
+    background-color: #fafafa;
+    border: 1px solid #e9e9e9;
+    border-radius: 8px;
 }
