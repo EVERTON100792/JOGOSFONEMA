@@ -1211,7 +1211,67 @@ body {
     transform: rotate(-15deg);
 }
 
-/* Fim do estilo para o botão Salvar Fases */
+/* === Animações Elegantes para o Painel do Professor === */
+
+/* Animação de entrada para os cards e seções */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(15px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Aplica a animação aos cards da turma com um pequeno atraso */
+.class-card {
+    animation: fadeIn 0.5s ease-out forwards;
+    opacity: 0; /* Começa invisível */
+}
+
+/* Adiciona um atraso escalonado para cada card */
+.classes-grid .class-card:nth-child(1) { animation-delay: 0.1s; }
+.classes-grid .class-card:nth-child(2) { animation-delay: 0.2s; }
+.classes-grid .class-card:nth-child(3) { animation-delay: 0.3s; }
+.classes-grid .class-card:nth-child(4) { animation-delay: 0.4s; }
+/* Adicione mais se houver mais cards visíveis de uma vez */
+
+/* Animação suave para a transição entre as abas do dashboard */
+.dashboard-view {
+    display: none;
+    opacity: 0;
+    transition: opacity 0.4s ease-in-out;
+}
+.dashboard-view.active {
+    display: block;
+    opacity: 1;
+    animation: fadeIn 0.4s ease-out;
+}
+
+/* Efeito de hover mais profissional nos links da barra lateral */
+.sidebar-nav a {
+    position: relative;
+    transition: all 0.3s ease;
+}
+.sidebar-nav a::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    height: 0;
+    width: 4px;
+    background: #764ba2;
+    border-radius: 0 4px 4px 0;
+    transition: height 0.3s ease;
+}
+.sidebar-nav a:hover::before,
+.sidebar-nav a.active::before {
+    height: 70%;
+}
+
+.sidebar-nav a.active {
+    background: #f0eaff;
+    color: #764ba2;
+}
+
+/* Fim das animações */
 
 .phase-checkbox-grid {
     /* Detalhes visuais para separar a área de rolagem. */
