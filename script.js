@@ -20,6 +20,47 @@ let teacherChannel = null;
 let onlineStudents = new Set();
 let studentChannel = null;
 
+// =======================================================
+// NOVO: LÓGICA DE ÁUDIO
+// =======================================================
+// Objeto para pré-carregar os sons e evitar atrasos.
+// CRIE UMA PASTA 'sounds' NO SEU PROJETO E COLOQUE OS ARQUIVOS MP3 DENTRO
+const soundEffects = {
+    click: new Audio('sounds/click.mp3'),
+    correct: new Audio('sounds/correct.mp3'),
+    incorrect: new Audio('sounds/incorrect.mp3'),
+    phaseWin: new Audio('sounds/phase_win.mp3')
+};
+
+function playSound(soundName) {
+    if (soundEffects[soundName]) {
+        soundEffects[soundName].currentTime = 0;
+        soundEffects[soundName].play().catch(error => console.error(`Erro ao tocar som ${soundName}:`, error));
+    }
+}
+
+// Função para "desbloquear" o áudio no primeiro clique do usuário em dispositivos móveis
+let audioUnlocked = false;
+function unlockAudio() {
+    if (audioUnlocked || !Object.values(soundEffects).length) return;
+    
+    // Toca todos os sons com volume 0 para que o navegador os "autorize"
+    Object.values(soundEffects).forEach(sound => {
+        sound.volume = 0;
+        sound.play().catch(() => {});
+        sound.pause();
+        sound.currentTime = 0;
+        sound.volume = 1;
+    });
+
+    audioUnlocked = true;
+    console.log("Contexto de áudio desbloqueado pelo usuário.");
+}
+// =======================================================
+// FIM DA LÓGICA DE ÁUDIO
+// =======================================================
+
+
 // PARTE 2: CONTEÚDO DO JOGO (SEQUÊNCIA PEDAGÓGICA FINAL ALINHADA À IMAGEM)
 const PHASE_DESCRIPTIONS = {
     1: "O Som das Letras",
@@ -40,109 +81,48 @@ const PHASE_DESCRIPTIONS = {
     16: "Completando com Sílabas Complexas"
 };
 
-// BANCO DE DADOS DAS FASES
+// BANCO DE DADOS DAS FASES (sem alterações)
 const PHASE_1_LETTER_SOUNDS = [
-    { letter: 'F', audioKey: 'F', description: 'de soprar uma vela (ffff...)?', optionsPool: 'AMOPV' },
-    { letter: 'V', audioKey: 'V', description: 'de um motor vibrando (vvvv...)?', optionsPool: 'AMOPF' },
-    { letter: 'S', audioKey: 'S', description: 'da cobrinha (ssss...)?', optionsPool: 'AMOPZ' },
-    { letter: 'Z', audioKey: 'Z', description: 'da abelhinha (zzzz...)?', optionsPool: 'AMOPS' },
-    { letter: 'M', audioKey: 'M', description: 'de quando a comida está gostosa (mmmm...)?', optionsPool: 'AOPNS' },
-    { letter: 'P', audioKey: 'P', description: 'de uma pequena explosão, sem voz (p, p, p)?', optionsPool: 'AFOVB' },
-    { letter: 'B', audioKey: 'B', description: 'de uma pequena explosão, com voz (b, b, b)?', optionsPool: 'AFOVP' },
-    { letter: 'T', audioKey: 'T', description: 'da batidinha da língua no dente, sem voz (t, t, t)?', optionsPool: 'AFOVD' },
-    { letter: 'D', audioKey: 'D', description: 'da batidinha da língua no dente, com voz (d, d, d)?', optionsPool: 'AFOVT' },
-    { letter: 'L', audioKey: 'L', description: 'com a língua no céu da boca (llll...)?', optionsPool: 'ARFMN' }
+    { letter: 'F', audioKey: 'F', description: 'de soprar uma vela (ffff...)?', optionsPool: 'AMOPV' }, { letter: 'V', audioKey: 'V', description: 'de um motor vibrando (vvvv...)?', optionsPool: 'AMOPF' }, { letter: 'S', audioKey: 'S', description: 'da cobrinha (ssss...)?', optionsPool: 'AMOPZ' }, { letter: 'Z', audioKey: 'Z', description: 'da abelhinha (zzzz...)?', optionsPool: 'AMOPS' }, { letter: 'M', audioKey: 'M', description: 'de quando a comida está gostosa (mmmm...)?', optionsPool: 'AOPNS' }, { letter: 'P', audioKey: 'P', description: 'de uma pequena explosão, sem voz (p, p, p)?', optionsPool: 'AFOVB' }, { letter: 'B', audioKey: 'B', description: 'de uma pequena explosão, com voz (b, b, b)?', optionsPool: 'AFOVP' }, { letter: 'T', audioKey: 'T', description: 'da batidinha da língua no dente, sem voz (t, t, t)?', optionsPool: 'AFOVD' }, { letter: 'D', audioKey: 'D', description: 'da batidinha da língua no dente, com voz (d, d, d)?', optionsPool: 'AFOVT' }, { letter: 'L', audioKey: 'L', description: 'com a língua no céu da boca (llll...)?', optionsPool: 'ARFMN' }
 ];
 const PHASE_3_SYLLABLE_F = [
-    { base: 'F', vowel: 'A', result: 'FA', image: '🔪', word: 'FACA' }, { base: 'F', vowel: 'E', result: 'FE', image: '🌱', word: 'FEIJÃO' },
-    { base: 'F', vowel: 'I', result: 'FI', image: '🎀', word: 'FITA' }, { base: 'F', vowel: 'O', result: 'FO', image: '🔥', word: 'FOGO' },
-    { base: 'F', vowel: 'U', result: 'FU', image: '💨', word: 'FUMAÇA' }, { base: 'F', vowel: 'A', result: 'FA', image: '🧚‍♀️', word: 'FADA' },
-    { base: 'F', vowel: 'E', result: 'FE', image: '😀', word: 'FELIZ' }, { base: 'F', vowel: 'I', result: 'FI', image: 'Figo', word: 'FIGO' },
-    { base: 'F', vowel: 'O', result: 'FO', image: '🦭', word: 'FOCA' }, { base: 'F', vowel: 'U', result: 'FU', image: '⚽', word: 'FUTEBOL' }
+    { base: 'F', vowel: 'A', result: 'FA', image: '🔪', word: 'FACA' }, { base: 'F', vowel: 'E', result: 'FE', image: '🌱', word: 'FEIJÃO' }, { base: 'F', vowel: 'I', result: 'FI', image: '🎀', word: 'FITA' }, { base: 'F', vowel: 'O', result: 'FO', image: '🔥', word: 'FOGO' }, { base: 'F', vowel: 'U', result: 'FU', image: '💨', word: 'FUMAÇA' }, { base: 'F', vowel: 'A', result: 'FA', image: '🧚‍♀️', word: 'FADA' }, { base: 'F', vowel: 'E', result: 'FE', image: '😀', word: 'FELIZ' }, { base: 'F', vowel: 'I', result: 'FI', image: 'Figo', word: 'FIGO' }, { base: 'F', vowel: 'O', result: 'FO', image: '🦭', word: 'FOCA' }, { base: 'F', vowel: 'U', result: 'FU', image: '⚽', word: 'FUTEBOL' }
 ];
 const PHASE_4_WORDS_F = [
-    { word: 'FOTO', image: '📷', options: ['FOTO', 'VOTO', 'POTE'] }, { word: 'FIO', image: '🧵', options: ['FIO', 'VIO', 'RIO'] },
-    { word: 'FACA', image: '🔪', options: ['FACA', 'VACA', 'PACA'] }, { word: 'FOCA', image: '🦭', options: ['FOCA', 'POCA', 'VOCA'] },
-    { word: 'FADA', image: '🧚‍♀️', options: ['FADA', 'VADA', 'NADA'] }, { word: 'FOGO', image: '🔥', options: ['FOGO', 'POGO', 'JOGO'] },
-    { word: 'FITA', image: '🎀', options: ['FITA', 'VITA', 'BITA'] }, { word: 'FESTA', image: '🎉', options: ['FESTA', 'RESTA', 'TESTA'] },
-    { word: 'FILA', image: '🧍🧍‍♀️🧍‍♂️', options: ['FILA', 'VILA', 'PILA'] }, { word: 'FAROL', image: '🚦', options: ['FAROL', 'CAROL', 'ROL'] }
+    { word: 'FOTO', image: '📷', options: ['FOTO', 'VOTO', 'POTE'] }, { word: 'FIO', image: '🧵', options: ['FIO', 'VIO', 'RIO'] }, { word: 'FACA', image: '🔪', options: ['FACA', 'VACA', 'PACA'] }, { word: 'FOCA', image: '🦭', options: ['FOCA', 'POCA', 'VOCA'] }, { word: 'FADA', image: '🧚‍♀️', options: ['FADA', 'VADA', 'NADA'] }, { word: 'FOGO', image: '🔥', options: ['FOGO', 'POGO', 'JOGO'] }, { word: 'FITA', image: '🎀', options: ['FITA', 'VITA', 'BITA'] }, { word: 'FESTA', image: '🎉', options: ['FESTA', 'RESTA', 'TESTA'] }, { word: 'FILA', image: '🧍🧍‍♀️🧍‍♂️', options: ['FILA', 'VILA', 'PILA'] }, { word: 'FAROL', image: '🚦', options: ['FAROL', 'CAROL', 'ROL'] }
 ];
 const PHASE_5_SOUND_PAIRS = [
-    { correct: 'VACA', incorrect: 'FACA', image: '🐄' }, { correct: 'PATO', incorrect: 'BATO', image: '🦆' },
-    { correct: 'DADO', incorrect: 'TADO', image: '🎲' }, { correct: 'BOTE', incorrect: 'POTE', image: '⛵' },
-    { correct: 'GOLA', incorrect: 'COLA', image: '👕' }, { correct: 'ZELO', incorrect: 'SELO', image: '😇' },
-    { correct: 'JOGO', incorrect: 'XOGO', image: '🎮' }, { correct: 'CHAVE', incorrect: 'JAVE', image: '🔑' },
-    { correct: 'GALO', incorrect: 'CALO', image: '🐓' }, { correct: 'FACA', incorrect: 'VACA', image: '🔪' }
+    { correct: 'VACA', incorrect: 'FACA', image: '🐄' }, { correct: 'PATO', incorrect: 'BATO', image: '🦆' }, { correct: 'DADO', incorrect: 'TADO', image: '🎲' }, { correct: 'BOTE', incorrect: 'POTE', image: '⛵' }, { correct: 'GOLA', incorrect: 'COLA', image: '👕' }, { correct: 'ZELO', incorrect: 'SELO', image: '😇' }, { correct: 'JOGO', incorrect: 'XOGO', image: '🎮' }, { correct: 'CHAVE', incorrect: 'JAVE', image: '🔑' }, { correct: 'GALO', incorrect: 'CALO', image: '🐓' }, { correct: 'FACA', incorrect: 'VACA', image: '🔪' }
 ];
 const PHASE_6_SENTENCES_COUNT = [
-    { sentence: 'A FADA VOOU', image: '🧚‍♀️', words: 3 }, { sentence: 'O GATO BEBE LEITE', image: '🐈', words: 4 },
-    { sentence: 'O SOL É AMARELO', image: '☀️', words: 4 }, { sentence: 'EU GOSTO DE BOLO', image: '🎂', words: 4 },
-    { sentence: 'A BOLA É REDONDA', image: '⚽', words: 4 }, { sentence: 'O CACHORRO LATE ALTO', image: '🐕', words: 4 },
-    { sentence: 'A LUA BRILHA NO CÉU', image: '🌙', words: 5 }, { sentence: 'A FLOR É CHEIROSA', image: '🌸', words: 4 },
-    { sentence: 'O SAPO PULA NO LAGO', image: '🐸', words: 5 }, { sentence: 'O PEIXE VIVE NA ÁGUA', image: '🐠', words: 5 }
+    { sentence: 'A FADA VOOU', image: '🧚‍♀️', words: 3 }, { sentence: 'O GATO BEBE LEITE', image: '🐈', words: 4 }, { sentence: 'O SOL É AMARELO', image: '☀️', words: 4 }, { sentence: 'EU GOSTO DE BOLO', image: '🎂', words: 4 }, { sentence: 'A BOLA É REDONDA', image: '⚽', words: 4 }, { sentence: 'O CACHORRO LATE ALTO', image: '🐕', words: 4 }, { sentence: 'A LUA BRILHA NO CÉU', image: '🌙', words: 5 }, { sentence: 'A FLOR É CHEIROSA', image: '🌸', words: 4 }, { sentence: 'O SAPO PULA NO LAGO', image: '🐸', words: 5 }, { sentence: 'O PEIXE VIVE NA ÁGUA', image: '🐠', words: 5 }
 ];
 const PHASE_7_SENTENCES_BUILD = [
-    { sentence: ['O', 'FOGO', 'QUEIMA'], image: '🔥', answer: 'O FOGO QUEIMA' }, { sentence: ['A', 'BOLA', 'É', 'REDONDA'], image: '⚽', answer: 'A BOLA É REDONDA' },
-    { sentence: ['EU', 'AMO', 'LER'], image: '📚', answer: 'EU AMO LER' }, { sentence: ['O', 'PEIXE', 'NADA'], image: '🐠', answer: 'O PEIXE NADA' },
-    { sentence: ['O', 'SOL', 'É', 'QUENTE'], image: '☀️', answer: 'O SOL É QUENTE' }, { sentence: ['A', 'CASA', 'É', 'GRANDE'], image: '🏠', answer: 'A CASA É GRANDE' },
-    { sentence: ['O', 'GATO', 'DORME'], image: '😴', answer: 'O GATO DORME' }, { sentence: ['A', 'FLOR', 'É', 'BONITA'], image: '🌻', answer: 'A FLOR É BONITA' },
-    { sentence: ['NÓS', 'VAMOS', 'BRINCAR'], image: '🤹', answer: 'NÓS VAMOS BRINCAR' }, { sentence: ['O', 'CARRO', 'É', 'AZUL'], image: '🚗', answer: 'O CARRO É AZUL' }
+    { sentence: ['O', 'FOGO', 'QUEIMA'], image: '🔥', answer: 'O FOGO QUEIMA' }, { sentence: ['A', 'BOLA', 'É', 'REDONDA'], image: '⚽', answer: 'A BOLA É REDONDA' }, { sentence: ['EU', 'AMO', 'LER'], image: '📚', answer: 'EU AMO LER' }, { sentence: ['O', 'PEIXE', 'NADA'], image: '🐠', answer: 'O PEIXE NADA' }, { sentence: ['O', 'SOL', 'É', 'QUENTE'], image: '☀️', answer: 'O SOL É QUENTE' }, { sentence: ['A', 'CASA', 'É', 'GRANDE'], image: '🏠', answer: 'A CASA É GRANDE' }, { sentence: ['O', 'GATO', 'DORME'], image: '😴', answer: 'O GATO DORME' }, { sentence: ['A', 'FLOR', 'É', 'BONITA'], image: '🌻', answer: 'A FLOR É BONITA' }, { sentence: ['NÓS', 'VAMOS', 'BRINCAR'], image: '🤹', answer: 'NÓS VAMOS BRINCAR' }, { sentence: ['O', 'CARRO', 'É', 'AZUL'], image: '🚗', answer: 'O CARRO É AZUL' }
 ];
 const PHASE_9_SYLLABLE_COUNT = [
-    { word: 'SOL', image: '☀️', syllables: 1 }, { word: 'PÃO', image: '🍞', syllables: 1 }, { word: 'FLOR', image: '🌸', syllables: 1 }, { word: 'MAR', image: '🌊', syllables: 1 },
-    { word: 'BOLA', image: '⚽', syllables: 2 }, { word: 'CASA', image: '🏠', syllables: 2 }, { word: 'LUA', image: '🌙', syllables: 2 }, { word: 'LIVRO', image: '📖', syllables: 2 },
-    { word: 'SAPATO', image: '👟', syllables: 3 }, { word: 'JANELA', image: '🖼️', syllables: 3 }, { word: 'MACACO', image: '🐒', syllables: 3 }, { word: 'CASTELO', image: '🏰', syllables: 3 },
-    { word: 'BORBOLETA', image: '🦋', syllables: 4 }, { word: 'TELEFONE', image: '📞', syllables: 4 },
-    { word: 'ABACAXI', image: '🍍', syllables: 4 }, { word: 'HIPOPÓTAMO', image: '🦛', syllables: 5 }
+    { word: 'SOL', image: '☀️', syllables: 1 }, { word: 'PÃO', image: '🍞', syllables: 1 }, { word: 'FLOR', image: '🌸', syllables: 1 }, { word: 'MAR', image: '🌊', syllables: 1 }, { word: 'BOLA', image: '⚽', syllables: 2 }, { word: 'CASA', image: '🏠', syllables: 2 }, { word: 'LUA', image: '🌙', syllables: 2 }, { word: 'LIVRO', image: '📖', syllables: 2 }, { word: 'SAPATO', image: '👟', syllables: 3 }, { word: 'JANELA', image: '🖼️', syllables: 3 }, { word: 'MACACO', image: '🐒', syllables: 3 }, { word: 'CASTELO', image: '🏰', syllables: 3 }, { word: 'BORBOLETA', image: '🦋', syllables: 4 }, { word: 'TELEFONE', image: '📞', syllables: 4 }, { word: 'ABACAXI', image: '🍍', syllables: 4 }, { word: 'HIPOPÓTAMO', image: '🦛', syllables: 5 }
 ];
 const PHASE_10_INITIAL_SYLLABLE = [
-    { word: 'BOLO', image: '🎂', correctAnswer: 'BO' }, { word: 'MACACO', image: '🐒', correctAnswer: 'MA' },
-    { word: 'SAPATO', image: '👟', correctAnswer: 'SA' }, { word: 'JANELA', image: '🖼️', correctAnswer: 'JA' },
-    { word: 'VACA', image: '🐄', correctAnswer: 'VA' }, { word: 'GATO', image: '🐈', correctAnswer: 'GA' },
-    { word: 'DADO', image: '🎲', correctAnswer: 'DA' }, { word: 'RATO', image: '🐀', correctAnswer: 'RA' },
-    { word: 'FOCA', image: '🦭', correctAnswer: 'FO' }, { word: 'LIVRO', image: '📖', correctAnswer: 'LI' }
+    { word: 'BOLO', image: '🎂', correctAnswer: 'BO' }, { word: 'MACACO', image: '🐒', correctAnswer: 'MA' }, { word: 'SAPATO', image: '👟', correctAnswer: 'SA' }, { word: 'JANELA', image: '🖼️', correctAnswer: 'JA' }, { word: 'VACA', image: '🐄', correctAnswer: 'VA' }, { word: 'GATO', image: '🐈', correctAnswer: 'GA' }, { word: 'DADO', image: '🎲', correctAnswer: 'DA' }, { word: 'RATO', image: '🐀', correctAnswer: 'RA' }, { word: 'FOCA', image: '🦭', correctAnswer: 'FO' }, { word: 'LIVRO', image: '📖', correctAnswer: 'LI' }
 ];
 const PHASE_11_F_POSITION = [
-    { word: 'FADA', image: '🧚‍♀️', syllable: 'FA', blanked: '__DA' }, { word: 'FIVELA', image: '🪢', syllable: 'FI', blanked: '__VELA' },
-    { word: 'GARRAFA', image: '🍾', syllable: 'FA', blanked: 'GARRA__' }, { word: 'ALFINETE', image: '🧷', syllable: 'FI', blanked: 'AL__NETE' },
-    { word: 'CAFÉ', image: '☕', syllable: 'FÉ', blanked: 'CA__' }, { word: 'GIRAFA', image: '🦒', syllable: 'FA', blanked: 'GIRA__' },
-    { word: 'SOFÁ', image: '🛋️', syllable: 'FÁ', blanked: 'SO__' }, { word: 'BIFE', image: '🥩', syllable: 'FE', blanked: 'BI__' },
-    { word: 'FÓSFORO', image: 'Matches', syllable: 'FOS', blanked: '__FORO' }, { word: 'GOLFINHO', image: '🐬', syllable: 'FI', blanked: 'GOL__NHO' }
+    { word: 'FADA', image: '🧚‍♀️', syllable: 'FA', blanked: '__DA' }, { word: 'FIVELA', image: '🪢', syllable: 'FI', blanked: '__VELA' }, { word: 'GARRAFA', image: '🍾', syllable: 'FA', blanked: 'GARRA__' }, { word: 'ALFINETE', image: '🧷', syllable: 'FI', blanked: 'AL__NETE' }, { word: 'CAFÉ', image: '☕', syllable: 'FÉ', blanked: 'CA__' }, { word: 'GIRAFA', image: '🦒', syllable: 'FA', blanked: 'GIRA__' }, { word: 'SOFÁ', image: '🛋️', syllable: 'FÁ', blanked: 'SO__' }, { word: 'BIFE', image: '🥩', syllable: 'FE', blanked: 'BI__' }, { word: 'FÓSFORO', image: 'Matches', syllable: 'FOS', blanked: '__FORO' }, { word: 'GOLFINHO', image: '🐬', syllable: 'FI', blanked: 'GOL__NHO' }
 ];
 const PHASE_12_WORD_TRANSFORM = [
-    { initialWord: 'SAPATO', toRemove: 'SA', correctAnswer: 'PATO', image: '🦆' }, { initialWord: 'LUVA', toRemove: 'L', correctAnswer: 'UVA', image: '🍇' },
-    { initialWord: 'CAMALEÃO', toRemove: 'CAMA', correctAnswer: 'LEÃO', image: '🦁' }, { initialWord: 'GALINHA', toRemove: 'GA', correctAnswer: 'LINHA', image: '🧵' },
-    { initialWord: 'SOLDADO', toRemove: 'SOL', correctAnswer: 'DADO', image: '🎲' }, { initialWord: 'SERPENTE', toRemove: 'SER', correctAnswer: 'PENTE', image: 'comb' },
-    { initialWord: 'TUCANO', toRemove: 'TU', correctAnswer: 'CANO', image: 'pipe' }, { initialWord: 'ESCADA', toRemove: 'ES', correctAnswer: 'CADA', image: 'ladder' },
-    { initialWord: 'REPOLHO', toRemove: 'RE', correctAnswer: 'POLHO', image: 'cabbage' }, { initialWord: 'SACOLA', toRemove: 'SA', correctAnswer: 'COLA', image: 'glue' }
+    { initialWord: 'SAPATO', toRemove: 'SA', correctAnswer: 'PATO', image: '🦆' }, { initialWord: 'LUVA', toRemove: 'L', correctAnswer: 'UVA', image: '🍇' }, { initialWord: 'CAMALEÃO', toRemove: 'CAMA', correctAnswer: 'LEÃO', image: '🦁' }, { initialWord: 'GALINHA', toRemove: 'GA', correctAnswer: 'LINHA', image: '🧵' }, { initialWord: 'SOLDADO', toRemove: 'SOL', correctAnswer: 'DADO', image: '🎲' }, { initialWord: 'SERPENTE', toRemove: 'SER', correctAnswer: 'PENTE', image: 'comb' }, { initialWord: 'TUCANO', toRemove: 'TU', correctAnswer: 'CANO', image: 'pipe' }, { initialWord: 'ESCADA', toRemove: 'ES', correctAnswer: 'CADA', image: 'ladder' }, { initialWord: 'REPOLHO', toRemove: 'RE', correctAnswer: 'POLHO', image: 'cabbage' }, { initialWord: 'SACOLA', toRemove: 'SA', correctAnswer: 'COLA', image: 'glue' }
 ];
 const PHASE_13_INVERT_SYLLABLES = [
-    { word: 'BOLO', image: '🎂', inverted: 'LOBO', imageInverted: '🐺' }, { word: 'MACA', image: '🍎', inverted: 'CAMA', imageInverted: '🛏️' },
-    { word: 'GATO', image: '🐈', inverted: 'TOGA', imageInverted: '🎓' }, { word: 'LAMA', image: '💩', inverted: 'MALA', imageInverted: '👜' },
-    { word: 'TOPA', image: '🤝', inverted: 'PATO', imageInverted: '🦆' }, { word: 'CASA', image: '🏠', inverted: 'SACA', imageInverted: '💰' },
-    { word: 'LICA', image: '👱‍♀️', inverted: 'CALI', imageInverted: '🌆' }, { word: 'DICA', image: '💡', inverted: 'CADI', imageInverted: '🛒' },
-    { word: 'MAGO', image: '🧙‍♂️', inverted: 'GOMA', imageInverted: '🍬' }, { word: 'SECA', image: '🏜️', inverted: 'CASE', imageInverted: '💼' }
+    { word: 'BOLO', image: '🎂', inverted: 'LOBO', imageInverted: '🐺' }, { word: 'MACA', image: '🍎', inverted: 'CAMA', imageInverted: '🛏️' }, { word: 'GATO', image: '🐈', inverted: 'TOGA', imageInverted: '🎓' }, { word: 'LAMA', image: '💩', inverted: 'MALA', imageInverted: '👜' }, { word: 'TOPA', image: '🤝', inverted: 'PATO', imageInverted: '🦆' }, { word: 'CASA', image: '🏠', inverted: 'SACA', imageInverted: '💰' }, { word: 'LICA', image: '👱‍♀️', inverted: 'CALI', imageInverted: '🌆' }, { word: 'DICA', image: '💡', inverted: 'CADI', imageInverted: '🛒' }, { word: 'MAGO', image: '🧙‍♂️', inverted: 'GOMA', imageInverted: '🍬' }, { word: 'SECA', image: '🏜️', inverted: 'CASE', imageInverted: '💼' }
 ];
 const PHASE_14_RHYMES = [
-    { word: 'PÃO', image: '🍞', rhyme: 'MÃO' }, { word: 'GATO', image: '🐈', rhyme: 'PATO' },
-    { word: 'JANELA', image: '🖼️', rhyme: 'PANELA' }, { word: 'ANEL', image: '💍', rhyme: 'PASTEL' },
-    { word: 'FIVELA', image: '🪢', rhyme: 'CANELA' }, { word: 'CADEIRA', image: '🪑', rhyme: 'BANDEIRA' },
-    { word: 'MARTELO', image: '🔨', rhyme: 'CASTELO' }, { word: 'SOLDADO', image: '🎖️', rhyme: 'ADOÇADO' },
-    { word: 'CEBOLA', image: '🧅', rhyme: 'ARGOLA' }, { word: 'CENOURA', image: '🥕', rhyme: 'TESOURA' }
+    { word: 'PÃO', image: '🍞', rhyme: 'MÃO' }, { word: 'GATO', image: '🐈', rhyme: 'PATO' }, { word: 'JANELA', image: '🖼️', rhyme: 'PANELA' }, { word: 'ANEL', image: '💍', rhyme: 'PASTEL' }, { word: 'FIVELA', image: '🪢', rhyme: 'CANELA' }, { word: 'CADEIRA', image: '🪑', rhyme: 'BANDEIRA' }, { word: 'MARTELO', image: '🔨', rhyme: 'CASTELO' }, { word: 'SOLDADO', image: '🎖️', rhyme: 'ADOÇADO' }, { word: 'CEBOLA', image: '🧅', rhyme: 'ARGOLA' }, { word: 'CENOURA', image: '🥕', rhyme: 'TESOURA' }
 ];
 const PHASE_15_PHONEME_COUNT = [
-    { word: 'LUA', image: '🌙', sounds: 3 }, { word: 'SOL', image: '☀️', sounds: 3 },
-    { word: 'PÉ', image: '🦶', sounds: 2 }, { word: 'BOLA', image: '⚽', sounds: 4 },
-    { word: 'FACA', image: '🔪', sounds: 4 }, { word: 'REI', image: '👑', sounds: 3 },
-    { word: 'UVA', image: '🍇', sounds: 3 }, { word: 'CASA', image: '🏠', sounds: 4 },
-    { word: 'RUA', image: '🛣️', sounds: 3 }, { word: 'DEDO', image: '☝️', sounds: 4 }
+    { word: 'LUA', image: '🌙', sounds: 3 }, { word: 'SOL', image: '☀️', sounds: 3 }, { word: 'PÉ', image: '🦶', sounds: 2 }, { word: 'BOLA', image: '⚽', sounds: 4 }, { word: 'FACA', image: '🔪', sounds: 4 }, { word: 'REI', image: '👑', sounds: 3 }, { word: 'UVA', image: '🍇', sounds: 3 }, { word: 'CASA', image: '🏠', sounds: 4 }, { word: 'RUA', image: '🛣️', sounds: 3 }, { word: 'DEDO', image: '☝️', sounds: 4 }
 ];
 const PHASE_16_COMPLEX_SYLLABLES = [
-    { word: 'LIVRO', image: '📖', syllable: 'VRO', blanked: 'LI__' }, { word: 'BRUXA', image: '🧙‍♀️', syllable: 'BRU', blanked: '__XA' },
-    { word: 'PALHAÇO', image: '🤡', syllable: 'LHA', blanked: 'PA__ÇO' }, { word: 'NINHO', image: '둥지', syllable: 'NHO', blanked: 'NI__' },
-    { word: 'DRAGÃO', image: '🐲', syllable: 'DRA', blanked: '__GÃO' }, { word: 'FLOR', image: '🌸', syllable: 'FLOR', blanked: '__' },
-    { word: 'PRATO', image: '🍽️', syllable: 'PRA', blanked: '__TO' }, { word: 'CHAVE', image: '🔑', syllable: 'CHA', blanked: '__VE' },
-    { word: 'GLOBO', image: '🌍', syllable: 'GLO', blanked: '__BO' }, { word: 'TREM', image: '🚂', syllable: 'TREM', blanked: '__' }
+    { word: 'LIVRO', image: '📖', syllable: 'VRO', blanked: 'LI__' }, { word: 'BRUXA', image: '🧙‍♀️', syllable: 'BRU', blanked: '__XA' }, { word: 'PALHAÇO', image: '🤡', syllable: 'LHA', blanked: 'PA__ÇO' }, { word: 'NINHO', image: '둥지', syllable: 'NHO', blanked: 'NI__' }, { word: 'DRAGÃO', image: '🐲', syllable: 'DRA', blanked: '__GÃO' }, { word: 'FLOR', image: '🌸', syllable: 'FLOR', blanked: '__' }, { word: 'PRATO', image: '🍽️', syllable: 'PRA', blanked: '__TO' }, { word: 'CHAVE', image: '🔑', syllable: 'CHA', blanked: '__VE' }, { word: 'GLOBO', image: '🌍', syllable: 'GLO', blanked: '__BO' }, { word: 'TREM', image: '🚂', syllable: 'TREM', blanked: '__' }
 ];
 
 
@@ -243,6 +223,7 @@ async function handleTeacherRegister(e) { e.preventDefault(); const button = e.t
 
 async function handleStudentLogin(e) {
     e.preventDefault();
+    unlockAudio(); // Desbloqueia o áudio na primeira interação de login
     const button = e.target.querySelector('button[type="submit"]');
     const originalText = button.innerHTML;
     button.disabled = true;
@@ -599,8 +580,8 @@ function stopTimer() { clearInterval(timerInterval); }
 
 // PARTE 8: LÓGICA DO JOGO
 async function showStudentGame() { await checkForCustomActivities(); await loadGameState(); const canResume = gameState.currentQuestionIndex > 0 && gameState.attempts > 0 && !gameState.phaseCompleted; document.getElementById('startButton').innerHTML = canResume ? '<i class="fas fa-play"></i> Continuar Aventura' : '<i class="fas fa-play"></i> Começar Aventura'; showScreen('startScreen'); }
-async function startGame() { gameState.isCustomActivity = false; await loadGameState(); if (gameState.phaseCompleted || gameState.attempts <= 0) { gameState.currentQuestionIndex = 0; gameState.score = 0; gameState.attempts = 3; gameState.phaseCompleted = false; gameState.questions = generateQuestions(gameState.currentPhase); } showScreen('gameScreen'); startQuestion(); connectStudentToRealtime(); }
-async function startCustomActivity() { if (!currentUser.assigned_activity) return; gameState.isCustomActivity = true; gameState.questions = currentUser.assigned_activity.questions; gameState.currentPhase = "Reforço"; gameState.currentQuestionIndex = 0; gameState.score = 0; gameState.attempts = 3; gameState.phaseCompleted = false; showScreen('gameScreen'); startQuestion(); connectStudentToRealtime(); }
+async function startGame() { unlockAudio(); gameState.isCustomActivity = false; await loadGameState(); if (gameState.phaseCompleted || gameState.attempts <= 0) { gameState.currentQuestionIndex = 0; gameState.score = 0; gameState.attempts = 3; gameState.phaseCompleted = false; gameState.questions = generateQuestions(gameState.currentPhase); } showScreen('gameScreen'); startQuestion(); connectStudentToRealtime(); }
+async function startCustomActivity() { unlockAudio(); if (!currentUser.assigned_activity) return; gameState.isCustomActivity = true; gameState.questions = currentUser.assigned_activity.questions; gameState.currentPhase = "Reforço"; gameState.currentQuestionIndex = 0; gameState.score = 0; gameState.attempts = 3; gameState.phaseCompleted = false; showScreen('gameScreen'); startQuestion(); connectStudentToRealtime(); }
 async function connectStudentToRealtime() { if (studentChannel) { await studentChannel.unsubscribe(); } const channelId = `teacher-room-${currentUser.teacher_id}`; studentChannel = supabaseClient.channel(channelId); studentChannel.subscribe(async (status) => { if (status === 'SUBSCRIBED') { await studentChannel.track({ student_id: currentUser.id, student_name: currentUser.name, online_at: new Date().toISOString(), }); } }); }
 window.addEventListener('beforeunload', () => { if (studentChannel) { studentChannel.untrack(); supabaseClient.removeChannel(studentChannel); } });
 async function loadGameState() { const { data: progressData, error } = await supabaseClient.from('progress').select('game_state, current_phase').eq('student_id', currentUser.id).single(); if (error && error.code !== 'PGRST116') { console.error("Erro ao carregar progresso:", error); } const assignedPhases = currentUser.assigned_phases && currentUser.assigned_phases.length > 0 ? currentUser.assigned_phases : [1]; const firstAssignedPhase = assignedPhases[0]; if (progressData?.game_state?.questions) { gameState = progressData.game_state; if (!assignedPhases.includes(gameState.currentPhase)) { gameState = { currentPhase: firstAssignedPhase, score: 0, attempts: 3, questions: generateQuestions(firstAssignedPhase), currentQuestionIndex: 0, teacherId: currentUser.teacher_id, tutorialsShown: [], phaseCompleted: false }; await saveGameState(); } if (!gameState.tutorialsShown) gameState.tutorialsShown = []; } else { gameState = { currentPhase: firstAssignedPhase, score: 0, attempts: 3, questions: generateQuestions(firstAssignedPhase), currentQuestionIndex: 0, teacherId: currentUser.teacher_id, tutorialsShown: [], phaseCompleted: false }; await saveGameState(); } }
@@ -623,24 +604,13 @@ function generateQuestions(phase) {
 
     switch (phase) {
         case 1:
-            questions = shuffleAndTake(PHASE_1_LETTER_SOUNDS, questionCount).map(item => ({
-                type: 'letter_sound',
-                correctAnswer: item.letter,
-                audioKey: item.audioKey,
-                description: item.description,
-                options: _generateOptions(item.letter, item.optionsPool, 4)
-            }));
+            questions = shuffleAndTake(PHASE_1_LETTER_SOUNDS, questionCount).map(item => ({ type: 'letter_sound', correctAnswer: item.letter, audioKey: item.audioKey, description: item.description, options: _generateOptions(item.letter, item.optionsPool, 4) }));
             break;
         case 2:
             questions = [{ type: 'memory_game' }];
             break;
         case 3:
-            questions = shuffleAndTake(PHASE_3_SYLLABLE_F, questionCount).map(item => ({ 
-                type: 'form_f_syllable', 
-                ...item, 
-                correctAnswer: item.result, 
-                options: _generateOptions(item.result, ['FA', 'FE', 'FI', 'FO', 'FU', 'VA', 'BO'], 4) 
-            }));
+            questions = shuffleAndTake(PHASE_3_SYLLABLE_F, questionCount).map(item => ({ type: 'form_f_syllable', ...item, correctAnswer: item.result, options: _generateOptions(item.result, ['FA', 'FE', 'FI', 'FO', 'FU', 'VA', 'BO'], 4) }));
             break;
         case 4:
             questions = shuffleAndTake(PHASE_4_WORDS_F, questionCount).map(item => ({ type: 'f_word_search', ...item, correctAnswer: item.word, options: [...item.options].sort(() => 0.5 - Math.random()) }));
@@ -665,12 +635,7 @@ function generateQuestions(phase) {
             questions = shuffleAndTake(PHASE_10_INITIAL_SYLLABLE, questionCount).map(item => ({ type: 'initial_syllable', ...item, options: _generateOptions(item.correctAnswer, ['BA','CA','DA','FA','GA','LA','MA','NA','PA','RA','SA','TA','VA'], 3) }));
             break;
         case 11:
-            questions = shuffleAndTake(PHASE_11_F_POSITION, questionCount).map(item => ({ 
-                type: 'f_position', 
-                ...item, 
-                correctAnswer: item.syllable, 
-                options: _generateOptions(item.syllable, ['FA', 'FE', 'FI', 'FO', 'FU'], 4) 
-            }));
+            questions = shuffleAndTake(PHASE_11_F_POSITION, questionCount).map(item => ({ type: 'f_position', ...item, correctAnswer: item.syllable, options: _generateOptions(item.syllable, ['FA', 'FE', 'FI', 'FO', 'FU'], 4) }));
             break;
         case 12: 
             questions = shuffleAndTake(PHASE_12_WORD_TRANSFORM, questionCount).map(item => ({ type: 'word_transform', ...item, correctAnswer: item.correctAnswer, options: _generateOptions(item.correctAnswer, item.initialWord.split(''), 3) }));
@@ -681,12 +646,7 @@ function generateQuestions(phase) {
         case 14:
             questions = shuffleAndTake(PHASE_14_RHYMES, questionCount).map(item => {
                 const rhymeOptionsSource = PHASE_14_RHYMES.map(r => r.rhyme).filter(r => r !== item.rhyme);
-                return { 
-                    type: 'find_rhyme', 
-                    ...item, 
-                    correctAnswer: item.rhyme, 
-                    options: _generateOptions(item.rhyme, rhymeOptionsSource, 4) 
-                };
+                return { type: 'find_rhyme', ...item, correctAnswer: item.rhyme, options: _generateOptions(item.rhyme, rhymeOptionsSource, 4) };
             });
             break;
         case 15:
@@ -744,8 +704,8 @@ function renderPhase16UI_ComplexSyllable(q) { document.getElementById('imageQues
 function renderOptions(options) { const lettersGrid = document.getElementById('lettersGrid'); lettersGrid.style.display = 'grid'; lettersGrid.innerHTML = options.map(option => `<button class="letter-button">${option}</button>`).join(''); lettersGrid.querySelectorAll('.letter-button').forEach(btn => btn.addEventListener('click', (e) => selectAnswer(e.target.textContent))); }
 function renderWordOptions(options) { const lettersGrid = document.getElementById('lettersGrid'); lettersGrid.style.display = 'grid'; lettersGrid.innerHTML = options.map(option => `<button class="word-option-button">${option}</button>`).join(''); lettersGrid.querySelectorAll('.word-option-button').forEach(btn => { btn.addEventListener('click', () => selectWordForSentence(btn)); }); }
 
-function handleCardFlip(card) { const { flippedCards, canFlip } = gameState.memoryGame; if (!canFlip || card.classList.contains('flipped')) return; card.classList.add('flipped'); flippedCards.push(card); if (flippedCards.length === 2) { gameState.memoryGame.canFlip = false; const [card1, card2] = flippedCards; if (card1.dataset.letter === card2.dataset.letter) { setTimeout(() => { card1.classList.add('matched'); card2.classList.add('matched'); gameState.memoryGame.matchedPairs++; gameState.score++; updateUI(); gameState.memoryGame.flippedCards = []; gameState.memoryGame.canFlip = true; if (gameState.memoryGame.matchedPairs === gameState.memoryGame.totalPairs) { playTeacherAudio('feedback_correct', 'Excelente'); showFeedback('Excelente! Todos os pares encontrados!', 'success'); const endTime = Date.now(); const durationInSeconds = Math.round((endTime - gameState.memoryGame.startTime) / 1000); gameState.memoryGame.completionTime = durationInSeconds; document.getElementById('nextQuestion').style.display = 'block'; } }, 800); } else { gameState.memoryGame.mistakesMade++; playTeacherAudio('feedback_incorrect', 'Tente de novo'); updateUI(); setTimeout(() => { card1.classList.remove('flipped'); card2.classList.remove('flipped'); gameState.memoryGame.flippedCards = []; gameState.memoryGame.canFlip = true; }, 1200); } } }
-function selectWordForSentence(buttonElement) { buttonElement.disabled = true; buttonElement.classList.add('disabled'); const sentenceBuildArea = document.getElementById('sentenceBuildArea'); const wordSpan = document.createElement('span'); wordSpan.className = 'sentence-word'; wordSpan.textContent = buttonElement.textContent; sentenceBuildArea.appendChild(wordSpan); const allButtons = document.querySelectorAll('.word-option-button'); const allDisabled = Array.from(allButtons).every(btn => btn.disabled); if (allDisabled) { const constructedSentence = Array.from(sentenceBuildArea.children).map(span => span.textContent).join(' '); selectAnswer(constructedSentence); } }
+function handleCardFlip(card) { const { flippedCards, canFlip } = gameState.memoryGame; if (!canFlip || card.classList.contains('flipped')) return; card.classList.add('flipped'); flippedCards.push(card); if (flippedCards.length === 2) { gameState.memoryGame.canFlip = false; const [card1, card2] = flippedCards; if (card1.dataset.letter === card2.dataset.letter) { setTimeout(() => { card1.classList.add('matched'); card2.classList.add('matched'); gameState.memoryGame.matchedPairs++; gameState.score++; updateUI(); playSound('correct'); gameState.memoryGame.flippedCards = []; gameState.memoryGame.canFlip = true; if (gameState.memoryGame.matchedPairs === gameState.memoryGame.totalPairs) { playTeacherAudio('feedback_correct', 'Excelente'); showFeedback('Excelente! Todos os pares encontrados!', 'success'); playSound('phaseWin'); const endTime = Date.now(); const durationInSeconds = Math.round((endTime - gameState.memoryGame.startTime) / 1000); gameState.memoryGame.completionTime = durationInSeconds; document.getElementById('nextQuestion').style.display = 'block'; } }, 800); } else { gameState.memoryGame.mistakesMade++; playTeacherAudio('feedback_incorrect', 'Tente de novo'); playSound('incorrect'); updateUI(); setTimeout(() => { card1.classList.remove('flipped'); card2.classList.remove('flipped'); gameState.memoryGame.flippedCards = []; gameState.memoryGame.canFlip = true; }, 1200); } } }
+function selectWordForSentence(buttonElement) { playSound('click'); buttonElement.disabled = true; buttonElement.classList.add('disabled'); const sentenceBuildArea = document.getElementById('sentenceBuildArea'); const wordSpan = document.createElement('span'); wordSpan.className = 'sentence-word'; wordSpan.textContent = buttonElement.textContent; sentenceBuildArea.appendChild(wordSpan); const allButtons = document.querySelectorAll('.word-option-button'); const allDisabled = Array.from(allButtons).every(btn => btn.disabled); if (allDisabled) { const constructedSentence = Array.from(sentenceBuildArea.children).map(span => span.textContent).join(' '); selectAnswer(constructedSentence); } }
 
 async function selectAnswer(selectedAnswer) {
     const q = gameState.questions[gameState.currentQuestionIndex];
@@ -766,11 +726,13 @@ async function selectAnswer(selectedAnswer) {
     }
 
     if (isCorrect) {
+        playSound('correct');
         gameState.score++;
         showFeedback('Muito bem!', 'success');
         playTeacherAudio('feedback_correct', 'Acertou');
         setTimeout(nextQuestion, 1500); 
     } else {
+        playSound('incorrect');
         gameState.attempts--;
         logStudentError({ question: q, selectedAnswer: selectedAnswer }).catch(console.error);
         showFeedback(`Quase! A resposta correta era "${q.correctAnswer}"`, 'error');
@@ -789,12 +751,12 @@ async function selectAnswer(selectedAnswer) {
 }
 
 function nextQuestion() { if (gameState.questions[0].type === 'memory_game') { return endPhase(); } gameState.currentQuestionIndex++; startQuestion(); }
-async function endPhase() { let totalQuestions = gameState.questions.length; if (gameState.questions[0]?.type === 'memory_game' && gameState.memoryGame) { totalQuestions = gameState.memoryGame.totalPairs; } const accuracy = totalQuestions > 0 ? Math.round((gameState.score / totalQuestions) * 100) : 0; const passed = accuracy >= 70; if (gameState.isCustomActivity) { await logCustomActivityCompletion(accuracy); await clearAssignedActivity(); } else { const q = gameState.questions[0]; let metadata = null; if (q?.type === 'memory_game' && gameState.memoryGame) { metadata = { time_seconds: gameState.memoryGame.completionTime || 0, mistakes: gameState.memoryGame.mistakesMade || 0 }; } await logPhaseCompletionToHistory(accuracy, metadata); } showResultScreen(accuracy, passed); }
+async function endPhase() { let totalQuestions = gameState.questions.length; if (gameState.questions[0]?.type === 'memory_game' && gameState.memoryGame) { totalQuestions = gameState.memoryGame.totalPairs; } const accuracy = totalQuestions > 0 ? Math.round((gameState.score / totalQuestions) * 100) : 0; const passed = accuracy >= 70; if (passed) { playSound('phaseWin'); } if (gameState.isCustomActivity) { await logCustomActivityCompletion(accuracy); await clearAssignedActivity(); } else { const q = gameState.questions[0]; let metadata = null; if (q?.type === 'memory_game' && gameState.memoryGame) { metadata = { time_seconds: gameState.memoryGame.completionTime || 0, mistakes: gameState.memoryGame.mistakesMade || 0 }; } await logPhaseCompletionToHistory(accuracy, metadata); } showResultScreen(accuracy, passed); }
 async function clearAssignedActivity() { await supabaseClient.from('students').update({ assigned_activity: null }).eq('id', currentUser.id); currentUser.assigned_activity = null; sessionStorage.setItem('currentUser', JSON.stringify(currentUser)); }
 function showResultScreen(accuracy, passed) { showScreen('resultScreen'); document.getElementById('finalScore').textContent = gameState.score; document.getElementById('accuracy').textContent = accuracy; const continueBtn = document.getElementById('continueButton'); const retryBtn = document.getElementById('retryButton'); const restartBtn = document.getElementById('restartButton'); if (gameState.isCustomActivity) { document.getElementById('resultTitle').textContent = 'Atividade de Reforço Concluída!'; document.getElementById('resultMessage').innerHTML = `Você acertou ${accuracy}% das questões. Continue praticando!`; continueBtn.style.display = 'none'; retryBtn.style.display = 'none'; restartBtn.innerHTML = '<i class="fas fa-home"></i> Voltar ao Início'; return; } const assignedPhases = currentUser.assigned_phases || [1]; const currentPhaseIndex = assignedPhases.indexOf(gameState.currentPhase); const hasNextPhase = currentPhaseIndex !== -1 && currentPhaseIndex < assignedPhases.length - 1; if (passed) { document.getElementById('resultTitle').textContent = 'Parabéns!'; retryBtn.style.display = 'none'; gameState.phaseCompleted = true; saveGameState(); if (hasNextPhase) { document.getElementById('resultMessage').innerHTML = 'Você completou a fase! 🏆<br>Clique para ir para a próxima!'; continueBtn.style.display = 'inline-block'; restartBtn.innerHTML = '<i class="fas fa-home"></i> Voltar ao Início'; } else { document.getElementById('resultMessage').innerHTML = 'Você completou TODAS as suas fases! 🥳<br>Fale com seu professor para designar mais fases!'; } } else { document.getElementById('resultTitle').textContent = 'Não desanime!'; document.getElementById('resultMessage').textContent = 'Você precisa acertar mais. Tente novamente!'; continueBtn.style.display = 'none'; retryBtn.style.display = 'inline-block'; restartBtn.innerHTML = '<i class="fas fa-home"></i> Voltar ao Início'; gameState.phaseCompleted = false; saveGameState(); } }
-async function nextPhase() { const assignedPhases = currentUser.assigned_phases || [1]; const currentPhaseIndex = assignedPhases.indexOf(gameState.currentPhase); const hasNextPhase = currentPhaseIndex !== -1 && currentPhaseIndex < assignedPhases.length - 1; if (hasNextPhase) { const nextPhaseNum = assignedPhases[currentPhaseIndex + 1]; gameState.currentPhase = nextPhaseNum; gameState.currentQuestionIndex = 0; gameState.score = 0; gameState.attempts = 3; gameState.questions = generateQuestions(gameState.currentPhase); gameState.phaseCompleted = false; await saveGameState(); showScreen('gameScreen'); startQuestion(); } else { showResultScreen(100, true); } }
-async function retryPhase() { gameState.currentQuestionIndex = 0; gameState.score = 0; gameState.attempts = 3; gameState.phaseCompleted = false; gameState.questions = generateQuestions(gameState.currentPhase); await saveGameState(); showScreen('gameScreen'); startQuestion(); }
-async function restartGame() { await showStudentGame(); }
+async function nextPhase() { playSound('click'); const assignedPhases = currentUser.assigned_phases || [1]; const currentPhaseIndex = assignedPhases.indexOf(gameState.currentPhase); const hasNextPhase = currentPhaseIndex !== -1 && currentPhaseIndex < assignedPhases.length - 1; if (hasNextPhase) { const nextPhaseNum = assignedPhases[currentPhaseIndex + 1]; gameState.currentPhase = nextPhaseNum; gameState.currentQuestionIndex = 0; gameState.score = 0; gameState.attempts = 3; gameState.questions = generateQuestions(gameState.currentPhase); gameState.phaseCompleted = false; await saveGameState(); showScreen('gameScreen'); startQuestion(); } else { showResultScreen(100, true); } }
+async function retryPhase() { playSound('click'); gameState.currentQuestionIndex = 0; gameState.score = 0; gameState.attempts = 3; gameState.phaseCompleted = false; gameState.questions = generateQuestions(gameState.currentPhase); await saveGameState(); showScreen('gameScreen'); startQuestion(); }
+async function restartGame() { playSound('click'); await showStudentGame(); }
 async function playCurrentAudio() {
     const q = gameState.questions[gameState.currentQuestionIndex];
     if (q.type === 'vowel_sound' || q.type === 'letter_sound') {
