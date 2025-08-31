@@ -1322,3 +1322,43 @@ body {
     border-radius: 8px;
     padding: 15px;
 }
+/* ======================================================= */
+/* CORREÇÃO PARA FASE 3 E JOGOS DE ARRASTAR EM CELULARES   */
+/* ======================================================= */
+
+@media (max-width: 480px) {
+    /* Permite que os itens quebrem a linha se não couberem */
+    .interactive-area {
+        flex-wrap: wrap;
+    }
+    
+    /* Diminui o tamanho da letra base "F" */
+    .syllable-base {
+        font-size: 2.5rem; 
+    }
+
+    /* Diminui o tamanho da caixa de encaixe da vogal */
+    .syllable-dropzone {
+        width: 60px;
+        height: 60px;
+        font-size: 2rem;
+    }
+
+    /* Diminui o tamanho e o espaçamento das vogais arrastáveis */
+    .draggable-item.letter {
+        font-size: 1.8rem;
+        padding: 10px 20px;
+    }
+
+    /* Diminui o tamanho das sílabas e palavras arrastáveis em outras fases */
+    .draggable-item.syllable,
+    .draggable-item.word {
+        font-size: 1.3rem;
+        padding: 8px 15px;
+    }
+
+    /* Ajusta o tamanho da fonte na bandeja de frases */
+    .sentence-dropzone .word-in-sentence {
+        font-size: 1.3rem;
+    }
+}
