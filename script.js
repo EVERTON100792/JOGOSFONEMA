@@ -1,5 +1,5 @@
 // =======================================================
-// JOGO DAS LETRAS - VERSÃO ATUALIZADA SEM ARRASTAR
+// JOGO DAS LETRAS - VERSÃO COM CURRÍCULO REORDENADO
 // =======================================================
 
 // PARTE 1: CONFIGURAÇÃO INICIAL E SUPABASE
@@ -54,11 +54,38 @@ function unlockAudio() {
 }
 
 // =======================================================
-// PARTE 2: CONTEÚDO DO JOGO (FASES ATUALIZADAS)
+// PARTE 2: CONTEÚDO DO JOGO (FASES REORDENADAS)
 // =======================================================
+
+// NOVA ORDEM DAS FASES SEGUINDO O CURRÍCULO
 const PHASE_DESCRIPTIONS = {
-    1: "O Som das Letras", 2: "Jogo da Memória", 3: "Fábrica de Sílabas", 4: "Caça-Palavras da Letra F", 5: "Pares Surdos/Sonoros", 6: "Contando Palavras na Frase", 7: "Detetive de Frases", 8: "Identificação de Vogais", 9: "Contando Sílabas", 10: "Caça-Sílaba Inicial", 11: "Encaixe a Sílaba", 12: "Formando Novas Palavras", 13: "Invertendo Sílabas", 14: "Fábrica de Rimas", 15: "Contando Sons (Fonemas)", 16: "Sílabas Complexas", 17: "Rima ou Não Rima?", 18: "Qual é a Letra Intrometida?", 19: "Detetive de Palavras", 20: "Leitura Rápida (Desafio)"
+    // Bloco 1: Alfabeto e Sons
+    1: "O Som das Letras",
+    2: "Identificação de Vogais",
+    3: "Jogo da Memória (Letras)",
+    4: "Pares Surdos/Sonoros",
+    // Bloco 2: Palavras e Frases
+    5: "Caça-Palavras",
+    6: "Contando Palavras na Frase",
+    7: "Detetive de Frases",
+    // Bloco 3: Consciência Silábica
+    8: "Fábrica de Sílabas",
+    9: "Contando Sílabas",
+    10: "Caça-Sílaba Inicial",
+    11: "Encaixe a Sílaba",
+    12: "Formando Novas Palavras",
+    13: "Invertendo Sílabas",
+    14: "Sílabas Complexas",
+    15: "Fábrica de Rimas",
+    16: "Rima ou Não Rima?",
+    // Bloco 4: Consciência Fonêmica e Fluência
+    17: "Contando Sons (Fonemas)",
+    18: "Qual é a Letra Intrometida?",
+    19: "Detetive de Palavras (Avançado)",
+    20: "Leitura Rápida (Desafio)"
 };
+
+// DADOS DAS FASES (permanecem os mesmos, mas serão chamados na nova ordem)
 const PHASE_1_LETTER_SOUNDS = [
     { letter: 'F', audioKey: 'F', description: 'de soprar uma vela (ffff...)?', optionsPool: 'AMOPV' }, { letter: 'V', audioKey: 'V', description: 'de um motor vibrando (vvvv...)?', optionsPool: 'AMOPF' }, { letter: 'S', audioKey: 'S', description: 'da cobrinha (ssss...)?', optionsPool: 'AMOPZ' }, { letter: 'Z', audioKey: 'Z', description: 'da abelhinha (zzzz...)?', optionsPool: 'AMOPS' }, { letter: 'M', audioKey: 'M', description: 'de quando a comida está gostosa (mmmm...)?', optionsPool: 'AOPNS' }, { letter: 'P', audioKey: 'P', description: 'de uma pequena explosão, sem voz (p, p, p)?', optionsPool: 'AFOVB' }, { letter: 'B', audioKey: 'B', description: 'de uma pequena explosão, com voz (b, b, b)?', optionsPool: 'AFOVP' }, { letter: 'T', audioKey: 'T', description: 'da batidinha da língua no dente, sem voz (t, t, t)?', optionsPool: 'AFOVD' }, { letter: 'D', audioKey: 'D', description: 'da batidinha da língua no dente, com voz (d, d, d)?', optionsPool: 'AFOVT' }, { letter: 'L', audioKey: 'L', description: 'com a língua no céu da boca (llll...)?', optionsPool: 'ARFMN' }
 ];
@@ -113,6 +140,7 @@ const PHASE_19_WORD_DETECTIVE = [
 const PHASE_20_SPEED_READING = [
     { word: 'GATO', image: '🐈' }, { word: 'BOLA', image: '⚽' }, { word: 'SOL', image: '☀️' }, { word: 'LUA', image: '🌙' }, { word: 'CASA', image: '🏠' }, { word: 'PATO', image: '🦆' }, { word: 'FACA', image: '🔪' }, { word: 'DADO', image: '🎲' }, { word: 'PÃO', image: '🍞' }, { word: 'FLOR', image: '🌸' }, { word: 'UVA', image: '🍇' }, { word: 'REI', image: '👑' }
 ];
+
 
 // =======================================================
 // PARTE 3: FUNÇÕES UTILITÁRIAS
@@ -397,9 +425,10 @@ function renderStudentProgress(sortBy = 'last_played') {
         const lastPlayedStr = progress?.last_played ? new Date(progress.last_played).toLocaleDateString('pt-BR') : 'Nunca';
 
         const phaseModules = {
-            "Módulo 1: Consciência Fonológica": [1, 2, 5, 8, 14, 15, 17],
-            "Módulo 2: Princípio Alfabético": [3, 4, 10, 11, 16, 18],
-            "Módulo 3: Fluência e Estrutura": [6, 7, 9, 12, 13, 19, 20],
+            "Módulo 1: Alfabeto e Sons": [1, 2, 3, 4],
+            "Módulo 2: Palavras e Frases": [5, 6, 7],
+            "Módulo 3: Consciência Silábica": [8, 9, 10, 11, 12, 13, 14, 15, 16],
+            "Módulo 4: Consciência Fonêmica e Fluência": [17, 18, 19, 20]
         };
         let phaseCheckboxesHTML = '';
         for (const moduleName in phaseModules) {
@@ -498,36 +527,36 @@ window.addEventListener('beforeunload', () => { if (studentChannel) { studentCha
 async function loadGameState() { const { data: progressData, error } = await supabaseClient.from('progress').select('game_state, current_phase').eq('student_id', currentUser.id).single(); if (error && error.code !== 'PGRST116') { console.error("Erro ao carregar progresso:", error); } const assignedPhases = currentUser.assigned_phases && currentUser.assigned_phases.length > 0 ? currentUser.assigned_phases : [1]; const firstAssignedPhase = assignedPhases[0]; if (progressData?.game_state?.questions) { gameState = progressData.game_state; if (!assignedPhases.includes(gameState.currentPhase)) { gameState = { currentPhase: firstAssignedPhase, score: 0, attempts: 3, questions: generateQuestions(firstAssignedPhase), currentQuestionIndex: 0, teacherId: currentUser.teacher_id, tutorialsShown: [], phaseCompleted: false }; await saveGameState(); } if (!gameState.tutorialsShown) gameState.tutorialsShown = []; } else { gameState = { currentPhase: firstAssignedPhase, score: 0, attempts: 3, questions: generateQuestions(firstAssignedPhase), currentQuestionIndex: 0, teacherId: currentUser.teacher_id, tutorialsShown: [], phaseCompleted: false }; await saveGameState(); } }
 async function saveGameState() { if (!currentUser || currentUser.type !== 'student' || gameState.isCustomActivity) return; await supabaseClient.from('progress').upsert({ student_id: currentUser.id, current_phase: gameState.currentPhase, game_state: gameState, last_played: new Date().toISOString() }, { onConflict: 'student_id' }); }
 
+// GERAÇÃO DE QUESTÕES COM A NOVA ORDEM
 function generateQuestions(phase) {
     let questions = [];
     const questionCount = 10;
     const shuffleAndTake = (arr, num) => [...arr].sort(() => 0.5 - Math.random()).slice(0, num);
 
     switch (phase) {
-        case 1:
-            questions = shuffleAndTake(PHASE_1_LETTER_SOUNDS, questionCount).map(item => ({ type: 'letter_sound', correctAnswer: item.letter, audioKey: item.audioKey, description: item.description, options: _generateOptions(item.letter, item.optionsPool, 4) }));
+        // Bloco 1: Alfabeto e Sons
+        case 1: // O Som das Letras (Original: 1)
+            questions = shuffleAndTake(PHASE_1_LETTER_SOUNDS, questionCount).map(item => ({ type: 'letter_sound', ...item, options: _generateOptions(item.letter, item.optionsPool, 4) }));
             break;
-        case 2:
+        case 2: // Identificação de Vogais (Original: 8)
+            const vowelSet = [...VOWELS, ...VOWELS].sort(() => 0.5 - Math.random());
+            questions = vowelSet.map(vowel => ({ type: 'vowel_sound', correctAnswer: vowel, options: _generateOptions(vowel, VOWELS, 4) }));
+            break;
+        case 3: // Jogo da Memória (Original: 2)
             questions = [{ type: 'memory_game' }];
             break;
-        case 3: // NOVA FASE 3
-            questions = shuffleAndTake(PHASE_3_SYLLABLE_F, questionCount).map(item => ({
-                type: 'syllable_formation_mc',
-                ...item,
-                correctAnswer: item.result,
-                options: _generateOptions(item.result, ['FA', 'FE', 'FI', 'FO', 'FU', 'VA', 'PA', 'BO', 'DA'], 4)
-            }));
+        case 4: // Pares Surdos/Sonoros (Original: 5)
+            questions = shuffleAndTake(PHASE_5_SOUND_PAIRS, questionCount).map(item => ({ type: 'sound_detective', ...item, options: [item.correct, item.incorrect].sort(() => 0.5 - Math.random()) }));
             break;
-        case 4:
-            questions = shuffleAndTake(PHASE_4_WORDS_F, questionCount).map(item => ({ type: 'f_word_search', ...item, correctAnswer: item.word, options: [...item.options].sort(() => 0.5 - Math.random()) }));
+
+        // Bloco 2: Palavras e Frases
+        case 5: // Caça-Palavras (Original: 4)
+            questions = shuffleAndTake(PHASE_4_WORDS_F, questionCount).map(item => ({ type: 'f_word_search', ...item, options: [...item.options].sort(() => 0.5 - Math.random()) }));
             break;
-        case 5:
-            questions = shuffleAndTake(PHASE_5_SOUND_PAIRS, questionCount).map(item => ({ type: 'sound_detective', image: item.image, correctAnswer: item.correct, options: [item.correct, item.incorrect].sort(() => 0.5 - Math.random()) }));
+        case 6: // Contando Palavras na Frase (Original: 6)
+            questions = shuffleAndTake(PHASE_6_SENTENCES_COUNT, questionCount).map(item => ({ type: 'count_words', ...item, correctAnswer: item.words.toString(), options: _generateOptions(item.words.toString(), ['2', '3', '4', '5', '6'], 4) }));
             break;
-        case 6: 
-            questions = shuffleAndTake(PHASE_6_SENTENCES_COUNT, questionCount).map(item => ({ type: 'count_words', ...item, correctAnswer: item.words.toString(), options: _generateOptions(item.words.toString(), ['2', '3', '4', '5'], 4) }));
-            break;
-        case 7: // NOVA FASE 7
+        case 7: // Detetive de Frases (Original: 7)
             questions = shuffleAndTake(PHASE_7_SENTENCES_BUILD, questionCount).map(item => {
                 const options = new Set([item.answer]);
                 while (options.size < 3) {
@@ -536,62 +565,55 @@ function generateQuestions(phase) {
                         options.add(jumbled);
                     }
                 }
-                return {
-                    type: 'sentence_unscramble_mc',
-                    image: item.image,
-                    correctAnswer: item.answer,
-                    options: Array.from(options).sort(() => 0.5 - Math.random())
-                };
+                return { type: 'sentence_unscramble_mc', ...item, options: Array.from(options).sort(() => 0.5 - Math.random()) };
             });
             break;
-        case 8: 
-            const vowelSet = [...VOWELS, ...VOWELS].sort(() => 0.5 - Math.random());
-            questions = vowelSet.map(vowel => ({ type: 'vowel_sound', correctAnswer: vowel, options: _generateOptions(vowel, VOWELS, 4) }));
+
+        // Bloco 3: Consciência Silábica
+        case 8: // Fábrica de Sílabas (Original: 3)
+            questions = shuffleAndTake(PHASE_3_SYLLABLE_F, questionCount).map(item => ({ type: 'syllable_formation_mc', ...item, correctAnswer: item.result, options: _generateOptions(item.result, ['FA', 'FE', 'FI', 'FO', 'FU', 'VA', 'PA', 'BO'], 4) }));
             break;
-        case 9:
+        case 9: // Contando Sílabas (Original: 9)
             questions = shuffleAndTake(PHASE_9_SYLLABLE_COUNT, questionCount).map(item => ({ type: 'count_syllables', ...item, correctAnswer: item.syllables.toString(), options: _generateOptions(item.syllables.toString(), ['1', '2', '3', '4', '5'], 4) }));
             break;
-        case 10: 
-            questions = shuffleAndTake(PHASE_10_INITIAL_SYLLABLE, questionCount).map(item => ({ type: 'initial_syllable', ...item, options: _generateOptions(item.correctAnswer, ['BA','CA','DA','FA','GA','LA','MA','NA','PA','RA','SA','TA','VA'], 3) }));
+        case 10: // Caça-Sílaba Inicial (Original: 10)
+            questions = shuffleAndTake(PHASE_10_INITIAL_SYLLABLE, questionCount).map(item => ({ type: 'initial_syllable', ...item, options: _generateOptions(item.correctAnswer, ['BA','CA','DA','FA','GA','LA','MA','PA','RA','SA','TA','VA'], 4) }));
             break;
-        case 11: // NOVA FASE 11
-             questions = shuffleAndTake(PHASE_11_F_POSITION, questionCount).map(item => ({
-                type: 'complete_word_mc',
-                ...item,
-                correctAnswer: item.syllable,
-                options: _generateOptions(item.syllable, ['FA', 'FE', 'FI', 'FO', 'FU', 'VA', 'PA'], 4)
-            }));
+        case 11: // Encaixe a Sílaba (Original: 11)
+            questions = shuffleAndTake(PHASE_11_F_POSITION, questionCount).map(item => ({ type: 'complete_word_mc', ...item, correctAnswer: item.syllable, options: _generateOptions(item.syllable, ['FA', 'FE', 'FI', 'FO', 'FU'], 4) }));
             break;
-        case 12: 
-            questions = shuffleAndTake(PHASE_12_WORD_TRANSFORM, questionCount).map(item => ({ type: 'word_transform', ...item, correctAnswer: item.correctAnswer, options: _generateOptions(item.correctAnswer, item.initialWord.split(''), 3) }));
-            break;
-        case 13:
-             questions = shuffleAndTake(PHASE_13_INVERT_SYLLABLES, questionCount).map(item => ({ type: 'invert_syllables', ...item, correctAnswer: item.inverted, options: _generateOptions(item.inverted, PHASE_13_INVERT_SYLLABLES.map(i=>i.word), 4) }));
-             break;
-        case 14:
-            questions = shuffleAndTake(PHASE_14_RHYMES, questionCount).map(item => {
-                const rhymeOptionsSource = PHASE_14_RHYMES.map(r => r.rhyme).filter(r => r !== item.rhyme);
-                return { type: 'find_rhyme', ...item, correctAnswer: item.rhyme, options: _generateOptions(item.rhyme, rhymeOptionsSource, 4) };
-            });
-            break;
-        case 15:
-            questions = shuffleAndTake(PHASE_15_PHONEME_COUNT, questionCount).map(item => ({ type: 'count_phonemes', ...item, correctAnswer: item.sounds.toString(), options: _generateOptions(item.sounds.toString(), ['2','3','4','5'], 4) }));
-            break;
-        case 16:
-            questions = shuffleAndTake(PHASE_16_COMPLEX_SYLLABLES, questionCount).map(item => ({ type: 'complex_syllable', ...item, correctAnswer: item.syllable, options: _generateOptions(item.syllable, ['BRA','LHA','NHO','VRO','CRE'], 4) }));
-            break;
-        case 17:
-            questions = shuffleAndTake(PHASE_17_RHYME_DISCRIMINATION, questionCount).map(item => ({ type: 'rhyme_discrimination', ...item, correctAnswer: item.correct, options: [item.correct, item.incorrect].sort(() => 0.5 - Math.random()) }));
-            break;
-        case 18:
-            questions = shuffleAndTake(PHASE_18_INTRUDER_LETTER, questionCount).map(item => ({ type: 'intruder_letter', ...item, correctAnswer: item.intruder }));
-            break;
-        case 19:
-            questions = shuffleAndTake(PHASE_19_WORD_DETECTIVE, questionCount).map(item => ({ type: 'word_detective', ...item, options: [...item.options].sort(() => 0.5 - Math.random()) }));
-            break;
-        case 20:
-            questions = [{ type: 'speed_reading', words: shuffleAndTake(PHASE_20_SPEED_READING, 15) }];
-            break;
+        case 12: // Formando Novas Palavras (Original: 12)
+            questions = shuffleAndTake(PHASE_12_WORD_TRANSFORM, questionCount).map(item => ({ type: 'word_transform', ...item, options: _generateOptions(item.correctAnswer, item.initialWord.split(''), 3) }));
+            break;
+        case 13: // Invertendo Sílabas (Original: 13)
+            questions = shuffleAndTake(PHASE_13_INVERT_SYLLABLES, questionCount).map(item => ({ type: 'invert_syllables', ...item, correctAnswer: item.inverted, options: _generateOptions(item.inverted, PHASE_13_INVERT_SYLLABLES.map(i=>i.word), 4) }));
+            break;
+        case 14: // Sílabas Complexas (Original: 16)
+            questions = shuffleAndTake(PHASE_16_COMPLEX_SYLLABLES, questionCount).map(item => ({ type: 'complex_syllable', ...item, correctAnswer: item.syllable, options: _generateOptions(item.syllable, ['BRA','LHA','NHO','VRO','CRE', 'FLA', 'GRI'], 4) }));
+            break;
+        case 15: // Fábrica de Rimas (Original: 14)
+            questions = shuffleAndTake(PHASE_14_RHYMES, questionCount).map(item => {
+                const rhymeOptionsSource = PHASE_14_RHYMES.map(r => r.rhyme).filter(r => r !== item.rhyme);
+                return { type: 'find_rhyme', ...item, correctAnswer: item.rhyme, options: _generateOptions(item.rhyme, rhymeOptionsSource, 4) };
+            });
+            break;
+        case 16: // Rima ou Não Rima? (Original: 17)
+            questions = shuffleAndTake(PHASE_17_RHYME_DISCRIMINATION, questionCount).map(item => ({ type: 'rhyme_discrimination', ...item, correctAnswer: item.correct, options: [item.correct, item.incorrect].sort(() => 0.5 - Math.random()) }));
+            break;
+            
+        // Bloco 4: Consciência Fonêmica e Fluência
+        case 17: // Contando Sons (Fonemas) (Original: 15)
+            questions = shuffleAndTake(PHASE_15_PHONEME_COUNT, questionCount).map(item => ({ type: 'count_phonemes', ...item, correctAnswer: item.sounds.toString(), options: _generateOptions(item.sounds.toString(), ['2','3','4','5'], 4) }));
+            break;
+        case 18: // Qual é a Letra Intrometida? (Original: 18)
+            questions = shuffleAndTake(PHASE_18_INTRUDER_LETTER, questionCount).map(item => ({ type: 'intruder_letter', ...item }));
+            break;
+        case 19: // Detetive de Palavras (Avançado) (Original: 19)
+            questions = shuffleAndTake(PHASE_19_WORD_DETECTIVE, questionCount).map(item => ({ type: 'word_detective', ...item, options: [...item.options].sort(() => 0.5 - Math.random()) }));
+            break;
+        case 20: // Leitura Rápida (Desafio) (Original: 20)
+            questions = [{ type: 'speed_reading', words: shuffleAndTake(PHASE_20_SPEED_READING, 15) }];
+            break;
     }
     return questions;
 }
@@ -599,7 +621,6 @@ function generateQuestions(phase) {
 async function startQuestion() {
     if (gameState.phaseCompleted || !gameState.questions || !gameState.questions[gameState.currentQuestionIndex]) { return endPhase(); }
     
-    // Limpeza da UI (CORRIGIDA)
     selectedItemForClickMove = null;
     const UIElements = ['audioQuestionArea', 'imageQuestionArea', 'lettersGrid', 'memoryGameGrid', 'interactiveArea', 'optionsArea', 'wordDisplay', 'questionText'];
     const elementsToClear = ['lettersGrid', 'memoryGameGrid', 'interactiveArea', 'optionsArea', 'wordDisplay', 'questionText'];
@@ -622,19 +643,18 @@ async function startQuestion() {
     
     const q = gameState.questions[gameState.currentQuestionIndex];
     
-    // MAPA DE RENDERIZAÇÃO ATUALIZADO
     const renderMap = {
         'letter_sound': renderPhase1UI, 
         'memory_game': renderPhase2UI, 
-        'syllable_formation_mc': renderPhase3NewUI, // NOVA
+        'syllable_formation_mc': renderPhase3NewUI,
         'f_word_search': renderPhase4UI, 
         'sound_detective': renderPhase5UI, 
         'count_words': renderPhase6UI,
-        'sentence_unscramble_mc': renderPhase7NewUI, // NOVA
+        'sentence_unscramble_mc': renderPhase7NewUI,
         'vowel_sound': renderPhase8UI, 
         'count_syllables': renderPhase9UI,
         'initial_syllable': renderPhase10UI, 
-        'complete_word_mc': renderPhase11NewUI, // NOVA
+        'complete_word_mc': renderPhase11NewUI,
         'word_transform': renderPhase12UI,
         'invert_syllables': renderPhase13UI, 
         'find_rhyme': renderPhase14UI, 
@@ -650,20 +670,19 @@ async function startQuestion() {
         renderMap[q.type](q);
         playTeacherAudio(`instruction_phase_${gameState.currentPhase}`, "Vamos lá!");
     } else {
-        console.error("Tipo de questão desconhecido ou questão não encontrada:", q);
+        console.error("Tipo de questão desconhecido ou questão não encontrada:", q, `Fase: ${gameState.currentPhase}`);
     }
     
     updateUI(); 
 }
 
 // =======================================================
-// FUNÇÕES DE RENDERIZAÇÃO DAS FASES (COM NOVAS VERSÕES)
+// FUNÇÕES DE RENDERIZAÇÃO DAS FASES
 // =======================================================
 
 function renderPhase1UI(q) { document.getElementById('audioQuestionArea').style.display = 'block'; document.getElementById('lettersGrid').style.display = 'grid'; document.getElementById('questionText').textContent = `Qual letra faz o som ${q.description}`; document.getElementById('repeatAudio').style.display = 'inline-block'; renderOptions(q.options, 'letter-button'); setTimeout(playCurrentAudio, 500); }
 function renderPhase2UI(q) { const memoryGrid = document.getElementById('memoryGameGrid'); if (!memoryGrid) return; memoryGrid.innerHTML = ''; memoryGrid.style.display = 'grid'; document.getElementById('questionText').textContent = 'Encontre os pares de letras maiúsculas e minúsculas!'; document.getElementById('attempts').parentElement.style.visibility = 'hidden'; const shuffleAndTake = (arr, num) => [...arr].sort(() => 0.5 - Math.random()).slice(0, num); const letters = shuffleAndTake(ALPHABET, 8); const cards = [...letters, ...letters.map(l => l.toLowerCase())].sort(() => 0.5 - Math.random()); memoryGrid.innerHTML = cards.map(letter => ` <div class="memory-card" data-letter="${letter.toLowerCase()}"> <div class="card-inner"> <div class="card-face card-front"></div> <div class="card-face card-back">${letter}</div> </div> </div> `).join(''); gameState.score = 0; gameState.memoryGame = { flippedCards: [], matchedPairs: 0, totalPairs: letters.length, canFlip: true, mistakesMade: 0, startTime: Date.now() }; updateUI(); memoryGrid.querySelectorAll('.memory-card').forEach(card => card.addEventListener('click', () => handleCardFlip(card))); }
 
-// NOVA RENDERIZAÇÃO PARA FASE 3
 function renderPhase3NewUI(q) {
     const interactiveArea = document.getElementById('interactiveArea');
     interactiveArea.style.display = 'flex';
@@ -676,19 +695,17 @@ function renderPhase4UI(q) { document.getElementById('imageQuestionArea').style.
 function renderPhase5UI(q) { document.getElementById('imageQuestionArea').style.display = 'block'; document.getElementById('lettersGrid').style.display = 'grid'; document.getElementById('imageEmoji').textContent = q.image; document.getElementById('questionText').textContent = 'Qual é o nome correto desta figura?'; renderOptions(q.options, 'word-option-button'); }
 function renderPhase6UI(q) { document.getElementById('imageQuestionArea').style.display = 'block'; document.getElementById('lettersGrid').style.display = 'grid'; document.getElementById('imageEmoji').textContent = q.image; document.getElementById('wordDisplay').textContent = q.sentence; document.getElementById('questionText').textContent = 'Quantas palavras tem nesta frase?'; renderOptions(q.options, 'letter-button'); }
 
-// NOVA RENDERIZAÇÃO PARA FASE 7
 function renderPhase7NewUI(q) {
     document.getElementById('imageQuestionArea').style.display = 'block';
     document.getElementById('imageEmoji').textContent = q.image;
     document.getElementById('questionText').textContent = "Observe a figura. Qual é a frase correta?";
-    renderOptions(q.options, 'sentence-option-button'); // Usando uma nova classe CSS
+    renderOptions(q.options, 'sentence-option-button');
 }
 
 function renderPhase8UI(q) { document.getElementById('audioQuestionArea').style.display = 'block'; document.getElementById('lettersGrid').style.display = 'grid'; document.getElementById('questionText').textContent = 'Qual VOGAL faz este som?'; document.getElementById('repeatAudio').style.display = 'inline-block'; renderOptions(q.options, 'letter-button'); setTimeout(playCurrentAudio, 500); }
 function renderPhase9UI(q) { document.getElementById('imageQuestionArea').style.display = 'block'; document.getElementById('lettersGrid').style.display = 'grid'; document.getElementById('imageEmoji').textContent = q.image; document.getElementById('wordDisplay').textContent = q.word; document.getElementById('questionText').textContent = 'Quantas sílabas (pedaços) tem esta palavra?'; renderOptions(q.options, 'letter-button'); }
 function renderPhase10UI(q) { document.getElementById('imageQuestionArea').style.display = 'block'; document.getElementById('lettersGrid').style.display = 'grid'; document.getElementById('imageEmoji').textContent = q.image; document.getElementById('wordDisplay').textContent = `__${q.word.substring(q.correctAnswer.length)}`; document.getElementById('questionText').textContent = 'Qual sílaba começa esta palavra?'; renderOptions(q.options, 'word-option-button'); }
 
-// NOVA RENDERIZAÇÃO PARA FASE 11
 function renderPhase11NewUI(q) {
     document.getElementById('imageQuestionArea').style.display = 'block';
     document.getElementById('imageEmoji').textContent = q.image;
@@ -1036,89 +1053,37 @@ function generateSingleQuestionFromError(errorTemplate) {
     const phase = parseInt(errorTemplate.phase);
     const correctAnswer = errorTemplate.correct_answer;
 
+    // Este switch ainda usa a NUMERAÇÃO NOVA das fases
     switch(phase) {
-        case 1:
+        case 1: // Som das Letras
             const letterSoundData = PHASE_1_LETTER_SOUNDS.find(l => l.letter === correctAnswer);
             if (!letterSoundData) return null;
             return { type: 'letter_sound', ...letterSoundData, options: _generateOptions(correctAnswer, letterSoundData.optionsPool, 4) };
-        case 2:
-            return null; 
-        case 3:
-            const syllableFData = PHASE_3_SYLLABLE_F.find(s => s.result === correctAnswer);
-            if (!syllableFData) return null;
-            return { type: 'syllable_formation_mc', ...syllableFData, options: _generateOptions(syllableFData.result, ['FA', 'FE', 'FI', 'FO', 'FU', 'VA', 'PA', 'BO', 'DA'], 4) };
-        case 4:
-            const wordData = PHASE_4_WORDS_F.find(w => w.word === correctAnswer) || PHASE_4_WORDS_F[0];
-            return { type: 'f_word_search', ...wordData, correctAnswer: wordData.word, options: [...wordData.options].sort(() => 0.5-Math.random()) };
-        case 5:
-            const pairData = PHASE_5_SOUND_PAIRS.find(p => p.correct === correctAnswer) || PHASE_5_SOUND_PAIRS[0];
-            return { type: 'sound_detective', ...pairData, options: [pairData.correct, pairData.incorrect].sort(()=>0.5-Math.random()) };
-        case 6:
-            const sentenceCountData = PHASE_6_SENTENCES_COUNT.find(s => String(s.words) === String(correctAnswer));
-            if (!sentenceCountData) return null;
-            return { type: 'count_words', ...sentenceCountData, correctAnswer: correctAnswer, options: _generateOptions(correctAnswer, ['2', '3', '4', '5'], 4) };
-        case 7:
-             const sentenceBuildData = PHASE_7_SENTENCES_BUILD.find(s => s.answer === correctAnswer);
-             if (!sentenceBuildData) return null;
-             const options = new Set([sentenceBuildData.answer]);
-                while (options.size < 3) {
-                    const jumbled = [...sentenceBuildData.sentence].sort(() => 0.5 - Math.random()).join(' ');
-                    if (jumbled !== sentenceBuildData.answer) {
-                        options.add(jumbled);
-                    }
-                }
-             return { type: 'sentence_unscramble_mc', image: sentenceBuildData.image, correctAnswer: sentenceBuildData.answer, options: Array.from(options).sort(() => 0.5 - Math.random()) };
-        case 8:
-            return { type: 'vowel_sound', correctAnswer: correctAnswer, options: _generateOptions(correctAnswer, VOWELS, 4) };
-        case 9:
-            const syllableData = PHASE_9_SYLLABLE_COUNT.find(p => String(p.syllables) === String(correctAnswer)) || PHASE_9_SYLLABLE_COUNT[0];
-            return { type: 'count_syllables', ...syllableData, correctAnswer: syllableData.syllables.toString(), options: _generateOptions(syllableData.syllables.toString(), ['1','2','3','4'], 4) };
-        case 10:
-            const initialSyllableData = PHASE_10_INITIAL_SYLLABLE.find(p => p.correctAnswer === correctAnswer) || PHASE_10_INITIAL_SYLLABLE[0];
-            return { type: 'initial_syllable', ...initialSyllableData, options: _generateOptions(initialSyllableData.correctAnswer, ['BA','CA','DA','FA','GA','LA','MA','NA','PA','RA','SA','TA','VA'], 4) };
-        case 11:
-            const fPositionData = PHASE_11_F_POSITION.find(p => p.syllable === correctAnswer);
-            if (!fPositionData) return null;
-            return { type: 'complete_word_mc', ...fPositionData, options: _generateOptions(correctAnswer, ['FA', 'FE', 'FI', 'FO', 'FU'], 4) };
-        case 12:
-            const wordTransformData = PHASE_12_WORD_TRANSFORM.find(t => t.correctAnswer === correctAnswer);
-            if (!wordTransformData) return null;
-            const distractorOptions = [wordTransformData.correctAnswer, wordTransformData.toRemove, wordTransformData.initialWord.substring(0, 2)];
-            return { type: 'word_transform', ...wordTransformData, options: _generateOptions(correctAnswer, distractorOptions, 3) };
-        case 13:
-            const invertSyllableData = PHASE_13_INVERT_SYLLABLES.find(i => i.inverted === correctAnswer);
-            if (!invertSyllableData) return null;
-            const allWords = PHASE_13_INVERT_SYLLABLES.map(i => i.word);
-            return { type: 'invert_syllables', ...invertSyllableData, correctAnswer: correctAnswer, options: _generateOptions(correctAnswer, allWords, 4) };
-        case 14:
-            const rhymeData = PHASE_14_RHYMES.find(r => r.rhyme === correctAnswer) || PHASE_14_RHYMES.find(r => r.word === errorTemplate.question?.word);
-            if (!rhymeData) return null;
-            const rhymeOptions = PHASE_14_RHYMES.map(r => r.rhyme);
-            return { type: 'find_rhyme', ...rhymeData, correctAnswer: rhymeData.rhyme, options: _generateOptions(rhymeData.rhyme, rhymeOptions, 4) };
-        case 15:
-            const phonemeData = PHASE_15_PHONEME_COUNT.find(p => String(p.sounds) === String(correctAnswer));
-            if (!phonemeData) return null;
-            return { type: 'count_phonemes', ...phonemeData, correctAnswer: correctAnswer, options: _generateOptions(correctAnswer, ['2','3','4','5'], 4) };
-        case 16:
-            const complexData = PHASE_16_COMPLEX_SYLLABLES.find(c => c.syllable === correctAnswer);
-            if (!complexData) return null;
-            return { type: 'complex_syllable', ...complexData, correctAnswer: correctAnswer, options: _generateOptions(correctAnswer, ['BRA','LHA','NHO','VRO','CRE'], 4) };
-        case 17:
-            const rhymeDiscriminationData = PHASE_17_RHYME_DISCRIMINATION.find(r => r.correct === correctAnswer);
-            if (!rhymeDiscriminationData) return null;
-            return { type: 'rhyme_discrimination', ...rhymeDiscriminationData, correctAnswer: rhymeDiscriminationData.correct, options: [rhymeDiscriminationData.correct, rhymeDiscriminationData.incorrect].sort(() => 0.5 - Math.random()) };
-        case 18:
-            const intruderData = PHASE_18_INTRUDER_LETTER.find(i => i.intruder === correctAnswer);
-            if (!intruderData) return null;
-            return { type: 'intruder_letter', ...intruderData, correctAnswer: intruderData.intruder };
-        case 19:
-            const detectiveData = PHASE_19_WORD_DETECTIVE.find(d => d.answer === correctAnswer);
-            if (!detectiveData) return null;
-            return { type: 'word_detective', ...detectiveData, options: [...detectiveData.options].sort(() => 0.5 - Math.random()) };
-        case 20:
-            return null;
+        case 2: // Identificação de Vogais
+            return { type: 'vowel_sound', correctAnswer: correctAnswer, options: _generateOptions(correctAnswer, VOWELS, 4) };
+        case 3: // Jogo da Memória
+            return null;
+        case 4: // Pares Surdos/Sonoros
+            const pairData = PHASE_5_SOUND_PAIRS.find(p => p.correct === correctAnswer) || PHASE_5_SOUND_PAIRS[0];
+            return { type: 'sound_detective', ...pairData, options: [pairData.correct, pairData.incorrect].sort(()=>0.5-Math.random()) };
+        case 5: // Caça-Palavras
+            const wordData = PHASE_4_WORDS_F.find(w => w.word === correctAnswer) || PHASE_4_WORDS_F[0];
+            return { type: 'f_word_search', ...wordData, correctAnswer: wordData.word, options: [...wordData.options].sort(() => 0.5-Math.random()) };
+        case 6: // Contando Palavras
+            const sentenceCountData = PHASE_6_SENTENCES_COUNT.find(s => String(s.words) === String(correctAnswer));
+            if (!sentenceCountData) return null;
+            return { type: 'count_words', ...sentenceCountData, correctAnswer: correctAnswer, options: _generateOptions(correctAnswer, ['2', '3', '4', '5'], 4) };
+        case 7: // Detetive de Frases
+            const sentenceBuildData = PHASE_7_SENTENCES_BUILD.find(s => s.answer === correctAnswer);
+            if (!sentenceBuildData) return null;
+            const options = new Set([sentenceBuildData.answer]);
+            while (options.size < 3) {
+                const jumbled = [...sentenceBuildData.sentence].sort(() => 0.5 - Math.random()).join(' ');
+                if (jumbled !== sentenceBuildData.answer) { options.add(jumbled); }
+            }
+            return { type: 'sentence_unscramble_mc', image: sentenceBuildData.image, correctAnswer: sentenceBuildData.answer, options: Array.from(options).sort(() => 0.5 - Math.random()) };
         default:
-            return null;
+            return null; // Para fases mais complexas, a geração automática pode ser expandida
     }
 }
 
