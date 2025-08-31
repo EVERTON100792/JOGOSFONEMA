@@ -1362,3 +1362,52 @@ body {
         font-size: 1.3rem;
     }
 }
+/* ======================================================= */
+/* ESTILOS PARA NOVA MECÂNICA DE CLIQUE (ANTI-BUG)         */
+/* ======================================================= */
+
+.clickable-item {
+    padding: 15px 25px;
+    border-radius: 12px;
+    font-weight: bold;
+    color: white;
+    cursor: pointer;
+    user-select: none;
+    transition: all 0.2s ease;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+}
+
+.clickable-item.letter { background: linear-gradient(45deg, #ffa726, #fb8c00); font-size: 2rem; }
+.clickable-item.syllable { background: linear-gradient(45deg, #66bb6a, #43a047); font-size: 1.8rem; }
+.clickable-item.word { background: linear-gradient(45deg, #26c6da, #00acc1); font-size: 1.5rem; }
+
+.clickable-item:hover {
+    transform: translateY(-3px) scale(1.05);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+}
+
+.clickable-item.selected {
+    transform: translateY(-3px) scale(1.1);
+    box-shadow: 0 0 15px 5px #fff;
+    border: 3px solid white;
+}
+
+.sentence-dropzone.empty {
+    padding-top: 25px;
+    padding-bottom: 25px;
+}
+.sentence-dropzone.empty::before {
+    content: 'Toque nas palavras abaixo para montar a frase aqui';
+    font-size: 1rem;
+    color: #adb5bd;
+    font-style: italic;
+}
+
+.sentence-dropzone .word-in-sentence {
+    background: linear-gradient(45deg, #26c6da, #00acc1);
+    color: white;
+    padding: 10px 15px;
+    border-radius: 10px;
+    font-size: 1.5rem;
+    font-weight: bold;
+}
