@@ -14,7 +14,7 @@ let currentUser = null, currentClassId = null, studentProgressData = [], current
 const ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split(''), VOWELS = 'AEIOU'.split('');
 let gameState = {}, mediaRecorder, audioChunks = [], timerInterval, speechReady = false, selectedVoice = null;
 let confettiAnimationId;
-let selectedItemForClickMove = null;
+let selectedItemForClickMove = null; // Variável para a nova mecânica de clique
 
 // VARIÁVEIS PARA O STATUS EM TEMPO REAL
 let teacherChannel = null;
@@ -29,7 +29,7 @@ const soundEffects = {
     correct: new Audio('sounds/correct.mp3'),
     incorrect: new Audio('sounds/incorrect.mp3'),
     phaseWin: new Audio('sounds/phase_win.mp3'),
-    drop: new Audio('sounds/drop.mp3')
+    drop: new Audio('sounds/drop.mp3') // Usaremos para a ação de "colocar"
 };
 
 function playSound(soundName) {
@@ -75,7 +75,7 @@ const PHASE_6_SENTENCES_COUNT = [
     { sentence: 'A FADA VOOU', image: '🧚‍♀️', words: 3 }, { sentence: 'O GATO BEBE LEITE', image: '🐈', words: 4 }, { sentence: 'O SOL É AMARELO', image: '☀️', words: 4 }, { sentence: 'EU GOSTO DE BOLO', image: '🎂', words: 4 }, { sentence: 'A BOLA É REDONDA', image: '⚽', words: 4 }, { sentence: 'O CACHORRO LATE ALTO', image: '🐕', words: 4 }, { sentence: 'A LUA BRILHA NO CÉU', image: '🌙', words: 5 }, { sentence: 'A FLOR É CHEIROSA', image: '🌸', words: 4 }, { sentence: 'O SAPO PULA NO LAGO', image: '🐸', words: 5 }, { sentence: 'O PEIXE VIVE NA ÁGUA', image: '🐠', words: 5 }
 ];
 const PHASE_7_SENTENCES_BUILD = [
-    { sentence: ['O', 'FOGO', 'QUEIMA'], image: '🔥', answer: 'O FOGO QUEIMA' }, { sentence: ['A', 'BOLA', 'É', 'REDONDA'], image: '⚽', answer: 'A BOLA É REDONDA' }, { sentence: ['EU', 'AMO', 'LER'], image: '📚', answer: 'EU AMO LER' }, { sentence: ['O', 'PEIXE', 'NADA'], image: '🐠', answer: 'O PEIXE NADA' }, { sentence: ['O', 'SOL', 'É', 'QUENTE'], image: '☀️', answer: 'O SOL É QUENTE' }, { sentence: ['A', 'CASA', 'É', 'GRANDE'], image: '🏠', answer: 'A CASA É GRANDE' }, { sentence: 'O GATO DORME', image: '😴', answer: 'O GATO DORME' }, { sentence: ['A', 'FLOR', 'É', 'BONITA'], image: '🌻', answer: 'A FLOR É BONITA' }, { sentence: ['NÓS', 'VAMOS', 'BRINCAR'], image: '🤹', answer: 'NÓS VAMOS BRINCAR' }, { sentence: ['O', 'CARRO', 'É', 'AZUL'], image: '🚗', answer: 'O CARRO É AZUL' }
+    { sentence: ['O', 'FOGO', 'QUEIMA'], image: '🔥', answer: 'O FOGO QUEIMA' }, { sentence: ['A', 'BOLA', 'É', 'REDONDA'], image: '⚽', answer: 'A BOLA É REDONDA' }, { sentence: ['EU', 'AMO', 'LER'], image: '📚', answer: 'EU AMO LER' }, { sentence: ['O', 'PEIXE', 'NADA'], image: '🐠', answer: 'O PEIXE NADA' }, { sentence: ['O', 'SOL', 'É', 'QUENTE'], image: '☀️', answer: 'O SOL É QUENTE' }, { sentence: ['A', 'CASA', 'É', 'GRANDE'], image: '🏠', answer: 'A CASA É GRANDE' }, { sentence: ['O', 'GATO', 'DORME'], image: '😴', answer: 'O GATO DORME' }, { sentence: ['A', 'FLOR', 'É', 'BONITA'], image: '🌻', answer: 'A FLOR É BONITA' }, { sentence: ['NÓS', 'VAMOS', 'BRINCAR'], image: '🤹', answer: 'NÓS VAMOS BRINCAR' }, { sentence: ['O', 'CARRO', 'É', 'AZUL'], image: '🚗', answer: 'O CARRO É AZUL' }
 ];
 const PHASE_9_SYLLABLE_COUNT = [
     { word: 'SOL', image: '☀️', syllables: 1 }, { word: 'PÃO', image: '🍞', syllables: 1 }, { word: 'FLOR', image: '🌸', syllables: 1 }, { word: 'MAR', image: '🌊', syllables: 1 }, { word: 'BOLA', image: '⚽', syllables: 2 }, { word: 'CASA', image: '🏠', syllables: 2 }, { word: 'LUA', image: '🌙', syllables: 2 }, { word: 'LIVRO', image: '📖', syllables: 2 }, { word: 'SAPATO', image: '👟', syllables: 3 }, { word: 'JANELA', image: '🖼️', syllables: 3 }, { word: 'MACACO', image: '🐒', syllables: 3 }, { word: 'CASTELO', image: '🏰', syllables: 3 }, { word: 'BORBOLETA', image: '🦋', syllables: 4 }, { word: 'TELEFONE', image: '📞', syllables: 4 }, { word: 'ABACAXI', image: '🍍', syllables: 4 }, { word: 'HIPOPÓTAMO', image: '🦛', syllables: 5 }
@@ -622,179 +622,26 @@ async function startQuestion() {
 // FUNÇÕES DE RENDERIZAÇÃO DAS FASES (REVISADAS E ROBUSTAS)
 // =======================================================
 
-function renderPhase1UI(q) { 
-    document.getElementById('audioQuestionArea').style.display = 'block'; 
-    document.getElementById('lettersGrid').style.display = 'grid'; 
-    document.getElementById('questionText').textContent = `Qual letra faz o som ${q.description}`; 
-    document.getElementById('repeatAudio').style.display = 'inline-block'; 
-    renderOptions(q.options, 'letter-button'); 
-    setTimeout(playCurrentAudio, 500); 
-}
-function renderPhase2UI(q) { 
-    const memoryGrid = document.getElementById('memoryGameGrid'); 
-    if (!memoryGrid) return;
-    memoryGrid.innerHTML = ''; 
-    memoryGrid.style.display = 'grid'; 
-    document.getElementById('questionText').textContent = 'Encontre os pares de letras maiúsculas e minúsculas!'; 
-    document.getElementById('attempts').parentElement.style.visibility = 'hidden'; 
-    const shuffleAndTake = (arr, num) => [...arr].sort(() => 0.5 - Math.random()).slice(0, num); 
-    const letters = shuffleAndTake(ALPHABET, 8); 
-    const cards = [...letters, ...letters.map(l => l.toLowerCase())].sort(() => 0.5 - Math.random()); 
-    memoryGrid.innerHTML = cards.map(letter => ` <div class="memory-card" data-letter="${letter.toLowerCase()}"> <div class="card-inner"> <div class="card-face card-front"></div> <div class="card-face card-back">${letter}</div> </div> </div> `).join(''); 
-    gameState.score = 0; 
-    gameState.memoryGame = { flippedCards: [], matchedPairs: 0, totalPairs: letters.length, canFlip: true, mistakesMade: 0, startTime: Date.now() }; 
-    updateUI(); 
-    memoryGrid.querySelectorAll('.memory-card').forEach(card => card.addEventListener('click', () => handleCardFlip(card))); 
-}
-function renderPhase3UI(q) { 
-    const interactiveArea = document.getElementById('interactiveArea'); 
-    const optionsArea = document.getElementById('optionsArea');
-    if (!interactiveArea || !optionsArea) return;
-    interactiveArea.style.display = 'flex'; 
-    optionsArea.style.display = 'flex'; 
-    document.getElementById('questionText').textContent = `Toque na vogal e depois no sinal de '+' para formar a sílaba da palavra ${q.word}.`; 
-    interactiveArea.innerHTML = ` <div class="syllable-base">${q.base}</div> <div class="syllable-dropzone" data-correct-vowel="${q.vowel}">+</div> `; 
-    optionsArea.innerHTML = q.options.map(opt => `<div class="clickable-item letter" data-value="${opt}">${opt}</div>`).join(''); 
-    setupClickToMoveInteraction(); 
-}
-function renderPhase4UI(q) { 
-    document.getElementById('imageQuestionArea').style.display = 'block'; 
-    document.getElementById('lettersGrid').style.display = 'grid'; 
-    document.getElementById('imageEmoji').textContent = q.image; 
-    document.getElementById('questionText').textContent = 'Qual é o nome desta figura?'; 
-    renderOptions(q.options, 'word-option-button'); 
-}
-function renderPhase5UI(q) { 
-    document.getElementById('imageQuestionArea').style.display = 'block'; 
-    document.getElementById('lettersGrid').style.display = 'grid'; 
-    document.getElementById('imageEmoji').textContent = q.image; 
-    document.getElementById('questionText').textContent = 'Qual é o nome correto desta figura?'; 
-    renderOptions(q.options, 'word-option-button'); 
-}
-function renderPhase6UI(q) { 
-    document.getElementById('imageQuestionArea').style.display = 'block'; 
-    document.getElementById('lettersGrid').style.display = 'grid'; 
-    document.getElementById('imageEmoji').textContent = q.image; 
-    document.getElementById('wordDisplay').textContent = q.sentence; 
-    document.getElementById('questionText').textContent = 'Quantas palavras tem nesta frase?'; 
-    renderOptions(q.options, 'letter-button'); 
-}
-function renderPhase7UI(q) { 
-    const interactiveArea = document.getElementById('interactiveArea'); 
-    const optionsArea = document.getElementById('optionsArea'); 
-    if (!interactiveArea || !optionsArea) return;
-    interactiveArea.style.display = 'flex'; 
-    optionsArea.style.display = 'flex'; 
-    document.getElementById('questionText').textContent = 'Toque nas palavras na ordem certa para formar a frase.'; 
-    interactiveArea.innerHTML = `<div id="sentenceDropzone" class="sentence-dropzone empty"></div>`; 
-    optionsArea.innerHTML = q.options.map(opt => `<div class="clickable-item word" data-value="${opt}">${opt}</div>`).join(''); 
-    setupClickToMoveSentence(q.correctAnswer); 
-}
-function renderPhase8UI(q) { 
-    document.getElementById('audioQuestionArea').style.display = 'block'; 
-    document.getElementById('lettersGrid').style.display = 'grid'; 
-    document.getElementById('questionText').textContent = 'Qual VOGAL faz este som?'; 
-    document.getElementById('repeatAudio').style.display = 'inline-block'; 
-    renderOptions(q.options, 'letter-button'); 
-    setTimeout(playCurrentAudio, 500); 
-}
-function renderPhase9UI(q) { 
-    document.getElementById('imageQuestionArea').style.display = 'block'; 
-    document.getElementById('lettersGrid').style.display = 'grid'; 
-    document.getElementById('imageEmoji').textContent = q.image; 
-    document.getElementById('wordDisplay').textContent = q.word; 
-    document.getElementById('questionText').textContent = 'Quantas sílabas (pedaços) tem esta palavra?'; 
-    renderOptions(q.options, 'letter-button'); 
-}
-function renderPhase10UI(q) { 
-    document.getElementById('imageQuestionArea').style.display = 'block'; 
-    document.getElementById('lettersGrid').style.display = 'grid'; 
-    document.getElementById('imageEmoji').textContent = q.image; 
-    document.getElementById('wordDisplay').textContent = `__${q.word.substring(q.correctAnswer.length)}`; 
-    document.getElementById('questionText').textContent = 'Qual sílaba começa esta palavra?'; 
-    renderOptions(q.options, 'word-option-button'); 
-}
-function renderPhase11UI(q) { 
-    const interactiveArea = document.getElementById('interactiveArea'); 
-    const optionsArea = document.getElementById('optionsArea'); 
-    if (!interactiveArea || !optionsArea) return;
-    interactiveArea.style.display = 'flex'; 
-    optionsArea.style.display = 'flex'; 
-    document.getElementById('questionText').textContent = 'Toque na sílaba e depois no espaço para completar a palavra.'; 
-    const parts = q.blanked.split('__'); 
-    interactiveArea.innerHTML = ` <span class="word-part">${parts[0]}</span> <div class="syllable-dropzone word-completion" data-correct-syllable="${q.correctAnswer}"></div> <span class="word-part">${parts[1]}</span> `; 
-    optionsArea.innerHTML = q.options.map(opt => `<div class="clickable-item syllable" data-value="${opt}">${opt}</div>`).join(''); 
-    setupClickToMoveInteraction(); 
-}
-function renderPhase12UI(q) { 
-    document.getElementById('imageQuestionArea').style.display = 'block'; 
-    document.getElementById('lettersGrid').style.display = 'grid'; 
-    document.getElementById('imageEmoji').textContent = q.image; 
-    document.getElementById('wordDisplay').textContent = q.initialWord; 
-    document.getElementById('questionText').textContent = `Se tirarmos "${q.toRemove}", qual palavra formamos?`; 
-    renderOptions(q.options, 'word-option-button'); 
-}
-function renderPhase13UI(q) { 
-    document.getElementById('imageQuestionArea').style.display = 'block'; 
-    document.getElementById('lettersGrid').style.display = 'grid'; 
-    document.getElementById('imageEmoji').textContent = q.imageInverted; 
-    document.getElementById('wordDisplay').textContent = q.word; 
-    document.getElementById('questionText').textContent = `Se invertermos as sílabas de ${q.word}, qual palavra formamos?`; 
-    renderOptions(q.options, 'word-option-button'); 
-}
-function renderPhase14UI(q) { 
-    document.getElementById('imageQuestionArea').style.display = 'block'; 
-    document.getElementById('lettersGrid').style.display = 'grid'; 
-    document.getElementById('imageEmoji').textContent = q.image; 
-    document.getElementById('wordDisplay').textContent = q.word; 
-    document.getElementById('questionText').textContent = `Qual palavra rima com ${q.word}?`; 
-    renderOptions(q.options, 'word-option-button'); 
-}
-function renderPhase15UI(q) { 
-    document.getElementById('imageQuestionArea').style.display = 'block'; 
-    document.getElementById('lettersGrid').style.display = 'grid'; 
-    document.getElementById('imageEmoji').textContent = q.image; 
-    document.getElementById('wordDisplay').textContent = q.word; 
-    document.getElementById('questionText').textContent = 'Quantos SONS (não letras) você ouve nesta palavra?'; 
-    renderOptions(q.options, 'letter-button'); 
-}
-function renderPhase16UI(q) { 
-    document.getElementById('imageQuestionArea').style.display = 'block'; 
-    document.getElementById('lettersGrid').style.display = 'grid'; 
-    document.getElementById('imageEmoji').textContent = q.image; 
-    document.getElementById('wordDisplay').textContent = q.blanked; 
-    document.getElementById('questionText').textContent = 'Qual sílaba complexa completa a palavra?'; 
-    renderOptions(q.options, 'word-option-button'); 
-}
-function renderPhase17UI(q) { 
-    document.getElementById('imageQuestionArea').style.display = 'block'; 
-    document.getElementById('lettersGrid').style.display = 'grid'; 
-    document.getElementById('imageEmoji').textContent = q.image; 
-    document.getElementById('wordDisplay').textContent = q.target; 
-    document.getElementById('questionText').textContent = `Qual palavra rima com ${q.target}?`; 
-    renderOptions(q.options, 'word-option-button'); 
-}
-function renderPhase18UI(q) { 
-    document.getElementById('imageQuestionArea').style.display = 'block'; 
-    document.getElementById('wordDisplay').innerHTML = q.display.split('').map(letter => `<span class="clickable-letter">${letter}</span>`).join(''); 
-    document.getElementById('questionText').textContent = `Clique na letra intrometida da palavra.`; 
-    document.querySelectorAll('.clickable-letter').forEach(span => { span.addEventListener('click', () => selectAnswer(span.textContent)); }); 
-}
-function renderPhase19UI(q) { 
-    document.getElementById('imageQuestionArea').style.display = 'block'; 
-    document.getElementById('lettersGrid').style.display = 'grid'; 
-    document.getElementById('imageEmoji').textContent = q.image; 
-    document.getElementById('wordDisplay').textContent = q.sentence; 
-    document.getElementById('questionText').textContent = 'Qual palavra completa a frase?'; 
-    renderOptions(q.options, 'word-option-button'); 
-}
-function renderPhase20UI(q) { 
-    document.getElementById('questionText').textContent = 'Clique na palavra certa o mais rápido que puder!'; 
-    document.getElementById('attempts').parentElement.style.visibility = 'hidden'; 
-    gameState.speedReading = { words: q.words, currentIndex: 0, correctCount: 0, timer: null, timeLeft: 10 }; 
-    setupSpeedReadingScreen(); 
-    nextSpeedReadingWord(); 
-}
+function renderPhase1UI(q) { document.getElementById('audioQuestionArea').style.display = 'block'; document.getElementById('lettersGrid').style.display = 'grid'; document.getElementById('questionText').textContent = `Qual letra faz o som ${q.description}`; document.getElementById('repeatAudio').style.display = 'inline-block'; renderOptions(q.options, 'letter-button'); setTimeout(playCurrentAudio, 500); }
+function renderPhase2UI(q) { const memoryGrid = document.getElementById('memoryGameGrid'); if (!memoryGrid) return; memoryGrid.innerHTML = ''; memoryGrid.style.display = 'grid'; document.getElementById('questionText').textContent = 'Encontre os pares de letras maiúsculas e minúsculas!'; document.getElementById('attempts').parentElement.style.visibility = 'hidden'; const shuffleAndTake = (arr, num) => [...arr].sort(() => 0.5 - Math.random()).slice(0, num); const letters = shuffleAndTake(ALPHABET, 8); const cards = [...letters, ...letters.map(l => l.toLowerCase())].sort(() => 0.5 - Math.random()); memoryGrid.innerHTML = cards.map(letter => ` <div class="memory-card" data-letter="${letter.toLowerCase()}"> <div class="card-inner"> <div class="card-face card-front"></div> <div class="card-face card-back">${letter}</div> </div> </div> `).join(''); gameState.score = 0; gameState.memoryGame = { flippedCards: [], matchedPairs: 0, totalPairs: letters.length, canFlip: true, mistakesMade: 0, startTime: Date.now() }; updateUI(); memoryGrid.querySelectorAll('.memory-card').forEach(card => card.addEventListener('click', () => handleCardFlip(card))); }
+function renderPhase3UI(q) { const interactiveArea = document.getElementById('interactiveArea'); const optionsArea = document.getElementById('optionsArea'); if (!interactiveArea || !optionsArea) return; interactiveArea.style.display = 'flex'; optionsArea.style.display = 'flex'; document.getElementById('questionText').textContent = `Toque na vogal e depois no sinal de '+' para formar a sílaba da palavra ${q.word}.`; interactiveArea.innerHTML = ` <div class="syllable-base">${q.base}</div> <div class="syllable-dropzone" data-correct-vowel="${q.vowel}">+</div> `; optionsArea.innerHTML = q.options.map(opt => `<div class="clickable-item letter" data-value="${opt}">${opt}</div>`).join(''); setupClickToMoveInteraction(); }
+function renderPhase4UI(q) { document.getElementById('imageQuestionArea').style.display = 'block'; document.getElementById('lettersGrid').style.display = 'grid'; document.getElementById('imageEmoji').textContent = q.image; document.getElementById('questionText').textContent = 'Qual é o nome desta figura?'; renderOptions(q.options, 'word-option-button'); }
+function renderPhase5UI(q) { document.getElementById('imageQuestionArea').style.display = 'block'; document.getElementById('lettersGrid').style.display = 'grid'; document.getElementById('imageEmoji').textContent = q.image; document.getElementById('questionText').textContent = 'Qual é o nome correto desta figura?'; renderOptions(q.options, 'word-option-button'); }
+function renderPhase6UI(q) { document.getElementById('imageQuestionArea').style.display = 'block'; document.getElementById('lettersGrid').style.display = 'grid'; document.getElementById('imageEmoji').textContent = q.image; document.getElementById('wordDisplay').textContent = q.sentence; document.getElementById('questionText').textContent = 'Quantas palavras tem nesta frase?'; renderOptions(q.options, 'letter-button'); }
+function renderPhase7UI(q) { const interactiveArea = document.getElementById('interactiveArea'); const optionsArea = document.getElementById('optionsArea'); if (!interactiveArea || !optionsArea) return; interactiveArea.style.display = 'flex'; optionsArea.style.display = 'flex'; document.getElementById('questionText').textContent = 'Toque nas palavras na ordem certa para formar a frase.'; interactiveArea.innerHTML = `<div id="sentenceDropzone" class="sentence-dropzone empty"></div>`; optionsArea.innerHTML = q.options.map(opt => `<div class="clickable-item word" data-value="${opt}">${opt}</div>`).join(''); setupClickToMoveSentence(q.correctAnswer); }
+function renderPhase8UI(q) { document.getElementById('audioQuestionArea').style.display = 'block'; document.getElementById('lettersGrid').style.display = 'grid'; document.getElementById('questionText').textContent = 'Qual VOGAL faz este som?'; document.getElementById('repeatAudio').style.display = 'inline-block'; renderOptions(q.options, 'letter-button'); setTimeout(playCurrentAudio, 500); }
+function renderPhase9UI(q) { document.getElementById('imageQuestionArea').style.display = 'block'; document.getElementById('lettersGrid').style.display = 'grid'; document.getElementById('imageEmoji').textContent = q.image; document.getElementById('wordDisplay').textContent = q.word; document.getElementById('questionText').textContent = 'Quantas sílabas (pedaços) tem esta palavra?'; renderOptions(q.options, 'letter-button'); }
+function renderPhase10UI(q) { document.getElementById('imageQuestionArea').style.display = 'block'; document.getElementById('lettersGrid').style.display = 'grid'; document.getElementById('imageEmoji').textContent = q.image; document.getElementById('wordDisplay').textContent = `__${q.word.substring(q.correctAnswer.length)}`; document.getElementById('questionText').textContent = 'Qual sílaba começa esta palavra?'; renderOptions(q.options, 'word-option-button'); }
+function renderPhase11UI(q) { const interactiveArea = document.getElementById('interactiveArea'); const optionsArea = document.getElementById('optionsArea'); if (!interactiveArea || !optionsArea) return; interactiveArea.style.display = 'flex'; optionsArea.style.display = 'flex'; document.getElementById('questionText').textContent = 'Toque na sílaba e depois no espaço para completar a palavra.'; const parts = q.blanked.split('__'); interactiveArea.innerHTML = ` <span class="word-part">${parts[0]}</span> <div class="syllable-dropzone word-completion" data-correct-syllable="${q.correctAnswer}"></div> <span class="word-part">${parts[1]}</span> `; optionsArea.innerHTML = q.options.map(opt => `<div class="clickable-item syllable" data-value="${opt}">${opt}</div>`).join(''); setupClickToMoveInteraction(); }
+function renderPhase12UI(q) { document.getElementById('imageQuestionArea').style.display = 'block'; document.getElementById('lettersGrid').style.display = 'grid'; document.getElementById('imageEmoji').textContent = q.image; document.getElementById('wordDisplay').textContent = q.initialWord; document.getElementById('questionText').textContent = `Se tirarmos "${q.toRemove}", qual palavra formamos?`; renderOptions(q.options, 'word-option-button'); }
+function renderPhase13UI(q) { document.getElementById('imageQuestionArea').style.display = 'block'; document.getElementById('lettersGrid').style.display = 'grid'; document.getElementById('imageEmoji').textContent = q.imageInverted; document.getElementById('wordDisplay').textContent = q.word; document.getElementById('questionText').textContent = `Se invertermos as sílabas de ${q.word}, qual palavra formamos?`; renderOptions(q.options, 'word-option-button'); }
+function renderPhase14UI(q) { document.getElementById('imageQuestionArea').style.display = 'block'; document.getElementById('lettersGrid').style.display = 'grid'; document.getElementById('imageEmoji').textContent = q.image; document.getElementById('wordDisplay').textContent = q.word; document.getElementById('questionText').textContent = `Qual palavra rima com ${q.word}?`; renderOptions(q.options, 'word-option-button'); }
+function renderPhase15UI(q) { document.getElementById('imageQuestionArea').style.display = 'block'; document.getElementById('lettersGrid').style.display = 'grid'; document.getElementById('imageEmoji').textContent = q.image; document.getElementById('wordDisplay').textContent = q.word; document.getElementById('questionText').textContent = 'Quantos SONS (não letras) você ouve nesta palavra?'; renderOptions(q.options, 'letter-button'); }
+function renderPhase16UI(q) { document.getElementById('imageQuestionArea').style.display = 'block'; document.getElementById('lettersGrid').style.display = 'grid'; document.getElementById('imageEmoji').textContent = q.image; document.getElementById('wordDisplay').textContent = q.blanked; document.getElementById('questionText').textContent = 'Qual sílaba complexa completa a palavra?'; renderOptions(q.options, 'word-option-button'); }
+function renderPhase17UI(q) { document.getElementById('imageQuestionArea').style.display = 'block'; document.getElementById('lettersGrid').style.display = 'grid'; document.getElementById('imageEmoji').textContent = q.image; document.getElementById('wordDisplay').textContent = q.target; document.getElementById('questionText').textContent = `Qual palavra rima com ${q.target}?`; renderOptions(q.options, 'word-option-button'); }
+function renderPhase18UI(q) { document.getElementById('imageQuestionArea').style.display = 'block'; document.getElementById('wordDisplay').innerHTML = q.display.split('').map(letter => `<span class="clickable-letter">${letter}</span>`).join(''); document.getElementById('questionText').textContent = `Clique na letra intrometida da palavra.`; document.querySelectorAll('.clickable-letter').forEach(span => { span.addEventListener('click', () => selectAnswer(span.textContent)); }); }
+function renderPhase19UI(q) { document.getElementById('imageQuestionArea').style.display = 'block'; document.getElementById('lettersGrid').style.display = 'grid'; document.getElementById('imageEmoji').textContent = q.image; document.getElementById('wordDisplay').textContent = q.sentence; document.getElementById('questionText').textContent = 'Qual palavra completa a frase?'; renderOptions(q.options, 'word-option-button'); }
+function renderPhase20UI(q) { document.getElementById('questionText').textContent = 'Clique na palavra certa o mais rápido que puder!'; document.getElementById('attempts').parentElement.style.visibility = 'hidden'; gameState.speedReading = { words: q.words, currentIndex: 0, correctCount: 0, timer: null, timeLeft: 10 }; setupSpeedReadingScreen(); nextSpeedReadingWord(); }
 
 function renderOptions(options, buttonClass) { const lettersGrid = document.getElementById('lettersGrid'); lettersGrid.style.display = 'grid'; lettersGrid.innerHTML = options.map(option => `<button class="${buttonClass}">${option}</button>`).join(''); lettersGrid.querySelectorAll('button').forEach(btn => btn.addEventListener('click', (e) => selectAnswer(e.target.textContent))); }
 
@@ -1185,25 +1032,20 @@ function generateSingleQuestionFromError(errorTemplate) {
             const complexData = PHASE_16_COMPLEX_SYLLABLES.find(c => c.syllable === correctAnswer);
             if (!complexData) return null;
             return { type: 'complex_syllable', ...complexData, correctAnswer: correctAnswer, options: _generateOptions(correctAnswer, ['BRA','LHA','NHO','VRO','CRE'], 4) };
-        
         case 17:
             const rhymeDiscriminationData = PHASE_17_RHYME_DISCRIMINATION.find(r => r.correct === correctAnswer);
             if (!rhymeDiscriminationData) return null;
             return { type: 'rhyme_discrimination', ...rhymeDiscriminationData, correctAnswer: rhymeDiscriminationData.correct, options: [rhymeDiscriminationData.correct, rhymeDiscriminationData.incorrect].sort(() => 0.5 - Math.random()) };
-        
         case 18:
             const intruderData = PHASE_18_INTRUDER_LETTER.find(i => i.intruder === correctAnswer);
             if (!intruderData) return null;
             return { type: 'intruder_letter', ...intruderData, correctAnswer: intruderData.intruder };
-
         case 19:
             const detectiveData = PHASE_19_WORD_DETECTIVE.find(d => d.answer === correctAnswer);
             if (!detectiveData) return null;
             return { type: 'word_detective', ...detectiveData, options: [...detectiveData.options].sort(() => 0.5 - Math.random()) };
-        
         case 20:
             return null;
-
         default:
             return null;
     }
@@ -1226,7 +1068,7 @@ async function checkForCustomActivities() {
 function setupClickToMoveInteraction() {
     const items = document.querySelectorAll('.clickable-item');
     const dropzone = document.querySelector('.syllable-dropzone');
-    if (!items.length || !dropzone) return; // Verificação de segurança
+    if (!items.length || !dropzone) return; 
 
     items.forEach(item => {
         item.addEventListener('click', () => {
@@ -1283,7 +1125,7 @@ function setupClickToMoveInteraction() {
 function setupClickToMoveSentence(correctAnswer) {
     const items = document.querySelectorAll('.clickable-item');
     const dropzone = document.getElementById('sentenceDropzone');
-    if (!items.length || !dropzone) return; // Verificação de segurança
+    if (!items.length || !dropzone) return; 
 
     dropzone.classList.remove('empty');
 
@@ -1373,6 +1215,7 @@ function startTimerBar(seconds) {
         handleSpeedReadingAnswer(false, null);
     }, seconds * 1000);
 }
+
 
 // =======================================================
 // EFEITO DE CONFETTI
