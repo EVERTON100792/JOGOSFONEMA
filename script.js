@@ -1,5 +1,5 @@
 // =======================================================
-// JOGO DAS LETRAS - VERSÃO FINAL COM ÁUDIO PROFISSIONAL E CORREÇÕES
+// JOGO DAS LETRAS - VERSÃO FINAL COM ÁUDIO HÍBRIDO E CORREÇÕES
 // =======================================================
 
 // PARTE 1: CONFIGURAÇÃO INICIAL E SUPABASE
@@ -7,19 +7,19 @@ const { createClient } = supabase;
 const supabaseUrl = 'https://nxpwxbxhucliudnutyqd.supabase.co';
 const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im54cHd4YnhodWNsaXVkbnV0eXFkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU0ODU4NjcsImV4cCI6MjA3MTA2MTg2N30.m1KbiyPe_K9CK2nBhsxo97A5rai2GtnyVPnpff5isNg';
 const supabaseClient = createClient(supabaseUrl, supabaseKey);
-const GEMINI_API_KEY = "SUA_CHAVE_API_DO_GOOGLE_GEMINI_AQUI"; // <-- COLOQUE SUA CHAVE AQUI!
-const SUPER_ADMIN_TEACHER_ID = 'd88211f7-9f98-47b8-8e57-54bf767f42d6';
+const GEMINI_API_KEY = "SUA_CHAVE_API_DO_GOOGLE_GEMINI_AQUI";
 
 let currentUser = null, currentClassId = null, studentProgressData = [], currentChart = null, currentEvolutionChart = null;
 const ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split(''), VOWELS = 'AEIOU'.split('');
 let gameState = {}, mediaRecorder, audioChunks = [], timerInterval;
 let confettiAnimationId;
-let currentAudio = null; // Para controlar o áudio em reprodução
 
 // =======================================================
-// LÓGICA DE ÁUDIO E SONS (OTIMIZADA)
+// PARTE 2: NOVO SISTEMA DE ÁUDIO HÍBRIDO
 // =======================================================
 
+// --- Áudios de Efeitos e Sons Curtos (Alta Qualidade) ---
+let currentAudio = null;
 const soundEffects = {
     click: new Audio('https://github.com/prof-vane-digital/audios-jogo-letras/raw/main/sounds/click.mp3'),
     correct: new Audio('https://github.com/prof-vane-digital/audios-jogo-letras/raw/main/sounds/correct.mp3'),
@@ -31,26 +31,6 @@ const AUDIO_URLS = {
     feedback_correct: "https://github.com/prof-vane-digital/audios-jogo-letras/raw/main/feedbacks/feedback_correct.mp3",
     feedback_incorrect: "https://github.com/prof-vane-digital/audios-jogo-letras/raw/main/feedbacks/feedback_incorrect.mp3",
     feedback_phase_win: "https://github.com/prof-vane-digital/audios-jogo-letras/raw/main/feedbacks/feedback_phase_win.mp3",
-    instruction_letter_sound: "https://github.com/prof-vane-digital/audios-jogo-letras/raw/main/instructions/instruction_letter_sound.mp3",
-    instruction_vowel_sound: "https://github.com/prof-vane-digital/audios-jogo-letras/raw/main/instructions/instruction_vowel_sound.mp3",
-    instruction_memory_game: "https://github.com/prof-vane-digital/audios-jogo-letras/raw/main/instructions/instruction_memory_game.mp3",
-    instruction_sound_detective: "https://github.com/prof-vane-digital/audios-jogo-letras/raw/main/instructions/instruction_sound_detective.mp3",
-    instruction_f_word_search: "https://github.com/prof-vane-digital/audios-jogo-letras/raw/main/instructions/instruction_f_word_search.mp3",
-    instruction_count_words: "https://github.com/prof-vane-digital/audios-jogo-letras/raw/main/instructions/instruction_count_words.mp3",
-    instruction_sentence_unscramble_mc: "https://github.com/prof-vane-digital/audios-jogo-letras/raw/main/instructions/instruction_sentence_unscramble_mc.mp3",
-    instruction_syllable_formation_mc: "https://github.com/prof-vane-digital/audios-jogo-letras/raw/main/instructions/instruction_syllable_formation_mc.mp3",
-    instruction_count_syllables: "https://github.com/prof-vane-digital/audios-jogo-letras/raw/main/instructions/instruction_count_syllables.mp3",
-    instruction_initial_syllable: "https://github.com/prof-vane-digital/audios-jogo-letras/raw/main/instructions/instruction_initial_syllable.mp3",
-    instruction_complete_word_mc: "https://github.com/prof-vane-digital/audios-jogo-letras/raw/main/instructions/instruction_complete_word_mc.mp3",
-    instruction_word_transform: "https://github.com/prof-vane-digital/audios-jogo-letras/raw/main/instructions/instruction_word_transform.mp3",
-    instruction_invert_syllables: "https://github.com/prof-vane-digital/audios-jogo-letras/raw/main/instructions/instruction_invert_syllables.mp3",
-    instruction_complex_syllable: "https://github.com/prof-vane-digital/audios-jogo-letras/raw/main/instructions/instruction_complex_syllable.mp3",
-    instruction_find_rhyme: "https://github.com/prof-vane-digital/audios-jogo-letras/raw/main/instructions/instruction_find_rhyme.mp3",
-    instruction_rhyme_discrimination: "https://github.com/prof-vane-digital/audios-jogo-letras/raw/main/instructions/instruction_rhyme_discrimination.mp3",
-    instruction_count_phonemes: "https://github.com/prof-vane-digital/audios-jogo-letras/raw/main/instructions/instruction_count_phonemes.mp3",
-    instruction_intruder_letter: "https://github.com/prof-vane-digital/audios-jogo-letras/raw/main/instructions/instruction_intruder_letter.mp3",
-    instruction_word_detective: "https://github.com/prof-vane-digital/audios-jogo-letras/raw/main/instructions/instruction_word_detective.mp3",
-    instruction_speed_reading: "https://github.com/prof-vane-digital/audios-jogo-letras/raw/main/instructions/instruction_speed_reading.mp3",
     F: "https://github.com/prof-vane-digital/audios-jogo-letras/raw/main/letters/F.mp3", V: "https://github.com/prof-vane-digital/audios-jogo-letras/raw/main/letters/V.mp3", S: "https://github.com/prof-vane-digital/audios-jogo-letras/raw/main/letters/S.mp3", Z: "https://github.com/prof-vane-digital/audios-jogo-letras/raw/main/letters/Z.mp3", M: "https://github.com/prof-vane-digital/audios-jogo-letras/raw/main/letters/M.mp3", P: "https://github.com/prof-vane-digital/audios-jogo-letras/raw/main/letters/P.mp3", B: "https://github.com/prof-vane-digital/audios-jogo-letras/raw/main/letters/B.mp3", T: "https://github.com/prof-vane-digital/audios-jogo-letras/raw/main/letters/T.mp3", D: "https://github.com/prof-vane-digital/audios-jogo-letras/raw/main/letters/D.mp3", L: "https://github.com/prof-vane-digital/audios-jogo-letras/raw/main/letters/L.mp3",
     vowel_A: "https://github.com/prof-vane-digital/audios-jogo-letras/raw/main/vowels/A.mp3", vowel_E: "https://github.com/prof-vane-digital/audios-jogo-letras/raw/main/vowels/E.mp3", vowel_I: "https://github.com/prof-vane-digital/audios-jogo-letras/raw/main/vowels/I.mp3", vowel_O: "https://github.com/prof-vane-digital/audios-jogo-letras/raw/main/vowels/O.mp3", vowel_U: "https://github.com/prof-vane-digital/audios-jogo-letras/raw/main/vowels/U.mp3",
 };
@@ -73,22 +53,58 @@ function playSound(soundName) {
     }
 }
 
-// FUNÇÃO DE DESBLOQUEIO DE ÁUDIO CORRIGIDA E OTIMIZADA
+// --- Voz do Navegador (TTS) para Instruções Longas ---
+let speechReady = false;
+let selectedVoice = null;
+
+function initializeSpeech() {
+    if (typeof speechSynthesis === 'undefined') {
+        console.warn("API de Fala não suportada neste navegador.");
+        return;
+    }
+    const setVoice = () => {
+        const voices = speechSynthesis.getVoices();
+        if (voices.length > 0) {
+            selectedVoice = voices.find(v => v.lang === 'pt-BR');
+            if (!selectedVoice) selectedVoice = voices.find(v => v.lang.startsWith('pt'));
+            speechReady = true;
+            console.log("Voz TTS pronta:", selectedVoice?.name);
+        }
+    };
+    setVoice();
+    speechSynthesis.onvoiceschanged = setVoice;
+}
+
+function speak(text) {
+    if (!speechReady || !text) return;
+    speechSynthesis.cancel(); // Cancela qualquer fala anterior
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = 'pt-BR';
+    if (selectedVoice) {
+        utterance.voice = selectedVoice;
+    }
+    utterance.rate = 0.9; // Um pouco mais devagar para clareza
+    speechSynthesis.speak(utterance);
+}
+
+// Função de desbloqueio otimizada
 let audioUnlocked = false;
 function unlockAudio() {
     if (audioUnlocked) return;
+    const context = new (window.AudioContext || window.webkitAudioContext)();
+    if (context.state === 'suspended') {
+        context.resume();
+    }
     const clickSound = soundEffects.click;
     clickSound.volume = 0;
     clickSound.play().catch(() => {});
-    clickSound.pause();
-    clickSound.currentTime = 0;
     clickSound.volume = 1;
     audioUnlocked = true;
-    console.log("Contexto de áudio desbloqueado com sucesso.");
+    console.log("Contexto de áudio desbloqueado.");
 }
 
 // =======================================================
-// PARTE 2: CONTEÚDO DO JOGO
+// PARTE 3: CONTEÚDO DO JOGO
 // =======================================================
 
 const PHASE_DESCRIPTIONS = {
@@ -122,11 +138,11 @@ const PHASE_INSTRUCTIONS = {
 };
 
 const PHASE_1_LETTER_SOUNDS = [
-    { letter: 'F', audioKey: 'F', description: 'de soprar uma vela (ffff...)?', optionsPool: 'AMOPV' }, { letter: 'V', audioKey: 'V', description: 'de um motor vibrando (vvvv...)?', optionsPool: 'AMOPF' }, { letter: 'S', audioKey: 'S', description: 'da cobrinha (ssss...)?', optionsPool: 'AMOPZ' }, { letter: 'Z', audioKey: 'Z', description: 'da abelhinha (zzzz...)?', optionsPool: 'AMOPS' }, { letter: 'M', audioKey: 'M', description: 'de quando a comida está gostosa (mmmm...)?', optionsPool: 'AOPNS' }, { letter: 'P', audioKey: 'P', description: 'de uma pequena explosão, sem voz (p, p, p)?', optionsPool: 'AFOVB' }, { letter: 'B', audioKey: 'B', description: 'de uma pequena explosão, com voz (b, b, b)?', optionsPool: 'AFOVP' }, { letter: 'T', audioKey: 'T', description: 'da batidinha da língua no dente, sem voz (t, t, t)?', optionsPool: 'AFOVD' }, { letter: 'D', audioKey: 'D', description: 'da batidinha da língua no dente, com voz (d, d, d)?', optionsPool: 'AFOVT' }, { letter: 'L', audioKey: 'L', description: 'com a língua no céu da boca (llll...)?', optionsPool: 'ARFMN' }
+    { letter: 'F', audioKey: 'F', optionsPool: 'AMOPV' }, { letter: 'V', audioKey: 'V', optionsPool: 'AMOPF' }, { letter: 'S', audioKey: 'S', optionsPool: 'AMOPZ' }, { letter: 'Z', audioKey: 'Z', optionsPool: 'AMOPS' }, { letter: 'M', audioKey: 'M', optionsPool: 'AOPNS' }, { letter: 'P', audioKey: 'P', optionsPool: 'AFOVB' }, { letter: 'B', audioKey: 'B', optionsPool: 'AFOVP' }, { letter: 'T', audioKey: 'T', optionsPool: 'AFOVD' }, { letter: 'D', audioKey: 'D', optionsPool: 'AFOVT' }, { letter: 'L', audioKey: 'L', optionsPool: 'ARFMN' }
 ];
 const PHASE_3_SYLLABLE_F = [
-    { base: 'F', vowel: 'A', result: 'FA', image: '🔪', word: 'FACA' }, { base: 'F', vowel: 'E', result: 'FE', image: '🌱', word: 'FEIJÃO' }, { base: 'F', vowel: 'I', result: 'FI', image: '🎀', word: 'FITA' }, { base: 'F', vowel: 'O', result: 'FO', image: '🔥', word: 'FOGO' }, { base: 'F', vowel: 'U', result: 'FU', image: '💨', word: 'FUMAÇA' }, { base: 'F', vowel: 'A', result: 'FA', image: '🧚‍♀️', word: 'FADA' }, { base: 'F', vowel: 'E', result: 'FE', image: '😀', word: 'FELIZ' }, { base: 'F', vowel: 'I', result: 'FI', image: 'Figo', word: 'FIGO' }, { base: 'F', vowel: 'O', result: 'FO', image: '🦭', word: 'FOCA' }, { base: 'F', vowel: 'U', result: 'FU', image: '⚽', word: 'FUTEBOL' }
-];
+    { base: 'F', vowel: 'A', result: 'FA' }, { base: 'F', vowel: 'E', result: 'FE' }, { base: 'F', vowel: 'I', result: 'FI' }, { base: 'F', vowel: 'O', result: 'FO' }, { base: 'F', vowel: 'U', result: 'FU' }
+].flatMap(i => [i,i]);
 const PHASE_4_WORDS_F = [
     { word: 'FOTO', image: '📷', options: ['FOTO', 'VOTO', 'POTE'] }, { word: 'FIO', image: '🧵', options: ['FIO', 'VIO', 'RIO'] }, { word: 'FACA', image: '🔪', options: ['FACA', 'VACA', 'PACA'] }, { word: 'FOCA', image: '🦭', options: ['FOCA', 'POCA', 'VOCA'] }, { word: 'FADA', image: '🧚‍♀️', options: ['FADA', 'VADA', 'NADA'] }, { word: 'FOGO', image: '🔥', options: ['FOGO', 'POGO', 'JOGO'] }, { word: 'FITA', image: '🎀', options: ['FITA', 'VITA', 'BITA'] }, { word: 'FESTA', image: '🎉', options: ['FESTA', 'RESTA', 'TESTA'] }, { word: 'FILA', image: '🧍🧍‍♀️🧍‍♂️', options: ['FILA', 'VILA', 'PILA'] }, { word: 'FAROL', image: '🚦', options: ['FAROL', 'CAROL', 'ROL'] }
 ];
@@ -146,19 +162,10 @@ const PHASE_10_INITIAL_SYLLABLE = [
     { word: 'BOLO', image: '🎂', correctAnswer: 'BO' }, { word: 'MACACO', image: '🐒', correctAnswer: 'MA' }, { word: 'SAPATO', image: '👟', correctAnswer: 'SA' }, { word: 'JANELA', image: '🖼️', correctAnswer: 'JA' }, { word: 'VACA', image: '🐄', correctAnswer: 'VA' }, { word: 'GATO', image: '🐈', correctAnswer: 'GA' }, { word: 'DADO', image: '🎲', correctAnswer: 'DA' }, { word: 'RATO', image: '🐀', correctAnswer: 'RA' }, { word: 'FOCA', image: '🦭', correctAnswer: 'FO' }, { word: 'LIVRO', image: '📖', correctAnswer: 'LI' }
 ];
 const PHASE_11_F_POSITION = [
-    { word: 'FADA', image: '🧚‍♀️', syllable: 'FA', blanked: '__DA' }, { word: 'FIVELA', image: '🪢', syllable: 'FI', blanked: '__VELA' }, { word: 'GARRAFA', image: '🍾', syllable: 'FA', blanked: 'GARRA__' }, { word: 'ALFINETE', image: '🧷', syllable: 'FI', blanked: 'AL__NETE' }, { word: 'CAFÉ', image: '☕', syllable: 'FÉ', blanked: 'CA__' }, { word: 'GIRAFA', image: '🦒', syllable: 'FA', blanked: 'GIRA__' }, { word: 'SOFÁ', image: '🛋️', syllable: 'FÁ', blanked: 'SO__' }, { word: 'BIFE', image: '🥩', syllable: 'FE', blanked: 'BI__' }, { word: 'FÓSFORO', image: 'Matches', syllable: 'FOS', blanked: '__FORO' }, { word: 'GOLFINHO', image: '🐬', syllable: 'FI', blanked: 'GOL__NHO' }
+    { word: 'FADA', image: '🧚‍♀️', syllable: 'FA', blanked: '__DA' }, { word: 'FIVELA', image: '🪢', syllable: 'FI', blanked: '__VELA' }, { word: 'GARRAFA', image: '🍾', syllable: 'FA', blanked: 'GARRA__' }, { word: 'ALFINETE', image: '🧷', syllable: 'FI', blanked: 'AL__NETE' }, { word: 'CAFÉ', image: '☕', syllable: 'FÉ', blanked: 'CA__' }, { word: 'GIRAFA', image: '🦒', syllable: 'FA', blanked: 'GIRA__' }, { word: 'SOFÁ', image: '🛋️', syllable: 'FÁ', blanked: 'SO__' }, { word: 'BIFE', image: '🥩', syllable: 'FE', blanked: 'BI__' }
 ];
 const PHASE_12_WORD_TRANSFORM = [
-    { initialWord: 'SAPATO', toRemove: 'SA', correctAnswer: 'PATO', image: '🦆' },
-    { initialWord: 'LUVA', toRemove: 'L', correctAnswer: 'UVA', image: '🍇' },
-    { initialWord: 'CAMALEÃO', toRemove: 'CAMA', correctAnswer: 'LEÃO', image: '🦁' },
-    { initialWord: 'GALINHA', toRemove: 'GA', correctAnswer: 'LINHA', image: '🧵' },
-    { initialWord: 'SOLDADO', toRemove: 'SOL', correctAnswer: 'DADO', image: '🎲' },
-    { initialWord: 'FIVELA', toRemove: 'FI', correctAnswer: 'VELA', image: '🕯️' },
-    { initialWord: 'TUCANO', toRemove: 'TU', correctAnswer: 'CANO', image: '🔧' },
-    { initialWord: 'TUBARÃO', toRemove: 'TU', correctAnswer: 'BARÃO', image: '🎩' },
-    { initialWord: 'SACOLA', toRemove: 'SA', correctAnswer: 'COLA', image: '📎' },
-    { initialWord: 'CORUJA', toRemove: 'CO', correctAnswer: 'RUJA', image: '🦁' } 
+    { initialWord: 'SAPATO', toRemove: 'SA', correctAnswer: 'PATO', image: '🦆' }, { initialWord: 'LUVA', toRemove: 'L', correctAnswer: 'UVA', image: '🍇' }, { initialWord: 'CAMALEÃO', toRemove: 'CAMA', correctAnswer: 'LEÃO', image: '🦁' }, { initialWord: 'GALINHA', toRemove: 'GA', correctAnswer: 'LINHA', image: '🧵' }, { initialWord: 'SOLDADO', toRemove: 'SOL', correctAnswer: 'DADO', image: '🎲' }, { initialWord: 'FIVELA', toRemove: 'FI', correctAnswer: 'VELA', image: '🕯️' }, { initialWord: 'TUCANO', toRemove: 'TU', correctAnswer: 'CANO', image: '🔧' }, { initialWord: 'TUBARÃO', toRemove: 'TU', correctAnswer: 'BARÃO', image: '🎩' }, { initialWord: 'SACOLA', toRemove: 'SA', correctAnswer: 'COLA', image: '📎' }, { initialWord: 'CORUJA', toRemove: 'CO', correctAnswer: 'RUJA', image: '🦁' } 
 ];
 const PHASE_13_INVERT_SYLLABLES = [
     { word: 'BOLO', image: '🎂', inverted: 'LOBO', imageInverted: '🐺' }, { word: 'MACA', image: '🍎', inverted: 'CAMA', imageInverted: '🛏️' }, { word: 'GATO', image: '🐈', inverted: 'TOGA', imageInverted: '🎓' }, { word: 'LAMA', image: '💩', inverted: 'MALA', imageInverted: '👜' }, { word: 'TOPA', image: '🤝', inverted: 'PATO', imageInverted: '🦆' }, { word: 'CASA', image: '🏠', inverted: 'SACA', imageInverted: '💰' }, { word: 'LICA', image: '👱‍♀️', inverted: 'CALI', imageInverted: '🌆' }, { word: 'DICA', image: '💡', inverted: 'CADI', imageInverted: '🛒' }, { word: 'MAGO', image: '🧙‍♂️', inverted: 'GOMA', imageInverted: '🍬' }, { word: 'SECA', image: '🏜️', inverted: 'CASE', imageInverted: '💼' }
@@ -214,6 +221,7 @@ async function initApp() {
         alert("ERRO CRÍTICO: Supabase não carregou.");
         return;
     }
+    initializeSpeech();
     setupAllEventListeners();
     const studentSession = sessionStorage.getItem('currentUser');
     
@@ -576,6 +584,7 @@ function generateQuestions(phase) {
     const shuffleAndTake = (arr, num) => [...arr].sort(() => 0.5 - Math.random()).slice(0, num);
 
     switch (phase) {
+        // Bloco 1: Alfabeto e Sons
         case 1:
             questions = shuffleAndTake(PHASE_1_LETTER_SOUNDS, questionCount).map(item => ({
                 type: 'letter_sound',
@@ -594,6 +603,8 @@ function generateQuestions(phase) {
         case 4:
             questions = shuffleAndTake(PHASE_5_SOUND_PAIRS, questionCount).map(item => ({ type: 'sound_detective', correctAnswer: item.correct, ...item, options: [item.correct, item.incorrect].sort(() => 0.5 - Math.random()) }));
             break;
+
+        // Bloco 2: Palavras e Frases
         case 5:
             questions = shuffleAndTake(PHASE_4_WORDS_F, questionCount).map(item => ({ type: 'f_word_search', correctAnswer: item.word, ...item, options: [...item.options].sort(() => 0.5 - Math.random()) }));
             break;
@@ -612,6 +623,8 @@ function generateQuestions(phase) {
                 return { type: 'sentence_unscramble_mc', correctAnswer: item.answer, ...item, options: Array.from(options).sort(() => 0.5 - Math.random()) };
             });
             break;
+
+        // Bloco 3: Consciência Silábica
         case 8:
             questions = shuffleAndTake(PHASE_3_SYLLABLE_F, questionCount).map(item => ({ type: 'syllable_formation_mc', correctAnswer: item.result, ...item, options: _generateOptions(item.result, ['FA', 'FE', 'FI', 'FO', 'FU', 'VA', 'PA', 'BO'], 4) }));
             break;
@@ -642,6 +655,8 @@ function generateQuestions(phase) {
         case 16:
             questions = shuffleAndTake(PHASE_17_RHYME_DISCRIMINATION, questionCount).map(item => ({ type: 'rhyme_discrimination', correctAnswer: item.correct, ...item, options: [item.correct, item.incorrect].sort(() => 0.5 - Math.random()) }));
             break;
+            
+        // Bloco 4: Consciência Fonêmica e Fluência
         case 17:
             questions = shuffleAndTake(PHASE_15_PHONEME_COUNT, questionCount).map(item => ({ type: 'count_phonemes', correctAnswer: item.sounds.toString(), ...item, options: _generateOptions(item.sounds.toString(), ['2','3','4','5'], 4) }));
             break;
@@ -665,7 +680,6 @@ function generateQuestions(phase) {
 async function startQuestion() {
     if (gameState.phaseCompleted || !gameState.questions || !gameState.questions[gameState.currentQuestionIndex]) { return endPhase(); }
     
-    selectedItemForClickMove = null;
     const UIElements = ['audioQuestionArea', 'imageQuestionArea', 'lettersGrid', 'memoryGameGrid', 'interactiveArea', 'optionsArea', 'wordDisplay', 'questionText'];
     const elementsToClear = ['lettersGrid', 'memoryGameGrid', 'interactiveArea', 'optionsArea', 'wordDisplay', 'questionText'];
 
@@ -679,18 +693,14 @@ async function startQuestion() {
         }
     });
 
-    const repeatAudioBtn = document.getElementById('repeatAudio');
-    if(repeatAudioBtn) repeatAudioBtn.style.display = 'none';
-    
-    const attemptsEl = document.getElementById('attempts');
-    if (attemptsEl) attemptsEl.parentElement.style.visibility = 'visible';
+    document.getElementById('repeatAudio')?.setAttribute('style', 'display: none');
+    document.getElementById('attempts')?.parentElement.setAttribute('style', 'visibility: visible');
     
     const q = gameState.questions[gameState.currentQuestionIndex];
     
     const instruction = PHASE_INSTRUCTIONS[q.type] || "Escolha a resposta certa!";
-    playAudio(`instruction_${q.type}`);
+    speak(instruction); // Usa a voz do navegador para instruções
     document.getElementById('helperText').textContent = instruction;
-
 
     const renderMap = {
         'letter_sound': renderPhase1UI, 'vowel_sound': renderPhase8UI, 'memory_game': renderPhase2UI, 'sound_detective': renderPhase5UI,
@@ -713,14 +723,14 @@ async function startQuestion() {
 // FUNÇÕES DE RENDERIZAÇÃO DAS FASES
 // =======================================================
 
-function renderPhase1UI(q) { document.getElementById('audioQuestionArea').style.display = 'block'; document.getElementById('lettersGrid').style.display = 'grid'; document.getElementById('questionText').textContent = `Qual letra faz o som que você ouviu?`; document.getElementById('repeatAudio').style.display = 'inline-block'; renderOptions(q.options, 'letter-button'); setTimeout(playCurrentAudio, 800); }
+function renderPhase1UI(q) { document.getElementById('audioQuestionArea').style.display = 'block'; document.getElementById('lettersGrid').style.display = 'grid'; document.getElementById('questionText').textContent = `Qual letra faz o som que você ouviu?`; document.getElementById('repeatAudio').style.display = 'inline-block'; renderOptions(q.options, 'letter-button'); setTimeout(playCurrentAudio, 1500); }
 function renderPhase2UI(q) { const memoryGrid = document.getElementById('memoryGameGrid'); if (!memoryGrid) return; memoryGrid.innerHTML = ''; memoryGrid.style.display = 'grid'; document.getElementById('attempts').parentElement.style.visibility = 'hidden'; const shuffleAndTake = (arr, num) => [...arr].sort(() => 0.5 - Math.random()).slice(0, num); const letters = shuffleAndTake(ALPHABET, 8); const cards = [...letters, ...letters.map(l => l.toLowerCase())].sort(() => 0.5 - Math.random()); memoryGrid.innerHTML = cards.map(letter => ` <div class="memory-card" data-letter="${letter.toLowerCase()}"> <div class="card-inner"> <div class="card-face card-front"></div> <div class="card-face card-back">${letter}</div> </div> </div> `).join(''); gameState.score = 0; gameState.memoryGame = { flippedCards: [], matchedPairs: 0, totalPairs: letters.length, canFlip: true, mistakesMade: 0, startTime: Date.now() }; updateUI(); memoryGrid.querySelectorAll('.memory-card').forEach(card => card.addEventListener('click', () => handleCardFlip(card))); }
 function renderPhase3NewUI(q) { const interactiveArea = document.getElementById('interactiveArea'); interactiveArea.style.display = 'flex'; interactiveArea.innerHTML = `<div class="syllable-base">${q.base}</div> <div class="syllable-plus">+</div> <div class="syllable-base">${q.vowel}</div>`; renderOptions(q.options, 'letter-button'); }
 function renderPhase4UI(q) { document.getElementById('imageQuestionArea').style.display = 'block'; document.getElementById('lettersGrid').style.display = 'grid'; document.getElementById('imageEmoji').textContent = q.image; renderOptions(q.options, 'word-option-button'); }
 function renderPhase5UI(q) { document.getElementById('imageQuestionArea').style.display = 'block'; document.getElementById('lettersGrid').style.display = 'grid'; document.getElementById('imageEmoji').textContent = q.image; renderOptions(q.options, 'word-option-button'); }
 function renderPhase6UI(q) { document.getElementById('imageQuestionArea').style.display = 'block'; document.getElementById('lettersGrid').style.display = 'grid'; document.getElementById('imageEmoji').textContent = q.image; document.getElementById('wordDisplay').textContent = q.sentence; renderOptions(q.options, 'letter-button'); }
 function renderPhase7NewUI(q) { document.getElementById('imageQuestionArea').style.display = 'block'; document.getElementById('imageEmoji').textContent = q.image; renderOptions(q.options, 'sentence-option-button'); }
-function renderPhase8UI(q) { document.getElementById('audioQuestionArea').style.display = 'block'; document.getElementById('lettersGrid').style.display = 'grid'; document.getElementById('repeatAudio').style.display = 'inline-block'; renderOptions(q.options, 'letter-button'); setTimeout(playCurrentAudio, 800); }
+function renderPhase8UI(q) { document.getElementById('audioQuestionArea').style.display = 'block'; document.getElementById('lettersGrid').style.display = 'grid'; document.getElementById('repeatAudio').style.display = 'inline-block'; renderOptions(q.options, 'letter-button'); setTimeout(playCurrentAudio, 1500); }
 function renderPhase9UI(q) { document.getElementById('imageQuestionArea').style.display = 'block'; document.getElementById('lettersGrid').style.display = 'grid'; document.getElementById('imageEmoji').textContent = q.image; document.getElementById('wordDisplay').textContent = q.word; renderOptions(q.options, 'letter-button'); }
 function renderPhase10UI(q) { document.getElementById('imageQuestionArea').style.display = 'block'; document.getElementById('lettersGrid').style.display = 'grid'; document.getElementById('imageEmoji').textContent = q.image; document.getElementById('wordDisplay').textContent = `__${q.word.substring(q.correctAnswer.length)}`; renderOptions(q.options, 'word-option-button'); }
 function renderPhase11NewUI(q) { document.getElementById('imageQuestionArea').style.display = 'block'; document.getElementById('imageEmoji').textContent = q.image; document.getElementById('wordDisplay').textContent = q.blanked; renderOptions(q.options, 'word-option-button'); }
@@ -849,12 +859,7 @@ async function playCurrentAudio() {
 }
 
 // =======================================================
-// PARTE 9: SÍNTESE DE VOZ E ÁUDIOS (Simplificado)
-// =======================================================
-// O sistema de áudio agora é gerenciado pelas funções playAudio e playSound no topo do arquivo.
-
-// =======================================================
-// PARTE 10: FUNÇÕES GERAIS DE UI E LOGS
+// PARTE 9 E 10: FUNÇÕES GERAIS DE UI E LOGS
 // =======================================================
 function showScreen(screenId) { 
     if(screenId !== 'resultScreen') stopConfetti();
@@ -867,27 +872,7 @@ function closeModal(modalId) { const modalEl = document.getElementById(modalId);
 function showCreateStudentForm() { const formEl = document.getElementById('createStudentForm'); if(formEl) formEl.style.display = 'block'; }
 function hideCreateStudentForm() { const formEl = document.getElementById('createStudentForm'); if(formEl) { formEl.style.display = 'none'; document.getElementById('createStudentFormElement').reset(); } }
 function showAudioSettingsModal() { 
-    const letterSelect = document.getElementById('letterSelect');
-    if (letterSelect) {
-        let optionsHtml = '';
-        const ALL_AUDIO_KEYS = {
-            "Feedbacks": { feedback_correct: "Feedback de acerto", feedback_incorrect: "Feedback de erro", feedback_phase_win: "Feedback de fase concluída" },
-            "Instruções": Object.fromEntries(Object.keys(PHASE_INSTRUCTIONS).map(type => [`instruction_${type}`, `Instrução para ${PHASE_DESCRIPTIONS[Object.keys(PHASE_DESCRIPTIONS).find(k => generateQuestions(k)[0]?.type === type)]}`])),
-            "Sons de Letras": Object.fromEntries(ALPHABET.map(l => [l, `Letra ${l}`])),
-            "Sons de Vogais": Object.fromEntries(VOWELS.map(v => [`vowel_${v}`, `Vogal ${v}`]))
-        };
-        for (const groupName in ALL_AUDIO_KEYS) {
-            optionsHtml += `<optgroup label="${groupName}">`;
-            for (const key in ALL_AUDIO_KEYS[groupName]) {
-                optionsHtml += `<option value="${key}">${ALL_AUDIO_KEYS[groupName][key]}</option>`;
-            }
-            optionsHtml += '</optgroup>';
-        }
-        letterSelect.innerHTML = optionsHtml;
-    }
-    showModal('audioSettingsModal');
-    const firstTab = document.querySelector('#audioSettingsModal .tab-btn');
-    if(firstTab) showTab(firstTab);
+    alert("A personalização de áudio está temporariamente desativada para garantir a estabilidade do jogo.");
 }
 function showTab(clickedButton) { const parent = clickedButton.closest('.modal-content'); if(!parent) return; const tabId = clickedButton.getAttribute('data-tab'); parent.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active')); clickedButton.classList.add('active'); parent.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active')); const tabContent = parent.querySelector('#' + tabId); if(tabContent) tabContent.classList.add('active'); }
 function showFeedback(message, type = 'info') { const el = document.getElementById('globalFeedback'); if (!el) return; const textEl = el.querySelector('.feedback-text'); if (textEl) textEl.textContent = message; el.className = `feedback-toast show ${type}`; setTimeout(() => { el.className = el.className.replace('show', ''); }, 3000); }
