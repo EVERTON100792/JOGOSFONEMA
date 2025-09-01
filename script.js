@@ -7,19 +7,19 @@ const { createClient } = supabase;
 const supabaseUrl = 'https://nxpwxbxhucliudnutyqd.supabase.co';
 const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im54cHd4YnhodWNsaXVkbnV0eXFkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU0ODU4NjcsImV4cCI6MjA3MTA2MTg2N30.m1KbiyPe_K9CK2nBhsxo97A5rai2GtnyVPnpff5isNg';
 const supabaseClient = createClient(supabaseUrl, supabaseKey);
-const GEMINI_API_KEY = "SUA_CHAVE_API_DO_GOOGLE_GEMINI_AQUI";
+const GEMINI_API_KEY = "SUA_CHAVE_API_DO_GOOGLE_GEMINI_AQUI"; // <-- COLOQUE SUA CHAVE AQUI!
+const SUPER_ADMIN_TEACHER_ID = 'd88211f7-9f98-47b8-8e57-54bf767f42d6';
 
 let currentUser = null, currentClassId = null, studentProgressData = [], currentChart = null, currentEvolutionChart = null;
 const ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split(''), VOWELS = 'AEIOU'.split('');
 let gameState = {}, mediaRecorder, audioChunks = [], timerInterval;
 let confettiAnimationId;
+let currentAudio = null; // Para controlar o áudio em reprodução
 
 // =======================================================
-// PARTE 2: NOVO SISTEMA DE ÁUDIO HÍBRIDO
+// LÓGICA DE ÁUDIO E SONS (OTIMIZADA)
 // =======================================================
 
-// --- Áudios de Efeitos e Sons Curtos (Alta Qualidade) ---
-let currentAudio = null;
 const soundEffects = {
     click: new Audio('https://github.com/prof-vane-digital/audios-jogo-letras/raw/main/sounds/click.mp3'),
     correct: new Audio('https://github.com/prof-vane-digital/audios-jogo-letras/raw/main/sounds/correct.mp3'),
@@ -53,22 +53,16 @@ function playSound(soundName) {
     }
 }
 
-// --- Voz do Navegador (TTS) para Instruções Longas ---
 let speechReady = false;
 let selectedVoice = null;
 
 function initializeSpeech() {
-    if (typeof speechSynthesis === 'undefined') {
-        console.warn("API de Fala não suportada neste navegador.");
-        return;
-    }
+    if (typeof speechSynthesis === 'undefined') return;
     const setVoice = () => {
         const voices = speechSynthesis.getVoices();
         if (voices.length > 0) {
-            selectedVoice = voices.find(v => v.lang === 'pt-BR');
-            if (!selectedVoice) selectedVoice = voices.find(v => v.lang.startsWith('pt'));
+            selectedVoice = voices.find(v => v.lang === 'pt-BR') || voices.find(v => v.lang.startsWith('pt'));
             speechReady = true;
-            console.log("Voz TTS pronta:", selectedVoice?.name);
         }
     };
     setVoice();
@@ -77,17 +71,14 @@ function initializeSpeech() {
 
 function speak(text) {
     if (!speechReady || !text) return;
-    speechSynthesis.cancel(); // Cancela qualquer fala anterior
+    speechSynthesis.cancel();
     const utterance = new SpeechSynthesisUtterance(text);
     utterance.lang = 'pt-BR';
-    if (selectedVoice) {
-        utterance.voice = selectedVoice;
-    }
-    utterance.rate = 0.9; // Um pouco mais devagar para clareza
+    if (selectedVoice) utterance.voice = selectedVoice;
+    utterance.rate = 0.95;
     speechSynthesis.speak(utterance);
 }
 
-// Função de desbloqueio otimizada
 let audioUnlocked = false;
 function unlockAudio() {
     if (audioUnlocked) return;
@@ -104,7 +95,7 @@ function unlockAudio() {
 }
 
 // =======================================================
-// PARTE 3: CONTEÚDO DO JOGO
+// PARTE 2: CONTEÚDO DO JOGO
 // =======================================================
 
 const PHASE_DESCRIPTIONS = {
@@ -180,7 +171,7 @@ const PHASE_16_COMPLEX_SYLLABLES = [
     { word: 'LIVRO', image: '📖', syllable: 'VRO', blanked: 'LI__' }, { word: 'BRUXA', image: '🧙‍♀️', syllable: 'BRU', blanked: '__XA' }, { word: 'PALHAÇO', image: '🤡', syllable: 'LHA', blanked: 'PA__ÇO' }, { word: 'NINHO', image: '둥지', syllable: 'NHO', blanked: 'NI__' }, { word: 'DRAGÃO', image: '🐲', syllable: 'DRA', blanked: '__GÃO' }, { word: 'FLOR', image: '🌸', syllable: 'FLOR', blanked: '__' }, { word: 'PRATO', image: '🍽️', syllable: 'PRA', blanked: '__TO' }, { word: 'CHAVE', image: '🔑', syllable: 'CHA', blanked: '__VE' }, { word: 'GLOBO', image: '🌍', syllable: 'GLO', blanked: '__BO' }, { word: 'TREM', image: '🚂', syllable: 'TREM', blanked: '__' }
 ];
 const PHASE_17_RHYME_DISCRIMINATION = [
-    { target: 'GATO', image: '🐈', correct: 'PATO', incorrect: 'BOLA' }, { target: 'JANELA', image: '🖼️', correct: 'PANELA', incorrect: 'FOGO' }, { target: 'MÃO', image: '✋', correct: 'PÃO', incorrect: 'DEDO' }, { target: 'ANEL', image: '💍', correct: 'PASTEL', incorrect: 'LUVA' }, { target: 'CADEIRA', image: '🪑', correct: 'BANDEIRA', incorrect: 'MESA' }, { target: 'CEBOLA', image: '🧅', correct: 'ARGOLA', incorrect: 'ALHO' }, { target: 'GALO', image: '🐓', correct: 'BOLO', incorrect: 'CAMA' }, { target: 'COLA', image: '💧', correct: 'BOLA', incorrect: 'LÁPIS' }, { target: 'FOGO', image: '🔥', correct: 'JOGO', incorrect: 'ÁGUA' }, { target: 'LATA', image: '🥫', correct: 'BARATA', incorrect: 'COPO' }
+    { target: 'GATO', image: '🐈', correct: 'PATO', incorrect: 'BOLA' }, { target: 'JANELA', image: '🖼️', correct: 'PANELA', incorrect: 'FOGO' }, { target: 'MÃO', image: '✋', correct: 'PÃO', incorrect: 'DEDO' }, { target: 'ANEL', image: '💍', correct: 'PASTEL', incorrect: 'LUVA' }, { target: 'CADEIRA', image: '🪑', correct: 'BANDEIRA', incorrect: 'MESA' }, { target: 'CEBOLA', image: '🧅', correct: 'ARGOLA', incorrect: 'ALHO' }, { target: 'GALO', image: '🐓', correct: 'BOLO', incorrect: 'CAMA' }, { target: 'COLA', image: '💧', correct: 'BOLA', incorrect: 'LÁPIS' }, { word: 'FOGO', image: '🔥', correct: 'JOGO', incorrect: 'ÁGUA' }, { word: 'LATA', image: '🥫', correct: 'BARATA', incorrect: 'COPO' }
 ];
 const PHASE_18_INTRUDER_LETTER = [
     { word: 'GATO', image: '🐈', intruder: 'R', display: 'GARTO' }, { word: 'BOLA', image: '⚽', intruder: 'C', display: 'BOCLA' }, { word: 'CASA', image: '🏠', intruder: 'I', display: 'CAISA' }, { word: 'PATO', image: '🦆', intruder: 'N', display: 'PANTO' }, { word: 'LUA', image: '🌙', intruder: 'S', display: 'LUSA' }, { word: 'SOL', image: '☀️', intruder: 'V', display: 'SOVL' }, { word: 'FACA', image: '🔪', intruder: 'M', display: 'FAMCA' }, { word: 'DADO', image: '🎲', intruder: 'L', display: 'DALDO' }, { word: 'LIVRO', image: '📖', intruder: 'E', display: 'LIVEIRO' }, { word: 'PEIXE', image: '🐠', intruder: 'U', display: 'PEIUXE' }
@@ -395,7 +386,19 @@ function connectTeacherToRealtime() {
 }
 
 async function loadTeacherData() { if (!currentUser) return; document.getElementById('teacherName').textContent = currentUser.user_metadata.full_name || 'Professor(a)'; const audioSettingsButton = document.getElementById('showAudioSettingsModalBtn'); if (currentUser.id === SUPER_ADMIN_TEACHER_ID) { audioSettingsButton.style.display = 'block'; } else { audioSettingsButton.style.display = 'none'; } await loadTeacherClasses(); }
-async function loadTeacherClasses() { const { data, error } = await supabaseClient.from('classes').select('*, students(count)').eq('teacher_id', currentUser.id); if (error) { console.error('Erro ao carregar turmas:', error); return; } renderClasses(data); }
+async function loadTeacherClasses() {
+    const { data, error } = await supabaseClient
+        .from('classes')
+        .select('*, students(count)')
+        .eq('teacher_id', currentUser.id);
+        
+    if (error) {
+        console.error('Erro ao carregar turmas:', error);
+        document.getElementById('classesList').innerHTML = `<p style="color: red;">Ocorreu um erro ao buscar suas turmas. Tente recarregar a página.</p>`;
+        return;
+    }
+    renderClasses(data);
+}
 function renderClasses(classes) { const container = document.getElementById('classesList'); if (!classes || classes.length === 0) { container.innerHTML = '<p>Nenhuma turma criada ainda.</p>'; return; } container.innerHTML = classes.map(cls => { const studentCount = cls.students[0]?.count || 0; return ` <div class="class-card"> <h3>${cls.name}</h3> <span class="student-count">👥 ${studentCount} aluno(s)</span> <div class="class-card-actions"> <button class="btn primary" onclick="manageClass('${cls.id}', '${cls.name.replace(/'/g, "\\'")}')">Gerenciar</button> <button class="btn danger" onclick="handleDeleteClass('${cls.id}', '${cls.name.replace(/'/g, "\\'")}')" title="Excluir Turma"> <i class="fas fa-trash"></i> </button> </div> </div>`; }).join(''); }
 async function handleCreateClass(e) { e.preventDefault(); const name = document.getElementById('className').value; if (!name) return; const { error } = await supabaseClient.from('classes').insert([{ name, teacher_id: currentUser.id }]); if (error) { showFeedback(`Erro: ${error.message}`, 'error'); return; } closeModal('createClassModal'); await loadTeacherClasses(); showFeedback('Turma criada com sucesso!', 'success'); document.getElementById('createClassForm').reset(); }
 async function handleDeleteClass(classId, className) { if (!confirm(`ATENÇÃO! Deseja excluir a turma "${className}"?\nTODOS os alunos e progressos serão apagados.`)) return; const { error } = await supabaseClient.from('classes').delete().eq('id', classId); if (error) { showFeedback(`Erro: ${error.message}`, 'error'); } else { showFeedback(`Turma "${className}" excluída.`, 'success'); await loadTeacherClasses(); } }
@@ -577,14 +580,12 @@ window.addEventListener('beforeunload', () => { if (studentChannel) { studentCha
 async function loadGameState() { const { data: progressData, error } = await supabaseClient.from('progress').select('game_state, current_phase').eq('student_id', currentUser.id).single(); if (error && error.code !== 'PGRST116') { console.error("Erro ao carregar progresso:", error); } const assignedPhases = currentUser.assigned_phases && currentUser.assigned_phases.length > 0 ? currentUser.assigned_phases : [1]; const firstAssignedPhase = assignedPhases[0]; if (progressData?.game_state?.questions) { gameState = progressData.game_state; if (!assignedPhases.includes(gameState.currentPhase)) { gameState = { currentPhase: firstAssignedPhase, score: 0, attempts: 3, questions: generateQuestions(firstAssignedPhase), currentQuestionIndex: 0, teacherId: currentUser.teacher_id, tutorialsShown: [], phaseCompleted: false }; await saveGameState(); } if (!gameState.tutorialsShown) gameState.tutorialsShown = []; } else { gameState = { currentPhase: firstAssignedPhase, score: 0, attempts: 3, questions: generateQuestions(firstAssignedPhase), currentQuestionIndex: 0, teacherId: currentUser.teacher_id, tutorialsShown: [], phaseCompleted: false }; await saveGameState(); } }
 async function saveGameState() { if (!currentUser || currentUser.type !== 'student' || gameState.isCustomActivity) return; await supabaseClient.from('progress').upsert({ student_id: currentUser.id, current_phase: gameState.currentPhase, game_state: gameState, last_played: new Date().toISOString() }, { onConflict: 'student_id' }); }
 
-// GERAÇÃO DE QUESTÕES COM A NOVA ORDEM
 function generateQuestions(phase) {
     let questions = [];
     const questionCount = 10;
     const shuffleAndTake = (arr, num) => [...arr].sort(() => 0.5 - Math.random()).slice(0, num);
 
     switch (phase) {
-        // Bloco 1: Alfabeto e Sons
         case 1:
             questions = shuffleAndTake(PHASE_1_LETTER_SOUNDS, questionCount).map(item => ({
                 type: 'letter_sound',
@@ -603,8 +604,6 @@ function generateQuestions(phase) {
         case 4:
             questions = shuffleAndTake(PHASE_5_SOUND_PAIRS, questionCount).map(item => ({ type: 'sound_detective', correctAnswer: item.correct, ...item, options: [item.correct, item.incorrect].sort(() => 0.5 - Math.random()) }));
             break;
-
-        // Bloco 2: Palavras e Frases
         case 5:
             questions = shuffleAndTake(PHASE_4_WORDS_F, questionCount).map(item => ({ type: 'f_word_search', correctAnswer: item.word, ...item, options: [...item.options].sort(() => 0.5 - Math.random()) }));
             break;
@@ -623,8 +622,6 @@ function generateQuestions(phase) {
                 return { type: 'sentence_unscramble_mc', correctAnswer: item.answer, ...item, options: Array.from(options).sort(() => 0.5 - Math.random()) };
             });
             break;
-
-        // Bloco 3: Consciência Silábica
         case 8:
             questions = shuffleAndTake(PHASE_3_SYLLABLE_F, questionCount).map(item => ({ type: 'syllable_formation_mc', correctAnswer: item.result, ...item, options: _generateOptions(item.result, ['FA', 'FE', 'FI', 'FO', 'FU', 'VA', 'PA', 'BO'], 4) }));
             break;
@@ -655,8 +652,6 @@ function generateQuestions(phase) {
         case 16:
             questions = shuffleAndTake(PHASE_17_RHYME_DISCRIMINATION, questionCount).map(item => ({ type: 'rhyme_discrimination', correctAnswer: item.correct, ...item, options: [item.correct, item.incorrect].sort(() => 0.5 - Math.random()) }));
             break;
-            
-        // Bloco 4: Consciência Fonêmica e Fluência
         case 17:
             questions = shuffleAndTake(PHASE_15_PHONEME_COUNT, questionCount).map(item => ({ type: 'count_phonemes', correctAnswer: item.sounds.toString(), ...item, options: _generateOptions(item.sounds.toString(), ['2','3','4','5'], 4) }));
             break;
@@ -699,7 +694,7 @@ async function startQuestion() {
     const q = gameState.questions[gameState.currentQuestionIndex];
     
     const instruction = PHASE_INSTRUCTIONS[q.type] || "Escolha a resposta certa!";
-    speak(instruction); // Usa a voz do navegador para instruções
+    speak(instruction);
     document.getElementById('helperText').textContent = instruction;
 
     const renderMap = {
@@ -723,7 +718,7 @@ async function startQuestion() {
 // FUNÇÕES DE RENDERIZAÇÃO DAS FASES
 // =======================================================
 
-function renderPhase1UI(q) { document.getElementById('audioQuestionArea').style.display = 'block'; document.getElementById('lettersGrid').style.display = 'grid'; document.getElementById('questionText').textContent = `Qual letra faz o som que você ouviu?`; document.getElementById('repeatAudio').style.display = 'inline-block'; renderOptions(q.options, 'letter-button'); setTimeout(playCurrentAudio, 1500); }
+function renderPhase1UI(q) { document.getElementById('audioQuestionArea').style.display = 'block'; document.getElementById('lettersGrid').style.display = 'grid'; document.getElementById('questionText').textContent = ``; document.getElementById('repeatAudio').style.display = 'inline-block'; renderOptions(q.options, 'letter-button'); setTimeout(playCurrentAudio, 1500); }
 function renderPhase2UI(q) { const memoryGrid = document.getElementById('memoryGameGrid'); if (!memoryGrid) return; memoryGrid.innerHTML = ''; memoryGrid.style.display = 'grid'; document.getElementById('attempts').parentElement.style.visibility = 'hidden'; const shuffleAndTake = (arr, num) => [...arr].sort(() => 0.5 - Math.random()).slice(0, num); const letters = shuffleAndTake(ALPHABET, 8); const cards = [...letters, ...letters.map(l => l.toLowerCase())].sort(() => 0.5 - Math.random()); memoryGrid.innerHTML = cards.map(letter => ` <div class="memory-card" data-letter="${letter.toLowerCase()}"> <div class="card-inner"> <div class="card-face card-front"></div> <div class="card-face card-back">${letter}</div> </div> </div> `).join(''); gameState.score = 0; gameState.memoryGame = { flippedCards: [], matchedPairs: 0, totalPairs: letters.length, canFlip: true, mistakesMade: 0, startTime: Date.now() }; updateUI(); memoryGrid.querySelectorAll('.memory-card').forEach(card => card.addEventListener('click', () => handleCardFlip(card))); }
 function renderPhase3NewUI(q) { const interactiveArea = document.getElementById('interactiveArea'); interactiveArea.style.display = 'flex'; interactiveArea.innerHTML = `<div class="syllable-base">${q.base}</div> <div class="syllable-plus">+</div> <div class="syllable-base">${q.vowel}</div>`; renderOptions(q.options, 'letter-button'); }
 function renderPhase4UI(q) { document.getElementById('imageQuestionArea').style.display = 'block'; document.getElementById('lettersGrid').style.display = 'grid'; document.getElementById('imageEmoji').textContent = q.image; renderOptions(q.options, 'word-option-button'); }
@@ -747,7 +742,6 @@ function renderPhase20UI(q) { document.getElementById('attempts').parentElement.
 function renderOptions(options, buttonClass) { const lettersGrid = document.getElementById('lettersGrid'); lettersGrid.style.display = 'grid'; lettersGrid.innerHTML = options.map(option => `<button class="${buttonClass}">${option}</button>`).join(''); lettersGrid.querySelectorAll('button').forEach(btn => btn.addEventListener('click', (e) => selectAnswer(e.target.textContent))); }
 function handleCardFlip(card) { const { flippedCards, canFlip } = gameState.memoryGame; if (!canFlip || card.classList.contains('flipped')) return; card.classList.add('flipped'); flippedCards.push(card); if (flippedCards.length === 2) { gameState.memoryGame.canFlip = false; const [card1, card2] = flippedCards; if (card1.dataset.letter === card2.dataset.letter) { setTimeout(() => { card1.classList.add('matched'); card2.classList.add('matched'); gameState.memoryGame.matchedPairs++; gameState.score++; updateUI(); playSound('correct'); gameState.memoryGame.flippedCards = []; gameState.memoryGame.canFlip = true; if (gameState.memoryGame.matchedPairs === gameState.memoryGame.totalPairs) { playAudio('feedback_correct'); showFeedback('Excelente! Todos os pares encontrados!', 'success'); playSound('phaseWin'); const endTime = Date.now(); const durationInSeconds = Math.round((endTime - gameState.memoryGame.startTime) / 1000); gameState.memoryGame.completionTime = durationInSeconds; document.getElementById('nextQuestion').style.display = 'block'; } }, 800); } else { gameState.memoryGame.mistakesMade++; playAudio('feedback_incorrect'); playSound('incorrect'); updateUI(); setTimeout(() => { card1.classList.remove('flipped'); card2.classList.remove('flipped'); gameState.memoryGame.flippedCards = []; gameState.memoryGame.canFlip = true; }, 1200); } } }
 
-// FUNÇÃO DE RESPOSTA CORRIGIDA
 async function selectAnswer(rawSelectedAnswer) {
     const selectedAnswer = String(rawSelectedAnswer).trim(); 
     
@@ -859,7 +853,12 @@ async function playCurrentAudio() {
 }
 
 // =======================================================
-// PARTE 9 E 10: FUNÇÕES GERAIS DE UI E LOGS
+// PARTE 9: CÓDIGO DE ÁUDIO LEGADO (REMOVIDO)
+// =======================================================
+// O sistema de áudio agora é gerenciado pelas funções no topo do arquivo.
+
+// =======================================================
+// PARTE 10: FUNÇÕES GERAIS DE UI E LOGS
 // =======================================================
 function showScreen(screenId) { 
     if(screenId !== 'resultScreen') stopConfetti();
