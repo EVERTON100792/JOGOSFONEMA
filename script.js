@@ -1,5 +1,5 @@
 // =======================================================
-// JOGO DAS LETRAS - VERSÃO FINAL CORRIGIDA E REORDENADA
+// JOGO DAS LETRAS - VERSÃO FINAL COM INSTRUÇÕES E CORREÇÕES
 // =======================================================
 
 // PARTE 1: CONFIGURAÇÃO INICIAL E SUPABASE
@@ -57,32 +57,35 @@ function unlockAudio() {
 // PARTE 2: CONTEÚDO DO JOGO (FASES REORDENADAS)
 // =======================================================
 
-// NOVA ORDEM DAS FASES SEGUINDO O CURRÍCULO
 const PHASE_DESCRIPTIONS = {
-    // Bloco 1: Alfabeto e Sons
-    1: "O Som das Letras",
-    2: "Identificação de Vogais",
-    3: "Jogo da Memória (Letras)",
-    4: "Pares Surdos/Sonoros",
-    // Bloco 2: Palavras e Frases
-    5: "Caça-Palavras",
-    6: "Contando Palavras na Frase",
-    7: "Detetive de Frases",
-    // Bloco 3: Consciência Silábica
-    8: "Fábrica de Sílabas",
-    9: "Contando Sílabas",
-    10: "Caça-Sílaba Inicial",
-    11: "Encaixe a Sílaba",
-    12: "Formando Novas Palavras",
-    13: "Invertendo Sílabas",
-    14: "Sílabas Complexas",
-    15: "Fábrica de Rimas",
-    16: "Rima ou Não Rima?",
-    // Bloco 4: Consciência Fonêmica e Fluência
-    17: "Contando Sons (Fonemas)",
-    18: "Qual é a Letra Intrometida?",
-    19: "Detetive de Palavras (Avançado)",
-    20: "Leitura Rápida (Desafio)"
+    1: "O Som das Letras", 2: "Identificação de Vogais", 3: "Jogo da Memória (Letras)", 4: "Pares Surdos/Sonoros",
+    5: "Caça-Palavras", 6: "Contando Palavras na Frase", 7: "Detetive de Frases",
+    8: "Fábrica de Sílabas", 9: "Contando Sílabas", 10: "Caça-Sílaba Inicial", 11: "Encaixe a Sílaba", 12: "Formando Novas Palavras", 13: "Invertendo Sílabas", 14: "Sílabas Complexas", 15: "Fábrica de Rimas", 16: "Rima ou Não Rima?",
+    17: "Contando Sons (Fonemas)", 18: "Qual é a Letra Intrometida?", 19: "Detetive de Palavras (Avançado)", 20: "Leitura Rápida (Desafio)"
+};
+
+// NOVAS INSTRUÇÕES COMPLETAS PARA CADA TIPO DE FASE
+const PHASE_INSTRUCTIONS = {
+    letter_sound: "Ouça o som com atenção e clique na letra que faz este som.",
+    vowel_sound: "Vamos ouvir o som de uma vogal. Clique na vogal correta.",
+    memory_game: "Vamos brincar de jogo da memória! Encontre os pares de letras maiúsculas e minúsculas.",
+    sound_detective: "Veja a figura e escolha a palavra que está escrita corretamente.",
+    f_word_search: "Qual dessas palavras é o nome da figura?",
+    count_words: "Conte quantas palavras existem na frase e clique no número certo.",
+    sentence_unscramble_mc: "Veja a figura e escolha a frase que está na ordem correta.",
+    syllable_formation_mc: "Se juntarmos as letras, qual sílaba formamos? Escolha a opção correta.",
+    count_syllables: "Vamos contar as sílabas! Quantos pedaços tem esta palavra?",
+    initial_syllable: "Qual é a sílaba que começa esta palavra?",
+    complete_word_mc: "Veja a figura e a palavra. Qual sílaba está faltando?",
+    word_transform: "Se a gente tirar um pedaço da palavra, qual nova palavra aparece? Clique na resposta certa.",
+    invert_syllables: "Se trocarmos as sílabas de lugar, qual palavra formamos?",
+    complex_syllable: "Esta palavra tem uma sílaba mais difícil. Escolha a opção que completa a palavra.",
+    find_rhyme: "Qual palavra rima com a palavra da figura?",
+    rhyme_discrimination: "Veja a palavra em cima. Qual das opções abaixo rima com ela?",
+    count_phonemes: "Vamos ouvir os sons! Conte quantos sons, e não letras, esta palavra tem.",
+    intruder_letter: "Tem uma letra intrusa nesta palavra. Clique nela para expulsá-la!",
+    word_detective: "Leia a frase. Qual das palavras completa o espaço em branco?",
+    speed_reading: "Leitura Rápida! Leia a palavra da figura o mais rápido que puder e clique na opção correta."
 };
 
 // DADOS DAS FASES
@@ -441,7 +444,6 @@ function renderStudentProgress(sortBy = 'last_played') {
         };
         let phaseCheckboxesHTML = '';
         for (const moduleName in phaseModules) {
-            // AQUI ESTÁ A ÚNICA MUDANÇA NO JAVASCRIPT: h4 para h3
             phaseCheckboxesHTML += `<h3 class="phase-module-title">${moduleName}</h3>`;
             phaseCheckboxesHTML += phaseModules[moduleName].map(phaseNum => {
                 const phaseName = PHASE_DESCRIPTIONS[phaseNum] || `Fase ${phaseNum}`;
@@ -461,7 +463,6 @@ function renderStudentProgress(sortBy = 'last_played') {
                     <i class="fas fa-chevron-down"></i>
                 </button>
                 <div class="accordion-content">
-                    <h5><i class="fas fa-tasks"></i> Designar Fases</h5>
                     <div class="phase-checkbox-grid">${phaseCheckboxesHTML}</div>
                     <div class="accordion-actions"><button class="btn primary" onclick="assignPhases('${student.id}')"><i class="fas fa-save"></i> Salvar Fases</button></div>
                 </div>
@@ -653,32 +654,20 @@ async function startQuestion() {
     
     const q = gameState.questions[gameState.currentQuestionIndex];
     
+    // Tocar a instrução completa da fase
+    const instruction = PHASE_INSTRUCTIONS[q.type] || "Escolha a resposta certa!";
+    playTeacherAudio(`instruction_${q.type}`, instruction);
+
     const renderMap = {
-        'letter_sound': renderPhase1UI, 
-        'memory_game': renderPhase2UI, 
-        'syllable_formation_mc': renderPhase3NewUI,
-        'f_word_search': renderPhase4UI, 
-        'sound_detective': renderPhase5UI, 
-        'count_words': renderPhase6UI,
-        'sentence_unscramble_mc': renderPhase7NewUI,
-        'vowel_sound': renderPhase8UI, 
-        'count_syllables': renderPhase9UI,
-        'initial_syllable': renderPhase10UI, 
-        'complete_word_mc': renderPhase11NewUI,
-        'word_transform': renderPhase12UI,
-        'invert_syllables': renderPhase13UI, 
-        'find_rhyme': renderPhase14UI, 
-        'count_phonemes': renderPhase15UI,
-        'complex_syllable': renderPhase16UI, 
-        'rhyme_discrimination': renderPhase17UI, 
-        'intruder_letter': renderPhase18UI,
-        'word_detective': renderPhase19UI, 
-        'speed_reading': renderPhase20UI
+        'letter_sound': renderPhase1UI, 'vowel_sound': renderPhase8UI, 'memory_game': renderPhase2UI, 'sound_detective': renderPhase5UI,
+        'f_word_search': renderPhase4UI, 'count_words': renderPhase6UI, 'sentence_unscramble_mc': renderPhase7NewUI,
+        'syllable_formation_mc': renderPhase3NewUI, 'count_syllables': renderPhase9UI, 'initial_syllable': renderPhase10UI, 'complete_word_mc': renderPhase11NewUI,
+        'word_transform': renderPhase12UI, 'invert_syllables': renderPhase13UI, 'complex_syllable': renderPhase16UI, 'find_rhyme': renderPhase14UI, 'rhyme_discrimination': renderPhase17UI,
+        'count_phonemes': renderPhase15UI, 'intruder_letter': renderPhase18UI, 'word_detective': renderPhase19UI, 'speed_reading': renderPhase20UI
     };
 
     if (q && renderMap[q.type]) {
         renderMap[q.type](q);
-        playTeacherAudio(`instruction_phase_${gameState.currentPhase}`, "Vamos lá!");
     } else {
         console.error("Tipo de questão desconhecido ou questão não encontrada:", q, `Fase: ${gameState.currentPhase}`);
     }
@@ -697,48 +686,48 @@ function renderPhase3NewUI(q) {
     const interactiveArea = document.getElementById('interactiveArea');
     interactiveArea.style.display = 'flex';
     interactiveArea.innerHTML = `<div class="syllable-base">${q.base}</div> <div class="syllable-plus">+</div> <div class="syllable-base">${q.vowel}</div>`;
-    document.getElementById('questionText').textContent = "Juntando as letras acima, qual sílaba formamos?";
     renderOptions(q.options, 'letter-button');
 }
 
-function renderPhase4UI(q) { document.getElementById('imageQuestionArea').style.display = 'block'; document.getElementById('lettersGrid').style.display = 'grid'; document.getElementById('imageEmoji').textContent = q.image; document.getElementById('questionText').textContent = 'Qual é o nome desta figura?'; renderOptions(q.options, 'word-option-button'); }
-function renderPhase5UI(q) { document.getElementById('imageQuestionArea').style.display = 'block'; document.getElementById('lettersGrid').style.display = 'grid'; document.getElementById('imageEmoji').textContent = q.image; document.getElementById('questionText').textContent = 'Qual é o nome correto desta figura?'; renderOptions(q.options, 'word-option-button'); }
-function renderPhase6UI(q) { document.getElementById('imageQuestionArea').style.display = 'block'; document.getElementById('lettersGrid').style.display = 'grid'; document.getElementById('imageEmoji').textContent = q.image; document.getElementById('wordDisplay').textContent = q.sentence; document.getElementById('questionText').textContent = 'Quantas palavras tem nesta frase?'; renderOptions(q.options, 'letter-button'); }
+function renderPhase4UI(q) { document.getElementById('imageQuestionArea').style.display = 'block'; document.getElementById('lettersGrid').style.display = 'grid'; document.getElementById('imageEmoji').textContent = q.image; renderOptions(q.options, 'word-option-button'); }
+function renderPhase5UI(q) { document.getElementById('imageQuestionArea').style.display = 'block'; document.getElementById('lettersGrid').style.display = 'grid'; document.getElementById('imageEmoji').textContent = q.image; renderOptions(q.options, 'word-option-button'); }
+function renderPhase6UI(q) { document.getElementById('imageQuestionArea').style.display = 'block'; document.getElementById('lettersGrid').style.display = 'grid'; document.getElementById('imageEmoji').textContent = q.image; document.getElementById('wordDisplay').textContent = q.sentence; renderOptions(q.options, 'letter-button'); }
 
 function renderPhase7NewUI(q) {
     document.getElementById('imageQuestionArea').style.display = 'block';
     document.getElementById('imageEmoji').textContent = q.image;
-    document.getElementById('questionText').textContent = "Observe a figura. Qual é a frase correta?";
     renderOptions(q.options, 'sentence-option-button');
 }
 
-function renderPhase8UI(q) { document.getElementById('audioQuestionArea').style.display = 'block'; document.getElementById('lettersGrid').style.display = 'grid'; document.getElementById('questionText').textContent = 'Qual VOGAL faz este som?'; document.getElementById('repeatAudio').style.display = 'inline-block'; renderOptions(q.options, 'letter-button'); setTimeout(playCurrentAudio, 500); }
-function renderPhase9UI(q) { document.getElementById('imageQuestionArea').style.display = 'block'; document.getElementById('lettersGrid').style.display = 'grid'; document.getElementById('imageEmoji').textContent = q.image; document.getElementById('wordDisplay').textContent = q.word; document.getElementById('questionText').textContent = 'Quantas sílabas (pedaços) tem esta palavra?'; renderOptions(q.options, 'letter-button'); }
-function renderPhase10UI(q) { document.getElementById('imageQuestionArea').style.display = 'block'; document.getElementById('lettersGrid').style.display = 'grid'; document.getElementById('imageEmoji').textContent = q.image; document.getElementById('wordDisplay').textContent = `__${q.word.substring(q.correctAnswer.length)}`; document.getElementById('questionText').textContent = 'Qual sílaba começa esta palavra?'; renderOptions(q.options, 'word-option-button'); }
+function renderPhase8UI(q) { document.getElementById('audioQuestionArea').style.display = 'block'; document.getElementById('lettersGrid').style.display = 'grid'; document.getElementById('repeatAudio').style.display = 'inline-block'; renderOptions(q.options, 'letter-button'); setTimeout(playCurrentAudio, 500); }
+function renderPhase9UI(q) { document.getElementById('imageQuestionArea').style.display = 'block'; document.getElementById('lettersGrid').style.display = 'grid'; document.getElementById('imageEmoji').textContent = q.image; document.getElementById('wordDisplay').textContent = q.word; renderOptions(q.options, 'letter-button'); }
+function renderPhase10UI(q) { document.getElementById('imageQuestionArea').style.display = 'block'; document.getElementById('lettersGrid').style.display = 'grid'; document.getElementById('imageEmoji').textContent = q.image; document.getElementById('wordDisplay').textContent = `__${q.word.substring(q.correctAnswer.length)}`; renderOptions(q.options, 'word-option-button'); }
 
 function renderPhase11NewUI(q) {
     document.getElementById('imageQuestionArea').style.display = 'block';
     document.getElementById('imageEmoji').textContent = q.image;
     document.getElementById('wordDisplay').textContent = q.blanked;
-    document.getElementById('questionText').textContent = "Qual sílaba completa a palavra?";
     renderOptions(q.options, 'word-option-button');
 }
 
 function renderPhase12UI(q) { document.getElementById('imageQuestionArea').style.display = 'block'; document.getElementById('lettersGrid').style.display = 'grid'; document.getElementById('imageEmoji').textContent = q.image; document.getElementById('wordDisplay').textContent = q.initialWord; document.getElementById('questionText').textContent = `Se tirarmos "${q.toRemove}", qual palavra formamos?`; renderOptions(q.options, 'word-option-button'); }
 function renderPhase13UI(q) { document.getElementById('imageQuestionArea').style.display = 'block'; document.getElementById('lettersGrid').style.display = 'grid'; document.getElementById('imageEmoji').textContent = q.imageInverted; document.getElementById('wordDisplay').textContent = q.word; document.getElementById('questionText').textContent = `Se invertermos as sílabas de ${q.word}, qual palavra formamos?`; renderOptions(q.options, 'word-option-button'); }
-function renderPhase14UI(q) { document.getElementById('imageQuestionArea').style.display = 'block'; document.getElementById('lettersGrid').style.display = 'grid'; document.getElementById('imageEmoji').textContent = q.image; document.getElementById('wordDisplay').textContent = q.word; document.getElementById('questionText').textContent = `Qual palavra rima com ${q.word}?`; renderOptions(q.options, 'word-option-button'); }
-function renderPhase15UI(q) { document.getElementById('imageQuestionArea').style.display = 'block'; document.getElementById('lettersGrid').style.display = 'grid'; document.getElementById('imageEmoji').textContent = q.image; document.getElementById('wordDisplay').textContent = q.word; document.getElementById('questionText').textContent = 'Quantos SONS (não letras) você ouve nesta palavra?'; renderOptions(q.options, 'letter-button'); }
-function renderPhase16UI(q) { document.getElementById('imageQuestionArea').style.display = 'block'; document.getElementById('lettersGrid').style.display = 'grid'; document.getElementById('imageEmoji').textContent = q.image; document.getElementById('wordDisplay').textContent = q.blanked; document.getElementById('questionText').textContent = 'Qual sílaba complexa completa a palavra?'; renderOptions(q.options, 'word-option-button'); }
-function renderPhase17UI(q) { document.getElementById('imageQuestionArea').style.display = 'block'; document.getElementById('lettersGrid').style.display = 'grid'; document.getElementById('imageEmoji').textContent = q.image; document.getElementById('wordDisplay').textContent = q.target; document.getElementById('questionText').textContent = `Qual palavra rima com ${q.target}?`; renderOptions(q.options, 'word-option-button'); }
-function renderPhase18UI(q) { document.getElementById('imageQuestionArea').style.display = 'block'; document.getElementById('wordDisplay').innerHTML = q.display.split('').map(letter => `<span class="clickable-letter">${letter}</span>`).join(''); document.getElementById('questionText').textContent = `Clique na letra intrometida da palavra.`; document.querySelectorAll('.clickable-letter').forEach(span => { span.addEventListener('click', () => selectAnswer(span.textContent)); }); }
-function renderPhase19UI(q) { document.getElementById('imageQuestionArea').style.display = 'block'; document.getElementById('lettersGrid').style.display = 'grid'; document.getElementById('imageEmoji').textContent = q.image; document.getElementById('wordDisplay').textContent = q.sentence; document.getElementById('questionText').textContent = 'Qual palavra completa a frase?'; renderOptions(q.options, 'word-option-button'); }
-function renderPhase20UI(q) { document.getElementById('questionText').textContent = 'Clique na palavra certa o mais rápido que puder!'; document.getElementById('attempts').parentElement.style.visibility = 'hidden'; gameState.speedReading = { words: q.words, currentIndex: 0, correctCount: 0, timer: null, timeLeft: 10 }; setupSpeedReadingScreen(); nextSpeedReadingWord(); }
+function renderPhase14UI(q) { document.getElementById('imageQuestionArea').style.display = 'block'; document.getElementById('lettersGrid').style.display = 'grid'; document.getElementById('imageEmoji').textContent = q.image; document.getElementById('wordDisplay').textContent = q.word; renderOptions(q.options, 'word-option-button'); }
+function renderPhase15UI(q) { document.getElementById('imageQuestionArea').style.display = 'block'; document.getElementById('lettersGrid').style.display = 'grid'; document.getElementById('imageEmoji').textContent = q.image; document.getElementById('wordDisplay').textContent = q.word; renderOptions(q.options, 'letter-button'); }
+function renderPhase16UI(q) { document.getElementById('imageQuestionArea').style.display = 'block'; document.getElementById('lettersGrid').style.display = 'grid'; document.getElementById('imageEmoji').textContent = q.image; document.getElementById('wordDisplay').textContent = q.blanked; renderOptions(q.options, 'word-option-button'); }
+function renderPhase17UI(q) { document.getElementById('imageQuestionArea').style.display = 'block'; document.getElementById('lettersGrid').style.display = 'grid'; document.getElementById('imageEmoji').textContent = q.image; document.getElementById('wordDisplay').textContent = q.target; renderOptions(q.options, 'word-option-button'); }
+function renderPhase18UI(q) { document.getElementById('imageQuestionArea').style.display = 'block'; document.getElementById('wordDisplay').innerHTML = q.display.split('').map(letter => `<span class="clickable-letter">${letter}</span>`).join(''); document.getElementById('questionText').textContent = `Clique na letra intrometida da palavra.`; document.querySelectorAll('.clickable-letter').forEach(span => { span.addEventListener('click', (e) => selectAnswer(e.target.textContent)); }); }
+function renderPhase19UI(q) { document.getElementById('imageQuestionArea').style.display = 'block'; document.getElementById('lettersGrid').style.display = 'grid'; document.getElementById('imageEmoji').textContent = q.image; document.getElementById('wordDisplay').textContent = q.sentence; renderOptions(q.options, 'word-option-button'); }
+function renderPhase20UI(q) { document.getElementById('attempts').parentElement.style.visibility = 'hidden'; gameState.speedReading = { words: q.words, currentIndex: 0, correctCount: 0, timer: null, timeLeft: 10 }; setupSpeedReadingScreen(); nextSpeedReadingWord(); }
 
 function renderOptions(options, buttonClass) { const lettersGrid = document.getElementById('lettersGrid'); lettersGrid.style.display = 'grid'; lettersGrid.innerHTML = options.map(option => `<button class="${buttonClass}">${option}</button>`).join(''); lettersGrid.querySelectorAll('button').forEach(btn => btn.addEventListener('click', (e) => selectAnswer(e.target.textContent))); }
 
 function handleCardFlip(card) { const { flippedCards, canFlip } = gameState.memoryGame; if (!canFlip || card.classList.contains('flipped')) return; card.classList.add('flipped'); flippedCards.push(card); if (flippedCards.length === 2) { gameState.memoryGame.canFlip = false; const [card1, card2] = flippedCards; if (card1.dataset.letter === card2.dataset.letter) { setTimeout(() => { card1.classList.add('matched'); card2.classList.add('matched'); gameState.memoryGame.matchedPairs++; gameState.score++; updateUI(); playSound('correct'); gameState.memoryGame.flippedCards = []; gameState.memoryGame.canFlip = true; if (gameState.memoryGame.matchedPairs === gameState.memoryGame.totalPairs) { playTeacherAudio('feedback_correct', 'Excelente'); showFeedback('Excelente! Todos os pares encontrados!', 'success'); playSound('phaseWin'); const endTime = Date.now(); const durationInSeconds = Math.round((endTime - gameState.memoryGame.startTime) / 1000); gameState.memoryGame.completionTime = durationInSeconds; document.getElementById('nextQuestion').style.display = 'block'; } }, 800); } else { gameState.memoryGame.mistakesMade++; playTeacherAudio('feedback_incorrect', 'Tente de novo'); playSound('incorrect'); updateUI(); setTimeout(() => { card1.classList.remove('flipped'); card2.classList.remove('flipped'); gameState.memoryGame.flippedCards = []; gameState.memoryGame.canFlip = true; }, 1200); } } }
 
-async function selectAnswer(selectedAnswer) {
+// FUNÇÃO DE RESPOSTA CORRIGIDA
+async function selectAnswer(rawSelectedAnswer) {
+    const selectedAnswer = String(rawSelectedAnswer).trim(); // Limpa espaços em branco
+    
     const q = gameState.questions[gameState.currentQuestionIndex];
     if (!q || q.type === 'memory_game' || q.type === 'speed_reading' ) return;
 
@@ -746,17 +735,18 @@ async function selectAnswer(selectedAnswer) {
         btn.style.pointerEvents = 'none';
     });
 
-    const isCorrect = String(selectedAnswer) === String(q.correctAnswer);
+    const correctAnswer = String(q.correctAnswer).trim(); // Limpa a resposta correta também, por segurança
+    const isCorrect = selectedAnswer === correctAnswer;
 
     const buttons = document.querySelectorAll('.letter-button, .word-option-button, .sentence-option-button');
     buttons.forEach(btn => {
-        if (btn.textContent === q.correctAnswer) btn.classList.add('correct');
-        if (!isCorrect && btn.textContent === selectedAnswer) btn.classList.add('incorrect');
+        if (btn.textContent.trim() === correctAnswer) btn.classList.add('correct');
+        if (!isCorrect && btn.textContent.trim() === selectedAnswer) btn.classList.add('incorrect');
     });
-
+    
     document.querySelectorAll('.clickable-letter').forEach(span => {
-        if (span.textContent === q.correctAnswer) span.classList.add('correct');
-        if (!isCorrect && span.textContent === selectedAnswer) span.classList.add('incorrect');
+        if (span.textContent.trim() === correctAnswer) span.classList.add('correct');
+        if (!isCorrect && span.textContent.trim() === selectedAnswer) span.classList.add('incorrect');
     });
 
     if (isCorrect) {
@@ -769,7 +759,7 @@ async function selectAnswer(selectedAnswer) {
         playSound('incorrect');
         gameState.attempts--;
         logStudentError({ question: q, selectedAnswer: selectedAnswer }).catch(console.error);
-        showFeedback(`Quase! A resposta correta era "${q.correctAnswer}"`, 'error');
+        showFeedback(`Quase! A resposta correta era "${correctAnswer}"`, 'error');
         playTeacherAudio('feedback_incorrect', 'Tente de novo');
         setTimeout(() => {
             if (gameState.attempts <= 0) {
@@ -852,7 +842,7 @@ async function playCurrentAudio() {
 const ALL_AUDIO_KEYS = {
     "Boas-Vindas e Feedback": { "welcome": "Mensagem de boas-vindas (Robô)", "feedback_correct": "Feedback de acerto", "feedback_incorrect": "Feedback de erro", "feedback_phase_win": "Feedback de fase concluída" },
     "Letras e Vogais": { ...Object.fromEntries(ALPHABET.map(l => [l, `Letra ${l}`])), ...Object.fromEntries(VOWELS.map(v => [`vowel_${v}`, `Vogal ${v}`])) },
-    "Instruções das Fases": { ...Object.fromEntries(Object.keys(PHASE_DESCRIPTIONS).map(n => [`instruction_phase_${n}`, `Instrução - Fase ${n}`])) },
+    "Instruções das Fases": { ...Object.fromEntries(Object.keys(PHASE_INSTRUCTIONS).map(type => [`instruction_${type}`, `Instrução para ${type}`])) },
     "Palavras e Frases (Exemplos)": { "GATO": "Palavra 'GATO'", "PATO": "Palavra 'PATO'", "BOLA": "Palavra 'BOLA'" }
 };
 
