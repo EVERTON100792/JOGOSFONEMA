@@ -1,5 +1,5 @@
 // =======================================================
-// JOGO DAS LETRAS - VERSÃO COM CURRÍCULO REORDENADO
+// JOGO DAS LETRAS - VERSÃO FINAL CORRIGIDA E REORDENADA
 // =======================================================
 
 // PARTE 1: CONFIGURAÇÃO INICIAL E SUPABASE
@@ -114,7 +114,16 @@ const PHASE_11_F_POSITION = [
     { word: 'FADA', image: '🧚‍♀️', syllable: 'FA', blanked: '__DA' }, { word: 'FIVELA', image: '🪢', syllable: 'FI', blanked: '__VELA' }, { word: 'GARRAFA', image: '🍾', syllable: 'FA', blanked: 'GARRA__' }, { word: 'ALFINETE', image: '🧷', syllable: 'FI', blanked: 'AL__NETE' }, { word: 'CAFÉ', image: '☕', syllable: 'FÉ', blanked: 'CA__' }, { word: 'GIRAFA', image: '🦒', syllable: 'FA', blanked: 'GIRA__' }, { word: 'SOFÁ', image: '🛋️', syllable: 'FÁ', blanked: 'SO__' }, { word: 'BIFE', image: '🥩', syllable: 'FE', blanked: 'BI__' }, { word: 'FÓSFORO', image: 'Matches', syllable: 'FOS', blanked: '__FORO' }, { word: 'GOLFINHO', image: '🐬', syllable: 'FI', blanked: 'GOL__NHO' }
 ];
 const PHASE_12_WORD_TRANSFORM = [
-    { initialWord: 'SAPATO', toRemove: 'SA', correctAnswer: 'PATO', image: '🦆' }, { initialWord: 'LUVA', toRemove: 'L', correctAnswer: 'UVA', image: '🍇' }, { initialWord: 'CAMALEÃO', toRemove: 'CAMA', correctAnswer: 'LEÃO', image: '🦁' }, { initialWord: 'GALINHA', toRemove: 'GA', correctAnswer: 'LINHA', image: '🧵' }, { initialWord: 'SOLDADO', toRemove: 'SOL', correctAnswer: 'DADO', image: '🎲' }, { initialWord: 'SERPENTE', toRemove: 'SER', correctAnswer: 'PENTE', image: 'comb' }, { initialWord: 'TUCANO', toRemove: 'TU', correctAnswer: 'CANO', image: 'pipe' }, { initialWord: 'ESCADA', toRemove: 'ES', correctAnswer: 'CADA', image: 'ladder' }, { initialWord: 'REPOLHO', toRemove: 'RE', correctAnswer: 'POLHO', image: 'cabbage' }, { initialWord: 'SACOLA', toRemove: 'SA', correctAnswer: 'COLA', image: 'glue' }
+    { initialWord: 'SAPATO', toRemove: 'SA', correctAnswer: 'PATO', image: '🦆' },
+    { initialWord: 'LUVA', toRemove: 'L', correctAnswer: 'UVA', image: '🍇' },
+    { initialWord: 'CAMALEÃO', toRemove: 'CAMA', correctAnswer: 'LEÃO', image: '🦁' },
+    { initialWord: 'GALINHA', toRemove: 'GA', correctAnswer: 'LINHA', image: '🧵' },
+    { initialWord: 'SOLDADO', toRemove: 'SOL', correctAnswer: 'DADO', image: '🎲' },
+    { initialWord: 'FIVELA', toRemove: 'FI', correctAnswer: 'VELA', image: '🕯️' },
+    { initialWord: 'TUCANO', toRemove: 'TU', correctAnswer: 'CANO', image: '🔧' },
+    { initialWord: 'TUBARÃO', toRemove: 'TU', correctAnswer: 'BARÃO', image: '🎩' },
+    { initialWord: 'SACOLA', toRemove: 'SA', correctAnswer: 'COLA', image: '📎' },
+    { initialWord: 'CORUJA', toRemove: 'CO', correctAnswer: 'RUJA', image: '🦁' } 
 ];
 const PHASE_13_INVERT_SYLLABLES = [
     { word: 'BOLO', image: '🎂', inverted: 'LOBO', imageInverted: '🐺' }, { word: 'MACA', image: '🍎', inverted: 'CAMA', imageInverted: '🛏️' }, { word: 'GATO', image: '🐈', inverted: 'TOGA', imageInverted: '🎓' }, { word: 'LAMA', image: '💩', inverted: 'MALA', imageInverted: '👜' }, { word: 'TOPA', image: '🤝', inverted: 'PATO', imageInverted: '🦆' }, { word: 'CASA', image: '🏠', inverted: 'SACA', imageInverted: '💰' }, { word: 'LICA', image: '👱‍♀️', inverted: 'CALI', imageInverted: '🌆' }, { word: 'DICA', image: '💡', inverted: 'CADI', imageInverted: '🛒' }, { word: 'MAGO', image: '🧙‍♂️', inverted: 'GOMA', imageInverted: '🍬' }, { word: 'SECA', image: '🏜️', inverted: 'CASE', imageInverted: '💼' }
