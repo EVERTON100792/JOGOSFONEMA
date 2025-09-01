@@ -17,10 +17,9 @@ let confettiAnimationId;
 let currentAudio = null; // Para controlar o áudio em reprodução
 
 // =======================================================
-// LÓGICA DE ÁUDIO E SONS
+// LÓGICA DE ÁUDIO E SONS (OTIMIZADA)
 // =======================================================
 
-// Áudios de efeitos sonoros
 const soundEffects = {
     click: new Audio('https://github.com/prof-vane-digital/audios-jogo-letras/raw/main/sounds/click.mp3'),
     correct: new Audio('https://github.com/prof-vane-digital/audios-jogo-letras/raw/main/sounds/correct.mp3'),
@@ -28,14 +27,10 @@ const soundEffects = {
     phaseWin: new Audio('https://github.com/prof-vane-digital/audios-jogo-letras/raw/main/sounds/phase_win.mp3')
 };
 
-// MAPA DE ÁUDIOS PRÉ-GRAVADOS COM VOZ HUMANA
 const AUDIO_URLS = {
-    // Feedbacks
-    feedback_correct: "https://github.com/prof-vane-digital/audios-jogo-letras/raw/main/feedbacks/feedback_correct.mp3", // "Muito bem!"
-    feedback_incorrect: "https://github.com/prof-vane-digital/audios-jogo-letras/raw/main/feedbacks/feedback_incorrect.mp3", // "Oh, tente de novo!"
-    feedback_phase_win: "https://github.com/prof-vane-digital/audios-jogo-letras/raw/main/feedbacks/feedback_phase_win.mp3", // "Parabéns, você completou a fase!"
-
-    // Instruções das Fases
+    feedback_correct: "https://github.com/prof-vane-digital/audios-jogo-letras/raw/main/feedbacks/feedback_correct.mp3",
+    feedback_incorrect: "https://github.com/prof-vane-digital/audios-jogo-letras/raw/main/feedbacks/feedback_incorrect.mp3",
+    feedback_phase_win: "https://github.com/prof-vane-digital/audios-jogo-letras/raw/main/feedbacks/feedback_phase_win.mp3",
     instruction_letter_sound: "https://github.com/prof-vane-digital/audios-jogo-letras/raw/main/instructions/instruction_letter_sound.mp3",
     instruction_vowel_sound: "https://github.com/prof-vane-digital/audios-jogo-letras/raw/main/instructions/instruction_vowel_sound.mp3",
     instruction_memory_game: "https://github.com/prof-vane-digital/audios-jogo-letras/raw/main/instructions/instruction_memory_game.mp3",
@@ -56,28 +51,10 @@ const AUDIO_URLS = {
     instruction_intruder_letter: "https://github.com/prof-vane-digital/audios-jogo-letras/raw/main/instructions/instruction_intruder_letter.mp3",
     instruction_word_detective: "https://github.com/prof-vane-digital/audios-jogo-letras/raw/main/instructions/instruction_word_detective.mp3",
     instruction_speed_reading: "https://github.com/prof-vane-digital/audios-jogo-letras/raw/main/instructions/instruction_speed_reading.mp3",
-
-    // Sons das Letras
-    F: "https://github.com/prof-vane-digital/audios-jogo-letras/raw/main/letters/F.mp3",
-    V: "https://github.com/prof-vane-digital/audios-jogo-letras/raw/main/letters/V.mp3",
-    S: "https://github.com/prof-vane-digital/audios-jogo-letras/raw/main/letters/S.mp3",
-    Z: "https://github.com/prof-vane-digital/audios-jogo-letras/raw/main/letters/Z.mp3",
-    M: "https://github.com/prof-vane-digital/audios-jogo-letras/raw/main/letters/M.mp3",
-    P: "https://github.com/prof-vane-digital/audios-jogo-letras/raw/main/letters/P.mp3",
-    B: "https://github.com/prof-vane-digital/audios-jogo-letras/raw/main/letters/B.mp3",
-    T: "https://github.com/prof-vane-digital/audios-jogo-letras/raw/main/letters/T.mp3",
-    D: "https://github.com/prof-vane-digital/audios-jogo-letras/raw/main/letters/D.mp3",
-    L: "https://github.com/prof-vane-digital/audios-jogo-letras/raw/main/letters/L.mp3",
-
-    // Sons das Vogais
-    vowel_A: "https://github.com/prof-vane-digital/audios-jogo-letras/raw/main/vowels/A.mp3",
-    vowel_E: "https://github.com/prof-vane-digital/audios-jogo-letras/raw/main/vowels/E.mp3",
-    vowel_I: "https://github.com/prof-vane-digital/audios-jogo-letras/raw/main/vowels/I.mp3",
-    vowel_O: "https://github.com/prof-vane-digital/audios-jogo-letras/raw/main/vowels/O.mp3",
-    vowel_U: "https://github.com/prof-vane-digital/audios-jogo-letras/raw/main/vowels/U.mp3",
+    F: "https://github.com/prof-vane-digital/audios-jogo-letras/raw/main/letters/F.mp3", V: "https://github.com/prof-vane-digital/audios-jogo-letras/raw/main/letters/V.mp3", S: "https://github.com/prof-vane-digital/audios-jogo-letras/raw/main/letters/S.mp3", Z: "https://github.com/prof-vane-digital/audios-jogo-letras/raw/main/letters/Z.mp3", M: "https://github.com/prof-vane-digital/audios-jogo-letras/raw/main/letters/M.mp3", P: "https://github.com/prof-vane-digital/audios-jogo-letras/raw/main/letters/P.mp3", B: "https://github.com/prof-vane-digital/audios-jogo-letras/raw/main/letters/B.mp3", T: "https://github.com/prof-vane-digital/audios-jogo-letras/raw/main/letters/T.mp3", D: "https://github.com/prof-vane-digital/audios-jogo-letras/raw/main/letters/D.mp3", L: "https://github.com/prof-vane-digital/audios-jogo-letras/raw/main/letters/L.mp3",
+    vowel_A: "https://github.com/prof-vane-digital/audios-jogo-letras/raw/main/vowels/A.mp3", vowel_E: "https://github.com/prof-vane-digital/audios-jogo-letras/raw/main/vowels/E.mp3", vowel_I: "https://github.com/prof-vane-digital/audios-jogo-letras/raw/main/vowels/I.mp3", vowel_O: "https://github.com/prof-vane-digital/audios-jogo-letras/raw/main/vowels/O.mp3", vowel_U: "https://github.com/prof-vane-digital/audios-jogo-letras/raw/main/vowels/U.mp3",
 };
 
-// Função de áudio simplificada
 function playAudio(key) {
     if (currentAudio) {
         currentAudio.pause();
@@ -96,20 +73,18 @@ function playSound(soundName) {
     }
 }
 
+// FUNÇÃO DE DESBLOQUEIO DE ÁUDIO CORRIGIDA E OTIMIZADA
 let audioUnlocked = false;
 function unlockAudio() {
     if (audioUnlocked) return;
-    const allSounds = { ...soundEffects, ...AUDIO_URLS };
-    for (const key in allSounds) {
-        const sound = (typeof allSounds[key] === 'string') ? new Audio(allSounds[key]) : allSounds[key];
-        sound.volume = 0;
-        sound.play().catch(() => {});
-        sound.pause();
-        sound.currentTime = 0;
-        sound.volume = 1;
-    }
+    const clickSound = soundEffects.click;
+    clickSound.volume = 0;
+    clickSound.play().catch(() => {});
+    clickSound.pause();
+    clickSound.currentTime = 0;
+    clickSound.volume = 1;
     audioUnlocked = true;
-    console.log("Contexto de áudio desbloqueado.");
+    console.log("Contexto de áudio desbloqueado com sucesso.");
 }
 
 // =======================================================
@@ -121,6 +96,29 @@ const PHASE_DESCRIPTIONS = {
     5: "Caça-Palavras", 6: "Contando Palavras na Frase", 7: "Detetive de Frases",
     8: "Fábrica de Sílabas", 9: "Contando Sílabas", 10: "Caça-Sílaba Inicial", 11: "Encaixe a Sílaba", 12: "Formando Novas Palavras", 13: "Invertendo Sílabas", 14: "Sílabas Complexas", 15: "Fábrica de Rimas", 16: "Rima ou Não Rima?",
     17: "Contando Sons (Fonemas)", 18: "Qual é a Letra Intrometida?", 19: "Detetive de Palavras (Avançado)", 20: "Leitura Rápida (Desafio)"
+};
+
+const PHASE_INSTRUCTIONS = {
+    letter_sound: "Ouça o som com atenção e clique na letra que faz este som.",
+    vowel_sound: "Vamos ouvir o som de uma vogal. Clique na vogal correta.",
+    memory_game: "Vamos brincar de jogo da memória! Encontre os pares de letras maiúsculas e minúsculas.",
+    sound_detective: "Veja a figura e escolha a palavra que está escrita corretamente.",
+    f_word_search: "Qual dessas palavras é o nome da figura?",
+    count_words: "Conte quantas palavras existem na frase e clique no número certo.",
+    sentence_unscramble_mc: "Veja a figura e escolha a frase que está na ordem correta.",
+    syllable_formation_mc: "Se juntarmos as letras, qual sílaba formamos? Escolha a opção correta.",
+    count_syllables: "Vamos contar as sílabas! Quantos pedaços tem esta palavra?",
+    initial_syllable: "Qual é a sílaba que começa esta palavra?",
+    complete_word_mc: "Veja a figura e a palavra. Qual sílaba está faltando?",
+    word_transform: "Se a gente tirar um pedaço da palavra, qual nova palavra aparece? Clique na resposta certa.",
+    invert_syllables: "Se trocarmos as sílabas de lugar, qual palavra formamos?",
+    complex_syllable: "Esta palavra tem uma sílaba mais difícil. Escolha a opção que completa a palavra.",
+    find_rhyme: "Qual palavra rima com a palavra da figura?",
+    rhyme_discrimination: "Veja a palavra em cima. Qual das opções abaixo rima com ela?",
+    count_phonemes: "Vamos ouvir os sons! Conte quantos sons, e não letras, esta palavra tem.",
+    intruder_letter: "Tem uma letra intrusa nesta palavra. Clique nela para expulsá-la!",
+    word_detective: "Leia a frase. Qual das palavras completa o espaço em branco?",
+    speed_reading: "Leitura Rápida! Leia a palavra da figura o mais rápido que puder e clique na opção correta."
 };
 
 const PHASE_1_LETTER_SOUNDS = [
@@ -578,7 +576,6 @@ function generateQuestions(phase) {
     const shuffleAndTake = (arr, num) => [...arr].sort(() => 0.5 - Math.random()).slice(0, num);
 
     switch (phase) {
-        // Bloco 1: Alfabeto e Sons
         case 1:
             questions = shuffleAndTake(PHASE_1_LETTER_SOUNDS, questionCount).map(item => ({
                 type: 'letter_sound',
@@ -597,8 +594,6 @@ function generateQuestions(phase) {
         case 4:
             questions = shuffleAndTake(PHASE_5_SOUND_PAIRS, questionCount).map(item => ({ type: 'sound_detective', correctAnswer: item.correct, ...item, options: [item.correct, item.incorrect].sort(() => 0.5 - Math.random()) }));
             break;
-
-        // Bloco 2: Palavras e Frases
         case 5:
             questions = shuffleAndTake(PHASE_4_WORDS_F, questionCount).map(item => ({ type: 'f_word_search', correctAnswer: item.word, ...item, options: [...item.options].sort(() => 0.5 - Math.random()) }));
             break;
@@ -617,8 +612,6 @@ function generateQuestions(phase) {
                 return { type: 'sentence_unscramble_mc', correctAnswer: item.answer, ...item, options: Array.from(options).sort(() => 0.5 - Math.random()) };
             });
             break;
-
-        // Bloco 3: Consciência Silábica
         case 8:
             questions = shuffleAndTake(PHASE_3_SYLLABLE_F, questionCount).map(item => ({ type: 'syllable_formation_mc', correctAnswer: item.result, ...item, options: _generateOptions(item.result, ['FA', 'FE', 'FI', 'FO', 'FU', 'VA', 'PA', 'BO'], 4) }));
             break;
@@ -649,8 +642,6 @@ function generateQuestions(phase) {
         case 16:
             questions = shuffleAndTake(PHASE_17_RHYME_DISCRIMINATION, questionCount).map(item => ({ type: 'rhyme_discrimination', correctAnswer: item.correct, ...item, options: [item.correct, item.incorrect].sort(() => 0.5 - Math.random()) }));
             break;
-            
-        // Bloco 4: Consciência Fonêmica e Fluência
         case 17:
             questions = shuffleAndTake(PHASE_15_PHONEME_COUNT, questionCount).map(item => ({ type: 'count_phonemes', correctAnswer: item.sounds.toString(), ...item, options: _generateOptions(item.sounds.toString(), ['2','3','4','5'], 4) }));
             break;
@@ -696,9 +687,9 @@ async function startQuestion() {
     
     const q = gameState.questions[gameState.currentQuestionIndex];
     
-    // Tocar a instrução completa da fase
+    const instruction = PHASE_INSTRUCTIONS[q.type] || "Escolha a resposta certa!";
     playAudio(`instruction_${q.type}`);
-    document.getElementById('helperText').textContent = PHASE_INSTRUCTIONS[q.type] || "Escolha a resposta certa!";
+    document.getElementById('helperText').textContent = instruction;
 
 
     const renderMap = {
@@ -879,6 +870,12 @@ function showAudioSettingsModal() {
     const letterSelect = document.getElementById('letterSelect');
     if (letterSelect) {
         let optionsHtml = '';
+        const ALL_AUDIO_KEYS = {
+            "Feedbacks": { feedback_correct: "Feedback de acerto", feedback_incorrect: "Feedback de erro", feedback_phase_win: "Feedback de fase concluída" },
+            "Instruções": Object.fromEntries(Object.keys(PHASE_INSTRUCTIONS).map(type => [`instruction_${type}`, `Instrução para ${PHASE_DESCRIPTIONS[Object.keys(PHASE_DESCRIPTIONS).find(k => generateQuestions(k)[0]?.type === type)]}`])),
+            "Sons de Letras": Object.fromEntries(ALPHABET.map(l => [l, `Letra ${l}`])),
+            "Sons de Vogais": Object.fromEntries(VOWELS.map(v => [`vowel_${v}`, `Vogal ${v}`]))
+        };
         for (const groupName in ALL_AUDIO_KEYS) {
             optionsHtml += `<optgroup label="${groupName}">`;
             for (const key in ALL_AUDIO_KEYS[groupName]) {
