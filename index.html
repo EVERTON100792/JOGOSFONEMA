@@ -128,7 +128,7 @@
                     </a>
                     <a href="#" id="nav-relatorios" data-view="viewRelatorios">
                         <i class="fas fa-chart-pie"></i>
-                        <span>Relatórios</span>
+                        <span>Relatórios e Gráficos</span>
                     </a>
                     <a href="#" id="nav-config" data-view="viewConfig">
                         <i class="fas fa-sliders-h"></i>
@@ -177,8 +177,8 @@
                          <div class="view-header">
                             <p>Opções e configurações gerais da sua conta de professor.</p>
                         </div>
-                          <button id="showAudioSettingsModalBtn" class="create-btn" style="background-color: #5c6bc0;">
-                            <i class="fas fa-microphone-alt"></i> Gerenciar Áudios do Jogo
+                         <button id="showAudioSettingsModalBtn" class="create-btn" style="background-color: #5c6bc0;">
+                            <i class="fas fa-microphone-alt"></i> Gerenciar Áudios das Letras
                         </button>
                     </div>
     
@@ -227,7 +227,7 @@
 				</div>
 				<div class="attempts">
 					<i class="fas fa-heart"></i>
-					<span id="attempts">3</span>
+					<span id="attempts">3</span> tentativas
 				</div>
 			</div>
             <div class="game-actions">
@@ -243,7 +243,7 @@
 						<i class="fas fa-robot"></i>
 					</div>
 					<div class="speech-bubble" id="helperText">
-						Ouça com atenção e escolha a resposta certa!
+						Clique no alto-falante para ouvir o som!
 					</div>
 				</div>
 
@@ -258,12 +258,10 @@
                     <div class="image-display">
                         <span id="imageEmoji" class="image-emoji"></span>
                     </div>
-                    <div id="wordDisplay" class="word-display"></div>
+                    <div id="sentenceBuildArea" class="sentence-build-area"></div>
+                    <h3 id="wordDisplay" class="word-display"></h3>
                 </div>
-                
-                <div id="interactiveArea" class="interactive-area"></div>
-                <div id="optionsArea" class="options-area"></div>
-                
+
 				<div class="question-text">
 					<h3 id="questionText"></h3>
 				</div>
@@ -285,7 +283,6 @@
 	</div>
 
 	<div id="resultScreen" class="screen">
-        <canvas id="confettiCanvas" class="confetti-canvas"></canvas>
 		<div class="container">
 			<div class="result-content">
 				<div class="result-icon" id="resultIcon">
@@ -405,16 +402,16 @@
 
     <div id="audioSettingsModal" class="modal">
         <div class="modal-content large">
-            <h3><i class="fas fa-microphone-alt"></i> Gerenciar Áudios do Jogo</h3>
+            <h3>Gerenciar Áudios das Letras</h3>
             <div class="modal-tabs">
-                <button class="tab-btn active" data-tab="recordVoiceTab">Gravar com Microfone</button>
-                <button class="tab-btn" data-tab="uploadFileTab">Enviar Arquivos</button>
+                <button class="tab-btn active" data-tab="uploadFileTab">Enviar Arquivos</button>
+                <button class="tab-btn" data-tab="recordVoiceTab">Gravar com Microfone</button>
             </div>
-            <div id="uploadFileTab" class="tab-content">
+            <div id="uploadFileTab" class="tab-content active">
                 <div class="upload-section">
-                    <p>Envie os arquivos de áudio (.mp3, .wav, .m4a) para cada item do jogo.</p>
+                    <p>Envie os arquivos de áudio (.mp3, .wav, .m4a) para cada letra.</p>
                     <div class="upload-instructions">
-                        <p><i class="fas fa-info-circle"></i> <strong>Nomeie os arquivos com a "chave" exata do item.</strong> Ex: para a letra A, use <code>A.mp3</code>. Para a instrução da fase 1, use <code>instruction_phase_1.mp3</code>.</p>
+                        <p><i class="fas fa-info-circle"></i> <strong>Nomeie os arquivos exatamente como a letra.</strong> Ex: <code>A.mp3</code></p>
                     </div>
                     <div class="upload-area">
                         <input type="file" id="audioUpload" accept="audio/*" multiple>
@@ -424,11 +421,11 @@
                     <button id="uploadAudioBtn" class="modal-btn primary">Enviar Arquivos</button>
                 </div>
             </div>
-            <div id="recordVoiceTab" class="tab-content active">
+            <div id="recordVoiceTab" class="tab-content">
                 <div class="record-section">
-                    <p>Grave sua voz para ser usada nas instruções, letras e feedbacks do jogo.</p>
+                    <p>Grave sua voz falando o som de cada letra.</p>
                     <div class="form-group">
-                        <label for="letterSelect">1. Escolha o Item para Gravar:</label>
+                        <label for="letterSelect">1. Escolha a Letra para Gravar:</label>
                         <select id="letterSelect"></select>
                     </div>
                     <div class="record-controls">
