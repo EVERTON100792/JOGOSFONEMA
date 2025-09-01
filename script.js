@@ -1,5 +1,5 @@
 // =======================================================
-// JOGO DAS LETRAS - VERSÃO FINAL COM INSTRUÇÕES E CORREÇÕES
+// JOGO DAS LETRAS - VERSÃO FINAL COM ÁUDIO PROFISSIONAL E CORREÇÕES
 // =======================================================
 
 // PARTE 1: CONFIGURAÇÃO INICIAL E SUPABASE
@@ -12,25 +12,82 @@ const SUPER_ADMIN_TEACHER_ID = 'd88211f7-9f98-47b8-8e57-54bf767f42d6';
 
 let currentUser = null, currentClassId = null, studentProgressData = [], currentChart = null, currentEvolutionChart = null;
 const ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split(''), VOWELS = 'AEIOU'.split('');
-let gameState = {}, mediaRecorder, audioChunks = [], timerInterval, speechReady = false, selectedVoice = null;
+let gameState = {}, mediaRecorder, audioChunks = [], timerInterval;
 let confettiAnimationId;
-let selectedItemForClickMove = null;
-
-// VARIÁVEIS PARA O STATUS EM TEMPO REAL
-let teacherChannel = null;
-let onlineStudents = new Set();
-let studentChannel = null;
+let currentAudio = null; // Para controlar o áudio em reprodução
 
 // =======================================================
 // LÓGICA DE ÁUDIO E SONS
 // =======================================================
+
+// Áudios de efeitos sonoros
 const soundEffects = {
-    click: new Audio('sounds/click.mp3'),
-    correct: new Audio('sounds/correct.mp3'),
-    incorrect: new Audio('sounds/incorrect.mp3'),
-    phaseWin: new Audio('sounds/phase_win.mp3'),
-    drop: new Audio('sounds/drop.mp3')
+    click: new Audio('https://github.com/prof-vane-digital/audios-jogo-letras/raw/main/sounds/click.mp3'),
+    correct: new Audio('https://github.com/prof-vane-digital/audios-jogo-letras/raw/main/sounds/correct.mp3'),
+    incorrect: new Audio('https://github.com/prof-vane-digital/audios-jogo-letras/raw/main/sounds/incorrect.mp3'),
+    phaseWin: new Audio('https://github.com/prof-vane-digital/audios-jogo-letras/raw/main/sounds/phase_win.mp3')
 };
+
+// MAPA DE ÁUDIOS PRÉ-GRAVADOS COM VOZ HUMANA
+const AUDIO_URLS = {
+    // Feedbacks
+    feedback_correct: "https://github.com/prof-vane-digital/audios-jogo-letras/raw/main/feedbacks/feedback_correct.mp3", // "Muito bem!"
+    feedback_incorrect: "https://github.com/prof-vane-digital/audios-jogo-letras/raw/main/feedbacks/feedback_incorrect.mp3", // "Oh, tente de novo!"
+    feedback_phase_win: "https://github.com/prof-vane-digital/audios-jogo-letras/raw/main/feedbacks/feedback_phase_win.mp3", // "Parabéns, você completou a fase!"
+
+    // Instruções das Fases
+    instruction_letter_sound: "https://github.com/prof-vane-digital/audios-jogo-letras/raw/main/instructions/instruction_letter_sound.mp3",
+    instruction_vowel_sound: "https://github.com/prof-vane-digital/audios-jogo-letras/raw/main/instructions/instruction_vowel_sound.mp3",
+    instruction_memory_game: "https://github.com/prof-vane-digital/audios-jogo-letras/raw/main/instructions/instruction_memory_game.mp3",
+    instruction_sound_detective: "https://github.com/prof-vane-digital/audios-jogo-letras/raw/main/instructions/instruction_sound_detective.mp3",
+    instruction_f_word_search: "https://github.com/prof-vane-digital/audios-jogo-letras/raw/main/instructions/instruction_f_word_search.mp3",
+    instruction_count_words: "https://github.com/prof-vane-digital/audios-jogo-letras/raw/main/instructions/instruction_count_words.mp3",
+    instruction_sentence_unscramble_mc: "https://github.com/prof-vane-digital/audios-jogo-letras/raw/main/instructions/instruction_sentence_unscramble_mc.mp3",
+    instruction_syllable_formation_mc: "https://github.com/prof-vane-digital/audios-jogo-letras/raw/main/instructions/instruction_syllable_formation_mc.mp3",
+    instruction_count_syllables: "https://github.com/prof-vane-digital/audios-jogo-letras/raw/main/instructions/instruction_count_syllables.mp3",
+    instruction_initial_syllable: "https://github.com/prof-vane-digital/audios-jogo-letras/raw/main/instructions/instruction_initial_syllable.mp3",
+    instruction_complete_word_mc: "https://github.com/prof-vane-digital/audios-jogo-letras/raw/main/instructions/instruction_complete_word_mc.mp3",
+    instruction_word_transform: "https://github.com/prof-vane-digital/audios-jogo-letras/raw/main/instructions/instruction_word_transform.mp3",
+    instruction_invert_syllables: "https://github.com/prof-vane-digital/audios-jogo-letras/raw/main/instructions/instruction_invert_syllables.mp3",
+    instruction_complex_syllable: "https://github.com/prof-vane-digital/audios-jogo-letras/raw/main/instructions/instruction_complex_syllable.mp3",
+    instruction_find_rhyme: "https://github.com/prof-vane-digital/audios-jogo-letras/raw/main/instructions/instruction_find_rhyme.mp3",
+    instruction_rhyme_discrimination: "https://github.com/prof-vane-digital/audios-jogo-letras/raw/main/instructions/instruction_rhyme_discrimination.mp3",
+    instruction_count_phonemes: "https://github.com/prof-vane-digital/audios-jogo-letras/raw/main/instructions/instruction_count_phonemes.mp3",
+    instruction_intruder_letter: "https://github.com/prof-vane-digital/audios-jogo-letras/raw/main/instructions/instruction_intruder_letter.mp3",
+    instruction_word_detective: "https://github.com/prof-vane-digital/audios-jogo-letras/raw/main/instructions/instruction_word_detective.mp3",
+    instruction_speed_reading: "https://github.com/prof-vane-digital/audios-jogo-letras/raw/main/instructions/instruction_speed_reading.mp3",
+
+    // Sons das Letras
+    F: "https://github.com/prof-vane-digital/audios-jogo-letras/raw/main/letters/F.mp3",
+    V: "https://github.com/prof-vane-digital/audios-jogo-letras/raw/main/letters/V.mp3",
+    S: "https://github.com/prof-vane-digital/audios-jogo-letras/raw/main/letters/S.mp3",
+    Z: "https://github.com/prof-vane-digital/audios-jogo-letras/raw/main/letters/Z.mp3",
+    M: "https://github.com/prof-vane-digital/audios-jogo-letras/raw/main/letters/M.mp3",
+    P: "https://github.com/prof-vane-digital/audios-jogo-letras/raw/main/letters/P.mp3",
+    B: "https://github.com/prof-vane-digital/audios-jogo-letras/raw/main/letters/B.mp3",
+    T: "https://github.com/prof-vane-digital/audios-jogo-letras/raw/main/letters/T.mp3",
+    D: "https://github.com/prof-vane-digital/audios-jogo-letras/raw/main/letters/D.mp3",
+    L: "https://github.com/prof-vane-digital/audios-jogo-letras/raw/main/letters/L.mp3",
+
+    // Sons das Vogais
+    vowel_A: "https://github.com/prof-vane-digital/audios-jogo-letras/raw/main/vowels/A.mp3",
+    vowel_E: "https://github.com/prof-vane-digital/audios-jogo-letras/raw/main/vowels/E.mp3",
+    vowel_I: "https://github.com/prof-vane-digital/audios-jogo-letras/raw/main/vowels/I.mp3",
+    vowel_O: "https://github.com/prof-vane-digital/audios-jogo-letras/raw/main/vowels/O.mp3",
+    vowel_U: "https://github.com/prof-vane-digital/audios-jogo-letras/raw/main/vowels/U.mp3",
+};
+
+// Função de áudio simplificada
+function playAudio(key) {
+    if (currentAudio) {
+        currentAudio.pause();
+        currentAudio.currentTime = 0;
+    }
+    if (AUDIO_URLS[key]) {
+        currentAudio = new Audio(AUDIO_URLS[key]);
+        currentAudio.play().catch(error => console.error(`Erro ao tocar áudio ${key}:`, error));
+    }
+}
 
 function playSound(soundName) {
     if (soundEffects[soundName]) {
@@ -41,20 +98,22 @@ function playSound(soundName) {
 
 let audioUnlocked = false;
 function unlockAudio() {
-    if (audioUnlocked || !Object.values(soundEffects).length) return;
-    Object.values(soundEffects).forEach(sound => {
+    if (audioUnlocked) return;
+    const allSounds = { ...soundEffects, ...AUDIO_URLS };
+    for (const key in allSounds) {
+        const sound = (typeof allSounds[key] === 'string') ? new Audio(allSounds[key]) : allSounds[key];
         sound.volume = 0;
         sound.play().catch(() => {});
         sound.pause();
         sound.currentTime = 0;
         sound.volume = 1;
-    });
+    }
     audioUnlocked = true;
     console.log("Contexto de áudio desbloqueado.");
 }
 
 // =======================================================
-// PARTE 2: CONTEÚDO DO JOGO (FASES REORDENADAS)
+// PARTE 2: CONTEÚDO DO JOGO
 // =======================================================
 
 const PHASE_DESCRIPTIONS = {
@@ -64,31 +123,6 @@ const PHASE_DESCRIPTIONS = {
     17: "Contando Sons (Fonemas)", 18: "Qual é a Letra Intrometida?", 19: "Detetive de Palavras (Avançado)", 20: "Leitura Rápida (Desafio)"
 };
 
-// NOVAS INSTRUÇÕES COMPLETAS PARA CADA TIPO DE FASE
-const PHASE_INSTRUCTIONS = {
-    letter_sound: "Ouça o som com atenção e clique na letra que faz este som.",
-    vowel_sound: "Vamos ouvir o som de uma vogal. Clique na vogal correta.",
-    memory_game: "Vamos brincar de jogo da memória! Encontre os pares de letras maiúsculas e minúsculas.",
-    sound_detective: "Veja a figura e escolha a palavra que está escrita corretamente.",
-    f_word_search: "Qual dessas palavras é o nome da figura?",
-    count_words: "Conte quantas palavras existem na frase e clique no número certo.",
-    sentence_unscramble_mc: "Veja a figura e escolha a frase que está na ordem correta.",
-    syllable_formation_mc: "Se juntarmos as letras, qual sílaba formamos? Escolha a opção correta.",
-    count_syllables: "Vamos contar as sílabas! Quantos pedaços tem esta palavra?",
-    initial_syllable: "Qual é a sílaba que começa esta palavra?",
-    complete_word_mc: "Veja a figura e a palavra. Qual sílaba está faltando?",
-    word_transform: "Se a gente tirar um pedaço da palavra, qual nova palavra aparece? Clique na resposta certa.",
-    invert_syllables: "Se trocarmos as sílabas de lugar, qual palavra formamos?",
-    complex_syllable: "Esta palavra tem uma sílaba mais difícil. Escolha a opção que completa a palavra.",
-    find_rhyme: "Qual palavra rima com a palavra da figura?",
-    rhyme_discrimination: "Veja a palavra em cima. Qual das opções abaixo rima com ela?",
-    count_phonemes: "Vamos ouvir os sons! Conte quantos sons, e não letras, esta palavra tem.",
-    intruder_letter: "Tem uma letra intrusa nesta palavra. Clique nela para expulsá-la!",
-    word_detective: "Leia a frase. Qual das palavras completa o espaço em branco?",
-    speed_reading: "Leitura Rápida! Leia a palavra da figura o mais rápido que puder e clique na opção correta."
-};
-
-// DADOS DAS FASES
 const PHASE_1_LETTER_SOUNDS = [
     { letter: 'F', audioKey: 'F', description: 'de soprar uma vela (ffff...)?', optionsPool: 'AMOPV' }, { letter: 'V', audioKey: 'V', description: 'de um motor vibrando (vvvv...)?', optionsPool: 'AMOPF' }, { letter: 'S', audioKey: 'S', description: 'da cobrinha (ssss...)?', optionsPool: 'AMOPZ' }, { letter: 'Z', audioKey: 'Z', description: 'da abelhinha (zzzz...)?', optionsPool: 'AMOPS' }, { letter: 'M', audioKey: 'M', description: 'de quando a comida está gostosa (mmmm...)?', optionsPool: 'AOPNS' }, { letter: 'P', audioKey: 'P', description: 'de uma pequena explosão, sem voz (p, p, p)?', optionsPool: 'AFOVB' }, { letter: 'B', audioKey: 'B', description: 'de uma pequena explosão, com voz (b, b, b)?', optionsPool: 'AFOVP' }, { letter: 'T', audioKey: 'T', description: 'da batidinha da língua no dente, sem voz (t, t, t)?', optionsPool: 'AFOVD' }, { letter: 'D', audioKey: 'D', description: 'da batidinha da língua no dente, com voz (d, d, d)?', optionsPool: 'AFOVT' }, { letter: 'L', audioKey: 'L', description: 'com a língua no céu da boca (llll...)?', optionsPool: 'ARFMN' }
 ];
@@ -182,7 +216,6 @@ async function initApp() {
         alert("ERRO CRÍTICO: Supabase não carregou.");
         return;
     }
-    initializeSpeech();
     setupAllEventListeners();
     const studentSession = sessionStorage.getItem('currentUser');
     
@@ -546,28 +579,33 @@ function generateQuestions(phase) {
 
     switch (phase) {
         // Bloco 1: Alfabeto e Sons
-        case 1: // O Som das Letras (Original: 1)
-            questions = shuffleAndTake(PHASE_1_LETTER_SOUNDS, questionCount).map(item => ({ type: 'letter_sound', ...item, options: _generateOptions(item.letter, item.optionsPool, 4) }));
+        case 1:
+            questions = shuffleAndTake(PHASE_1_LETTER_SOUNDS, questionCount).map(item => ({
+                type: 'letter_sound',
+                correctAnswer: item.letter,
+                ...item,
+                options: _generateOptions(item.letter, item.optionsPool, 4)
+            }));
             break;
-        case 2: // Identificação de Vogais (Original: 8)
+        case 2:
             const vowelSet = [...VOWELS, ...VOWELS].sort(() => 0.5 - Math.random());
             questions = vowelSet.map(vowel => ({ type: 'vowel_sound', correctAnswer: vowel, options: _generateOptions(vowel, VOWELS, 4) }));
             break;
-        case 3: // Jogo da Memória (Original: 2)
+        case 3:
             questions = [{ type: 'memory_game' }];
             break;
-        case 4: // Pares Surdos/Sonoros (Original: 5)
-            questions = shuffleAndTake(PHASE_5_SOUND_PAIRS, questionCount).map(item => ({ type: 'sound_detective', ...item, options: [item.correct, item.incorrect].sort(() => 0.5 - Math.random()) }));
+        case 4:
+            questions = shuffleAndTake(PHASE_5_SOUND_PAIRS, questionCount).map(item => ({ type: 'sound_detective', correctAnswer: item.correct, ...item, options: [item.correct, item.incorrect].sort(() => 0.5 - Math.random()) }));
             break;
 
         // Bloco 2: Palavras e Frases
-        case 5: // Caça-Palavras (Original: 4)
-            questions = shuffleAndTake(PHASE_4_WORDS_F, questionCount).map(item => ({ type: 'f_word_search', ...item, options: [...item.options].sort(() => 0.5 - Math.random()) }));
+        case 5:
+            questions = shuffleAndTake(PHASE_4_WORDS_F, questionCount).map(item => ({ type: 'f_word_search', correctAnswer: item.word, ...item, options: [...item.options].sort(() => 0.5 - Math.random()) }));
             break;
-        case 6: // Contando Palavras na Frase (Original: 6)
-            questions = shuffleAndTake(PHASE_6_SENTENCES_COUNT, questionCount).map(item => ({ type: 'count_words', ...item, correctAnswer: item.words.toString(), options: _generateOptions(item.words.toString(), ['2', '3', '4', '5', '6'], 4) }));
+        case 6:
+            questions = shuffleAndTake(PHASE_6_SENTENCES_COUNT, questionCount).map(item => ({ type: 'count_words', correctAnswer: item.words.toString(), ...item, options: _generateOptions(item.words.toString(), ['2', '3', '4', '5', '6'], 4) }));
             break;
-        case 7: // Detetive de Frases (Original: 7)
+        case 7:
             questions = shuffleAndTake(PHASE_7_SENTENCES_BUILD, questionCount).map(item => {
                 const options = new Set([item.answer]);
                 while (options.size < 3) {
@@ -576,53 +614,57 @@ function generateQuestions(phase) {
                         options.add(jumbled);
                     }
                 }
-                return { type: 'sentence_unscramble_mc', ...item, options: Array.from(options).sort(() => 0.5 - Math.random()) };
+                return { type: 'sentence_unscramble_mc', correctAnswer: item.answer, ...item, options: Array.from(options).sort(() => 0.5 - Math.random()) };
             });
             break;
 
         // Bloco 3: Consciência Silábica
-        case 8: // Fábrica de Sílabas (Original: 3)
-            questions = shuffleAndTake(PHASE_3_SYLLABLE_F, questionCount).map(item => ({ type: 'syllable_formation_mc', ...item, correctAnswer: item.result, options: _generateOptions(item.result, ['FA', 'FE', 'FI', 'FO', 'FU', 'VA', 'PA', 'BO'], 4) }));
+        case 8:
+            questions = shuffleAndTake(PHASE_3_SYLLABLE_F, questionCount).map(item => ({ type: 'syllable_formation_mc', correctAnswer: item.result, ...item, options: _generateOptions(item.result, ['FA', 'FE', 'FI', 'FO', 'FU', 'VA', 'PA', 'BO'], 4) }));
             break;
-        case 9: // Contando Sílabas (Original: 9)
-            questions = shuffleAndTake(PHASE_9_SYLLABLE_COUNT, questionCount).map(item => ({ type: 'count_syllables', ...item, correctAnswer: item.syllables.toString(), options: _generateOptions(item.syllables.toString(), ['1', '2', '3', '4', '5'], 4) }));
+        case 9:
+            questions = shuffleAndTake(PHASE_9_SYLLABLE_COUNT, questionCount).map(item => ({ type: 'count_syllables', correctAnswer: item.syllables.toString(), ...item, options: _generateOptions(item.syllables.toString(), ['1', '2', '3', '4', '5'], 4) }));
             break;
-        case 10: // Caça-Sílaba Inicial (Original: 10)
+        case 10:
             questions = shuffleAndTake(PHASE_10_INITIAL_SYLLABLE, questionCount).map(item => ({ type: 'initial_syllable', ...item, options: _generateOptions(item.correctAnswer, ['BA','CA','DA','FA','GA','LA','MA','PA','RA','SA','TA','VA'], 4) }));
             break;
-        case 11: // Encaixe a Sílaba (Original: 11)
-            questions = shuffleAndTake(PHASE_11_F_POSITION, questionCount).map(item => ({ type: 'complete_word_mc', ...item, correctAnswer: item.syllable, options: _generateOptions(item.syllable, ['FA', 'FE', 'FI', 'FO', 'FU'], 4) }));
+        case 11:
+            questions = shuffleAndTake(PHASE_11_F_POSITION, questionCount).map(item => ({ type: 'complete_word_mc', correctAnswer: item.syllable, ...item, options: _generateOptions(item.syllable, ['FA', 'FE', 'FI', 'FO', 'FU'], 4) }));
             break;
-        case 12: // Formando Novas Palavras (Original: 12)
+        case 12:
             questions = shuffleAndTake(PHASE_12_WORD_TRANSFORM, questionCount).map(item => ({ type: 'word_transform', ...item, options: _generateOptions(item.correctAnswer, item.initialWord.split(''), 3) }));
             break;
-        case 13: // Invertendo Sílabas (Original: 13)
-            questions = shuffleAndTake(PHASE_13_INVERT_SYLLABLES, questionCount).map(item => ({ type: 'invert_syllables', ...item, correctAnswer: item.inverted, options: _generateOptions(item.inverted, PHASE_13_INVERT_SYLLABLES.map(i=>i.word), 4) }));
+        case 13:
+            questions = shuffleAndTake(PHASE_13_INVERT_SYLLABLES, questionCount).map(item => ({ type: 'invert_syllables', correctAnswer: item.inverted, ...item, options: _generateOptions(item.inverted, PHASE_13_INVERT_SYLLABLES.map(i=>i.word), 4) }));
             break;
-        case 14: // Sílabas Complexas (Original: 16)
-            questions = shuffleAndTake(PHASE_16_COMPLEX_SYLLABLES, questionCount).map(item => ({ type: 'complex_syllable', ...item, correctAnswer: item.syllable, options: _generateOptions(item.syllable, ['BRA','LHA','NHO','VRO','CRE', 'FLA', 'GRI'], 4) }));
+        case 14:
+            questions = shuffleAndTake(PHASE_16_COMPLEX_SYLLABLES, questionCount).map(item => ({ type: 'complex_syllable', correctAnswer: item.syllable, ...item, options: _generateOptions(item.syllable, ['BRA','LHA','NHO','VRO','CRE', 'FLA', 'GRI'], 4) }));
             break;
-        case 15: // Fábrica de Rimas (Original: 14)
+        case 15:
             questions = shuffleAndTake(PHASE_14_RHYMES, questionCount).map(item => {
                 const rhymeOptionsSource = PHASE_14_RHYMES.map(r => r.rhyme).filter(r => r !== item.rhyme);
-                return { type: 'find_rhyme', ...item, correctAnswer: item.rhyme, options: _generateOptions(item.rhyme, rhymeOptionsSource, 4) };
+                return { type: 'find_rhyme', correctAnswer: item.rhyme, ...item, options: _generateOptions(item.rhyme, rhymeOptionsSource, 4) };
             });
             break;
-        case 16: // Rima ou Não Rima? (Original: 17)
-            questions = shuffleAndTake(PHASE_17_RHYME_DISCRIMINATION, questionCount).map(item => ({ type: 'rhyme_discrimination', ...item, correctAnswer: item.correct, options: [item.correct, item.incorrect].sort(() => 0.5 - Math.random()) }));
+        case 16:
+            questions = shuffleAndTake(PHASE_17_RHYME_DISCRIMINATION, questionCount).map(item => ({ type: 'rhyme_discrimination', correctAnswer: item.correct, ...item, options: [item.correct, item.incorrect].sort(() => 0.5 - Math.random()) }));
             break;
             
         // Bloco 4: Consciência Fonêmica e Fluência
-        case 17: // Contando Sons (Fonemas) (Original: 15)
-            questions = shuffleAndTake(PHASE_15_PHONEME_COUNT, questionCount).map(item => ({ type: 'count_phonemes', ...item, correctAnswer: item.sounds.toString(), options: _generateOptions(item.sounds.toString(), ['2','3','4','5'], 4) }));
+        case 17:
+            questions = shuffleAndTake(PHASE_15_PHONEME_COUNT, questionCount).map(item => ({ type: 'count_phonemes', correctAnswer: item.sounds.toString(), ...item, options: _generateOptions(item.sounds.toString(), ['2','3','4','5'], 4) }));
             break;
-        case 18: // Qual é a Letra Intrometida? (Original: 18)
-            questions = shuffleAndTake(PHASE_18_INTRUDER_LETTER, questionCount).map(item => ({ type: 'intruder_letter', ...item }));
+        case 18:
+            questions = shuffleAndTake(PHASE_18_INTRUDER_LETTER, questionCount).map(item => ({
+                type: 'intruder_letter',
+                correctAnswer: item.intruder,
+                ...item
+            }));
             break;
-        case 19: // Detetive de Palavras (Avançado) (Original: 19)
-            questions = shuffleAndTake(PHASE_19_WORD_DETECTIVE, questionCount).map(item => ({ type: 'word_detective', ...item, options: [...item.options].sort(() => 0.5 - Math.random()) }));
+        case 19:
+            questions = shuffleAndTake(PHASE_19_WORD_DETECTIVE, questionCount).map(item => ({ type: 'word_detective', correctAnswer: item.answer, ...item, options: [...item.options].sort(() => 0.5 - Math.random()) }));
             break;
-        case 20: // Leitura Rápida (Desafio) (Original: 20)
+        case 20:
             questions = [{ type: 'speed_reading', words: shuffleAndTake(PHASE_20_SPEED_READING, 15) }];
             break;
     }
@@ -655,8 +697,9 @@ async function startQuestion() {
     const q = gameState.questions[gameState.currentQuestionIndex];
     
     // Tocar a instrução completa da fase
-    const instruction = PHASE_INSTRUCTIONS[q.type] || "Escolha a resposta certa!";
-    playTeacherAudio(`instruction_${q.type}`, instruction);
+    playAudio(`instruction_${q.type}`);
+    document.getElementById('helperText').textContent = PHASE_INSTRUCTIONS[q.type] || "Escolha a resposta certa!";
+
 
     const renderMap = {
         'letter_sound': renderPhase1UI, 'vowel_sound': renderPhase8UI, 'memory_game': renderPhase2UI, 'sound_detective': renderPhase5UI,
@@ -679,54 +722,33 @@ async function startQuestion() {
 // FUNÇÕES DE RENDERIZAÇÃO DAS FASES
 // =======================================================
 
-function renderPhase1UI(q) { document.getElementById('audioQuestionArea').style.display = 'block'; document.getElementById('lettersGrid').style.display = 'grid'; document.getElementById('questionText').textContent = `Qual letra faz o som ${q.description}`; document.getElementById('repeatAudio').style.display = 'inline-block'; renderOptions(q.options, 'letter-button'); setTimeout(playCurrentAudio, 500); }
-function renderPhase2UI(q) { const memoryGrid = document.getElementById('memoryGameGrid'); if (!memoryGrid) return; memoryGrid.innerHTML = ''; memoryGrid.style.display = 'grid'; document.getElementById('questionText').textContent = 'Encontre os pares de letras maiúsculas e minúsculas!'; document.getElementById('attempts').parentElement.style.visibility = 'hidden'; const shuffleAndTake = (arr, num) => [...arr].sort(() => 0.5 - Math.random()).slice(0, num); const letters = shuffleAndTake(ALPHABET, 8); const cards = [...letters, ...letters.map(l => l.toLowerCase())].sort(() => 0.5 - Math.random()); memoryGrid.innerHTML = cards.map(letter => ` <div class="memory-card" data-letter="${letter.toLowerCase()}"> <div class="card-inner"> <div class="card-face card-front"></div> <div class="card-face card-back">${letter}</div> </div> </div> `).join(''); gameState.score = 0; gameState.memoryGame = { flippedCards: [], matchedPairs: 0, totalPairs: letters.length, canFlip: true, mistakesMade: 0, startTime: Date.now() }; updateUI(); memoryGrid.querySelectorAll('.memory-card').forEach(card => card.addEventListener('click', () => handleCardFlip(card))); }
-
-function renderPhase3NewUI(q) {
-    const interactiveArea = document.getElementById('interactiveArea');
-    interactiveArea.style.display = 'flex';
-    interactiveArea.innerHTML = `<div class="syllable-base">${q.base}</div> <div class="syllable-plus">+</div> <div class="syllable-base">${q.vowel}</div>`;
-    renderOptions(q.options, 'letter-button');
-}
-
+function renderPhase1UI(q) { document.getElementById('audioQuestionArea').style.display = 'block'; document.getElementById('lettersGrid').style.display = 'grid'; document.getElementById('questionText').textContent = `Qual letra faz o som que você ouviu?`; document.getElementById('repeatAudio').style.display = 'inline-block'; renderOptions(q.options, 'letter-button'); setTimeout(playCurrentAudio, 800); }
+function renderPhase2UI(q) { const memoryGrid = document.getElementById('memoryGameGrid'); if (!memoryGrid) return; memoryGrid.innerHTML = ''; memoryGrid.style.display = 'grid'; document.getElementById('attempts').parentElement.style.visibility = 'hidden'; const shuffleAndTake = (arr, num) => [...arr].sort(() => 0.5 - Math.random()).slice(0, num); const letters = shuffleAndTake(ALPHABET, 8); const cards = [...letters, ...letters.map(l => l.toLowerCase())].sort(() => 0.5 - Math.random()); memoryGrid.innerHTML = cards.map(letter => ` <div class="memory-card" data-letter="${letter.toLowerCase()}"> <div class="card-inner"> <div class="card-face card-front"></div> <div class="card-face card-back">${letter}</div> </div> </div> `).join(''); gameState.score = 0; gameState.memoryGame = { flippedCards: [], matchedPairs: 0, totalPairs: letters.length, canFlip: true, mistakesMade: 0, startTime: Date.now() }; updateUI(); memoryGrid.querySelectorAll('.memory-card').forEach(card => card.addEventListener('click', () => handleCardFlip(card))); }
+function renderPhase3NewUI(q) { const interactiveArea = document.getElementById('interactiveArea'); interactiveArea.style.display = 'flex'; interactiveArea.innerHTML = `<div class="syllable-base">${q.base}</div> <div class="syllable-plus">+</div> <div class="syllable-base">${q.vowel}</div>`; renderOptions(q.options, 'letter-button'); }
 function renderPhase4UI(q) { document.getElementById('imageQuestionArea').style.display = 'block'; document.getElementById('lettersGrid').style.display = 'grid'; document.getElementById('imageEmoji').textContent = q.image; renderOptions(q.options, 'word-option-button'); }
 function renderPhase5UI(q) { document.getElementById('imageQuestionArea').style.display = 'block'; document.getElementById('lettersGrid').style.display = 'grid'; document.getElementById('imageEmoji').textContent = q.image; renderOptions(q.options, 'word-option-button'); }
 function renderPhase6UI(q) { document.getElementById('imageQuestionArea').style.display = 'block'; document.getElementById('lettersGrid').style.display = 'grid'; document.getElementById('imageEmoji').textContent = q.image; document.getElementById('wordDisplay').textContent = q.sentence; renderOptions(q.options, 'letter-button'); }
-
-function renderPhase7NewUI(q) {
-    document.getElementById('imageQuestionArea').style.display = 'block';
-    document.getElementById('imageEmoji').textContent = q.image;
-    renderOptions(q.options, 'sentence-option-button');
-}
-
-function renderPhase8UI(q) { document.getElementById('audioQuestionArea').style.display = 'block'; document.getElementById('lettersGrid').style.display = 'grid'; document.getElementById('repeatAudio').style.display = 'inline-block'; renderOptions(q.options, 'letter-button'); setTimeout(playCurrentAudio, 500); }
+function renderPhase7NewUI(q) { document.getElementById('imageQuestionArea').style.display = 'block'; document.getElementById('imageEmoji').textContent = q.image; renderOptions(q.options, 'sentence-option-button'); }
+function renderPhase8UI(q) { document.getElementById('audioQuestionArea').style.display = 'block'; document.getElementById('lettersGrid').style.display = 'grid'; document.getElementById('repeatAudio').style.display = 'inline-block'; renderOptions(q.options, 'letter-button'); setTimeout(playCurrentAudio, 800); }
 function renderPhase9UI(q) { document.getElementById('imageQuestionArea').style.display = 'block'; document.getElementById('lettersGrid').style.display = 'grid'; document.getElementById('imageEmoji').textContent = q.image; document.getElementById('wordDisplay').textContent = q.word; renderOptions(q.options, 'letter-button'); }
 function renderPhase10UI(q) { document.getElementById('imageQuestionArea').style.display = 'block'; document.getElementById('lettersGrid').style.display = 'grid'; document.getElementById('imageEmoji').textContent = q.image; document.getElementById('wordDisplay').textContent = `__${q.word.substring(q.correctAnswer.length)}`; renderOptions(q.options, 'word-option-button'); }
-
-function renderPhase11NewUI(q) {
-    document.getElementById('imageQuestionArea').style.display = 'block';
-    document.getElementById('imageEmoji').textContent = q.image;
-    document.getElementById('wordDisplay').textContent = q.blanked;
-    renderOptions(q.options, 'word-option-button');
-}
-
+function renderPhase11NewUI(q) { document.getElementById('imageQuestionArea').style.display = 'block'; document.getElementById('imageEmoji').textContent = q.image; document.getElementById('wordDisplay').textContent = q.blanked; renderOptions(q.options, 'word-option-button'); }
 function renderPhase12UI(q) { document.getElementById('imageQuestionArea').style.display = 'block'; document.getElementById('lettersGrid').style.display = 'grid'; document.getElementById('imageEmoji').textContent = q.image; document.getElementById('wordDisplay').textContent = q.initialWord; document.getElementById('questionText').textContent = `Se tirarmos "${q.toRemove}", qual palavra formamos?`; renderOptions(q.options, 'word-option-button'); }
 function renderPhase13UI(q) { document.getElementById('imageQuestionArea').style.display = 'block'; document.getElementById('lettersGrid').style.display = 'grid'; document.getElementById('imageEmoji').textContent = q.imageInverted; document.getElementById('wordDisplay').textContent = q.word; document.getElementById('questionText').textContent = `Se invertermos as sílabas de ${q.word}, qual palavra formamos?`; renderOptions(q.options, 'word-option-button'); }
 function renderPhase14UI(q) { document.getElementById('imageQuestionArea').style.display = 'block'; document.getElementById('lettersGrid').style.display = 'grid'; document.getElementById('imageEmoji').textContent = q.image; document.getElementById('wordDisplay').textContent = q.word; renderOptions(q.options, 'word-option-button'); }
 function renderPhase15UI(q) { document.getElementById('imageQuestionArea').style.display = 'block'; document.getElementById('lettersGrid').style.display = 'grid'; document.getElementById('imageEmoji').textContent = q.image; document.getElementById('wordDisplay').textContent = q.word; renderOptions(q.options, 'letter-button'); }
 function renderPhase16UI(q) { document.getElementById('imageQuestionArea').style.display = 'block'; document.getElementById('lettersGrid').style.display = 'grid'; document.getElementById('imageEmoji').textContent = q.image; document.getElementById('wordDisplay').textContent = q.blanked; renderOptions(q.options, 'word-option-button'); }
 function renderPhase17UI(q) { document.getElementById('imageQuestionArea').style.display = 'block'; document.getElementById('lettersGrid').style.display = 'grid'; document.getElementById('imageEmoji').textContent = q.image; document.getElementById('wordDisplay').textContent = q.target; renderOptions(q.options, 'word-option-button'); }
-function renderPhase18UI(q) { document.getElementById('imageQuestionArea').style.display = 'block'; document.getElementById('wordDisplay').innerHTML = q.display.split('').map(letter => `<span class="clickable-letter">${letter}</span>`).join(''); document.getElementById('questionText').textContent = `Clique na letra intrometida da palavra.`; document.querySelectorAll('.clickable-letter').forEach(span => { span.addEventListener('click', (e) => selectAnswer(e.target.textContent)); }); }
+function renderPhase18UI(q) { document.getElementById('imageQuestionArea').style.display = 'block'; document.getElementById('wordDisplay').innerHTML = q.display.split('').map(letter => `<span class="clickable-letter">${letter}</span>`).join(''); document.querySelectorAll('.clickable-letter').forEach(span => { span.addEventListener('click', (e) => selectAnswer(e.target.textContent)); }); }
 function renderPhase19UI(q) { document.getElementById('imageQuestionArea').style.display = 'block'; document.getElementById('lettersGrid').style.display = 'grid'; document.getElementById('imageEmoji').textContent = q.image; document.getElementById('wordDisplay').textContent = q.sentence; renderOptions(q.options, 'word-option-button'); }
 function renderPhase20UI(q) { document.getElementById('attempts').parentElement.style.visibility = 'hidden'; gameState.speedReading = { words: q.words, currentIndex: 0, correctCount: 0, timer: null, timeLeft: 10 }; setupSpeedReadingScreen(); nextSpeedReadingWord(); }
 
 function renderOptions(options, buttonClass) { const lettersGrid = document.getElementById('lettersGrid'); lettersGrid.style.display = 'grid'; lettersGrid.innerHTML = options.map(option => `<button class="${buttonClass}">${option}</button>`).join(''); lettersGrid.querySelectorAll('button').forEach(btn => btn.addEventListener('click', (e) => selectAnswer(e.target.textContent))); }
-
-function handleCardFlip(card) { const { flippedCards, canFlip } = gameState.memoryGame; if (!canFlip || card.classList.contains('flipped')) return; card.classList.add('flipped'); flippedCards.push(card); if (flippedCards.length === 2) { gameState.memoryGame.canFlip = false; const [card1, card2] = flippedCards; if (card1.dataset.letter === card2.dataset.letter) { setTimeout(() => { card1.classList.add('matched'); card2.classList.add('matched'); gameState.memoryGame.matchedPairs++; gameState.score++; updateUI(); playSound('correct'); gameState.memoryGame.flippedCards = []; gameState.memoryGame.canFlip = true; if (gameState.memoryGame.matchedPairs === gameState.memoryGame.totalPairs) { playTeacherAudio('feedback_correct', 'Excelente'); showFeedback('Excelente! Todos os pares encontrados!', 'success'); playSound('phaseWin'); const endTime = Date.now(); const durationInSeconds = Math.round((endTime - gameState.memoryGame.startTime) / 1000); gameState.memoryGame.completionTime = durationInSeconds; document.getElementById('nextQuestion').style.display = 'block'; } }, 800); } else { gameState.memoryGame.mistakesMade++; playTeacherAudio('feedback_incorrect', 'Tente de novo'); playSound('incorrect'); updateUI(); setTimeout(() => { card1.classList.remove('flipped'); card2.classList.remove('flipped'); gameState.memoryGame.flippedCards = []; gameState.memoryGame.canFlip = true; }, 1200); } } }
+function handleCardFlip(card) { const { flippedCards, canFlip } = gameState.memoryGame; if (!canFlip || card.classList.contains('flipped')) return; card.classList.add('flipped'); flippedCards.push(card); if (flippedCards.length === 2) { gameState.memoryGame.canFlip = false; const [card1, card2] = flippedCards; if (card1.dataset.letter === card2.dataset.letter) { setTimeout(() => { card1.classList.add('matched'); card2.classList.add('matched'); gameState.memoryGame.matchedPairs++; gameState.score++; updateUI(); playSound('correct'); gameState.memoryGame.flippedCards = []; gameState.memoryGame.canFlip = true; if (gameState.memoryGame.matchedPairs === gameState.memoryGame.totalPairs) { playAudio('feedback_correct'); showFeedback('Excelente! Todos os pares encontrados!', 'success'); playSound('phaseWin'); const endTime = Date.now(); const durationInSeconds = Math.round((endTime - gameState.memoryGame.startTime) / 1000); gameState.memoryGame.completionTime = durationInSeconds; document.getElementById('nextQuestion').style.display = 'block'; } }, 800); } else { gameState.memoryGame.mistakesMade++; playAudio('feedback_incorrect'); playSound('incorrect'); updateUI(); setTimeout(() => { card1.classList.remove('flipped'); card2.classList.remove('flipped'); gameState.memoryGame.flippedCards = []; gameState.memoryGame.canFlip = true; }, 1200); } } }
 
 // FUNÇÃO DE RESPOSTA CORRIGIDA
 async function selectAnswer(rawSelectedAnswer) {
-    const selectedAnswer = String(rawSelectedAnswer).trim(); // Limpa espaços em branco
+    const selectedAnswer = String(rawSelectedAnswer).trim(); 
     
     const q = gameState.questions[gameState.currentQuestionIndex];
     if (!q || q.type === 'memory_game' || q.type === 'speed_reading' ) return;
@@ -735,7 +757,7 @@ async function selectAnswer(rawSelectedAnswer) {
         btn.style.pointerEvents = 'none';
     });
 
-    const correctAnswer = String(q.correctAnswer).trim(); // Limpa a resposta correta também, por segurança
+    const correctAnswer = String(q.correctAnswer).trim();
     const isCorrect = selectedAnswer === correctAnswer;
 
     const buttons = document.querySelectorAll('.letter-button, .word-option-button, .sentence-option-button');
@@ -753,14 +775,14 @@ async function selectAnswer(rawSelectedAnswer) {
         playSound('correct');
         gameState.score++;
         showFeedback('Muito bem!', 'success');
-        playTeacherAudio('feedback_correct', 'Acertou');
+        playAudio('feedback_correct');
         setTimeout(nextQuestion, 1500); 
     } else {
         playSound('incorrect');
         gameState.attempts--;
         logStudentError({ question: q, selectedAnswer: selectedAnswer }).catch(console.error);
         showFeedback(`Quase! A resposta correta era "${correctAnswer}"`, 'error');
-        playTeacherAudio('feedback_incorrect', 'Tente de novo');
+        playAudio('feedback_incorrect');
         setTimeout(() => {
             if (gameState.attempts <= 0) {
                 endPhase();
@@ -803,7 +825,7 @@ async function endPhase() {
     
     if (passed) { 
         playSound('phaseWin');
-        playTeacherAudio('feedback_phase_win', 'Fase concluída!');
+        playAudio('feedback_phase_win');
         startConfetti();
     } 
     
@@ -829,26 +851,16 @@ async function restartGame() { playSound('click'); await showStudentGame(); }
 async function playCurrentAudio() {
     const q = gameState.questions[gameState.currentQuestionIndex];
     if (q.type === 'vowel_sound') {
-        playTeacherAudio(`vowel_${q.correctAnswer}`, q.correctAnswer);
+        playAudio(`vowel_${q.correctAnswer}`);
     } else if(q.type === 'letter_sound') {
-        playTeacherAudio(q.audioKey, q.correctAnswer);
+        playAudio(q.audioKey);
     }
 }
 
 // =======================================================
-// PARTE 9: SÍNTESE DE VOZ, ÁUDIOS E PERSONALIZAÇÃO
+// PARTE 9: SÍNTESE DE VOZ E ÁUDIOS (Simplificado)
 // =======================================================
-
-const ALL_AUDIO_KEYS = {
-    "Boas-Vindas e Feedback": { "welcome": "Mensagem de boas-vindas (Robô)", "feedback_correct": "Feedback de acerto", "feedback_incorrect": "Feedback de erro", "feedback_phase_win": "Feedback de fase concluída" },
-    "Letras e Vogais": { ...Object.fromEntries(ALPHABET.map(l => [l, `Letra ${l}`])), ...Object.fromEntries(VOWELS.map(v => [`vowel_${v}`, `Vogal ${v}`])) },
-    "Instruções das Fases": { ...Object.fromEntries(Object.keys(PHASE_INSTRUCTIONS).map(type => [`instruction_${type}`, `Instrução para ${type}`])) },
-    "Palavras e Frases (Exemplos)": { "GATO": "Palavra 'GATO'", "PATO": "Palavra 'PATO'", "BOLA": "Palavra 'BOLA'" }
-};
-
-function initializeSpeech() { const checkVoices = (resolve) => { const voices = speechSynthesis.getVoices(); if (voices.length > 0) { selectedVoice = voices.find(v => v.lang === 'pt-BR'); if (!selectedVoice) selectedVoice = voices[0]; speechReady = true; resolve(); } }; return new Promise((resolve) => { if (speechSynthesis.getVoices().length > 0) { checkVoices(resolve); } else { speechSynthesis.onvoiceschanged = () => checkVoices(resolve); } }); }
-function speak(text, onEndCallback) { if (!window.speechSynthesis) return; if (!speechReady) { initializeSpeech().then(() => speak(text, onEndCallback)); return; } speechSynthesis.cancel(); const utterance = new SpeechSynthesisUtterance(text); utterance.lang = 'pt-BR'; if(selectedVoice) utterance.voice = selectedVoice; if (onEndCallback) utterance.onend = onEndCallback; speechSynthesis.speak(utterance); }
-async function playTeacherAudio(key, fallbackText, onEndCallback) { const teacherId = SUPER_ADMIN_TEACHER_ID; if (!teacherId) { speak(fallbackText, onEndCallback); return; } try { const { data } = await supabaseClient.storage.from('audio_uploads').list(teacherId, { search: `${key}.` }); if (data && data.length > 0) { const audioFileName = data[0].name; const { data: { publicUrl } } = supabaseClient.storage.from('audio_uploads').getPublicUrl(`${teacherId}/${audioFileName}`); const audio = new Audio(publicUrl); audio.onerror = () => speak(fallbackText, onEndCallback); if (onEndCallback) audio.onended = onEndCallback; audio.play(); } else { speak(fallbackText, onEndCallback); } } catch (error) { console.error(`[Áudio] Erro ao buscar áudio:`, error); speak(fallbackText, onEndCallback); } }
+// O sistema de áudio agora é gerenciado pelas funções playAudio e playSound no topo do arquivo.
 
 // =======================================================
 // PARTE 10: FUNÇÕES GERAIS DE UI E LOGS
@@ -1057,14 +1069,14 @@ function generateSingleQuestionFromError(errorTemplate) {
         case 1:
             const letterSoundData = PHASE_1_LETTER_SOUNDS.find(l => l.letter === correctAnswer);
             if (!letterSoundData) return null;
-            return { type: 'letter_sound', ...letterSoundData, options: _generateOptions(correctAnswer, letterSoundData.optionsPool, 4) };
+            return { type: 'letter_sound', ...letterSoundData, correctAnswer: letterSoundData.letter, options: _generateOptions(correctAnswer, letterSoundData.optionsPool, 4) };
         case 2:
             return { type: 'vowel_sound', correctAnswer: correctAnswer, options: _generateOptions(correctAnswer, VOWELS, 4) };
         case 3:
             return null;
         case 4:
             const pairData = PHASE_5_SOUND_PAIRS.find(p => p.correct === correctAnswer) || PHASE_5_SOUND_PAIRS[0];
-            return { type: 'sound_detective', ...pairData, options: [pairData.correct, pairData.incorrect].sort(()=>0.5-Math.random()) };
+            return { type: 'sound_detective', ...pairData, correctAnswer: pairData.correct, options: [pairData.correct, pairData.incorrect].sort(()=>0.5-Math.random()) };
         case 5:
             const wordData = PHASE_4_WORDS_F.find(w => w.word === correctAnswer) || PHASE_4_WORDS_F[0];
             return { type: 'f_word_search', ...wordData, correctAnswer: wordData.word, options: [...wordData.options].sort(() => 0.5-Math.random()) };
