@@ -1411,3 +1411,98 @@ body {
     font-size: 1.5rem;
     font-weight: bold;
 }
+/* ======================================================= */
+/* NOVA ESTILIZAÇÃO PARA A SELEÇÃO DE FASES (PROFESSOR)    */
+/* ======================================================= */
+
+/* Título de cada módulo (Ex: "Módulo 1: Alfabeto e Sons") */
+.phase-module-title {
+    background-color: #f0eaff;
+    color: #764ba2;
+    padding: 10px 15px;
+    border-radius: 8px;
+    margin-top: 20px;
+    margin-bottom: 15px;
+    font-size: 1.1rem;
+    border-left: 5px solid #764ba2;
+}
+.phase-checkbox-grid .phase-module-title:first-child {
+    margin-top: 0;
+}
+
+/* O contêiner principal das checkboxes */
+.phase-checkbox-grid {
+    background-color: #ffffff; /* Fundo mais limpo */
+    border: 1px solid #e0d8f0;
+    padding: 20px;
+}
+
+/* Cada item de fase (a linha com checkbox + texto) */
+.phase-checkbox-label {
+    display: grid; /* Usando Grid para alinhamento perfeito */
+    grid-template-columns: auto 1fr; /* Coluna 1 (checkbox) automática, Coluna 2 (texto) ocupa o resto */
+    align-items: center;
+    gap: 15px; /* Aumenta o espaço entre checkbox e texto */
+    padding: 12px;
+    border-radius: 8px;
+    border: 1px solid transparent;
+    margin-bottom: 8px; /* Espaço entre as linhas */
+    transition: background-color 0.2s ease, border-color 0.2s ease;
+    cursor: pointer;
+}
+.phase-checkbox-label:hover {
+    background-color: #f7f5ff;
+    border-color: #e0d8f0;
+}
+.phase-checkbox-label:last-child {
+    margin-bottom: 0;
+}
+
+/* O texto da fase */
+.phase-checkbox-label span {
+    color: #333;
+    font-size: 1rem;
+    line-height: 1.4;
+}
+.phase-checkbox-label span strong {
+    color: #2c3e50;
+    display: block; /* Faz o "Fase X:" ficar em sua própria "linha" visual */
+    font-size: 1.05rem;
+}
+
+/* Checkbox personalizado */
+.phase-checkbox {
+    -webkit-appearance: none;
+    appearance: none;
+    background-color: #fff;
+    margin: 0;
+    font: inherit;
+    color: currentColor;
+    width: 1.4em;
+    height: 1.4em;
+    border: 0.15em solid #dcd1ed;
+    border-radius: 0.25em;
+    transform: translateY(-0.075em);
+    display: grid;
+    place-content: center;
+    transition: background-color 0.2s ease;
+}
+
+.phase-checkbox::before {
+    content: "";
+    width: 0.75em;
+    height: 0.75em;
+    transform: scale(0);
+    transition: 120ms transform ease-in-out;
+    box-shadow: inset 1em 1em #764ba2;
+    /* Adicionando o "check" com clip-path */
+    clip-path: polygon(14% 44%, 0 65%, 50% 100%, 100% 16%, 80% 0%, 43% 62%);
+}
+
+.phase-checkbox:checked {
+    background-color: #e0d8f0;
+}
+
+.phase-checkbox:checked::before {
+    transform: scale(1);
+}
