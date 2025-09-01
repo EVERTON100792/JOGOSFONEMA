@@ -1506,3 +1506,106 @@ body {
 .phase-checkbox:checked::before {
     transform: scale(1);
 }
+/* ======================================================= */
+/* NOVO DESIGN "TOP" PARA A SELEÇÃO DE FASES (PROFESSOR)   */
+/* ======================================================= */
+
+/* Contêiner principal das checkboxes */
+.phase-checkbox-grid {
+    background-color: #f7f5ff; /* Fundo suave levemente roxo */
+    border: 1px solid #e0d8f0;
+    padding: 20px;
+    border-radius: 12px;
+}
+
+/* Título de cada módulo (Ex: "Módulo 1: Alfabeto e Sons") */
+h3.phase-module-title {
+    color: #5a3e8d; /* Roxo mais escuro para destaque */
+    padding-bottom: 8px;
+    margin-top: 20px;
+    margin-bottom: 15px;
+    font-size: 1.1rem;
+    font-weight: 700; /* Mais forte */
+    border-bottom: 2px solid #e0d8f0;
+    text-align: left;
+}
+.phase-checkbox-grid .phase-module-title:first-child {
+    margin-top: 0;
+}
+
+/* Cada item de fase (a linha com checkbox + texto) */
+.phase-checkbox-label {
+    display: grid;
+    grid-template-columns: auto 1fr; /* Coluna para checkbox e coluna para texto */
+    align-items: center; /* Alinhamento vertical perfeito */
+    gap: 15px;
+    padding: 14px;
+    border-radius: 10px;
+    margin-bottom: 10px;
+    background-color: #ffffff;
+    border: 1px solid #e0d8f0;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.04);
+    transition: all 0.2s ease-in-out;
+    cursor: pointer;
+}
+
+.phase-checkbox-label:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(118, 75, 162, 0.15);
+    border-color: #a07cd5;
+}
+
+/* O texto da fase */
+.phase-checkbox-label span {
+    color: #444;
+    font-size: 1rem;
+    line-height: 1.4;
+    text-align: left;
+}
+.phase-checkbox-label span strong {
+    color: #2c3e50;
+    display: block;
+    font-size: 1.05rem;
+    font-weight: 700;
+    margin-bottom: 2px;
+}
+
+/* Checkbox personalizado */
+.phase-checkbox {
+    -webkit-appearance: none;
+    appearance: none;
+    background-color: #fff;
+    margin: 0;
+    width: 1.5em;
+    height: 1.5em;
+    border: 0.15em solid #c5b5e6;
+    border-radius: 0.35em;
+    display: grid;
+    place-content: center;
+    transition: all 0.1s ease-in-out;
+    cursor: pointer;
+}
+
+.phase-checkbox::before {
+    content: "";
+    width: 0.7em;
+    height: 0.7em;
+    transform: scale(0);
+    transition: 100ms transform ease-in-out;
+    box-shadow: inset 1em 1em white;
+    clip-path: polygon(14% 44%, 0 65%, 50% 100%, 100% 16%, 80% 0%, 43% 62%);
+}
+
+.phase-checkbox:checked {
+    background-color: #764ba2;
+    border-color: #764ba2;
+}
+
+.phase-checkbox:checked::before {
+    transform: scale(1);
+}
+
+.phase-checkbox:focus {
+    outline: 2px solid #bca7e8;
+    outline-offset: 2px;
+}
